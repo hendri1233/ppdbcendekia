@@ -1,0 +1,1273 @@
+:root {
+    color-scheme: light;
+    --ink: #182a24;
+    --muted: #63716b;
+    --green: #155b46;
+    --green-dark: #104635;
+    --accent: #c45b3c;
+    --paper: #f1f5f1;
+    --line: #dce5de;
+    --white: #fff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-width: 320px;
+    background: var(--paper);
+}
+
+body {
+    margin: 0;
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--paper);
+    background-image: linear-gradient(rgba(21, 91, 70, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(21, 91, 70, 0.035) 1px, transparent 1px);
+    background-size: 34px 34px;
+}
+
+a {
+    color: inherit;
+}
+
+.page-shell {
+    width: min(100% - 48px, 1000px);
+    margin: 0 auto;
+}
+
+.site-header {
+    min-height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(21, 91, 70, 0.14);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.brand-logo {
+    width: 46px;
+    height: 45px;
+    display: block;
+    flex: 0 0 auto;
+    object-fit: contain;
+}
+
+.brand-copy {
+    display: grid;
+    gap: 3px;
+}
+
+.brand-copy strong {
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.brand-copy small {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.back-link {
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+}
+
+.intro {
+    max-width: 700px;
+    padding: 54px 0 34px;
+}
+
+.eyebrow {
+    margin: 0 0 14px;
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.intro h1 {
+    margin: 0;
+    color: var(--ink);
+    font-family: 'Manrope', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.12;
+}
+
+.intro h1 span {
+    color: var(--green);
+}
+
+.intro-copy {
+    max-width: 540px;
+    margin: 16px 0 18px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.intro-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--green-dark);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.meta-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.registration-form {
+    overflow: hidden;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 18px 48px rgba(20, 54, 41, 0.07);
+}
+
+.form-section {
+    padding: 30px 36px 34px;
+    border-bottom: 1px solid var(--line);
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 24px;
+}
+
+.section-number {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    color: var(--green);
+    background: #e8f1eb;
+    border-radius: 4px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-family: 'Manrope', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.section-heading p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 22px;
+}
+
+.field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+}
+
+.field-wide {
+    grid-column: 1 / -1;
+}
+
+.field label,
+.field legend {
+    color: #34443d;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.field legend {
+    padding: 0;
+}
+
+.required-mark {
+    color: var(--accent);
+}
+
+.whatsapp-confirmation {
+    display: grid;
+    gap: 7px;
+    margin-top: 18px;
+    padding: 15px 17px;
+    color: #593b21;
+    background: #fff5e9;
+    border-left: 4px solid #c45b3c;
+}
+
+.whatsapp-confirmation strong {
+    color: #38291e;
+    font-size: 13px;
+}
+
+.whatsapp-confirmation p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.whatsapp-confirmation label {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 3px;
+    color: #34443d;
+    font-size: 12px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.whatsapp-confirmation input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    margin: 0;
+    accent-color: var(--green);
+}
+
+.optional-mark {
+    margin-left: 5px;
+    color: #87928c;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 11px 13px;
+    color: var(--ink);
+    background-color: #fff;
+    border: 1px solid #cbd7cf;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 14px;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.field textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.field input::placeholder {
+    color: #929c96;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    border-color: var(--green);
+    outline: 3px solid rgba(21, 91, 70, 0.13);
+    outline-offset: 1px;
+}
+
+.field-hint {
+    margin-top: -2px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.operator-note {
+    margin: 17px 0 0;
+    padding: 12px 14px;
+    color: #52635a;
+    background: #f3f7f3;
+    border-left: 3px solid var(--green);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.offer-summary {
+    margin-top: 18px;
+    padding: 13px 15px;
+    color: #315345;
+    background: #edf4ef;
+    border-left: 3px solid var(--green);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.gender-field {
+    gap: 11px;
+}
+
+.radio-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.radio-option {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 13px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.radio-option input {
+    width: 16px;
+    min-height: 16px;
+    margin: 0;
+    accent-color: var(--green);
+}
+
+.radio-option span {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 36px;
+    background: #f7faf7;
+}
+
+.form-footer p {
+    max-width: 430px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.form-footer .submit-button {
+    flex: 0 0 auto;
+}
+
+.submit-button {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 20px;
+    color: var(--white);
+    background: var(--green);
+    border: 0;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 140ms ease, box-shadow 160ms ease;
+}
+
+.submit-button:hover:not(:disabled) {
+    background: var(--green-dark);
+    box-shadow: 0 8px 20px rgba(21, 91, 70, 0.22);
+    transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+    background: #86948d;
+    cursor: not-allowed;
+}
+
+.submit-button:active {
+    transform: translateY(1px);
+}
+
+.submit-button:focus-visible,
+.back-link:focus-visible,
+.brand:focus-visible {
+    outline: 3px solid rgba(196, 91, 60, 0.55);
+    outline-offset: 3px;
+}
+
+.submit-button span {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.error-summary {
+    margin: 0 0 20px;
+    padding: 17px 20px;
+    color: #7b2d20;
+    background: #fff3ef;
+    border: 1px solid #e9b4a5;
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.error-summary strong {
+    display: block;
+    margin-bottom: 7px;
+}
+
+.error-summary ul {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.6;
+}
+
+.site-footer {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.site-footer a {
+    color: var(--green);
+    font-weight: 700;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+    .page-shell {
+        width: min(100% - 32px, 1000px);
+    }
+
+    .site-header {
+        min-height: 74px;
+    }
+
+    .brand-logo {
+        width: 40px;
+        height: 39px;
+    }
+
+    .brand-copy strong {
+        font-size: 13px;
+    }
+
+    .brand-copy small {
+        font-size: 9px;
+    }
+
+    .back-link {
+        font-size: 11px;
+    }
+
+    .intro {
+        padding: 42px 0 27px;
+    }
+
+    .intro h1 {
+        font-size: 34px;
+    }
+
+    .intro-copy {
+        font-size: 14px;
+    }
+
+    .form-section {
+        padding: 24px 20px 27px;
+    }
+
+    .field-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .field-wide {
+        grid-column: auto;
+    }
+
+    .form-footer {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .submit-button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================================
+   Alur pendaftaran: registrasi awal, gerbang kode, popup konfirmasi,
+   unggah dokumen, dan mikro-interaksi yang fungsional.
+   ============================================================ */
+
+.skip-link {
+    position: absolute;
+    top: -60px;
+    left: 16px;
+    z-index: 100;
+    padding: 10px 16px;
+    color: #fff;
+    background: var(--green-dark);
+    border-radius: 0 0 6px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: top 160ms ease;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+.field-index {
+    display: inline-block;
+    min-width: 22px;
+    margin-right: 6px;
+    padding: 1px 5px;
+    color: var(--green);
+    background: #e8f1eb;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-align: center;
+    vertical-align: 1px;
+}
+
+/* --- Tata letak dua kolom dengan rel bagian kiri yang lengket --- */
+.initial-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    gap: 46px;
+    align-items: start;
+    padding-bottom: 20px;
+}
+
+.intro-rail {
+    position: sticky;
+    top: 28px;
+    max-width: none;
+    padding: 54px 0 30px;
+}
+
+.initial-main {
+    min-width: 0;
+    padding-top: 30px;
+}
+
+.journey-list {
+    display: grid;
+    gap: 0;
+    margin: 26px 0 22px;
+    padding: 0;
+    list-style: none;
+    counter-reset: journey;
+}
+
+.journey-list li {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 0 0 22px;
+}
+
+.journey-list li::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    bottom: 2px;
+    left: 15px;
+    width: 2px;
+    background: var(--line);
+}
+
+.journey-list li:last-child {
+    padding-bottom: 0;
+}
+
+.journey-list li:last-child::before {
+    display: none;
+}
+
+.journey-list li > span {
+    position: relative;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    background: var(--white);
+    border: 2px solid var(--line);
+    border-radius: 50%;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.journey-list li.is-active > span {
+    color: var(--white);
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 0 5px rgba(21, 91, 70, 0.12);
+    animation: journey-pulse 2.4s ease-in-out infinite;
+}
+
+.journey-list li div {
+    display: grid;
+    gap: 2px;
+    padding-top: 4px;
+}
+
+.journey-list li strong {
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.journey-list li.is-active strong {
+    color: var(--green);
+}
+
+.journey-list li small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+@keyframes journey-pulse {
+    0%, 100% { box-shadow: 0 0 0 5px rgba(21, 91, 70, 0.12); }
+    50% { box-shadow: 0 0 0 9px rgba(21, 91, 70, 0.04); }
+}
+
+/* --- Penanda isian --- */
+.field.is-filled input,
+.field.is-filled select {
+    border-color: #a9c3b3;
+    background-color: #fbfdfb;
+}
+
+.field.is-valid input {
+    border-color: #2f7d5c;
+    background-image: linear-gradient(#2f7d5c, #2f7d5c);
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    background-size: 2px 22px;
+    padding-right: 26px;
+}
+
+.field.is-invalid input,
+.field.is-invalid select {
+    border-color: var(--accent);
+    background-color: #fffaf8;
+}
+
+.field.is-invalid {
+    animation: shake-field 320ms ease;
+}
+
+@keyframes shake-field {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* --- Ringkasan biaya yang muncul saat unit dipilih --- */
+.offer-summary {
+    display: grid;
+    gap: 4px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    color: #315345;
+    background: #edf4ef;
+    border-left: 3px solid var(--green);
+    border-radius: 0 4px 4px 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* Atribut hidden harus menang atas display: grid di atas. */
+.offer-summary[hidden] {
+    display: none;
+}
+
+.offer-summary strong {
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+}
+
+.offer-summary span {
+    color: #4a6156;
+    font-size: 11px;
+}
+
+.offer-summary.is-flash {
+    animation: offer-in 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes offer-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Persetujuan data --- */
+.consent-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin-top: 22px;
+    padding: 15px 17px;
+    color: #34443d;
+    background: #f7faf7;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.6;
+    cursor: pointer;
+    transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.consent-check:hover {
+    border-color: #b9cfc1;
+    background: #f2f8f4;
+}
+
+.consent-check input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    margin: 0;
+    accent-color: var(--green);
+}
+
+.submit-button.is-busy {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.submit-button.is-busy::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 720ms linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- Gerbang kode pendaftaran --- */
+.gate-panel {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 58px 0 40px;
+}
+
+.gate-panel h1 {
+    margin: 0;
+    font-family: 'Manrope', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.14;
+}
+
+.gate-panel h1 span {
+    color: var(--green);
+}
+
+.gate-form {
+    display: grid;
+    gap: 18px;
+    margin-top: 28px;
+    padding: 26px 28px 28px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 18px 48px rgba(20, 54, 41, 0.07);
+    animation: offer-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.gate-form #kode {
+    font-family: 'Manrope', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.gate-form .submit-button {
+    justify-self: start;
+}
+
+.gate-panel > .submit-button {
+    margin-top: 24px;
+    text-decoration: none;
+}
+
+/* --- Popup konfirmasi data awal --- */
+.confirm-dialog {
+    width: min(100% - 32px, 520px);
+    padding: 0;
+    color: var(--ink);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 30px 80px rgba(16, 55, 40, 0.28);
+}
+
+.confirm-dialog::backdrop {
+    background: rgba(12, 38, 28, 0.55);
+    backdrop-filter: blur(3px);
+    animation: backdrop-in 220ms ease;
+}
+
+.confirm-dialog[open] {
+    animation: dialog-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes dialog-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.confirm-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.confirm-card__head h2 {
+    margin: 0;
+    font-family: 'Manrope', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.confirm-badge {
+    flex: 0 0 auto;
+    padding: 5px 10px;
+    color: var(--green);
+    background: #e8f1eb;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.confirm-grid {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 6px 24px 4px;
+}
+
+.confirm-grid > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--line);
+}
+
+.confirm-grid > div:last-child {
+    border-bottom: 0;
+}
+
+.confirm-grid dt {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.confirm-grid dd {
+    margin: 0;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.confirm-card__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+    padding: 18px 24px 6px;
+}
+
+.choice-yes,
+.choice-no {
+    min-height: 48px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.choice-yes {
+    color: #fff;
+    background: var(--green);
+    border: 1px solid var(--green);
+}
+
+.choice-no {
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid #c3d0c7;
+}
+
+.choice-yes:hover,
+.choice-no:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(20, 54, 41, 0.14);
+}
+
+.choice-yes.is-picked {
+    background: var(--green-dark);
+}
+
+.confirm-card__note {
+    margin: 0;
+    padding: 12px 24px 20px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.confirm-card__note.is-warning {
+    color: #8a3b22;
+    font-weight: 600;
+}
+
+.confirm-dialog.is-confirmed .confirm-badge {
+    color: #fff;
+    background: var(--green);
+}
+
+/* Isian di bawah popup hanya muncul setelah konfirmasi. */
+#formulir-terbuka {
+    animation: offer-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#formulir-terbuka[hidden] {
+    display: none;
+}
+
+/* --- Unggah dokumen --- */
+.document-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+}
+
+.document-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 17px 17px;
+    background: #fbfdfb;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.document-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(20, 54, 41, 0.09);
+}
+
+.document-card.has-file {
+    border-color: #9dc0ac;
+    background: #f4faf6;
+}
+
+.document-card.is-invalid {
+    border-color: var(--accent);
+    background: #fffaf8;
+}
+
+.document-card.is-missing {
+    border-style: dashed;
+    background: #fff;
+}
+
+.document-card__head {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.document-card__head strong {
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.document-card__hint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.document-card__done {
+    margin: 0;
+    color: #2f6a4d;
+    font-size: 11px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.document-card__done.is-missing {
+    color: #8a6a3c;
+    font-weight: 500;
+}
+
+.file-drop {
+    display: grid;
+    gap: 3px;
+    margin-top: 4px;
+    padding: 13px 14px;
+    background: #fff;
+    border: 1.5px dashed #c3d0c7;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.file-drop:hover {
+    border-color: var(--green);
+    background: #f4faf6;
+}
+
+.file-drop input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.file-drop:focus-within {
+    outline: 3px solid rgba(21, 91, 70, 0.16);
+    outline-offset: 2px;
+}
+
+.file-drop__label {
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.file-drop__name {
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.file-drop__name.is-invalid {
+    color: #8a3b22;
+    font-weight: 600;
+}
+
+.document-card.has-file .file-drop {
+    border-style: solid;
+    border-color: #9dc0ac;
+}
+
+@media (max-width: 900px) {
+    .initial-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .intro-rail {
+        position: static;
+        padding: 42px 0 20px;
+    }
+
+    .initial-main {
+        padding-top: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .gate-panel {
+        padding: 40px 0 30px;
+    }
+
+    .gate-panel h1 {
+        font-size: 29px;
+    }
+
+    .gate-form {
+        padding: 20px 18px 22px;
+    }
+
+    .gate-form .submit-button {
+        width: 100%;
+    }
+
+    .confirm-card__actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .confirm-grid > div {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .confirm-grid dd {
+        text-align: left;
+    }
+
+    .document-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .consent-check {
+        margin-top: 0;
+    }
+}
+
+/* ============================================================
+   PPolish visual: progres pengisian dan munculnya bagian saat
+   digulir. Semua dinonaktifkan untuk pengguna yang meminta
+   reduced motion.
+   ============================================================ */
+
+/* Cincin progres di rel kiri, dekat judul. */
+.progress-ring {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 14px 16px 16px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+}
+
+.progress-ring__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.progress-ring__label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.progress-ring__count {
+    color: var(--green);
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.progress-ring__track {
+    height: 5px;
+    overflow: hidden;
+    background: #e2ece5;
+    border-radius: 99px;
+}
+
+.progress-ring__bar {
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #3f8f6d);
+    border-radius: 99px;
+    transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Munculnya bagian formulir ketika masuk viewport. */
+.will-reveal {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1), transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.will-reveal.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Fokus keyboard pada pilihan konfirmasi agar mudah dinavigasi. */
+.choice-yes:focus-visible,
+.choice-no:focus-visible {
+    outline: 3px solid rgba(196, 91, 60, 0.5);
+    outline-offset: 3px;
+}
+
+/* Konten yang baru saja dibuka diberi penekanan singkat. */
+#formulir-terbuka.is-revealed > .registration-form {
+    animation: offer-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (max-width: 900px) {
+    .progress-ring {
+        margin-bottom: 18px;
+    }
+}
