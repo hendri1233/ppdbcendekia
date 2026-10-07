@@ -1,85 +1,73 @@
 <?php
-include 'koneksi.php';
-$peserta = mysqli_query($conn, "SELECT * FROM tb_pendaftaran WHERE id_pendaftaran = '".$_GET['id']."' ");
-$p = mysqli_fetch_object($peserta);
-?>
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name ="viewport" content="width=device-width, initial-scale=1">
-        <title>PPDB ONLINE</title>
-        <link rel="stylesheet" type ="text/css" href="css/cetak.css">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Quicksand:wght@500&display=swap" rel="stylesheet">
-    <script>
-        window.print();
-    </script>
-    </head>
-    <body>
-       <div class="box">
-       <center><h1>Bukti Pendaftaran</h1></center>
-       <table class="table-data" border="0" >
-            <tr>
-                <td>Kode Pendaftaran</td>
-                <td>:</td>
-                <td><?php echo $p->id_pendaftaran ?></td>
-            </tr>
-            <tr>
-                <td>Tahun Ajaran</td>
-                <td>:</td>
-                <td><?php echo $p->th_ajaran ?></td>
-            </tr>
-            <tr>
-                <td>Jurusan</td>
-                <td>:</td>
-                <td><?php echo $p->jurusan ?></td>
-            </tr>
-            <tr>
-                <td>Nomor Induk Siswa Nasional</td>
-                <td>:</td>
-                <td><?php echo $p->NISN ?></td>
-            </tr>
-            <tr>
-                <td>Asal Sekolah</td>
-                <td>:</td>
-                <td><?php echo $p->asal_sekolah ?></td>
-            </tr>
-            <tr>
-                <td>Nama Lengkap</td>
-                <td>:</td>
-                <td><?php echo $p->nm_peserta ?></td>
-            </tr>
-            <tr>
-                <td>Tempat,Tanggal Lahir</td>
-                <td>:</td>
-                <td><?php echo $p->tmp_lahir.','.$p->tgl_lahir ?></td>
-            </tr>
-            <tr>
-                <td>Jenis Kelamin</td>
-                <td>:</td>
-                <td><?php echo $p->jenis_kelamin ?></td>
-            </tr>
-            <tr>
-                <td>No. Telepon</td>
-                <td>:</td>
-                <td><?php echo $p->no_hp ?></td>
-            </tr>
-            <tr>
-                <td>Agama</td>
-                <td>:</td>
-                <td><?php echo $p->agama ?></td>
-            </tr>
-            <tr>
-                <td>Nilai rata-rata raport</td>
-                <td>:</td>
-                <td><?php echo $p->raport ?></td>
-            </tr>
-            <tr>
-                <td>Alamat</td>
-                <td>:</td>
-                <td><?php echo $p->alamat ?></td>
-            </tr>
-       </table>
-       </div>
-    </body>
-</html>
+require_once 'app_helpers.php';
+require_once 'koneksi.php';
+require_once 'vendor/autoload.php';
+
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
+$registrationId = $_GET['id'] ?? '';
+$receiptToken = $_GET['token'] ?? '';
+if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
+    http_response_code(404);
+    exit('Bukti pendaftaran tidak ditemukan.');
+}
+
+$tokenIsValid = preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
+$tokenHash = $tokenIsValid ? hash('sha256', $receiptToken) : '';
+$stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran, p.th_ajaran, p.tgl_daftar, p.nm_peserta, u.nama_unit, p.token_bukti, p.token_whatsapp FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit = u.kode_unit WHERE p.id_pendaftaran = ? LIMIT 1');
+mysqli_stmt_bind_param($stmt, 's', $registrationId);
+mysqli_stmt_execute($stmt);
+$registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+mysqli_stmt_close($stmt);
+
+start_app_session();
+$tokenAuthorized = $registration && $tokenIsValid && (hash_equals($registration['token_bukti'], $tokenHash) || hash_equals((string) ($registration['token_whatsapp'] ?? ''), $tokenHash));
+$adminAuthorized = !empty($_SESSION['admin_id']);
+if (!$registration || (!$tokenAuthorized && !$adminAuthorized)) {
+    http_response_code(404);
+    exit('Bukti pendaftaran tidak ditemukan.');
+}
+
+$dateRegistered = date('d-m-Y', strtotime($registration['tgl_daftar']));
+$html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
+    @page { margin: 34px 42px; }
+    body { color: #182a24; font-family: "DejaVu Sans", sans-serif; font-size: 11px; }
+    .topline { height: 7px; background: #155b46; margin-bottom: 28px; }
+    .brand { color: #155b46; font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+    h1 { margin: 9px 0 5px; font-size: 22px; }
+    .subtitle { margin: 0; color: #63716b; font-size: 10px; }
+    .code { margin: 26px 0 20px; padding: 17px; background: #eef4ef; border-left: 4px solid #c45b3c; }
+    .code-label { color: #63716b; font-size: 8px; font-weight: bold; }
+    .code-value { margin-top: 7px; color: #155b46; font-size: 19px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 11px 8px; border-bottom: 1px solid #dce5de; vertical-align: top; }
+    td:first-child { width: 34%; color: #63716b; }
+    td:last-child { font-weight: bold; }
+    .note { margin-top: 26px; padding: 12px 14px; color: #63716b; background: #f7f8f5; font-size: 9px; line-height: 1.6; }
+    .footer { margin-top: 30px; color: #63716b; font-size: 8px; }
+</style></head><body>
+    <div class="topline"></div>
+    <div class="brand">YAYASAN WAKAF CENDEKIA TAKENGON</div>
+    <h1>Bukti Pendaftaran</h1>
+    <p class="subtitle">Penerimaan Peserta Didik Baru</p>
+    <div class="code"><div class="code-label">KODE PENDAFTARAN</div><div class="code-value">'.h($registration['id_pendaftaran']).'</div></div>
+    <table>
+        <tr><td>Nama peserta didik</td><td>'.h($registration['nm_peserta']).'</td></tr>
+        <tr><td>Unit pendidikan</td><td>'.h($registration['nama_unit'] ?? 'Belum ditentukan').'</td></tr>
+        <tr><td>Tahun ajaran</td><td>'.h($registration['th_ajaran']).'</td></tr>
+        <tr><td>Tanggal pendaftaran</td><td>'.h($dateRegistered).'</td></tr>
+    </table>
+    <div class="note">Dokumen ini merupakan ringkasan bukti pendaftaran. Data identitas kependudukan, alamat lengkap, dan data keluarga tidak dicantumkan pada dokumen ini.</div>
+    <div class="footer">Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah · 0821-8164-9543</div>
+</body></html>';
+
+$options = new Options();
+$options->set('isRemoteEnabled', false);
+$options->set('defaultFont', 'DejaVu Sans');
+$dompdf = new Dompdf($options);
+$dompdf->loadHtml($html, 'UTF-8');
+$dompdf->setPaper('A4', 'portrait');
+$dompdf->render();
+$dompdf->stream('bukti-pendaftaran-'.$registrationId.'.pdf', ['Attachment' => true]);
+exit;
