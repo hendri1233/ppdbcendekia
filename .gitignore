@@ -1,6 +1,5 @@
 /vendor/
 /.env
-/.htaccess
 /secrets/
 /*service-account*.json
 /*credentials*.json
