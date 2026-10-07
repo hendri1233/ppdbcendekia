@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/koneksi.php';
 require_once __DIR__ . '/app_helpers.php';
+require_once __DIR__ . '/web_stats.php';
+
+ppdb_track_visit($conn);
 
 // Data unit diambil dari database agar halaman beranda selalu sesuai
 // dengan konfigurasi resmi, termasuk status buka dan kuotanya.
@@ -30,6 +33,18 @@ while ($unit = mysqli_fetch_assoc($unitQuery)) {
         $totalOpenQuota += $unit['sisa'];
     }
 }
+
+// Statistik publik: pendaftar per unit dan kunjungan web 30 hari terakhir.
+$totalRegistrants = 0;
+$maxRegistrants = 0;
+foreach ($units as $unit) {
+    $totalRegistrants += $unit['terisi'] + $unit['internal_terisi'];
+    $maxRegistrants = max($maxRegistrants, $unit['terisi'] + $unit['internal_terisi']);
+}
+$dailyVisits = ppdb_daily_visits($conn, 30);
+$visitorsToday = end($dailyVisits)['visitors'];
+$viewsLast30 = array_sum(array_column($dailyVisits, 'views'));
+$visitorsLast30 = ppdb_unique_visitors($conn, 30);
 
 $siteName = 'Yayasan Wakaf Cendekia Takengon';
 $siteShort = 'PPDB Cendekia Takengon';
@@ -220,62 +235,94 @@ $arrow = "\u{2192}";
         </p>
     </section>
 
-    <section class="unit-section" id="unit">
+    <section class="unit-section stats-section" id="unit">
         <div class="section-head">
             <p class="section-index">01 <?= $enDash ?> Unit pendidikan</p>
-            <h2>Lima layanan pendidikan,<br><span>satu lingkungan belajar.</span></h2>
-            <p class="section-lead">Pendaftaran umum dibuka per unit dan tahun ajaran. SDM yayasan menggunakan <a href="daftar.php?internal=1">tautan internal bersama</a> dan token khusus 9 karakter.</p>
+            <h2>Pendaftaran berjalan,<br><span>terpantau setiap hari.</span></h2>
+            <p class="section-lead">Jumlah pendaftar per unit untuk tahun ajaran <?= h($activeYear) ?> dan kunjungan ke situs ini selama 30 hari terakhir, diperbarui otomatis.</p>
         </div>
 
-        <div class="unit-grid">
-            <?php foreach ($units as $index => $unit) { ?>
-                <?php $persentase = $unit['kuota_eksternal'] > 0 ? min(100, (int) round($unit['terisi'] / $unit['kuota_eksternal'] * 100)) : 0; ?>
-                <article class="unit-card<?= $unit['terbuka'] ? '' : ' is-closed' ?>" data-reveal style="--delay: <?= $index * 70 ?>ms">
-                    <header class="unit-card__top">
-                        <span class="unit-card__level"><?= h($unit['jenjang']) ?></span>
-                        <?php if ($unit['terbuka']) { ?>
-                            <span class="unit-card__badge is-open">Pendaftaran dibuka</span>
-                        <?php } else { ?>
-                            <span class="unit-card__badge">Belum dibuka</span>
-                        <?php } ?>
-                    </header>
+        <dl class="stats-kpis">
+            <div class="stats-kpi" data-reveal>
+                <dt>Total pendaftar</dt>
+                <dd><?= number_format($totalRegistrants, 0, ',', '.') ?></dd>
+                <dd class="stats-kpi__note">Tahun ajaran <?= h($activeYear) ?></dd>
+            </div>
+            <div class="stats-kpi" data-reveal style="--delay: 70ms">
+                <dt>Pengunjung 30 hari</dt>
+                <dd><?= number_format($visitorsLast30, 0, ',', '.') ?></dd>
+                <dd class="stats-kpi__note">Pengunjung berbeda</dd>
+            </div>
+            <div class="stats-kpi" data-reveal style="--delay: 140ms">
+                <dt>Pengunjung hari ini</dt>
+                <dd><?= number_format($visitorsToday, 0, ',', '.') ?></dd>
+                <dd class="stats-kpi__note"><?= h(ppdb_format_date_id(ppdb_stats_today()->format('Y-m-d'))) ?></dd>
+            </div>
+            <div class="stats-kpi" data-reveal style="--delay: 210ms">
+                <dt>Halaman dilihat</dt>
+                <dd><?= number_format($viewsLast30, 0, ',', '.') ?></dd>
+                <dd class="stats-kpi__note">30 hari terakhir</dd>
+            </div>
+        </dl>
 
-                    <h3><?= h($unit['nama_unit']) ?></h3>
-                    <p class="unit-card__npsn">NPSN <?= h($unit['npsn']) ?></p>
-                    <?php if ($unit['alamat'] !== '') { ?><p class="unit-card__address"><?= h($unit['alamat']) ?></p><?php } else { ?><p class="unit-card__address">Lokasi belum dikonfirmasi.</p><?php } ?>
-
-                    <dl class="unit-card__meta">
-                        <div>
-                            <dt>Eksternal</dt>
-                            <dd><?= $unit['kuota_eksternal'] > 0 ? $unit['kuota_eksternal'] : '&mdash;' ?></dd>
-                        </div>
-                        <div>
-                            <dt>Sisa eksternal</dt>
-                            <dd><?= $unit['terbuka'] ? $unit['sisa'] : '&mdash;' ?></dd>
-                        </div>
-                        <div>
-                            <dt>Biaya</dt>
-                            <dd><?= (float) $unit['biaya_pendaftaran'] > 0 ? 'Rp ' . number_format((float) $unit['biaya_pendaftaran'], 0, ',', '.') : 'Gratis' ?></dd>
-                        </div>
-                    </dl>
-                    <p class="unit-card__quota-note">
-                        Internal SDM yayasan: <?= $unit['kuota_internal'] > 0 ? $unit['kuota_internal'].' kursi' : 'belum diatur' ?>
-                        <?= $unit['internal_terbuka'] ? ' · '.$unit['internal_sisa'].' tersisa' : '' ?>
-                    </p>
-
-                    <?php if ($unit['kuota_eksternal'] > 0) { ?>
-                        <div class="unit-card__bar" role="img" aria-label="Kuota eksternal terisi <?= $unit['terisi'] ?> dari <?= $unit['kuota_eksternal'] ?> kursi">
-                            <span style="--w: <?= $persentase ?>%"></span>
-                        </div>
+        <div class="stats-grid">
+            <article class="stats-card" data-reveal>
+                <header class="stats-card__head">
+                    <h3>Pendaftar per unit</h3>
+                    <p>Jalur umum dan internal SDM yayasan, tidak termasuk yang ditolak.</p>
+                </header>
+                <ul class="unit-bars" data-unit-bars>
+                    <?php foreach ($units as $unit) { ?>
+                        <?php $unitTotal = $unit['terisi'] + $unit['internal_terisi']; ?>
+                        <li class="unit-bars__row" tabindex="0"
+                            data-name="<?= h($unit['nama_unit']) ?>"
+                            data-total="<?= $unitTotal ?>"
+                            data-external="<?= $unit['terisi'] ?>"
+                            data-internal="<?= $unit['internal_terisi'] ?>">
+                            <span class="unit-bars__label">
+                                <strong><?= h($unit['jenjang']) ?></strong>
+                                <span><?= h($unit['nama_unit']) ?></span>
+                            </span>
+                            <span class="unit-bars__track">
+                                <span class="unit-bars__fill" style="--w: <?= $maxRegistrants > 0 ? round($unitTotal / $maxRegistrants * 100, 1) : 0 ?>%"></span>
+                            </span>
+                            <span class="unit-bars__value"><?= $unitTotal ?></span>
+                        </li>
                     <?php } ?>
+                </ul>
+                <?php if ($totalRegistrants === 0) { ?>
+                    <p class="stats-card__empty">Belum ada pendaftar untuk tahun ajaran ini.</p>
+                <?php } ?>
+            </article>
 
-                    <a class="unit-card__cta" href="<?= $unit['th_ajaran'] ? 'daftar.php?unit='.rawurlencode($unit['kode_unit']).'&amp;tahun='.rawurlencode((string) $unit['th_ajaran']) : 'daftar.php' ?>">
-                        <?= $unit['terbuka'] ? 'Pilih unit ini' : 'Lihat pendaftaran' ?>
-                        <span aria-hidden="true"><?= $arrow ?></span>
-                    </a>
-                </article>
-            <?php } ?>
+            <article class="stats-card stats-card--wide" data-reveal style="--delay: 90ms">
+                <header class="stats-card__head">
+                    <h3>Pengunjung harian</h3>
+                    <p>Pengunjung berbeda per hari, 30 hari terakhir.</p>
+                </header>
+                <div class="visit-chart" data-visit-chart role="img" aria-label="Grafik pengunjung harian 30 hari terakhir, total <?= $visitorsLast30 ?> pengunjung berbeda"></div>
+                <details class="stats-table">
+                    <summary>Lihat data dalam tabel</summary>
+                    <div class="stats-table__scroll">
+                        <table>
+                            <thead><tr><th scope="col">Tanggal</th><th scope="col">Pengunjung</th><th scope="col">Halaman dilihat</th></tr></thead>
+                            <tbody>
+                                <?php foreach (array_reverse($dailyVisits) as $day) { ?>
+                                    <tr><td><?= h(ppdb_format_date_id($day['date'])) ?></td><td><?= $day['visitors'] ?></td><td><?= $day['views'] ?></td></tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            </article>
         </div>
+
+        <div class="stats-tooltip" data-stats-tooltip role="tooltip" hidden></div>
+        <script type="application/json" id="visit-data"><?= json_encode($dailyVisits, JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
+
+        <p class="stats-cta">
+            <a class="btn btn--primary" href="daftar.php">Mulai pendaftaran <span aria-hidden="true"><?= $arrow ?></span></a>
+        </p>
     </section>
 
     <section class="alur-section" id="alur">
