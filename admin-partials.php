@@ -33,13 +33,20 @@ function ppdb_admin_icon(string $name): string
 /** Daftar navigasi admin, dipakai bersama oleh sidebar dan navigasi ponsel. */
 function ppdb_admin_navigation(string $activePage): array
 {
-    return [
+    $navigation = [
         ['key' => 'dashboard', 'href' => 'admin.php', 'label' => 'Dashboard', 'icon' => 'dashboard', 'caption' => 'Ringkasan'],
         ['key' => 'registrations', 'href' => 'daftar_peserta.php', 'label' => 'Data peserta', 'icon' => 'registrations', 'caption' => 'Antrean &amp; arsip'],
         ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'caption' => 'Akses pengelola'],
         ['key' => 'quota', 'href' => 'pengaturan-ppdb.php', 'label' => 'Kuota &amp; pembayaran', 'icon' => 'quota', 'caption' => 'Pengaturan penerimaan'],
         ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'caption' => 'Brosur, SOP &amp; form'],
     ];
+
+    return ppdb_is_super_admin()
+        ? $navigation
+        : array_values(array_filter(
+            $navigation,
+            static fn (array $item): bool => in_array($item['key'], ['dashboard', 'registrations'], true)
+        ));
 }
 
 /**

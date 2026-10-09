@@ -15,8 +15,14 @@ if (!$documentId || $documentId < 1) {
     exit('Dokumen tidak ditemukan.');
 }
 
-$stmt = mysqli_prepare($conn, 'SELECT path_file,mime_type,nama_file_asli FROM tb_dokumen_peserta WHERE id=? LIMIT 1');
-mysqli_stmt_bind_param($stmt, 'i', $documentId);
+if (ppdb_is_super_admin()) {
+    $stmt = mysqli_prepare($conn, 'SELECT d.path_file,d.mime_type,d.nama_file_asli FROM tb_dokumen_peserta d WHERE d.id=? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 'i', $documentId);
+} else {
+    $unitCode = (string) $_SESSION['admin_unit_code'];
+    $stmt = mysqli_prepare($conn, 'SELECT d.path_file,d.mime_type,d.nama_file_asli FROM tb_dokumen_peserta d JOIN tb_pendaftaran p ON p.id_pendaftaran=d.id_pendaftaran WHERE d.id=? AND p.kode_unit=? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 'is', $documentId, $unitCode);
+}
 mysqli_stmt_execute($stmt);
 $document = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 mysqli_stmt_close($stmt);

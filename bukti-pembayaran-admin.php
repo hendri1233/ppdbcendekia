@@ -9,8 +9,14 @@ if (!$paymentId || $paymentId < 1) {
     exit('Bukti pembayaran tidak ditemukan.');
 }
 
-$stmt = mysqli_prepare($conn, 'SELECT path_file,mime_type FROM tb_bukti_pembayaran WHERE id=? LIMIT 1');
-mysqli_stmt_bind_param($stmt, 'i', $paymentId);
+if (ppdb_is_super_admin()) {
+    $stmt = mysqli_prepare($conn, 'SELECT b.path_file,b.mime_type FROM tb_bukti_pembayaran b WHERE b.id=? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 'i', $paymentId);
+} else {
+    $unitCode = (string) $_SESSION['admin_unit_code'];
+    $stmt = mysqli_prepare($conn, 'SELECT b.path_file,b.mime_type FROM tb_bukti_pembayaran b JOIN tb_pendaftaran p ON p.id_pendaftaran=b.id_pendaftaran WHERE b.id=? AND p.kode_unit=? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 'is', $paymentId, $unitCode);
+}
 mysqli_stmt_execute($stmt);
 $proof = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 mysqli_stmt_close($stmt);

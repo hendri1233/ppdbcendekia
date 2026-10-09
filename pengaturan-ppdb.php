@@ -1,7 +1,7 @@
 <?php
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
-require_admin();
+require_super_admin();
 
 $error = '';
 $notice = '';
@@ -11,7 +11,11 @@ for ($year = 2027; $year <= 2040; $year++) {
     $academicYears[] = $year.'/'.($year + 1);
 }
 
-$unitResult = mysqli_query($conn, "SELECT kode_unit,nama_unit,jenjang FROM tb_unit_pendidikan ORDER BY FIELD(jenjang,'KB','TPA','TK','SD','SMP')");
+$adminUnitCode = ppdb_is_super_admin() ? '' : (string) $_SESSION['admin_unit_code'];
+$unitCondition = $adminUnitCode === '' ? '' : " WHERE kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
+$settingsUnitCondition = $adminUnitCode === '' ? '' : " WHERE c.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
+$tokensUnitCondition = $adminUnitCode === '' ? '' : " WHERE t.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
+$unitResult = mysqli_query($conn, "SELECT kode_unit,nama_unit,jenjang FROM tb_unit_pendidikan".$unitCondition." ORDER BY FIELD(jenjang,'KB','TPA','TK','SD','SMP')");
 $units = [];
 while ($unit = mysqli_fetch_assoc($unitResult)) {
     $units[$unit['kode_unit']] = $unit;
@@ -101,8 +105,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($tokenId === false || $tokenId < 1) {
             $error = 'Token yang dipilih tidak valid.';
         } else {
-            $revoke = mysqli_prepare($conn, 'UPDATE tb_token_internal SET revoked_at=NOW() WHERE id=? AND used_at IS NULL AND revoked_at IS NULL');
-            mysqli_stmt_bind_param($revoke, 'i', $tokenId);
+            if ($adminUnitCode === '') {
+                $revoke = mysqli_prepare($conn, 'UPDATE tb_token_internal SET revoked_at=NOW() WHERE id=? AND used_at IS NULL AND revoked_at IS NULL');
+                mysqli_stmt_bind_param($revoke, 'i', $tokenId);
+            } else {
+                $revoke = mysqli_prepare($conn, 'UPDATE tb_token_internal SET revoked_at=NOW() WHERE id=? AND kode_unit=? AND used_at IS NULL AND revoked_at IS NULL');
+                mysqli_stmt_bind_param($revoke, 'is', $tokenId, $adminUnitCode);
+            }
             if (mysqli_stmt_execute($revoke) && mysqli_stmt_affected_rows($revoke) === 1) {
                 $notice = 'Token internal berhasil dicabut.';
             } else {
@@ -115,8 +124,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($tokenId === false || $tokenId < 1 || ($_POST['admin_approval'] ?? '') !== '1') {
             $error = 'Pilih token yang valid dan konfirmasikan persetujuan untuk mengaktifkannya kembali.';
         } else {
-            $reactivate = mysqli_prepare($conn, 'UPDATE tb_token_internal SET revoked_at=NULL WHERE id=? AND used_at IS NULL AND revoked_at IS NOT NULL');
-            mysqli_stmt_bind_param($reactivate, 'i', $tokenId);
+            if ($adminUnitCode === '') {
+                $reactivate = mysqli_prepare($conn, 'UPDATE tb_token_internal SET revoked_at=NULL WHERE id=? AND used_at IS NULL AND revoked_at IS NOT NULL');
+                mysqli_stmt_bind_param($reactivate, 'i', $tokenId);
+            } else {
+                $reactivate = mysqli_prepare($conn, 'UPDATE tb_token_internal SET revoked_at=NULL WHERE id=? AND kode_unit=? AND used_at IS NULL AND revoked_at IS NOT NULL');
+                mysqli_stmt_bind_param($reactivate, 'is', $tokenId, $adminUnitCode);
+            }
             if (mysqli_stmt_execute($reactivate) && mysqli_stmt_affected_rows($reactivate) === 1) {
                 $notice = 'Token internal berhasil diaktifkan kembali atas persetujuan admin. Token dapat digunakan saat jalur internal unit dan tahun ajarannya dibuka.';
             } else {
@@ -134,8 +148,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 mysqli_begin_transaction($conn);
                 $tokenTransactionStarted = true;
-                $tokenLock = mysqli_prepare($conn, 'SELECT id,used_at,revoked_at FROM tb_token_internal WHERE id=? FOR UPDATE');
-                mysqli_stmt_bind_param($tokenLock, 'i', $tokenId);
+                if ($adminUnitCode === '') {
+                    $tokenLock = mysqli_prepare($conn, 'SELECT id,used_at,revoked_at FROM tb_token_internal WHERE id=? FOR UPDATE');
+                    mysqli_stmt_bind_param($tokenLock, 'i', $tokenId);
+                } else {
+                    $tokenLock = mysqli_prepare($conn, 'SELECT id,used_at,revoked_at FROM tb_token_internal WHERE id=? AND kode_unit=? FOR UPDATE');
+                    mysqli_stmt_bind_param($tokenLock, 'is', $tokenId, $adminUnitCode);
+                }
                 mysqli_stmt_execute($tokenLock);
                 $lockedToken = mysqli_fetch_assoc(mysqli_stmt_get_result($tokenLock));
                 mysqli_stmt_close($tokenLock);
@@ -251,7 +270,7 @@ $settings = mysqli_query($conn, "SELECT c.*,u.nama_unit,u.jenjang,
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=c.kode_unit AND p.th_ajaran=c.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb='diterima') AS internal_diterima,
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=c.kode_unit AND p.th_ajaran=c.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb='diterima') AS eksternal_diterima
     ,(SELECT COUNT(*) FROM tb_token_internal t WHERE t.kode_unit=c.kode_unit AND t.th_ajaran=c.th_ajaran AND t.used_at IS NULL AND t.revoked_at IS NULL) AS internal_token_belum_digunakan
-    FROM tb_pengaturan_ppdb c JOIN tb_unit_pendidikan u ON u.kode_unit=c.kode_unit ORDER BY c.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
+    FROM tb_pengaturan_ppdb c JOIN tb_unit_pendidikan u ON u.kode_unit=c.kode_unit".$settingsUnitCondition." ORDER BY c.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
 $settingsRows = [];
 $settingsByKey = [];
 while ($setting = mysqli_fetch_assoc($settings)) {
@@ -270,8 +289,9 @@ while ($setting = mysqli_fetch_assoc($settings)) {
         'reserved_eksternal' => (int) $setting['eksternal_terisi'],
     ];
 }
-$internalTokens = mysqli_query($conn, "SELECT t.id,t.kode_token,t.kode_unit,t.th_ajaran,t.created_at,t.used_at,t.revoked_at,u.nama_unit FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'),t.kode_token");
-$internalTokenPools = mysqli_query($conn, "SELECT t.kode_unit,t.th_ajaran,u.nama_unit,COUNT(*) AS total_token FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.used_at IS NULL AND t.revoked_at IS NULL GROUP BY t.kode_unit,t.th_ajaran,u.nama_unit ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
+$internalTokens = mysqli_query($conn, "SELECT t.id,t.kode_token,t.kode_unit,t.th_ajaran,t.created_at,t.used_at,t.revoked_at,u.nama_unit FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit".$tokensUnitCondition." ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'),t.kode_token");
+$internalTokensCondition = $adminUnitCode === '' ? '' : " AND t.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
+$internalTokenPools = mysqli_query($conn, "SELECT t.kode_unit,t.th_ajaran,u.nama_unit,COUNT(*) AS total_token FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.used_at IS NULL AND t.revoked_at IS NULL".$internalTokensCondition." GROUP BY t.kode_unit,t.th_ajaran,u.nama_unit ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
 $activeAdminPage = 'quota';
 $adminPageTitle = 'Kuota & pembayaran';
 $adminPageDescription = 'Atur kuota, biaya, rekening, dan status buka pendaftaran per unit serta tahun ajaran.';

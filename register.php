@@ -6,14 +6,27 @@ start_app_session();
 $adminCountResult = mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tbadmin');
 $adminCount = (int) mysqli_fetch_assoc($adminCountResult)['total'];
 $isBootstrap = $adminCount === 0;
-if (!$isBootstrap && empty($_SESSION['admin_id'])) {
+$isSignedIn = !empty($_SESSION['admin_id']);
+if (!$isBootstrap && !$isSignedIn) {
     header('Location: login.php');
     exit;
+}
+if (!$isBootstrap) {
+    require_super_admin();
 }
 
 $error = '';
 $username = trim($_POST['username'] ?? '');
 $email = trim($_POST['email'] ?? '');
+$role = $_POST['role'] ?? 'super_admin';
+if (!in_array($role, ['super_admin', 'admin_unit'], true)) {
+    $role = 'super_admin';
+}
+$unitResult = mysqli_query($conn, "SELECT kode_unit,nama_unit FROM tb_unit_pendidikan ORDER BY FIELD(jenjang,'KB','TPA','TK','SD','SMP')");
+$units = [];
+while ($unit = mysqli_fetch_assoc($unitResult)) {
+    $units[$unit['kode_unit']] = $unit['nama_unit'];
+}
 $showAdminLayout = !$isBootstrap && !empty($_SESSION['admin_id']);
 $activeAdminPage = 'accounts';
 $adminPageTitle = 'Administrator';
@@ -33,8 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $countResult = mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tbadmin');
         $isStillBootstrap = (int) mysqli_fetch_assoc($countResult)['total'] === 0;
-        if (!$isStillBootstrap && empty($_SESSION['admin_id'])) {
+        if (!$isStillBootstrap && (empty($_SESSION['admin_id']) || !ppdb_is_super_admin())) {
             $error = 'Pembuatan admin pertama sudah dilakukan. Silakan masuk.';
+        } elseif (!$isStillBootstrap && $role === 'admin_unit' && !isset($units[$_POST['kode_unit'] ?? ''])) {
+            $error = 'Pilih unit pendidikan yang valid untuk akun admin unit.';
         } else {
             $check = mysqli_prepare($conn, 'SELECT id FROM tbadmin WHERE email = ? LIMIT 1');
             mysqli_stmt_bind_param($check, 's', $email);
@@ -46,8 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Email tersebut sudah terdaftar.';
             } else {
                 $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-                $insert = mysqli_prepare($conn, 'INSERT INTO tbadmin (username, email, password) VALUES (?, ?, ?)');
-                mysqli_stmt_bind_param($insert, 'sss', $username, $email, $passwordHash);
+                $role = $isStillBootstrap ? 'super_admin' : $role;
+                $unitCode = $role === 'admin_unit' ? (string) $_POST['kode_unit'] : null;
+                $insert = mysqli_prepare($conn, 'INSERT INTO tbadmin (username,email,password,role,kode_unit) VALUES (?,?,?,?,?)');
+                mysqli_stmt_bind_param($insert, 'sssss', $username, $email, $passwordHash, $role, $unitCode);
                 if (mysqli_stmt_execute($insert)) {
                     if ($isStillBootstrap) {
                         header('Location: login.php?created=1');
@@ -83,6 +100,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <form method="post" class="admin-account-form">
             <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+            <div class="admin-account-fields">
+                <div class="filter-field">
+                    <label for="role">Peran akun</label>
+                    <select id="role" name="role">
+                        <option value="super_admin"<?php echo $role === 'super_admin' ? ' selected' : ''; ?>>Super Admin · semua unit</option>
+                        <option value="admin_unit"<?php echo $role === 'admin_unit' ? ' selected' : ''; ?>>Admin Unit · satu unit</option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label for="kode_unit">Unit pendidikan</label>
+                    <select id="kode_unit" name="kode_unit">
+                        <option value="">Pilih unit</option>
+                        <?php foreach ($units as $code => $name) { ?>
+                            <option value="<?php echo h($code); ?>"<?php echo ($_POST['kode_unit'] ?? '') === $code ? ' selected' : ''; ?>><?php echo h($name); ?></option>
+                        <?php } ?>
+                    </select>
+                </div>
+            </div>
             <div class="admin-account-fields">
                 <div class="filter-field">
                     <label for="username">Nama pengelola</label>
@@ -145,6 +180,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($error !== '') { ?><div class="auth-alert" role="alert"><?php echo h($error); ?></div><?php } ?>
             <form method="post" class="auth-form">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                <?php if (!$isBootstrap) { ?>
+                <label for="role">Peran akun</label>
+                <select id="role" name="role">
+                    <option value="super_admin"<?php echo $role === 'super_admin' ? ' selected' : ''; ?>>Super Admin · semua unit</option>
+                    <option value="admin_unit"<?php echo $role === 'admin_unit' ? ' selected' : ''; ?>>Admin Unit · satu unit</option>
+                </select>
+                <label for="kode_unit">Unit pendidikan</label>
+                <select id="kode_unit" name="kode_unit">
+                    <option value="">Pilih unit</option>
+                    <?php foreach ($units as $code => $name) { ?>
+                        <option value="<?php echo h($code); ?>"<?php echo ($_POST['kode_unit'] ?? '') === $code ? ' selected' : ''; ?>><?php echo h($name); ?></option>
+                    <?php } ?>
+                </select>
+                <?php } ?>
                 <label for="username">Nama pengelola</label>
                 <input id="username" type="text" name="username" value="<?php echo h($username); ?>" autocomplete="name" maxlength="80" required>
                 <label for="email">Email</label>

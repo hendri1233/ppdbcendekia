@@ -5,7 +5,7 @@ require_once 'koneksi.php';
 start_app_session();
 $isAdmin = !empty($_SESSION['admin_id']);
 if ($isAdmin) {
-    require_admin();
+    require_super_admin();
 }
 
 $materialId = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
@@ -15,9 +15,9 @@ if (!$materialId || !in_array($fileKind, ['preview', 'original'], true)) {
     exit('File materi tidak ditemukan.');
 }
 
-$stmt = mysqli_prepare($conn, 'SELECT m.nama_file_asli,m.path_file_asli,m.mime_file_asli,m.nama_file_pratinjau,m.path_file_pratinjau,m.mime_file_pratinjau,p.token_formulir,p.token_bukti,p.token_whatsapp FROM tb_ppdb_materials m LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=m.kode_unit AND c.th_ajaran=m.th_ajaran LEFT JOIN tb_pendaftaran p ON p.kode_unit=m.kode_unit AND p.th_ajaran=m.th_ajaran AND p.id_pendaftaran=? WHERE m.id=? LIMIT 1');
 $registrationCode = strtoupper(trim((string) ($_GET['kode'] ?? '')));
 $registrationCode = preg_match('/^P[0-9]{9}$/', $registrationCode) ? $registrationCode : '';
+$stmt = mysqli_prepare($conn, 'SELECT m.kode_unit,m.nama_file_asli,m.path_file_asli,m.mime_file_asli,m.nama_file_pratinjau,m.path_file_pratinjau,m.mime_file_pratinjau,p.token_formulir,p.token_bukti,p.token_whatsapp FROM tb_ppdb_materials m LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=m.kode_unit AND c.th_ajaran=m.th_ajaran LEFT JOIN tb_pendaftaran p ON p.kode_unit=m.kode_unit AND p.th_ajaran=m.th_ajaran AND p.id_pendaftaran=? WHERE m.id=? LIMIT 1');
 mysqli_stmt_bind_param($stmt, 'si', $registrationCode, $materialId);
 mysqli_stmt_execute($stmt);
 $material = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));

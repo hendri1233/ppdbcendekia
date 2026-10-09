@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__.'/app_helpers.php';
 require_once __DIR__.'/koneksi.php';
-require_admin();
+require_super_admin();
 header('Cache-Control: private, no-store');
 header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');

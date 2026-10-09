@@ -15,6 +15,15 @@ if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
     http_response_code(404);
     exit('Data peserta tidak ditemukan.');
 }
+$accessCheck = mysqli_prepare($conn, 'SELECT kode_unit FROM tb_pendaftaran WHERE id_pendaftaran=? LIMIT 1');
+mysqli_stmt_bind_param($accessCheck, 's', $registrationId);
+mysqli_stmt_execute($accessCheck);
+$accessibleRegistration = mysqli_fetch_assoc(mysqli_stmt_get_result($accessCheck));
+mysqli_stmt_close($accessCheck);
+if (!$accessibleRegistration || (!ppdb_is_super_admin() && $accessibleRegistration['kode_unit'] !== $_SESSION['admin_unit_code'])) {
+    http_response_code(404);
+    exit('Data peserta tidak ditemukan.');
+}
 
 function ppdb_active_queue_rank(mysqli $conn, string $unitCode, string $academicYear, string $track, int $queueNumber): int
 {

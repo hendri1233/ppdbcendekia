@@ -4,14 +4,19 @@ require_admin();
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
 
+$adminUnitCode = ppdb_is_super_admin() ? '' : (string) $_SESSION['admin_unit_code'];
+$escapedUnitCode = mysqli_real_escape_string($conn, $adminUnitCode);
+$registrationWhere = $adminUnitCode === '' ? '' : " WHERE kode_unit='".$escapedUnitCode."'";
+$registrationScope = $adminUnitCode === '' ? '' : " AND p.kode_unit='".$escapedUnitCode."'";
+
 // Angka(Method, 0/1)
-$totalRegistrations = (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tb_pendaftaran'))['total'];
+$totalRegistrations = (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tb_pendaftaran'.$registrationWhere))['total'];
 
 /**
  * Sebaran pendaftar per tahap alur. Dipakai untuk statistik, antrean kerja,
  * dan diagram batang tanpa pustaka grafik.
  */
-$funnelQuery = mysqli_query($conn, 'SELECT status_ppdb, COUNT(*) AS total FROM tb_pendaftaran GROUP BY status_ppdb');
+$funnelQuery = mysqli_query($conn, 'SELECT status_ppdb,COUNT(*) AS total FROM tb_pendaftaran'.$registrationWhere.' GROUP BY status_ppdb');
 $funnelCounts = [];
 $totalFunnel = 0;
 while ($row = mysqli_fetch_assoc($funnelQuery)) {
@@ -41,17 +46,18 @@ foreach (['menunggu_kontak', 'pembayaran_diperiksa', 'pembayaran_terverifikasi',
 
 $acceptedCount = (int) ($funnelCounts['diterima'] ?? 0);
 $waitlistCount = (int) ($funnelCounts['daftar_tunggu'] ?? 0);
-$unmappedRegistrations = (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit IS NULL'))['total'];
-$unitCount = (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tb_unit_pendidikan'))['total'];
-$activeYears = (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(DISTINCT th_ajaran) AS total FROM tb_pendaftaran'))['total'];
-$documentCount = (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tb_dokumen_peserta'))['total'];
+$unmappedRegistrations = $adminUnitCode === '' ? (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit IS NULL'))['total'] : 0;
+$unitCount = $adminUnitCode === '' ? (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(*) AS total FROM tb_unit_pendidikan'))['total'] : 1;
+$activeYears = (int) mysqli_fetch_assoc(mysqli_query($conn, 'SELECT COUNT(DISTINCT th_ajaran) AS total FROM tb_pendaftaran'.$registrationWhere))['total'];
+$documentQuery = 'SELECT COUNT(*) AS total FROM tb_dokumen_peserta d JOIN tb_pendaftaran p ON p.id_pendaftaran=d.id_pendaftaran'.($adminUnitCode === '' ? '' : " WHERE p.kode_unit='".$escapedUnitCode."'");
+$documentCount = (int) mysqli_fetch_assoc(mysqli_query($conn, $documentQuery))['total'];
 
 // Pengisian kuota per unit agar admin tahu realisasi penerimaan.
 $quotaQuery = mysqli_query($conn, "SELECT u.kode_unit,u.nama_unit,u.jenjang,q.kuota_internal,q.kuota_eksternal,q.internal_dibuka,q.eksternal_dibuka,q.th_ajaran,
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=u.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi,
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=u.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi,
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=u.kode_unit AND p.th_ajaran=q.th_ajaran AND p.status_ppdb='diterima') AS diterima
-    FROM tb_unit_pendidikan u LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=u.kode_unit ORDER BY FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'),q.th_ajaran DESC");
+    FROM tb_unit_pendidikan u LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=u.kode_unit".($adminUnitCode === '' ? '' : " WHERE u.kode_unit='".$escapedUnitCode."'")." ORDER BY FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'),q.th_ajaran DESC");
 $quotaRows = [];
 while ($row = mysqli_fetch_assoc($quotaQuery)) {
     $row['kuota_internal'] = (int) $row['kuota_internal'];
@@ -65,18 +71,25 @@ while ($row = mysqli_fetch_assoc($quotaQuery)) {
 }
 
 $syncCounts = ['pending' => 0, 'failed' => 0, 'synced' => 0];
-$syncStatusResult = mysqli_query($conn, 'SELECT status, COUNT(*) AS total FROM tb_google_sync_outbox GROUP BY status');
-while ($syncStatus = mysqli_fetch_assoc($syncStatusResult)) {
-    $syncCounts[$syncStatus['status']] = (int) $syncStatus['total'];
+$lastSyncFailure = '';
+$sheetsCredentialsReady = false;
+$syncFlash = null;
+if ($adminUnitCode === '') {
+    $syncStatusResult = mysqli_query($conn, 'SELECT status,COUNT(*) AS total FROM tb_google_sync_outbox GROUP BY status');
+    while ($syncStatus = mysqli_fetch_assoc($syncStatusResult)) {
+        $syncCounts[$syncStatus['status']] = (int) $syncStatus['total'];
+    }
+    $lastSyncFailure = mysqli_fetch_assoc(mysqli_query($conn, "SELECT last_error FROM tb_google_sync_outbox WHERE status='failed' AND last_error IS NOT NULL ORDER BY last_attempt_at DESC LIMIT 1"))['last_error'] ?? '';
+    $credentialsPath = getenv('GOOGLE_APPLICATION_CREDENTIALS');
+    $sheetsCredentialsReady = $credentialsPath && is_file($credentialsPath);
+    $syncFlash = $_SESSION['google_sheets_sync_result'] ?? null;
+    unset($_SESSION['google_sheets_sync_result']);
 }
-$lastSyncFailure = mysqli_fetch_assoc(mysqli_query($conn, "SELECT last_error FROM tb_google_sync_outbox WHERE status = 'failed' AND last_error IS NOT NULL ORDER BY last_attempt_at DESC LIMIT 1"))['last_error'] ?? '';
-$credentialsPath = getenv('GOOGLE_APPLICATION_CREDENTIALS');
-$sheetsCredentialsReady = $credentialsPath && is_file($credentialsPath);
-$syncFlash = $_SESSION['google_sheets_sync_result'] ?? null;
-unset($_SESSION['google_sheets_sync_result']);
 
-$latestRegistrations = mysqli_query($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.status_ppdb,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit ORDER BY p.tgl_daftar DESC, p.id_pendaftaran DESC LIMIT 8');
-$attentionQuery = mysqli_query($conn, "SELECT p.id_pendaftaran,p.nm_peserta,p.status_ppdb,p.tgl_daftar,p.waktu_daftar,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.status_ppdb IN ('menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi') ORDER BY FIELD(p.status_ppdb,'menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi'), p.waktu_daftar ASC LIMIT 8");
+$latestSql = 'SELECT p.id_pendaftaran,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.status_ppdb,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'.($adminUnitCode === '' ? '' : " WHERE p.kode_unit='".$escapedUnitCode."'").' ORDER BY p.tgl_daftar DESC,p.id_pendaftaran DESC LIMIT 8';
+$latestRegistrations = mysqli_query($conn, $latestSql);
+$attentionSql = "SELECT p.id_pendaftaran,p.nm_peserta,p.status_ppdb,p.tgl_daftar,p.waktu_daftar,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.status_ppdb IN ('menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi')".$registrationScope." ORDER BY FIELD(p.status_ppdb,'menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi'),p.waktu_daftar ASC LIMIT 8";
+$attentionQuery = mysqli_query($conn, $attentionSql);
 
 $activeAdminPage = 'dashboard';
 $adminPageTitle = 'Dashboard';
@@ -89,7 +102,7 @@ require 'admin_header.php';
 
     <header class="page-hero">
         <div class="page-hero__text">
-            <p class="eyebrow">Penerimaan peserta didik baru</p>
+            <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'Penerimaan peserta didik baru' : 'PENERIMAAN · '.h($_SESSION['admin_unit_name'] ?? 'UNIT'); ?></p>
             <h1>Selamat datang kembali, <?php echo h(explode(' ', (string) ($_SESSION['admin_name'] ?? 'Administrator'))[0]); ?>.</h1>
             <p><?php echo $actionableTotal > 0
                 ? $actionableTotal.' peserta menunggu tindakan Anda. Mulai dari data yang paling lama menunggu.'
@@ -186,7 +199,7 @@ require 'admin_header.php';
         </section>
     </div>
 
-    <section class="panel">
+    <?php if ($adminUnitCode === '') { ?><section class="panel">
         <div class="panel-header">
             <div><h2>Kapasitas per unit pendidikan</h2><span class="panel-subtitle">Realisasi penerimaan terhadap kuota yang ditetapkan</span></div>
             <a class="panel-link" href="pengaturan-ppdb.php">Atur kuota &rarr;</a>
@@ -218,7 +231,7 @@ require 'admin_header.php';
                 </tbody>
             </table>
         </div>
-    </section>
+    </section><?php } ?>
 
     <div class="dashboard-grid">
         <section class="panel">
@@ -247,7 +260,7 @@ require 'admin_header.php';
             </div>
         </section>
 
-        <section class="panel spreadsheet-panel">
+        <?php if ($adminUnitCode === '') { ?><section class="panel spreadsheet-panel">
             <div class="panel-header">
                 <div><h2>Sinkronisasi Google Sheets</h2><span class="panel-subtitle">Data Dapodik ke spreadsheet</span></div>
                 <span class="status-pill <?php echo $sheetsCredentialsReady ? 'is-open' : 'is-closed'; ?>"><?php echo $sheetsCredentialsReady ? 'Aktif' : 'Nonaktif'; ?></span>
@@ -268,7 +281,7 @@ require 'admin_header.php';
                     </form>
                 </div>
             </div>
-        </section>
+        </section><?php } ?>
     </div>
 
     <section class="panel panel-muted">

@@ -2,7 +2,7 @@
 require_once 'app_helpers.php';
 require_once 'ppdb_material_helpers.php';
 require_once 'koneksi.php';
-require_admin();
+require_super_admin();
 
 $materialTypes = [
     'brosur' => 'Brosur PPDB',
@@ -13,17 +13,20 @@ $questions = [];
 $materials = [];
 $errors = [];
 $notice = '';
-$unitRows = mysqli_query($conn, "SELECT kode_unit,nama_unit FROM tb_unit_pendidikan ORDER BY FIELD(jenjang,'KB','TPA','TK','SD','SMP')");
+$adminUnitCode = ppdb_is_super_admin() ? '' : (string) $_SESSION['admin_unit_code'];
+$unitCondition = $adminUnitCode === '' ? '' : " WHERE kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
+$summaryUnitCondition = $adminUnitCode === '' ? '' : " WHERE s.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
+$unitRows = mysqli_query($conn, "SELECT kode_unit,nama_unit FROM tb_unit_pendidikan".$unitCondition." ORDER BY FIELD(jenjang,'KB','TPA','TK','SD','SMP')");
 $units = [];
 while ($unit = mysqli_fetch_assoc($unitRows)) {
     $units[$unit['kode_unit']] = $unit['nama_unit'];
 }
-$yearRows = mysqli_query($conn, 'SELECT DISTINCT th_ajaran FROM tb_pengaturan_ppdb ORDER BY th_ajaran DESC');
+$yearRows = mysqli_query($conn, 'SELECT DISTINCT th_ajaran FROM tb_pengaturan_ppdb'.$unitCondition.' ORDER BY th_ajaran DESC');
 $years = [];
 while ($year = mysqli_fetch_assoc($yearRows)) {
     $years[] = $year['th_ajaran'];
 }
-$selectedUnit = trim((string) ($_POST['kode_unit'] ?? $_GET['unit'] ?? array_key_first($units) ?? ''));
+$selectedUnit = $adminUnitCode !== '' ? $adminUnitCode : trim((string) ($_POST['kode_unit'] ?? $_GET['unit'] ?? array_key_first($units) ?? ''));
 $selectedYear = trim((string) ($_POST['th_ajaran'] ?? $_GET['tahun'] ?? ($years[0] ?? '')));
 if (!isset($units[$selectedUnit])) {
     $selectedUnit = (string) (array_key_first($units) ?? '');
@@ -33,7 +36,7 @@ if (!in_array($selectedYear, $years, true)) {
 }
 
 $unitYearSummary = [];
-$summaryRows = mysqli_query($conn, 'SELECT s.kode_unit,s.th_ajaran,u.nama_unit FROM tb_pengaturan_ppdb s INNER JOIN tb_unit_pendidikan u ON u.kode_unit=s.kode_unit ORDER BY s.th_ajaran DESC,FIELD(u.jenjang,"KB","TPA","TK","SD","SMP"),u.nama_unit');
+$summaryRows = mysqli_query($conn, 'SELECT s.kode_unit,s.th_ajaran,u.nama_unit FROM tb_pengaturan_ppdb s INNER JOIN tb_unit_pendidikan u ON u.kode_unit=s.kode_unit'.$summaryUnitCondition.' ORDER BY s.th_ajaran DESC,FIELD(u.jenjang,"KB","TPA","TK","SD","SMP"),u.nama_unit');
 while ($summary = mysqli_fetch_assoc($summaryRows)) {
     $summaryKey = $summary['kode_unit'].'|'.$summary['th_ajaran'];
     $unitYearSummary[$summaryKey] = [

@@ -8,6 +8,7 @@ $activeAdminPage = $activeAdminPage ?? '';
 $adminPageTitle = $adminPageTitle ?? 'Admin PPDB';
 $adminPageDescription = $adminPageDescription ?? 'Panel pengelolaan penerimaan peserta didik baru Yayasan Wakaf Cendekia Takengon.';
 $navigation = ppdb_admin_navigation($activeAdminPage);
+$adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SESSION['admin_unit_name'] ?? 'Unit');
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -79,7 +80,7 @@ $navigation = ppdb_admin_navigation($activeAdminPage);
 
             <div class="admin-user">
                 <span class="admin-user-text">
-                    <small>Masuk sebagai</small>
+                    <small><?php echo h($adminRoleLabel); ?></small>
                     <strong><?php echo h($adminName); ?></strong>
                 </span>
                 <span class="user-initial" aria-hidden="true"><?php echo h(strtoupper(substr($adminName, 0, 1))); ?></span>

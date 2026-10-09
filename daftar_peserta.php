@@ -6,7 +6,8 @@ require_once __DIR__ . '/admin-partials.php';
 
 $search = trim($_GET['q'] ?? '');
 $selectedYear = trim($_GET['year'] ?? '');
-$selectedUnit = trim($_GET['unit'] ?? '');
+$adminUnitCode = ppdb_is_super_admin() ? '' : (string) $_SESSION['admin_unit_code'];
+$selectedUnit = ppdb_is_super_admin() ? trim($_GET['unit'] ?? '') : $adminUnitCode;
 $selectedStatus = trim($_GET['status'] ?? '');
 $selectedTrack = trim($_GET['jalur'] ?? '');
 if (!in_array($selectedTrack, ['', 'internal', 'eksternal'], true)) {
@@ -93,8 +94,19 @@ mysqli_stmt_execute($registrationsStatement);
 $registrations = mysqli_stmt_get_result($registrationsStatement);
 mysqli_stmt_close($registrationsStatement);
 
-$yearOptions = mysqli_query($conn, "SELECT DISTINCT th_ajaran FROM tb_pendaftaran WHERE th_ajaran <> '' ORDER BY th_ajaran DESC");
-$unitOptions = mysqli_query($conn, "SELECT kode_unit, nama_unit FROM tb_unit_pendidikan ORDER BY FIELD(jenjang, 'KB', 'TPA', 'TK', 'SD', 'SMP')");
+if ($adminUnitCode === '') {
+    $yearOptions = mysqli_query($conn, "SELECT DISTINCT th_ajaran FROM tb_pendaftaran WHERE th_ajaran <> '' ORDER BY th_ajaran DESC");
+    $unitOptions = mysqli_query($conn, "SELECT kode_unit,nama_unit FROM tb_unit_pendidikan ORDER BY FIELD(jenjang,'KB','TPA','TK','SD','SMP')");
+} else {
+    $yearStatement = mysqli_prepare($conn, "SELECT DISTINCT th_ajaran FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran<>'' ORDER BY th_ajaran DESC");
+    mysqli_stmt_bind_param($yearStatement, 's', $adminUnitCode);
+    mysqli_stmt_execute($yearStatement);
+    $yearOptions = mysqli_stmt_get_result($yearStatement);
+    $unitStatement = mysqli_prepare($conn, 'SELECT kode_unit,nama_unit FROM tb_unit_pendidikan WHERE kode_unit=?');
+    mysqli_stmt_bind_param($unitStatement, 's', $adminUnitCode);
+    mysqli_stmt_execute($unitStatement);
+    $unitOptions = mysqli_stmt_get_result($unitStatement);
+}
 
 /** Menyusun ulang query string sambil mengganti satu parameter. */
 function with_query(array $overrides): string
@@ -114,9 +126,9 @@ require 'admin_header.php';
 <div class="admin-content">
     <header class="page-heading">
         <div>
-            <p class="eyebrow">ARSIP PENERIMAAN</p>
+            <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'ARSIP PENERIMAAN' : 'ARSIP UNIT · '.h($_SESSION['admin_unit_name'] ?? ''); ?></p>
             <h1>Data peserta</h1>
-            <p>Daftar seluruh pendaftar. Gunakan filter untuk memisahkan peserta yang menunggu tindakan.</p>
+            <p><?php echo $adminUnitCode === '' ? 'Daftar seluruh pendaftar. Gunakan filter untuk memisahkan peserta yang menunggu tindakan.' : 'Daftar pendaftar untuk unit pendidikan Anda. Data unit lain tidak ditampilkan.'; ?></p>
         </div>
         <div class="table-actions">
             <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset filter</a><?php } ?>
@@ -158,7 +170,7 @@ require 'admin_header.php';
                     <?php } ?>
                 </select>
             </div>
-            <div class="filter-field">
+            <?php if ($adminUnitCode === '') { ?><div class="filter-field">
                 <label for="unit">Unit pendidikan</label>
                 <select id="unit" name="unit">
                     <option value="">Semua unit</option>
@@ -166,7 +178,7 @@ require 'admin_header.php';
                         <option value="<?php echo h($unit['kode_unit']); ?>"<?php echo $selectedUnit === $unit['kode_unit'] ? ' selected' : ''; ?>><?php echo h($unit['nama_unit']); ?></option>
                     <?php } ?>
                 </select>
-            </div>
+            </div><?php } ?>
             <div class="filter-actions">
                 <button class="button-primary" type="submit">Terapkan</button>
                 <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset</a><?php } ?>

@@ -27,6 +27,27 @@ function require_admin(): void
         header('Location: login.php');
         exit;
     }
+
+    $role = $_SESSION['admin_role'] ?? 'super_admin';
+    if (!in_array($role, ['super_admin', 'admin_unit'], true)
+        || ($role === 'admin_unit' && empty($_SESSION['admin_unit_code']))) {
+        http_response_code(403);
+        exit('Akses admin tidak valid. Silakan masuk kembali.');
+    }
+}
+
+function require_super_admin(): void
+{
+    require_admin();
+    if (($_SESSION['admin_role'] ?? 'super_admin') !== 'super_admin') {
+        http_response_code(403);
+        exit('Fitur ini hanya dapat diakses super admin.');
+    }
+}
+
+function ppdb_is_super_admin(): bool
+{
+    return ($_SESSION['admin_role'] ?? 'super_admin') === 'super_admin';
 }
 
 function h($value): string

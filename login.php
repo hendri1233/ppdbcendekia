@@ -10,21 +10,25 @@ if (!empty($_SESSION['admin_id'])) {
 
 $error = '';
 $email = trim($_POST['email'] ?? '');
+$role = $_POST['role'] ?? 'super_admin';
+if (!in_array($role, ['super_admin', 'admin_unit'], true)) {
+    $role = 'super_admin';
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi formulir kedaluwarsa. Muat ulang halaman dan coba kembali.';
     } else {
         $password = $_POST['password'] ?? '';
-        $stmt = mysqli_prepare($conn, 'SELECT id, username, password FROM tbadmin WHERE email = ? LIMIT 1');
-        mysqli_stmt_bind_param($stmt, 's', $email);
+        $stmt = mysqli_prepare($conn, 'SELECT a.id,a.username,a.password,a.role,a.kode_unit,u.nama_unit FROM tbadmin a LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=a.kode_unit WHERE a.email=? AND a.role=? LIMIT 1');
+        mysqli_stmt_bind_param($stmt, 'ss', $email, $role);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         $admin = mysqli_fetch_assoc($result);
         $authenticated = false;
 
-        if ($admin && password_verify($password, $admin['password'])) {
+        if ($admin && ($admin['role'] === 'super_admin' || $admin['kode_unit'] !== null) && password_verify($password, $admin['password'])) {
             $authenticated = true;
-        } elseif ($admin && hash_equals($admin['password'], md5($password))) {
+        } elseif ($admin && ($admin['role'] === 'super_admin' || $admin['kode_unit'] !== null) && hash_equals($admin['password'], md5($password))) {
             $newHash = password_hash($password, PASSWORD_DEFAULT);
             $update = mysqli_prepare($conn, 'UPDATE tbadmin SET password = ? WHERE id = ?');
             mysqli_stmt_bind_param($update, 'si', $newHash, $admin['id']);
@@ -37,6 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             session_regenerate_id(true);
             $_SESSION['admin_id'] = (int) $admin['id'];
             $_SESSION['admin_name'] = $admin['username'];
+            $_SESSION['admin_role'] = $admin['role'];
+            $_SESSION['admin_unit_code'] = $admin['kode_unit'];
+            $_SESSION['admin_unit_name'] = $admin['nama_unit'];
             header('Location: admin.php');
             exit;
         }
@@ -69,17 +76,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <section class="auth-panel">
             <p class="eyebrow">AREA PENGELOLA</p>
             <h1>Selamat datang kembali.</h1>
-            <p class="auth-copy">Masuk untuk mengelola pendaftaran peserta didik.</p>
+            <p class="auth-copy">Pilih akses sesuai peran Anda untuk mengelola pendaftaran peserta didik.</p>
             <?php if ($error !== '') { ?><div class="auth-alert" role="alert"><?php echo h($error); ?></div><?php } ?>
             <form method="post" class="auth-form">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                <label for="role">Masuk sebagai</label>
+                <select id="role" name="role">
+                    <option value="super_admin"<?php echo $role === 'super_admin' ? ' selected' : ''; ?>>Super Admin · semua unit</option>
+                    <option value="admin_unit"<?php echo $role === 'admin_unit' ? ' selected' : ''; ?>>Admin Unit · unit pendidikan</option>
+                </select>
                 <label for="email">Email</label>
                 <input id="email" type="email" name="email" value="<?php echo h($email); ?>" autocomplete="username" required>
                 <label for="password">Kata sandi</label>
                 <input id="password" type="password" name="password" autocomplete="current-password" required>
                 <button type="submit">Masuk ke dashboard <span aria-hidden="true">&rarr;</span></button>
             </form>
-            <p class="auth-note">Dashboard hanya untuk pengelola resmi. Aktivitas tercatat pada log server.</p>
+            <p class="auth-note">Admin unit menggunakan email dan kata sandi sementara yang diberikan super admin. Login Google akan tersedia pada tahap berikutnya.</p>
             <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>
         </section>
         <footer>Yayasan Wakaf Cendekia Takengon</footer>

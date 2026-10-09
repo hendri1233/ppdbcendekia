@@ -126,7 +126,8 @@ body {
     font-weight: 500;
 }
 
-.auth-form input {
+.auth-form input,
+.auth-form select {
     width: 100%;
     min-height: 48px;
     padding: 11px 13px;
@@ -138,7 +139,8 @@ body {
     font-size: 14px;
 }
 
-.auth-form input:focus {
+.auth-form input:focus,
+.auth-form select:focus {
     border-color: var(--auth-green);
     outline: 3px solid rgba(21, 91, 70, 0.13);
     outline-offset: 1px;
