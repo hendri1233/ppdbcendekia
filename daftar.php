@@ -117,7 +117,8 @@ if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
             $tokenEntryRequested = true;
         } elseif (!(int) $internalCode['internal_dibuka'] || (int) $internalCode['kuota_internal'] < 1) {
             $routeError = 'Pendaftaran internal untuk unit dan tahun ajaran ini sedang ditutup.';
-        } elseif ((int) $internalCode['internal_terisi'] >= (int) $internalCode['kuota_internal']) {
+        } elseif ((int) $internalCode['internal_terisi'] >= (int) $internalCode['kuota_internal']
+            && $_SERVER['REQUEST_METHOD'] !== 'POST') {
             $routeError = 'Kuota internal sudah terpenuhi. Hubungi panitia untuk informasi lebih lanjut.';
         } else {
             $routeType = 'internal';
@@ -139,7 +140,8 @@ if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
     if ($selectedUnitCode !== '' || $selectedAcademicYear !== '') {
         if (!$candidate || !(int) $candidate['eksternal_dibuka'] || $candidate['kuota_eksternal'] < 1) {
             $routeError = 'Pendaftaran eksternal untuk unit dan tahun ajaran tersebut sedang ditutup.';
-        } elseif ($candidate['eksternal_terisi'] >= $candidate['kuota_eksternal']) {
+        } elseif ($candidate['eksternal_terisi'] >= $candidate['kuota_eksternal']
+            && $_SERVER['REQUEST_METHOD'] !== 'POST') {
             $routeError = 'Kuota eksternal untuk unit dan tahun ajaran tersebut sudah terpenuhi.';
         } else {
             $routeOffer = $candidate;
@@ -260,6 +262,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             $openColumn = $isInternal ? 'internal_dibuka' : 'eksternal_dibuka';
             if (!$lockedOffer || !(int) $lockedOffer[$openColumn] || (int) $lockedOffer[$quotaColumn] < 1) {
                 throw new RuntimeException('Pendaftaran untuk jalur, unit, dan tahun ajaran tersebut baru saja ditutup.');
+            }
+            $duplicateQuery = mysqli_prepare($conn, "SELECT no_hp_pendaftar FROM tb_pendaftaran
+                WHERE kode_unit=? AND th_ajaran=? AND tgl_lahir=? AND jenis_kelamin=?
+                    AND status_ppdb NOT IN ('ditolak','data_lama')
+                FOR UPDATE");
+            mysqli_stmt_bind_param($duplicateQuery, 'ssss', $unitCode, $academicYear, $birthDate, $gender);
+            mysqli_stmt_execute($duplicateQuery);
+            $duplicateResults = mysqli_stmt_get_result($duplicateQuery);
+            $duplicateFound = false;
+            $normalizedRegistrantPhone = ppdb_normalize_whatsapp_number($registrantPhone);
+            while ($existingRegistration = mysqli_fetch_assoc($duplicateResults)) {
+                $existingPhone = ppdb_normalize_whatsapp_number((string) $existingRegistration['no_hp_pendaftar']);
+                if ($normalizedRegistrantPhone !== '' && $existingPhone === $normalizedRegistrantPhone) {
+                    $duplicateFound = true;
+                    break;
+                }
+            }
+            mysqli_stmt_close($duplicateQuery);
+            if ($duplicateFound) {
+                $unitName = (string) ($routeOffer['nama_unit'] ?? 'unit yang dipilih');
+                throw new RuntimeException('Data tanggal lahir, jenis kelamin, dan nomor WhatsApp pendaftar ini sudah terdaftar di unit '.$unitName.' untuk tahun ajaran '.$academicYear.'. Pendaftaran duplikat tidak dapat diproses. Hubungi panitia jika Anda memerlukan bantuan.');
             }
             $countRegistrations = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND status_ppdb NOT IN ('ditolak','data_lama')");
             mysqli_stmt_bind_param($countRegistrations, 'sss', $unitCode, $academicYear, $routeType);
