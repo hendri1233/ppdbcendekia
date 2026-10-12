@@ -549,7 +549,7 @@ require 'admin_header.php';
         <?php } ?>
 
         <section class="panel questionnaire-edit-panel">
-            <div class="panel-header"><div><h2>Kuisioner pendaftar</h2><span class="panel-subtitle">Pertanyaan ini ditampilkan sebelum data lengkap dan jawaban disimpan bersama pendaftaran.</span></div><div class="questionnaire-edit-actions"><button class="button-secondary" type="button" data-require-all-questions aria-pressed="false">Wajibkan semua</button><button class="button-secondary" type="button" data-add-question>Tambah pertanyaan</button></div></div>
+            <div class="panel-header"><div><h2>Kuisioner pendaftar</h2><span class="panel-subtitle">Pertanyaan ini ditampilkan sebelum data lengkap dan jawaban disimpan bersama pendaftaran.</span></div><div class="questionnaire-edit-actions"><button class="button-secondary" type="button" data-require-all-questions aria-pressed="false">Wajibkan semua</button><button class="button-secondary" type="button" data-unrequire-all-questions>Batalkan semua</button><button class="button-secondary" type="button" data-add-question>Tambah pertanyaan</button></div></div>
             <div class="question-editor-list" data-question-list>
                 <?php foreach ($questions as $index => $question) { ?>
                     <fieldset class="question-editor" data-question-row>
@@ -578,5 +578,5 @@ require 'admin_header.php';
         </fieldset>
     </template>
 </div>
-<script src="js/materials-editor.js"></script>
+<script src="js/materials-editor.js?v=<?php echo (int) filemtime(__DIR__.'/js/materials-editor.js'); ?>"></script>
 <?php require 'admin_footer.php'; ?>

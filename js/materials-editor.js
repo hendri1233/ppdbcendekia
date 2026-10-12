@@ -42,17 +42,26 @@
   const template = document.getElementById("question-editor-template");
   const addButton = document.querySelector("[data-add-question]");
   const requireAllButton = document.querySelector("[data-require-all-questions]");
+  const unrequireAllButton = document.querySelector("[data-unrequire-all-questions]");
   if (!list || !template || !addButton) return;
 
-  function syncRequireAllButton() {
-    if (!requireAllButton) return;
-    const checkboxes = Array.from(
+  function requiredCheckboxes() {
+    return Array.from(
       list.querySelectorAll(".question-required input[type='checkbox']"),
     );
-    requireAllButton.setAttribute(
-      "aria-pressed",
-      String(checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked)),
-    );
+  }
+
+  function syncRequireAllButton() {
+    const checkboxes = requiredCheckboxes();
+    if (requireAllButton) {
+      requireAllButton.setAttribute(
+        "aria-pressed",
+        String(checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked)),
+      );
+    }
+    if (unrequireAllButton) {
+      unrequireAllButton.disabled = !checkboxes.some((checkbox) => checkbox.checked);
+    }
   }
 
   function updateQuestionRows() {
@@ -86,10 +95,16 @@
   addButton.addEventListener("click", addQuestion);
   if (requireAllButton) {
     requireAllButton.addEventListener("click", function () {
-      for (const checkbox of list.querySelectorAll(
-        ".question-required input[type='checkbox']",
-      )) {
+      for (const checkbox of requiredCheckboxes()) {
         checkbox.checked = true;
+      }
+      syncRequireAllButton();
+    });
+  }
+  if (unrequireAllButton) {
+    unrequireAllButton.addEventListener("click", function () {
+      for (const checkbox of requiredCheckboxes()) {
+        checkbox.checked = false;
       }
       syncRequireAllButton();
     });

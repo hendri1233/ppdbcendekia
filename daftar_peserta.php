@@ -1,8 +1,13 @@
 <?php
 require_once 'koneksi.php';
 require_once 'app_helpers.php';
+require_once 'wablas.php';
 require_admin();
 require_once __DIR__ . '/admin-partials.php';
+
+$waNotice = $_SESSION['wa_notice'] ?? null;
+unset($_SESSION['wa_notice']);
+$useWablas = ppdb_wablas_enabled();
 
 $search = trim($_GET['q'] ?? '');
 $selectedYear = trim($_GET['year'] ?? '');
@@ -77,7 +82,7 @@ $currentPage = (int) ($_GET['page'] ?? 1);
 $currentPage = min(max(1, $currentPage), $totalPages);
 $offset = ($currentPage - 1) * $perPage;
 
-$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
+$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
     .' ORDER BY FIELD(p.status_ppdb,\'menunggu_kontak\',\'pembayaran_diperiksa\',\'pembayaran_terverifikasi\',\'formulir_terisi\',\'menunggu_pembayaran\',\'menunggu_formulir\',\'daftar_tunggu\',\'diterima\',\'ditolak\',\'data_lama\'), p.waktu_daftar DESC, p.id_pendaftaran DESC'
     .' LIMIT '.$perPage.' OFFSET '.$offset;
@@ -118,17 +123,6 @@ function with_query(array $overrides): string
 
 $hasFilter = $search !== '' || $selectedYear !== '' || $selectedUnit !== '' || $selectedStatus !== '' || $selectedTrack !== '';
 $progressStages = ['Registrasi', 'Pembayaran', 'Formulir', 'Verifikasi', 'Hasil'];
-$paymentStatusLabels = [
-    'belum_bayar' => 'Belum bayar',
-    'menunggu_verifikasi' => 'Menunggu verifikasi',
-    'terverifikasi' => 'Terverifikasi',
-    'ditolak' => 'Ditolak',
-];
-$dataStatusLabels = [
-    'belum_diperiksa' => 'Belum diperiksa',
-    'terverifikasi' => 'Terverifikasi',
-    'perlu_perbaikan' => 'Perlu perbaikan',
-];
 
 $activeAdminPage = 'registrations';
 $adminPageTitle = 'Data peserta';
@@ -146,6 +140,8 @@ require 'admin_header.php';
             <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset filter</a><?php } ?>
         </div>
     </header>
+
+    <?php if ($waNotice) { ?><div class="<?php echo $waNotice['ok'] ? 'alert-success' : 'alert-error'; ?>" role="status"><?php echo h($waNotice['text']); ?></div><?php } ?>
 
     <section class="panel">
         <form class="filter-bar" action="daftar_peserta.php" method="get">
@@ -223,7 +219,9 @@ require 'admin_header.php';
                             <th scope="col">STATUS</th>
                             <th scope="col">TANGGAL</th>
                             <th scope="col">AKSI</th>
-                            <th scope="col">PROSES</th>
+                            <?php foreach ($progressStages as $stage) { ?>
+                                <th scope="col" class="stage-col"><?php echo h(strtoupper($stage)); ?></th>
+                            <?php } ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -232,7 +230,10 @@ require 'admin_header.php';
                         $statusInfo = ppdb_status_info($row['status_ppdb']);
                         $progressStep = (int) $statusInfo['step'];
                         $isArchived = $progressStep === 0;
-                        $isAccepted = $row['status_ppdb'] === 'diterima'; ?>
+                        $isAccepted = $row['status_ppdb'] === 'diterima';
+                        $waNumber = (string) array_key_first(ppdb_registrant_recipients($row));
+                        $canNotify = !$isArchived && !$isAccepted && $waNumber !== '';
+                        $waLink = $canNotify && !$useWablas ? ppdb_whatsapp_link($waNumber, ppdb_status_reminder_message($row)) : ''; ?>
                         <tr>
                             <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
@@ -256,32 +257,40 @@ require 'admin_header.php';
                                     </form>
                                 </div>
                             </td>
-                            <td data-label="Proses" class="process-cell">
-                                <div class="registration-process<?php echo $isArchived ? ' is-archived' : ''; ?>" aria-label="Proses pendaftaran: <?php echo h($statusInfo['label']); ?>">
-                                    <?php if ($isArchived) { ?>
-                                        <strong class="registration-process__summary">Arsip lama</strong>
-                                        <span class="registration-process__detail"><?php echo h($statusInfo['label']); ?> · tidak menggunakan alur PPDB aktif.</span>
-                                    <?php } else { ?>
-                                        <ol class="registration-process__steps" aria-label="Tahapan pendaftaran">
-                                            <?php foreach ($progressStages as $index => $stage) {
-                                                $stageNumber = $index + 1;
-                                                $stageClass = $stageNumber < $progressStep || $isAccepted
-                                                    ? 'is-complete'
-                                                    : ($stageNumber === $progressStep ? 'is-current tone-'.$meta['tone'] : 'is-upcoming'); ?>
-                                                <li class="registration-process__step <?php echo h($stageClass); ?>"<?php echo $stageNumber === $progressStep ? ' aria-current="step"' : ''; ?> title="<?php echo h($stage); ?>">
-                                                    <span class="registration-process__marker"><?php echo $stageNumber < $progressStep || $isAccepted ? '&#10003;' : $stageNumber; ?></span>
-                                                    <span class="registration-process__label"><?php echo h($stage); ?></span>
-                                                </li>
+                            <?php if ($isArchived) { ?>
+                                <td data-label="Proses" class="stage-cell stage-cell--archived" colspan="<?php echo count($progressStages); ?>">
+                                    <span class="stage-state is-upcoming">Arsip lama · tidak menggunakan alur PPDB aktif</span>
+                                </td>
+                            <?php } else {
+                                foreach ($progressStages as $index => $stage) {
+                                    $stageNumber = $index + 1;
+                                    $isDone = $stageNumber < $progressStep || $isAccepted;
+                                    $isCurrent = !$isDone && $stageNumber === $progressStep; ?>
+                                <td data-label="<?php echo h($stage); ?>" class="stage-cell">
+                                    <?php if ($isDone) { ?>
+                                        <span class="stage-state is-complete">&#10003; Selesai</span>
+                                    <?php } elseif ($isCurrent) { ?>
+                                        <div class="stage-current">
+                                            <span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span>
+                                            <?php if ($canNotify && $useWablas) { ?>
+                                                <form action="kirim-notifikasi-wa.php" method="post" data-wa-send>
+                                                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                                                    <input type="hidden" name="id" value="<?php echo h($row['id_pendaftaran']); ?>">
+                                                    <input type="hidden" name="return" value="<?php echo h(with_query([])); ?>">
+                                                    <button class="table-action stage-wa" type="submit" title="Kirim otomatis lewat Wablas ke <?php echo h(ppdb_display_phone($waNumber)); ?>">Notifikasi WA</button>
+                                                </form>
+                                            <?php } elseif ($canNotify) { ?>
+                                                <a class="table-action stage-wa" href="<?php echo h($waLink); ?>" target="_blank" rel="noopener" title="Kirim notifikasi WhatsApp ke <?php echo h(ppdb_display_phone($waNumber)); ?>">Notifikasi WA</a>
+                                            <?php } else { ?>
+                                                <small class="cell-sub">No. WA tidak valid</small>
                                             <?php } ?>
-                                        </ol>
-                                        <strong class="registration-process__summary">
-                                            <?php echo $isAccepted ? 'Proses selesai · ' : 'Tahap '.$progressStep.' dari 5 · '; ?><?php echo h($progressStages[max(0, min(4, $progressStep - 1))]); ?>
-                                        </strong>
-                                        <span class="registration-process__detail"><?php echo h($statusInfo['label']); ?></span>
-                                        <span class="registration-process__detail">Pembayaran: <?php echo h($paymentStatusLabels[$row['status_pembayaran']] ?? 'Belum diketahui'); ?> · Data: <?php echo h($dataStatusLabels[$row['status_data']] ?? 'Belum diketahui'); ?></span>
+                                        </div>
+                                    <?php } else { ?>
+                                        <span class="stage-state is-upcoming">Belum</span>
                                     <?php } ?>
-                                </div>
-                            </td>
+                                </td>
+                            <?php }
+                            } ?>
                         </tr>
                     <?php } ?>
                     </tbody>
@@ -316,5 +325,4 @@ require 'admin_header.php';
         <?php } ?>
     </section>
 </div>
-<script src="js/admin.js"></script>
 <?php require 'admin_footer.php'; ?>

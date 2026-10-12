@@ -42,6 +42,22 @@
         });
     }
 
+    // --- Notifikasi WA: cegah klik ganda agar pesan tidak terkirim dua kali ---
+    for (const form of document.querySelectorAll('form[data-wa-send]')) {
+        form.addEventListener('submit', (event) => {
+            const button = form.querySelector('button[type="submit"]');
+            if (form.dataset.sending === '1') {
+                event.preventDefault();
+                return;
+            }
+            form.dataset.sending = '1';
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Mengirim…';
+            }
+        });
+    }
+
     // --- Pencarian dengan tunda agar tidak mengirim setiap ketikan ---
     const searchInput = document.querySelector('.search-field input[type="search"]');
     const filterForm = searchInput ? searchInput.closest('form') : null;

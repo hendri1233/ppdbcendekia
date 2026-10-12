@@ -380,6 +380,34 @@ function ppdb_registrant_recipients(array $registration): array
 }
 
 /**
+ * Pesan pengingat singkat sesuai tahap yang sedang berjalan. Tidak membuat
+ * token baru maupun mengubah status; tautan resmi tetap dikirim dari detail peserta.
+ */
+function ppdb_status_reminder_message(array $registration): string
+{
+    $student = (string) ($registration['nm_peserta'] ?? '');
+    $code = (string) ($registration['id_pendaftaran'] ?? '');
+    $bodies = [
+        'menunggu_kontak' => 'Registrasi awal ananda '.$student.' sudah kami terima. Panitia akan segera mengirimkan informasi pembayaran pendaftaran.',
+        'menunggu_pembayaran' => 'Kami mengingatkan bahwa pembayaran pendaftaran ananda '.$student.' belum kami terima. Mohon unggah bukti pembayaran melalui tautan yang telah kami kirimkan sebelumnya.',
+        'pembayaran_diperiksa' => 'Bukti pembayaran ananda '.$student.' sudah kami terima dan sedang diperiksa panitia.',
+        'pembayaran_terverifikasi' => 'Pembayaran pendaftaran ananda '.$student.' sudah kami verifikasi. Langkah berikutnya adalah melengkapi formulir pendaftaran.',
+        'menunggu_formulir' => 'Kami mengingatkan bahwa formulir pendaftaran ananda '.$student.' belum dilengkapi. Mohon isi formulir melalui tautan yang telah kami kirimkan sebelumnya.',
+        'formulir_terisi' => 'Formulir pendaftaran ananda '.$student.' sudah kami terima dan sedang diverifikasi panitia.',
+        'daftar_tunggu' => 'Pendaftaran ananda '.$student.' saat ini berada dalam daftar tunggu kuota. Panitia akan mengabarkan perkembangan selanjutnya.',
+        'ditolak' => 'Pendaftaran ananda '.$student.' memerlukan tindak lanjut. Mohon hubungi panitia PPDB untuk informasi lebih lanjut.',
+    ];
+    $body = $bodies[$registration['status_ppdb'] ?? ''] ?? 'Kami ingin menyampaikan informasi terkait pendaftaran ananda '.$student.'.';
+
+    return implode("\n", [
+        'Assalamualaikum Bapak/Ibu pendaftar PPDB Cendekia Takengon.',
+        $body,
+        'Kode pendaftaran: '.$code,
+        'Terima kasih.',
+    ]);
+}
+
+/**
  * Tautan pembayaran dibuat secara lokal di server: token baru dibuat, status
  * diubah menjadi menunggu pembayaran, lalu teks WhatsApp disiapkan untuk
  * dibuka admin lewat wa.me ke nomor pendaftar.

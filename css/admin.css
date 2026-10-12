@@ -1194,139 +1194,55 @@ img {
     display: flex;
 }
 
-.process-cell {
-    min-width: 290px;
-}
-
-.registration-process {
-    min-width: 270px;
-    display: grid;
-    gap: 7px;
-}
-
-.registration-process__steps {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.registration-process__step {
-    position: relative;
-    min-width: 0;
-    display: grid;
-    justify-items: center;
-    gap: 4px;
-    color: var(--admin-faint);
+.data-table th.stage-col {
     text-align: center;
 }
 
-.registration-process__step::before {
-    content: '';
-    position: absolute;
-    z-index: 0;
-    top: 9px;
-    right: 50%;
-    width: 100%;
-    height: 2px;
-    background: var(--admin-line);
+.data-table td.stage-cell {
+    min-width: 108px;
+    text-align: center;
 }
 
-.registration-process__step:first-child::before {
-    display: none;
+.stage-current {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
-.registration-process__step.is-complete::before,
-.registration-process__step.is-current::before {
-    background: #55a17b;
+.stage-cell .status-pill {
+    white-space: nowrap;
 }
 
-.registration-process__marker {
-    position: relative;
-    z-index: 1;
-    width: 20px;
-    height: 20px;
-    display: grid;
-    place-items: center;
-    color: var(--admin-faint);
-    background: #fff;
-    border: 2px solid var(--admin-line);
-    border-radius: 50%;
-    font-size: 9px;
-    font-weight: 800;
-    line-height: 1;
-}
-
-.registration-process__step.is-complete .registration-process__marker {
-    color: #fff;
-    background: #2f8a63;
-    border-color: #2f8a63;
-}
-
-.registration-process__step.is-current .registration-process__marker {
-    color: #fff;
-    background: var(--admin-green);
-    border-color: var(--admin-green);
-    box-shadow: 0 0 0 3px rgba(20, 86, 63, 0.12);
-}
-
-.registration-process__step.is-current.tone-amber .registration-process__marker {
-    background: #b47718;
-    border-color: #b47718;
-    box-shadow: 0 0 0 3px rgba(180, 119, 24, 0.14);
-}
-
-.registration-process__step.is-current.tone-red .registration-process__marker {
-    background: #b44530;
-    border-color: #b44530;
-    box-shadow: 0 0 0 3px rgba(180, 69, 48, 0.14);
-}
-
-.registration-process__step.is-current.tone-teal .registration-process__marker {
-    background: #1f7f74;
-    border-color: #1f7f74;
-    box-shadow: 0 0 0 3px rgba(31, 127, 116, 0.14);
-}
-
-.registration-process__step.is-current.tone-blue .registration-process__marker {
-    background: #3a80a8;
-    border-color: #3a80a8;
-    box-shadow: 0 0 0 3px rgba(58, 128, 168, 0.14);
-}
-
-.registration-process__label {
-    font-size: 9px;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.registration-process__step.is-complete,
-.registration-process__step.is-current {
-    color: var(--admin-ink-soft);
-}
-
-.registration-process__summary {
-    color: var(--admin-ink);
+.stage-cell .stage-wa {
+    min-height: 26px;
+    padding: 0 9px;
     font-size: 10.5px;
-    line-height: 1.35;
 }
 
-.registration-process__detail {
-    color: var(--admin-muted);
-    font-size: 10px;
-    line-height: 1.4;
+.stage-cell .stage-wa:disabled {
+    opacity: 0.6;
+    cursor: wait;
 }
 
-.registration-process__detail + .registration-process__detail {
-    margin-top: -5px;
+.stage-state {
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-.registration-process.is-archived {
-    min-width: 230px;
-    padding: 9px 10px;
+.stage-state.is-complete {
+    color: var(--tone-green-fg);
+}
+
+.stage-state.is-upcoming {
+    color: var(--admin-faint);
+    font-weight: 600;
+}
+
+.data-table td.stage-cell--archived {
+    text-align: left;
     background: var(--tone-slate-bg);
-    border-radius: 6px;
 }
 
 /* ---------------- Lencana status ---------------- */
@@ -2298,18 +2214,14 @@ select:focus-visible {
         min-width: 0;
     }
 
-    .data-table td.process-cell {
-        display: block;
+    .data-table td.stage-cell {
         min-width: 0;
+        text-align: left;
     }
 
-    .data-table td.process-cell::before {
-        display: block;
-        margin-bottom: 8px;
-    }
-
-    .process-cell .registration-process {
-        min-width: 0;
+    .stage-current {
+        flex-direction: row;
+        flex-wrap: wrap;
     }
 
     .table-actions {
@@ -2772,6 +2684,12 @@ select:focus-visible {
     color: var(--admin-green);
     background: var(--tone-green-bg);
     border-color: #b9d8c7;
+}
+
+.questionnaire-edit-actions button:disabled {
+    color: var(--admin-faint);
+    background: var(--admin-paper);
+    cursor: not-allowed;
 }
 
 .question-editor-list {
