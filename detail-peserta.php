@@ -9,6 +9,8 @@ require_once __DIR__ . '/admin-partials.php';
 $registrationId = $_GET['id'] ?? $_POST['id'] ?? '';
 $error = '';
 $notice = '';
+$whatsappDeliveryNotice = '';
+$whatsappDeliveryTone = 'success';
 $shareLinks = null;
 $shareTitle = '';
 if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
@@ -110,6 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $notice = 'Tautan pembayaran sudah aktif. Klik salah satu nomor untuk mengirim lewat WhatsApp.';
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
+                if (!$exception instanceof RuntimeException) {
+                    error_log('PPDB payment link setup failed ('.get_class($exception).').');
+                }
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Tautan pembayaran gagal disiapkan.';
             }
         } elseif ($action === 'reject_initial') {
@@ -207,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (in_array($action, ['accept_final', 'waitlist_final', 'reject_formulir'], true)) {
             try {
                 mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.status_data,p.status_pembayaran,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,p.nomor_antrian,c.kuota_internal,c.kuota_eksternal FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE');
+                $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.status_data,p.status_pembayaran,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,p.nomor_antrian,p.nm_peserta,p.no_hp_pendaftar,u.nama_unit,g.link_grup,c.kuota_internal,c.kuota_eksternal FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? FOR UPDATE');
                 mysqli_stmt_bind_param($lock, 's', $registrationId);
                 mysqli_stmt_execute($lock);
                 $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
@@ -239,13 +244,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_execute($update);
                 mysqli_stmt_close($update);
                 mysqli_commit($conn);
-                enqueue_google_sheets_registration($conn, $registrationId);
-                sync_google_sheets_registration($conn, $registrationId);
                 $notice = [
                     'accept_final' => 'Peserta dinyatakan diterima.',
                     'waitlist_final' => 'Peserta ditempatkan pada daftar tunggu kuota.',
                     'reject_formulir' => 'Formulir ditolak. Catatan: ' . $reviewNote,
                 ][$action];
+
+                if ($action === 'accept_final') {
+                    if (!ppdb_wablas_enabled()) {
+                        $whatsappDeliveryNotice = 'Status penerimaan tersimpan, tetapi ucapan WhatsApp belum dikirim karena integrasi Wablas belum dikonfigurasi.';
+                        $whatsappDeliveryTone = 'warning';
+                    } else {
+                        $recipientPhone = ppdb_normalize_whatsapp_number((string) $locked['no_hp_pendaftar']);
+                        if ($recipientPhone === '') {
+                            $whatsappDeliveryNotice = 'Peserta sudah diterima, tetapi nomor WhatsApp pendaftar tidak valid sehingga pesan belum dapat dikirim.';
+                            $whatsappDeliveryTone = 'warning';
+                        } else {
+                            $messageLines = [
+                                'Assalamu’alaikum warahmatullahi wabarakatuh.',
+                                '',
+                                'Alhamdulillah, ananda *'.$locked['nm_peserta'].'* telah dinyatakan *DITERIMA* di *'.$locked['nama_unit'].'*.',
+                                'Terima kasih telah mempercayakan pendidikan ananda kepada kami.',
+                                'Tetap semangat belajar dan bertumbuh. Semoga ananda meraih prestasi dan menjadi kebanggaan keluarga.',
+                            ];
+                            $groupLink = trim((string) ($locked['link_grup'] ?? ''));
+                            if ($groupLink !== '') {
+                                $messageLines[] = '';
+                                $messageLines[] = 'Silakan bergabung dengan grup WhatsApp '.$locked['nama_unit'].' melalui tautan berikut:';
+                                $messageLines[] = $groupLink;
+                            } else {
+                                $messageLines[] = '';
+                                $messageLines[] = 'Informasi grup WhatsApp akan disampaikan oleh panitia.';
+                            }
+
+                            try {
+                                $delivery = ppdb_wablas_send($recipientPhone, implode("\n", $messageLines));
+                                if ($delivery['ok']) {
+                                    $whatsappDeliveryNotice = 'Ucapan penerimaan berhasil dikirim otomatis melalui WhatsApp pendaftar.';
+                                } else {
+                                    $whatsappDeliveryNotice = 'Peserta sudah diterima, tetapi ucapan WhatsApp belum terkirim: '.$delivery['error'];
+                                    $whatsappDeliveryTone = 'warning';
+                                }
+                            } catch (Throwable $exception) {
+                                error_log('PPDB acceptance WhatsApp notification failed: '.$exception->getMessage());
+                                $whatsappDeliveryNotice = 'Peserta sudah diterima, tetapi ucapan WhatsApp belum terkirim. Periksa konfigurasi Wablas dan coba hubungi pendaftar secara manual.';
+                                $whatsappDeliveryTone = 'warning';
+                            }
+                        }
+                    }
+                    if (trim((string) ($locked['link_grup'] ?? '')) === '') {
+                        $groupReminder = 'Tautan grup WhatsApp unit belum diatur pada menu Grup WhatsApp.';
+                        $whatsappDeliveryNotice = trim($whatsappDeliveryNotice.' '.$groupReminder);
+                        $whatsappDeliveryTone = 'warning';
+                    }
+                }
+
+                enqueue_google_sheets_registration($conn, $registrationId);
+                sync_google_sheets_registration($conn, $registrationId);
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Keputusan belum dapat disimpan.';
@@ -365,6 +420,7 @@ require 'admin_header.php';
     </div>
     <?php if ($error !== '') { ?><div class="alert-error" role="alert"><?php echo h($error); ?></div><?php } ?>
     <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
+    <?php if ($whatsappDeliveryNotice !== '') { ?><div class="alert-<?php echo h($whatsappDeliveryTone); ?>" role="status"><?php echo h($whatsappDeliveryNotice); ?></div><?php } ?>
 
     <?php if ($shareLinks) { ?>
         <section class="detail-panel wide share-panel" aria-labelledby="share-title">

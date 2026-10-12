@@ -1,0 +1,7 @@
+<IfModule env_module>
+    SetEnv GOOGLE_APPLICATION_CREDENTIALS "C:/xampp/private/ppdb-sheets-service-account.json"
+</IfModule>
+
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>

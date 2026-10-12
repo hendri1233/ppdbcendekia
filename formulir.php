@@ -11,7 +11,7 @@ $materialLabels = [
     'sop' => 'SOP pendaftaran',
 ];
 $documentSlots = [
-    'foto' => ['label' => 'Foto peserta didik', 'required' => true, 'hint' => 'Foto formal terbaru, latar polos.'],
+    'foto' => ['label' => 'Foto peserta didik', 'required' => false, 'hint' => 'Foto formal terbaru, latar polos.'],
     'nisn' => ['label' => 'Foto / scan NISN', 'required' => false, 'hint' => 'Kosongkan bila ananda belum memiliki NISN.'],
     'kk' => ['label' => 'Scan Kartu Keluarga', 'required' => true, 'hint' => 'Halaman depan yang memuat nama ayah dan ibu.'],
     'akta_lahir' => ['label' => 'Scan Akta Kelahiran', 'required' => true, 'hint' => 'Akta kelahiran ananda.'],

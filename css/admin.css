@@ -612,6 +612,71 @@ img {
     padding: 16px 17px;
 }
 
+.group-links-list {
+    display: grid;
+}
+
+.group-link-row {
+    display: grid;
+    grid-template-columns: minmax(170px, 0.7fr) minmax(280px, 1.3fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 15px 17px;
+    border-bottom: 1px solid var(--admin-line-soft);
+}
+
+.group-link-row:last-child {
+    border-bottom: 0;
+}
+
+.group-link-unit {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.group-link-unit strong {
+    font-size: 12px;
+}
+
+.group-link-unit small,
+.group-link-field > span {
+    color: var(--admin-muted);
+    font-size: 10.5px;
+}
+
+.group-link-field {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.group-link-field input {
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 10px;
+    color: var(--admin-ink);
+    background: #fff;
+    border: 1px solid #ccd8d0;
+    border-radius: 7px;
+    font: inherit;
+    font-size: 12px;
+}
+
+.group-link-field input:focus {
+    border-color: var(--admin-green);
+    outline: 3px solid rgba(20, 86, 63, 0.13);
+    outline-offset: 1px;
+}
+
+.group-link-field a {
+    width: fit-content;
+    color: var(--admin-green);
+    font-size: 10.5px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
 .panel-note {
     margin: 0;
     color: var(--admin-muted);
@@ -1887,7 +1952,8 @@ img {
 /* ---------------- Pesan ---------------- */
 
 .alert-success,
-.alert-error {
+.alert-error,
+.alert-warning {
     display: flex;
     align-items: flex-start;
     gap: 9px;
@@ -1907,6 +1973,12 @@ img {
     color: var(--tone-red-fg);
     background: var(--tone-red-bg);
     border: 1px solid #edbdb2;
+}
+
+.alert-warning {
+    color: var(--tone-amber-fg);
+    background: var(--tone-amber-bg);
+    border: 1px solid #ecd5aa;
 }
 
 a:focus-visible,
@@ -1957,6 +2029,16 @@ select:focus-visible {
 
     .operator-form {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .group-link-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px 14px;
+    }
+
+    .group-link-field {
+        grid-column: 1 / -1;
+        grid-row: 2;
     }
 
     .detail-grid {

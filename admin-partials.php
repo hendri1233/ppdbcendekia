@@ -12,6 +12,7 @@ function ppdb_admin_icon(string $name): string
         'dashboard' => '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>',
         'registrations' => '<rect x="3.5" y="4.5" width="17" height="16" rx="1.5"/><path d="M7.5 9h9M7.5 13h9M7.5 17h5"/>',
         'users' => '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.6a3.2 3.2 0 0 1 0 5.8"/><path d="M17.5 14.2A6 6 0 0 1 21 20"/>',
+        'group' => '<circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.3"/><path d="M17 14a5 5 0 0 1 4 4.8"/>',
         'quota' => '<path d="M4 7h10M4 12h7M4 17h4"/><circle cx="17" cy="7" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="13" cy="17" r="2.2"/>',
         'admin' => '<path d="M12 3.2 4.5 6.4v5.2c0 4.3 3.1 8.2 7.5 9.2 4.4-1 7.5-4.9 7.5-9.2V6.4Z"/><path d="M9.2 12.2l2 2 3.6-3.8"/>',
         'logout' => '<path d="M14 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H14"/><path d="M17 8.5l3.5 3.5L17 15.5"/><path d="M20 12h-9"/>',
@@ -38,6 +39,7 @@ function ppdb_admin_navigation(string $activePage): array
         ['key' => 'registrations', 'href' => 'daftar_peserta.php', 'label' => 'Data peserta', 'icon' => 'registrations', 'caption' => 'Antrean &amp; arsip'],
         ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'caption' => 'Akses pengelola'],
         ['key' => 'quota', 'href' => 'pengaturan-ppdb.php', 'label' => 'Kuota &amp; pembayaran', 'icon' => 'quota', 'caption' => 'Pengaturan penerimaan'],
+        ['key' => 'groups', 'href' => 'grup-whatsapp.php', 'label' => 'Grup WhatsApp', 'icon' => 'group', 'caption' => 'Tautan grup per unit'],
         ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'caption' => 'Brosur, SOP &amp; form'],
     ];
 
@@ -45,7 +47,7 @@ function ppdb_admin_navigation(string $activePage): array
         ? $navigation
         : array_values(array_filter(
             $navigation,
-            static fn (array $item): bool => in_array($item['key'], ['dashboard', 'registrations'], true)
+            static fn (array $item): bool => in_array($item['key'], ['dashboard', 'registrations', 'groups'], true)
         ));
 }
 

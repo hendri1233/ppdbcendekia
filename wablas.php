@@ -12,6 +12,11 @@ function ppdb_wablas_enabled(): bool
 
 function ppdb_wablas_send(string $phone, string $message): array
 {
+    if (!function_exists('curl_init')) {
+        error_log('Wablas tidak dapat mengirim pesan: ekstensi cURL PHP tidak aktif.');
+        return ['ok' => false, 'error' => 'Ekstensi cURL server belum aktif.'];
+    }
+
     $baseUrl = rtrim(trim((string) getenv('WABLAS_BASE_URL')) ?: 'https://jkt.wablas.com', '/');
     $token = trim((string) getenv('WABLAS_TOKEN'));
     $secret = trim((string) getenv('WABLAS_SECRET'));
