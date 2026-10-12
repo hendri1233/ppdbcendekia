@@ -25,23 +25,10 @@ if (!$accessibleRegistration || (!ppdb_is_super_admin() && $accessibleRegistrati
     exit('Data peserta tidak ditemukan.');
 }
 
-function ppdb_active_queue_rank(mysqli $conn, string $unitCode, string $academicYear, string $track, int $queueNumber): int
-{
-    $stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND nomor_antrian<? AND status_ppdb NOT IN ('ditolak','data_lama')");
-    mysqli_stmt_bind_param($stmt, 'sssi', $unitCode, $academicYear, $track, $queueNumber);
-    mysqli_stmt_execute($stmt);
-    $rank = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['total'] + 1;
-    mysqli_stmt_close($stmt);
-    return $rank;
-}
-
-/** Menghitung kursi yang tersisa berdasarkan urutan antrean dan kuota. */
+/** Menghitung ketersediaan kursi berdasarkan peserta yang sudah diterima dan kuota jalur. */
 function ppdb_seat_availability(mysqli $conn, array $locked): array
 {
     $quota = $locked['jalur_pendaftaran'] === 'internal' ? $locked['kuota_internal'] : $locked['kuota_eksternal'];
-    $hasQuota = $quota !== null;
-    $activeRank = ppdb_active_queue_rank($conn, $locked['kode_unit'], $locked['th_ajaran'], $locked['jalur_pendaftaran'], (int) $locked['nomor_antrian']);
-    $withinQuota = $hasQuota && $activeRank <= (int) $quota;
 
     $acceptedQuery = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND status_ppdb='diterima'");
     mysqli_stmt_bind_param($acceptedQuery, 'sss', $locked['kode_unit'], $locked['th_ajaran'], $locked['jalur_pendaftaran']);
@@ -49,18 +36,10 @@ function ppdb_seat_availability(mysqli $conn, array $locked): array
     $acceptedCount = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($acceptedQuery))['total'];
     mysqli_stmt_close($acceptedQuery);
 
-    $earlierQuery = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND nomor_antrian<? AND status_ppdb NOT IN ('diterima','ditolak','data_lama')");
-    mysqli_stmt_bind_param($earlierQuery, 'sssi', $locked['kode_unit'], $locked['th_ajaran'], $locked['jalur_pendaftaran'], $locked['nomor_antrian']);
-    mysqli_stmt_execute($earlierQuery);
-    $earlierOpen = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($earlierQuery))['total'];
-    mysqli_stmt_close($earlierQuery);
-
     return [
-        'active_rank' => $activeRank,
         'accepted' => $acceptedCount,
-        'earlier_open' => $earlierOpen,
-        'seat_available' => $withinQuota && $acceptedCount < (int) $quota && $earlierOpen === 0,
-        'within_quota' => $withinQuota,
+        'quota' => (int) $quota,
+        'seat_available' => $quota !== null && $acceptedCount < (int) $quota,
     ];
 }
 
@@ -111,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new RuntimeException('Tautan pembayaran hanya dapat disiapkan saat peserta menunggu dihubungi.');
                 }
                 $availability = ppdb_seat_availability($conn, $locked);
-                if (!$availability['within_quota']) {
-                    throw new RuntimeException('Posisi antrean peserta di luar kuota saat ini. Tunda sampai kursi tersedia.');
+                if (!$availability['seat_available']) {
+                    throw new RuntimeException('Kuota jalur pendaftaran sudah penuh. Tunda sampai kursi tersedia.');
                 }
                 // Batas bayar hanya dibuat saat pertama kali transitioning dari kontak.
                 $nextDeadline = $locked['status_ppdb'] === 'menunggu_pembayaran'
