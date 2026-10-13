@@ -6,7 +6,6 @@
     'use strict';
 
     const root = document.documentElement;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // --- Loader halaman ---
     const finishLoading = () => root.classList.remove('is-loading');
@@ -107,18 +106,29 @@
                 if (link) more.href = link;
             }
         };
+        // Autoplay tetap berjalan; pengunjung menghentikannya lewat tombol jeda.
+        // Mode "kurangi gerakan" hanya menghilangkan efek transisi (lihat CSS).
+        const toggle = slider.querySelector('[data-slide-toggle]');
+        let paused = false;
         const stop = () => { clearInterval(timer); timer = null; };
         const start = () => {
-            if (reduceMotion || slides.length < 2 || timer) return;
+            stop();
+            if (paused || document.hidden || slides.length < 2) return;
             timer = setInterval(() => show(index + 1), interval);
         };
-        slider.querySelector('[data-slide-prev]')?.addEventListener('click', () => { stop(); show(index - 1); });
-        slider.querySelector('[data-slide-next]')?.addEventListener('click', () => { stop(); show(index + 1); });
-        dots.forEach((dot, i) => dot.addEventListener('click', () => { stop(); show(i); }));
-        slider.addEventListener('mouseenter', stop);
-        slider.addEventListener('mouseleave', start);
-        slider.addEventListener('focusin', stop);
-        document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+        const go = (next) => { show(next); start(); };
+        slider.querySelector('[data-slide-prev]')?.addEventListener('click', () => go(index - 1));
+        slider.querySelector('[data-slide-next]')?.addEventListener('click', () => go(index + 1));
+        dots.forEach((dot, i) => dot.addEventListener('click', () => go(i)));
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                paused = !paused;
+                toggle.setAttribute('aria-pressed', String(paused));
+                toggle.setAttribute('aria-label', paused ? 'Putar slide otomatis' : 'Jeda slide otomatis');
+                start();
+            });
+        }
+        document.addEventListener('visibilitychange', start);
         show(0);
         start();
     }

@@ -35,6 +35,7 @@ function public_icon(string $name): string
         'play' => '<path d="M7 5.5v9l7.5-4.5L7 5.5Z"/>',
         'prev' => '<path d="m12 5-5 5 5 5"/>',
         'next' => '<path d="m8 5 5 5-5 5"/>',
+        'pause' => '<path d="M7.5 5v10M12.5 5v10"/>',
         'check' => '<path d="m5 10.5 3.2 3L15 6.5"/>',
         'calendar' => '<rect x="3" y="4.5" width="14" height="12.5" rx="1.5"/><path d="M3 8.5h14M7 2.5v4M13 2.5v4"/>',
     ];

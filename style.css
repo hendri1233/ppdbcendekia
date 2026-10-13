@@ -934,6 +934,19 @@ dd {
     background: rgba(255, 255, 255, 0.18);
 }
 
+.slider-toggle .icon {
+    grid-area: 1 / 1;
+}
+
+.slider-toggle .icon--play,
+.slider-toggle[aria-pressed="true"] .icon--pause {
+    display: none;
+}
+
+.slider-toggle[aria-pressed="true"] .icon--play {
+    display: block;
+}
+
 /* ---------------- Beranda: profil singkat ---------------- */
 
 .intro {
@@ -2720,7 +2733,8 @@ dd {
         flex: 1 1 100%;
     }
 
-    .slider-arrows {
+    .slider-arrows [data-slide-prev],
+    .slider-arrows [data-slide-next] {
         display: none;
     }
 

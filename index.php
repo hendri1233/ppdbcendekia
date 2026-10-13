@@ -80,6 +80,7 @@ public_page_start($conn, [
                 <?php } ?>
             </div>
             <div class="slider-arrows">
+                <button class="slider-toggle" type="button" data-slide-toggle aria-pressed="false" aria-label="Jeda slide otomatis"><?= public_icon('pause') ?><?= public_icon('play') ?></button>
                 <button type="button" data-slide-prev aria-label="Slide sebelumnya"><?= public_icon('prev') ?></button>
                 <button type="button" data-slide-next aria-label="Slide berikutnya"><?= public_icon('next') ?></button>
             </div>
