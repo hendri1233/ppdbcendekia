@@ -70,7 +70,7 @@ require 'admin_header.php';
 <div class="admin-content">
     <header class="page-heading">
         <div>
-            <p class="eyebrow">KONFIGURASI PER UNIT</p>
+            <p class="eyebrow">Konfigurasi per unit</p>
             <h1>Grup WhatsApp</h1>
             <p>Atur tautan undangan grup setiap unit. Tautan ini dikirim kepada pendaftar saat peserta dinyatakan diterima.</p>
         </div>
@@ -101,7 +101,7 @@ require 'admin_header.php';
                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                         <input type="hidden" name="kode_unit" value="<?php echo h($unit['kode_unit']); ?>">
                         <div class="group-link-unit">
-                            <strong><?php echo h($unit['nama_unit']); ?></strong>
+                            <strong><?php echo h(ppdb_unit_display_name($unit['nama_unit'])); ?></strong>
                             <small><?php echo h($unit['jenjang']); ?> · <?php echo h($unit['kode_unit']); ?></small>
                         </div>
                         <label class="group-link-field" for="<?php echo h($inputId); ?>">

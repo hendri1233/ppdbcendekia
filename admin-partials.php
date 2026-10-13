@@ -24,23 +24,36 @@ function ppdb_admin_icon(string $name): string
         'wallet' => '<path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h11a2 2 0 0 1 2 2v1"/><rect x="3.5" y="7.5" width="17" height="11.5" rx="1.8"/><circle cx="16" cy="13.2" r="1.3"/>',
         'file' => '<path d="M6 3.5h7.5L18 8v12.5H6Z"/><path d="M13.5 3.5V8H18"/>',
         'chart' => '<path d="M4 20V9.5M9.3 20V4.5M14.7 20v-8M20 20v-5.5"/>',
+        'chevron' => '<path d="m9 6 6 6-6 6"/>',
+        'image' => '<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><circle cx="9" cy="9.5" r="1.8"/><path d="m4 17.5 5-5 4 4 2.5-2.5 4.5 4.5"/>',
+        'page' => '<path d="M6 3.5h12v17H6Z"/><path d="M9 8h6M9 11.5h6M9 15h4"/>',
+        'news' => '<path d="M4.5 5.5h12v13a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5Z"/><path d="M16.5 9h3v9.5a1.5 1.5 0 0 1-3 0"/><path d="M7.5 9h6M7.5 12.5h6M7.5 16h4"/>',
+        'building' => '<path d="M4 20.5h16"/><path d="M6 20.5V8l6-4 6 4v12.5"/><path d="M10 20.5v-5h4v5"/><path d="M9.5 10.5h1M13.5 10.5h1"/>',
+        'settings' => '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/>',
+        'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+        'moon' => '<path d="M19.5 14.5A7.8 7.8 0 0 1 9.5 4.5a7.8 7.8 0 1 0 10 10Z"/>',
     ];
 
     $path = $paths[$name] ?? $paths['dashboard'];
 
-    return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $path . '</svg>';
+    return '<svg class="ico ico--'.$name.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $path . '</svg>';
 }
 
-/** Daftar navigasi admin, dipakai bersama oleh sidebar dan navigasi ponsel. */
+/** Daftar navigasi admin per kelompok fungsi, dipakai bersama oleh sidebar dan navigasi ponsel. */
 function ppdb_admin_navigation(string $activePage): array
 {
     $navigation = [
-        ['key' => 'dashboard', 'href' => 'admin.php', 'label' => 'Dashboard', 'icon' => 'dashboard', 'caption' => 'Ringkasan'],
-        ['key' => 'registrations', 'href' => 'daftar_peserta.php', 'label' => 'Data peserta', 'icon' => 'registrations', 'caption' => 'Antrean &amp; arsip'],
-        ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'caption' => 'Akses pengelola'],
-        ['key' => 'quota', 'href' => 'pengaturan-ppdb.php', 'label' => 'Kuota &amp; pembayaran', 'icon' => 'quota', 'caption' => 'Pengaturan penerimaan'],
-        ['key' => 'groups', 'href' => 'grup-whatsapp.php', 'label' => 'Grup WhatsApp', 'icon' => 'group', 'caption' => 'Tautan grup per unit'],
-        ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'caption' => 'Brosur, SOP &amp; form'],
+        ['key' => 'dashboard', 'href' => 'admin.php', 'label' => 'Dashboard', 'icon' => 'dashboard', 'group' => 'Penerimaan'],
+        ['key' => 'registrations', 'href' => 'daftar_peserta.php', 'label' => 'Data peserta', 'icon' => 'registrations', 'group' => 'Penerimaan'],
+        ['key' => 'quota', 'href' => 'pengaturan-ppdb.php', 'label' => 'Kuota &amp; pembayaran', 'icon' => 'quota', 'group' => 'Pengaturan'],
+        ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'group' => 'Pengaturan'],
+        ['key' => 'groups', 'href' => 'grup-whatsapp.php', 'label' => 'Grup WhatsApp', 'icon' => 'group', 'group' => 'Pengaturan'],
+        ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'group' => 'Pengaturan'],
+        ['key' => 'cms-home', 'href' => 'cms-beranda.php', 'label' => 'Beranda &amp; slider', 'icon' => 'image', 'group' => 'Situs web'],
+        ['key' => 'cms-pages', 'href' => 'cms-halaman.php', 'label' => 'Tentang &amp; kurikulum', 'icon' => 'page', 'group' => 'Situs web'],
+        ['key' => 'cms-news', 'href' => 'cms-berita.php', 'label' => 'Berita', 'icon' => 'news', 'group' => 'Situs web'],
+        ['key' => 'cms-units', 'href' => 'cms-unit.php', 'label' => 'Profil unit', 'icon' => 'building', 'group' => 'Situs web'],
+        ['key' => 'cms-settings', 'href' => 'cms-pengaturan.php', 'label' => 'Kontak &amp; pengaturan', 'icon' => 'settings', 'group' => 'Situs web'],
     ];
 
     return ppdb_is_super_admin()

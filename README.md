@@ -1,6 +1,6 @@
-# PPDB Yayasan Wakaf Cendekia Takengon
+# Situs Yayasan Wakaf Cendekia Takengon
 
-Situs Penerimaan Peserta Didik Baru untuk unit KB, TPA, TK, SD, dan SMP Cendekia di bawah Yayasan Wakaf Cendekia Takengon.
+Situs resmi yayasan sekaligus sistem Penerimaan Peserta Didik Baru (PPDB) untuk unit KB, TPA, TK, SD, dan SMP Cendekia. Halaman publik: Beranda, Tentang, Kurikulum JSIT, Berita, PPDB, dan Kontak. Panel pengelola tidak ditautkan dari menu publik; akses melalui `login.php` (misalnya `https://domain-anda/login.php`).
 
 ## Unit Pendidikan
 
@@ -23,6 +23,8 @@ Kontak yayasan: 0821-8164-9543, wakafcendekiatakengon@gmail.com, [cendekiabisa.c
 - HTML and CSS
 - Dompdf for downloadable PDF receipts
 - Google API PHP client for Sheets synchronization
+- Anthropic PHP SDK untuk asisten tanya jawab (opsional)
+- GD dengan dukungan WebP untuk gambar unggahan CMS
 
 ## Menjalankan Secara Lokal
 
@@ -30,12 +32,30 @@ Kontak yayasan: 0821-8164-9543, wakafcendekiatakengon@gmail.com, [cendekiabisa.c
 2. Jalankan `composer install` untuk memasang Dompdf dan Google API PHP client.
 3. Buat database bernama `ppdb_cendekia`.
 4. Untuk instalasi baru, impor `ppdb_cendekia.sql`.
-5. Untuk database lama, jalankan migrasi `001_multi_unit_ppdb.sql` sampai `014_unit_whatsapp_groups.sql` satu kali secara berurutan. Setelah mengimpor dump pada instalasi baru, jalankan `014_unit_whatsapp_groups.sql` untuk menambahkan tautan grup WhatsApp per unit. Migrasi sebelumnya menambahkan dukungan multi-unit dan kuota, pendaftaran internal, akun admin unit, materi dan kuisioner, serta statistik kunjungan. Migrasi 009 menutup penerimaan dan mencabut token yang belum digunakan untuk tahun sebelum 2027/2028, tanpa menghapus data historis. Jangan impor dump instalasi baru ke database yang sedang digunakan.
+5. Untuk database lama, jalankan migrasi `001_multi_unit_ppdb.sql` sampai `015_cms_website.sql` satu kali secara berurutan. Setelah mengimpor dump pada instalasi baru, jalankan `014_unit_whatsapp_groups.sql` dan `015_cms_website.sql`. Gunakan `mysql --default-character-set=utf8mb4` saat mengimpor agar teks berhuruf khusus tersimpan benar. Migrasi 015 hanya menambah tabel situs (konten, berita, slider, profil unit, pengaturan, pembatas asisten AI) dan tidak mengubah tabel PPDB. Migrasi sebelumnya menambahkan dukungan multi-unit dan kuota, pendaftaran internal, akun admin unit, materi dan kuisioner, serta statistik kunjungan. Migrasi 009 menutup penerimaan dan mencabut token yang belum digunakan untuk tahun sebelum 2027/2028, tanpa menghapus data historis. Jangan impor dump instalasi baru ke database yang sedang digunakan.
 6. Sesuaikan host, username, password, dan nama database pada `koneksi.php`.
 7. Buka `http://localhost/ppdb-web`.
 8. Buat akun admin pertama melalui `register.php` hanya jika tabel admin masih kosong.
 
 Formulir mengumpulkan identitas, alamat, data ayah/ibu/wali, dan data periodik yang diperlukan untuk pencatatan bergaya Dapodik. Umur peserta dihitung terhadap 30 Juni pada tahun awal ajaran (misalnya, 30/06/2027 untuk 2027/2028), ditampilkan saat tanggal lahir diisi, lalu dicantumkan di halaman berhasil dan detail peserta admin. NIK, nomor KK, dan informasi keluarga hanya tersedia bagi admin yang telah masuk. Bukti PDF untuk orang tua hanya berisi kode pendaftaran, nama, unit, tahun ajaran, dan tanggal daftar.
+
+## Situs Web dan CMS
+
+Super admin mengelola isi situs dari grup menu **Situs web** di panel admin. Admin unit tidak melihat menu ini dan mendapat 403 bila membuka halamannya langsung.
+
+- **Beranda & slider**: unggah gambar slider (jumlah bebas, urutan dan status tampil dapat diatur), judul dan kalimat pembuka, profil singkat, serta tautan video YouTube yang langsung diputar di beranda.
+- **Tentang & kurikulum**: prakata pimpinan, visi dan misi, serta empat bagian Kurikulum JSIT (Program Penggerak, Kurikulum 2013, Merdeka Belajar, Deep Learning). Profil manajemen dan fasilitas dikelola sebagai daftar berfoto.
+- **Berita**: draf, terbit, atau terjadwal; dapat dikaitkan ke unit sehingga tampil di halaman unit.
+- **Profil unit**: ringkasan, uraian, foto, dan telepon tiap unit. Nama, NPSN, alamat, dan email tetap diambil dari data PPDB.
+- **Kontak & pengaturan**: kontak resmi, media sosial, peta, dan sakelar asisten AI.
+
+Bagian yang belum diisi tampil sebagai "sedang disiapkan" di situs, bukan teks contoh. Gambar unggahan dibaca ulang dengan GD dan disimpan sebagai WebP di `uploads/cms/` (metadata dibuang, lebar dibatasi). Folder tersebut diblokir dari eksekusi skrip melalui `uploads/.htaccess`; ikutkan folder ini dalam cadangan server karena tidak masuk repository.
+
+Situs publik dan panel admin memiliki mode terang dan gelap. Pilihan pengunjung disimpan di peramban; tanpa pilihan, tema mengikuti pengaturan perangkat.
+
+## Asisten AI
+
+Tombol **Tanya asisten** menjawab pertanyaan pengunjung hanya dari konten situs (unit, kuota PPDB saat ini, alur, persyaratan, profil, kurikulum, berita) melalui Claude API (`claude-opus-5-5`). Asisten tampil bila sakelar di **Kontak & pengaturan** aktif dan `ANTHROPIC_API_KEY` tersedia di `.env` atau environment server. Permintaan dibatasi 12 pertanyaan per 10 menit dan 60 per hari per alamat IP, serta 1.500 per hari untuk seluruh situs (ubah konstanta di `api-tanya.php` bila perlu). Riwayat percakapan tidak disimpan di server; hanya hash alamat IP dan waktu permintaan yang dicatat untuk pembatas laju dan dihapus otomatis setelah tiga hari.
 
 ## Kuota dan Pembayaran
 

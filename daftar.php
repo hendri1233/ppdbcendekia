@@ -164,7 +164,7 @@ function render_initial_field(array $field, array $values, int $index): void
     $value = (string) ($values[$name] ?? '');
     $wideClass = !empty($field['wide']) ? ' field-wide' : '';
     echo '<div class="field'.$wideClass.'" data-field="'.h($name).'">';
-    echo '<label for="'.h($name).'"><span class="field-index" aria-hidden="true">'.str_pad((string) $index, 2, '0', STR_PAD_LEFT).'</span>'.h($field['label']);
+    echo '<label for="'.h($name).'">'.h($field['label']);
     if (!empty($field['required'])) {
         echo ' <span class="required-mark" aria-hidden="true">*</span>';
     } else {
@@ -389,9 +389,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Registrasi awal PPDB Yayasan Wakaf Cendekia Takengon. Isi data dasar, tunggu verifikasi, lalu lengkapi formulir.">
     <title>Registrasi Awal | PPDB Yayasan Wakaf Cendekia Takengon</title>
+    <link rel="icon" href="img/logo-display.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/daftar.css">
 </head>
 <body data-academic-year="<?php echo h($routeOffer['th_ajaran'] ?? ''); ?>">
@@ -400,14 +402,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <header class="site-header">
         <a class="brand" href="index.php" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
-            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>TAKENGON · PPDB ONLINE</small></span>
+            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · PPDB online</small></span>
         </a>
         <a class="back-link" href="index.php">Kembali ke beranda</a>
     </header>
 
     <main class="initial-layout">
         <section class="intro intro-rail">
-            <p class="eyebrow">TAHAP 1 DARI 3 · REGISTRASI AWAL</p>
+            <p class="eyebrow">Tahap 1 dari 3 · Registrasi awal</p>
             <h1>Cukup data dasar,<br><span>sisanya kami pandu.</span></h1>
             <p class="intro-copy">Isi tujuh isian singkat berikut. Panitia menghubungi Anda lewat WhatsApp untuk pembayaran, lalu Anda melengkapi formulir dan mengunggah dokumen.</p>
             <div class="progress-ring">
@@ -427,12 +429,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
 
         <div class="initial-main">
             <?php if ($routeType === 'eksternal' && !$tokenEntryRequested && empty($_SESSION[$internalSessionKey])) { ?>
-                <section class="form-section" aria-labelledby="route-title">
-                    <div class="section-heading">
-                        <span class="section-number">01</span>
-                        <div><h2 id="route-title">Pendaftaran umum</h2><p>Pilih unit dan tahun ajaran, lalu lengkapi registrasi awal. Jalur eksternal ditetapkan otomatis.</p></div>
-                    </div>
-                </section>
                 <?php if ($routeError !== '' && $_SERVER['REQUEST_METHOD'] !== 'POST') { ?>
                     <div class="error-summary" role="alert"><strong>Pilihan pendaftaran tidak tersedia</strong><ul><li><?php echo h($routeError); ?></li></ul></div>
                 <?php } ?>
@@ -449,12 +445,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <section class="form-section" aria-labelledby="data-title">
                         <div class="section-heading">
-                            <span class="section-number">02</span>
-                            <div><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Pilih unit dan tahun ajaran, lalu isi tujuh data awal. NIK dan dokumen menyusul setelah pembayaran.</p></div>
+                            <div><p class="route-tag">Pendaftaran umum &middot; jalur eksternal</p><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Pilih unit dan tahun ajaran, lalu isi tujuh data awal. NIK dan dokumen menyusul setelah pembayaran.</p></div>
                         </div>
                         <div class="field-grid">
                             <div class="field field-wide">
-                                <label for="external_route"><span class="field-index" aria-hidden="true">01</span>Unit pendidikan dan tahun ajaran <span class="required-mark" aria-hidden="true">*</span></label>
+                                <label for="external_route">Unit pendidikan dan tahun ajaran <span class="required-mark" aria-hidden="true">*</span></label>
                                 <select id="external_route" name="external_route" required <?php echo !$openOffers ? 'disabled' : ''; ?>>
                                     <option value="">Pilih unit dan tahun ajaran</option>
                                     <?php foreach ($openOffers as $offer) {

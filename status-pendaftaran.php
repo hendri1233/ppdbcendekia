@@ -53,16 +53,18 @@ header('Referrer-Policy: no-referrer');
     <meta name="theme-color" content="#123d31">
     <meta name="robots" content="noindex, nofollow">
     <title><?php echo $registration ? 'Status pendaftaran '.$registration['id_pendaftaran'] : 'Pendaftaran tidak ditemukan'; ?> | PPDB Cendekia</title>
+    <link rel="icon" href="img/logo-display.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/result.css">
 </head>
 <body>
 <main class="result-shell">
     <a class="result-brand" href="index.php">
         <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
-        <span><strong>Wakaf Cendekia</strong><small>TAKENGON · PPDB</small></span>
+        <span><strong>Wakaf Cendekia</strong><small>Takengon · PPDB</small></span>
     </a>
 
     <?php if ($registration) { ?>
@@ -73,12 +75,12 @@ header('Referrer-Policy: no-referrer');
         <section class="result-panel status-panel">
             <div class="status-head">
                 <div>
-                    <p class="result-eyebrow">STATUS PENDAFTARAN</p>
+                    <p class="result-eyebrow">Status pendaftaran</p>
                     <h1><?php echo h($statusInfo['label']); ?></h1>
                     <p class="result-description"><?php echo h($statusInfo['public']); ?></p>
                 </div>
                 <div class="registration-code" role="group" aria-label="Kode pendaftaran">
-                    <span>KODE PENDAFTARAN</span>
+                    <span>Kode pendaftaran</span>
                     <strong><?php echo h($registration['id_pendaftaran']); ?></strong>
                 </div>
             </div>
@@ -179,7 +181,7 @@ header('Referrer-Policy: no-referrer');
         </section>
     <?php } else { ?>
         <section class="result-panel result-error">
-            <p class="result-eyebrow">TAUTAN TIDAK VALID</p>
+            <p class="result-eyebrow">Tautan tidak valid</p>
             <h1>Status pendaftaran<br>tidak ditemukan.</h1>
             <p class="result-description">Periksa kembali tautan dari pesan WhatsApp, atau hubungi panitia PPDB.</p>
             <a class="download-button" href="index.php">Kembali ke beranda</a>

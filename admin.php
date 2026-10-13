@@ -102,7 +102,7 @@ require 'admin_header.php';
 
     <header class="page-hero">
         <div class="page-hero__text">
-            <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'Penerimaan peserta didik baru' : 'PENERIMAAN · '.h($_SESSION['admin_unit_name'] ?? 'UNIT'); ?></p>
+            <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'Penerimaan peserta didik baru' : 'Penerimaan · '.h(ppdb_unit_display_name($_SESSION['admin_unit_name'] ?? 'Unit')); ?></p>
             <h1>Selamat datang kembali, <?php echo h(explode(' ', (string) ($_SESSION['admin_name'] ?? 'Administrator'))[0]); ?>.</h1>
             <p><?php echo $actionableTotal > 0
                 ? $actionableTotal.' peserta menunggu tindakan Anda. Mulai dari data yang paling lama menunggu.'
@@ -162,7 +162,7 @@ require 'admin_header.php';
                                 <span class="queue-dot tone-<?php echo h($meta['tone']); ?>" aria-hidden="true"></span>
                                 <div class="queue-main">
                                     <a href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>"><?php echo h($row['nm_peserta']); ?></a>
-                                    <small><?php echo h($row['nama_unit'] ?? 'Data lama'); ?> · <?php echo h($row['id_pendaftaran']); ?></small>
+                                    <small><?php echo h(ppdb_unit_display_name($row['nama_unit'] ?? 'Data lama')); ?> · <?php echo h($row['id_pendaftaran']); ?></small>
                                 </div>
                                 <span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span>
                                 <span class="queue-age"><?php echo h(date('d-m-Y', strtotime($row['tgl_daftar']))); ?></span>
@@ -206,26 +206,26 @@ require 'admin_header.php';
         </div>
         <div class="table-wrap">
             <table class="data-table">
-                <thead><tr><th>UNIT</th><th>JENJANG</th><th>TAHUN</th><th>REALISASI</th><th>INTERNAL</th><th>EKSTERNAL</th><th>DITERIMA</th><th>STATUS</th></tr></thead>
+                <thead><tr><th scope="col">Unit</th><th scope="col">Jenjang</th><th scope="col">Tahun</th><th scope="col">Realisasi</th><th scope="col">Internal</th><th scope="col">Eksternal</th><th scope="col">Diterima</th><th scope="col">Status</th></tr></thead>
                 <tbody>
                 <?php if (!$quotaRows) { ?>
                     <tr><td class="empty-state" colspan="8">Belum ada unit pendidikan.</td></tr>
                 <?php } ?>
                 <?php foreach ($quotaRows as $row) { ?>
                     <tr>
-                        <td class="primary-cell"><?php echo h($row['nama_unit']); ?></td>
-                        <td><span class="jenjang-chip"><?php echo h($row['jenjang']); ?></span></td>
-                        <td><?php echo h($row['th_ajaran'] ?? '—'); ?></td>
-                        <td>
+                        <td class="primary-cell" data-label="Unit"><?php echo h(ppdb_unit_display_name($row['nama_unit'])); ?></td>
+                        <td data-label="Jenjang"><span class="jenjang-chip"><?php echo h($row['jenjang']); ?></span></td>
+                        <td data-label="Tahun"><?php echo h($row['th_ajaran'] ?? '—'); ?></td>
+                        <td data-label="Realisasi">
                             <div class="quota-cell">
                                 <div class="quota-track"><span class="quota-bar" style="--w: <?php echo $row['persentase']; ?>%"></span></div>
                                 <small><?php echo $row['persentase']; ?>%</small>
                             </div>
                         </td>
-                        <td><?php echo $row['internal_terisi']; ?> / <?php echo $row['kuota_internal']; ?><br><small><?php echo $row['internal_dibuka'] ? 'Dibuka' : 'Ditutup'; ?></small></td>
-                        <td><?php echo $row['eksternal_terisi']; ?> / <?php echo $row['kuota_eksternal']; ?><br><small><?php echo $row['eksternal_dibuka'] ? 'Dibuka' : 'Ditutup'; ?></small></td>
-                        <td><?php echo $row['diterima']; ?></td>
-                        <td><span class="status-pill <?php echo $row['internal_dibuka'] || $row['eksternal_dibuka'] ? 'is-open' : 'is-closed'; ?>"><?php echo $row['internal_dibuka'] || $row['eksternal_dibuka'] ? 'Ada jalur dibuka' : 'Ditutup'; ?></span></td>
+                        <td data-label="Internal"><span><?php echo $row['internal_terisi']; ?> / <?php echo $row['kuota_internal']; ?> <small class="cell-sub"><?php echo $row['internal_dibuka'] ? 'Dibuka' : 'Ditutup'; ?></small></span></td>
+                        <td data-label="Eksternal"><span><?php echo $row['eksternal_terisi']; ?> / <?php echo $row['kuota_eksternal']; ?> <small class="cell-sub"><?php echo $row['eksternal_dibuka'] ? 'Dibuka' : 'Ditutup'; ?></small></span></td>
+                        <td data-label="Diterima"><?php echo $row['diterima']; ?></td>
+                        <td data-label="Status"><span class="status-pill <?php echo $row['internal_dibuka'] || $row['eksternal_dibuka'] ? 'is-open' : 'is-closed'; ?>"><?php echo $row['internal_dibuka'] || $row['eksternal_dibuka'] ? 'Ada jalur dibuka' : 'Ditutup'; ?></span></td>
                     </tr>
                 <?php } ?>
                 </tbody>
@@ -241,18 +241,18 @@ require 'admin_header.php';
             </div>
             <div class="table-wrap">
                 <table class="data-table">
-                    <thead><tr><th>KODE</th><th>NAMA</th><th>UNIT</th><th>STATUS</th><th></th></tr></thead>
+                    <thead><tr><th scope="col">Kode</th><th scope="col">Nama</th><th scope="col">Unit</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Aksi</span></th></tr></thead>
                     <tbody>
                     <?php if (mysqli_num_rows($latestRegistrations) === 0) { ?>
                         <tr><td class="empty-state" colspan="5">Belum ada pendaftaran.</td></tr>
                     <?php } else { while ($row = mysqli_fetch_assoc($latestRegistrations)) {
                         $meta = ppdb_admin_status_meta($row['status_ppdb']); ?>
                         <tr>
-                            <td><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
-                            <td class="primary-cell"><?php echo h($row['nm_peserta']); ?></td>
-                            <td><?php echo h($row['nama_unit'] ?? 'Data lama'); ?></td>
-                            <td><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span></td>
-                            <td><a class="table-action" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>">Detail</a></td>
+                            <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
+                            <td class="primary-cell" data-label="Nama"><?php echo h($row['nm_peserta']); ?></td>
+                            <td data-label="Unit"><?php echo h(ppdb_unit_display_name($row['nama_unit'] ?? 'Data lama')); ?></td>
+                            <td data-label="Status"><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span></td>
+                            <td data-label="Aksi"><a class="table-action" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>">Detail<span class="visually-hidden"> <?php echo h($row['nm_peserta']); ?></span></a></td>
                         </tr>
                     <?php }} ?>
                     </tbody>
@@ -287,7 +287,7 @@ require 'admin_header.php';
     <section class="panel panel-muted">
         <div class="panel-body admin-facts">
             <div><span>Dokumen peserta</span><strong><?php echo $documentCount; ?></strong><small>berkas tersimpan</small></div>
-            <div><span>Unit pendidikan</span><strong><?php echo $unitCount; ?></strong><small>TK, SD, dan SMP</small></div>
+            <div><span>Unit pendidikan</span><strong><?php echo $unitCount; ?></strong><small>KB, TPA, TK, SD, SMP</small></div>
             <div><span>Tahun ajaran</span><strong><?php echo $activeYears; ?></strong><small>tercatat di arsip</small></div>
             <div><span>Data belum dipetakan</span><strong><?php echo $unmappedRegistrations; ?></strong><small>tanpa unit</small></div>
         </div>

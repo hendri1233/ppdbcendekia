@@ -132,7 +132,7 @@ require 'admin_header.php';
 <div class="admin-content">
     <header class="page-heading">
         <div>
-            <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'ARSIP PENERIMAAN' : 'ARSIP UNIT · '.h($_SESSION['admin_unit_name'] ?? ''); ?></p>
+            <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'Arsip penerimaan' : 'Arsip unit · '.h(ppdb_unit_display_name($_SESSION['admin_unit_name'] ?? '')); ?></p>
             <h1>Data peserta</h1>
             <p><?php echo $adminUnitCode === '' ? 'Daftar seluruh pendaftar. Gunakan filter untuk memisahkan peserta yang menunggu tindakan.' : 'Daftar pendaftar untuk unit pendidikan Anda. Data unit lain tidak ditampilkan.'; ?></p>
         </div>
@@ -209,18 +209,18 @@ require 'admin_header.php';
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th scope="col">KODE</th>
-                            <th scope="col">ANTREAN</th>
-                            <th scope="col">NAMA PESERTA</th>
-                            <th scope="col">DAFTAR OLEH</th>
-                            <th scope="col">UNIT</th>
-                            <th scope="col">JALUR</th>
-                            <th scope="col">TAHUN</th>
-                            <th scope="col">STATUS</th>
-                            <th scope="col">TANGGAL</th>
-                            <th scope="col">AKSI</th>
+                            <th scope="col">Kode</th>
+                            <th scope="col">Antrean</th>
+                            <th scope="col">Nama peserta</th>
+                            <th scope="col">Daftar oleh</th>
+                            <th scope="col">Unit</th>
+                            <th scope="col">Jalur</th>
+                            <th scope="col">Tahun</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Tanggal</th>
+                            <th scope="col">Aksi</th>
                             <?php foreach ($progressStages as $stage) { ?>
-                                <th scope="col" class="stage-col"><?php echo h(strtoupper($stage)); ?></th>
+                                <th scope="col" class="stage-col"><?php echo h($stage); ?></th>
                             <?php } ?>
                         </tr>
                     </thead>
@@ -242,7 +242,7 @@ require 'admin_header.php';
                                 <?php if ($row['NISN'] !== '') { ?><small class="cell-sub">NISN <?php echo h($row['NISN']); ?></small><?php } ?>
                             </td>
                             <td data-label="Daftar oleh"><?php echo h(ppdb_pendaftar_label($row['pendaftar'])); ?></td>
-                            <td data-label="Unit"><?php echo h($row['nama_unit'] ?? 'Data lama'); ?></td>
+                            <td data-label="Unit"><?php echo h(ppdb_unit_display_name($row['nama_unit'] ?? 'Data lama')); ?></td>
                             <td data-label="Jalur"><?php echo $row['jalur_pendaftaran'] === 'internal' ? 'Internal · SDM' : 'Eksternal · umum'; ?></td>
                             <td data-label="Tahun"><?php echo h($row['th_ajaran']); ?></td>
                             <td data-label="Status"><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span></td>

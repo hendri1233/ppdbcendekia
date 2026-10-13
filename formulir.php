@@ -449,9 +449,11 @@ header('Referrer-Policy: no-referrer');
     <meta name="theme-color" content="#123d31">
     <meta name="robots" content="noindex, nofollow">
     <title>Formulir Lengkap | PPDB Cendekia Takengon</title>
+    <link rel="icon" href="img/logo-display.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/daftar.css">
 </head>
 <body>
@@ -460,7 +462,7 @@ header('Referrer-Policy: no-referrer');
     <header class="site-header">
         <a class="brand" href="index.php" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
-            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>TAKENGON · PPDB ONLINE</small></span>
+            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · PPDB online</small></span>
         </a>
         <?php if ($authorized) { ?><a class="back-link" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a><?php } ?>
     </header>
@@ -468,7 +470,7 @@ header('Referrer-Policy: no-referrer');
     <main>
         <?php if (!$authorized) { ?>
             <section class="gate-panel">
-                <p class="eyebrow">TAHAP 3 DARI 3 · FORMULIR LENGKAP</p>
+                <p class="eyebrow">Tahap 3 dari 3 · Formulir lengkap</p>
                 <h1>Masukkan kode<br><span>pendaftaran Anda.</span></h1>
                 <p class="intro-copy">Kode ini hanya berlaku bagi pendaftar yang pembayarannya sudah disetujui panitia. Kode dikirim melalui WhatsApp.</p>
 
@@ -478,7 +480,7 @@ header('Referrer-Policy: no-referrer');
 
                 <form class="gate-form" action="formulir.php" method="get" autocomplete="off">
                     <div class="field field-wide" data-field="kode">
-                        <label for="kode"><span class="field-index" aria-hidden="true">01</span>Kode pendaftaran <span class="required-mark" aria-hidden="true">*</span></label>
+                        <label for="kode">Kode pendaftaran <span class="required-mark" aria-hidden="true">*</span></label>
                         <input id="kode" name="kode" value="<?php echo h($code); ?>" placeholder="Contoh: P202600123" maxlength="10" pattern="[Pp][0-9]{9}" required autofocus>
                         <small class="field-hint">Kode terdiri huruf P diikuti 9 digit angka, contoh P202600123.</small>
                     </div>
@@ -488,7 +490,7 @@ header('Referrer-Policy: no-referrer');
 
         <?php } elseif (!$formOpen) { ?>
             <section class="gate-panel">
-                <p class="eyebrow">FORMULIR BELUM TERSEDIA</p>
+                <p class="eyebrow">Formulir belum tersedia</p>
                 <h1><?php echo $alreadySubmitted ? 'Formulir sudah<br><span>Anda kirim.</span>' : 'Pembayaran belum<br><span>disetujui.</span>'; ?></h1>
                 <?php if ($alreadySubmitted) { ?>
                     <p class="intro-copy">Formulir lengkap untuk kode <?php echo h($registration['id_pendaftaran']); ?> sudah diterima dan sedang diperiksa panitia. Hubungi panitia bila perlu perbaikan.</p>
@@ -509,7 +511,7 @@ header('Referrer-Policy: no-referrer');
             <dialog class="confirm-dialog" id="konfirmasi-awal" data-confirmation aria-labelledby="konfirmasi-judul">
                 <div class="confirm-card__head">
                     <div>
-                        <p class="eyebrow">KONFIRMASI DATA AWAL</p>
+                        <p class="eyebrow">Konfirmasi data awal</p>
                         <h2 id="konfirmasi-judul">Periksa kembali data ini</h2>
                     </div>
                     <span class="confirm-badge">Kode <?php echo h($registration['id_pendaftaran']); ?></span>
@@ -530,7 +532,7 @@ header('Referrer-Policy: no-referrer');
 
             <section class="materials-stage" id="materi-pendaftaran" data-material-stage hidden aria-labelledby="materi-title">
                 <div class="materials-stage__heading">
-                    <p class="eyebrow">TAHAP 2 DARI 3 · MATERI PENDAFTARAN</p>
+                    <p class="eyebrow">Tahap 2 dari 3 · Materi pendaftaran</p>
                     <h2 id="materi-title">Baca informasi sebelum melanjutkan</h2>
                     <p>Brosur, rincian biaya, dan SOP berikut disediakan panitia untuk unit dan tahun ajaran pendaftaran Anda.</p>
                 </div>
@@ -592,7 +594,7 @@ header('Referrer-Policy: no-referrer');
 
             <div id="formulir-terbuka" <?php echo $showFullForm ? '' : 'hidden'; ?>>
                 <div class="form-stage-intro">
-                    <p class="eyebrow">TAHAP 3 DARI 3</p>
+                    <p class="eyebrow">Tahap 3 dari 3</p>
                     <h2>Kuisioner dan formulir data lengkap</h2>
                     <p>Isi kuisioner terlebih dahulu, lalu lengkapi data peserta didik dan dokumen pendukung.</p>
                 </div>

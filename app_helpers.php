@@ -126,6 +126,64 @@ function ppdb_display_phone(string $phone): string
     return $digits;
 }
 
+/** Nama unit di database ditulis kapital; ubah ke huruf judul tanpa merusak singkatan. */
+function ppdb_unit_display_name(?string $name): string
+{
+    $words = preg_split('/\s+/', trim((string) $name)) ?: [];
+    $acronyms = ['KB', 'TPA', 'TK', 'SD', 'SMP', 'IT'];
+    return implode(' ', array_map(static function (string $word) use ($acronyms): string {
+        $upper = mb_strtoupper($word);
+        return in_array($upper, $acronyms, true) ? $upper : mb_convert_case($word, MB_CASE_TITLE);
+    }, $words));
+}
+
+/** Kepanjangan jenjang untuk orang tua yang belum akrab dengan singkatannya. */
+function ppdb_jenjang_label(?string $jenjang): string
+{
+    return [
+        'KB' => 'Kelompok Bermain',
+        'TPA' => 'Taman Penitipan Anak',
+        'TK' => 'Taman Kanak-kanak',
+        'SD' => 'Sekolah Dasar',
+        'SMP' => 'Sekolah Menengah Pertama',
+    ][(string) $jenjang] ?? (string) $jenjang;
+}
+
+/**
+ * Petunjuk teknis SPMB disimpan sebagai JSON agar panitia dapat memperbaruinya
+ * tanpa menyentuh kode. Mengembalikan array kosong bila berkas tidak ada atau rusak.
+ */
+function ppdb_technical_guide(): array
+{
+    $path = __DIR__.'/petunjuk_teknis_spmb_wakaf_cendekia.json';
+    if (!is_file($path)) {
+        return [];
+    }
+    $guide = json_decode((string) file_get_contents($path), true);
+    if (!is_array($guide)) {
+        return [];
+    }
+
+    $result = ['programs' => [], 'ages' => [], 'documents' => [], 'instructions' => []];
+    foreach ($guide['sections'] ?? [] as $section) {
+        if (!empty($section['programs'])) {
+            $result['programs'] = array_values(array_filter($section['programs'], 'is_string'));
+        }
+        foreach ($section['instructions'] ?? [] as $instruction) {
+            if (!empty($instruction['ageGuidelines'])) {
+                $result['ages'] = $instruction['ageGuidelines'];
+            }
+            if (!empty($instruction['requiredDocuments'])) {
+                $result['documents'] = array_values(array_filter($instruction['requiredDocuments'], 'is_string'));
+            }
+            if (!empty($instruction['title'])) {
+                $result['instructions'][] = $instruction;
+            }
+        }
+    }
+    return $result;
+}
+
 function ppdb_format_date_id(?string $date): string
 {
     if (!$date || $date === '0000-00-00') {

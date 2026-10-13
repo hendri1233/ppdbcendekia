@@ -2,6 +2,7 @@
     "require": {
         "dompdf/dompdf": "^3.1",
         "google/apiclient": "^2.20",
-        "vlucas/phpdotenv": "^5.7"
+        "vlucas/phpdotenv": "^5.7",
+        "anthropic-ai/sdk": "^0.57.0"
     }
 }

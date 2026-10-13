@@ -1,10 +1,11 @@
+/* Halaman hasil dan status. Warna dan font berasal dari css/tokens.css. */
 :root {
-    --result-ink: #182a24;
-    --result-muted: #63716b;
-    --result-green: #155b46;
-    --result-dark: #104635;
-    --result-accent: #c45b3c;
-    --result-line: #dce5de;
+    --result-ink: var(--ink);
+    --result-muted: var(--muted);
+    --result-green: var(--brand-700);
+    --result-dark: var(--brand-800);
+    --result-accent: var(--maroon-700);
+    --result-line: var(--line);
 }
 
 * {
@@ -16,10 +17,8 @@ body {
     min-height: 100vh;
     margin: 0;
     color: var(--result-ink);
-    background-color: #eef3ee;
-    background-image: linear-gradient(rgba(21, 91, 70, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(21, 91, 70, 0.035) 1px, transparent 1px);
-    background-size: 34px 34px;
-    font-family: 'DM Sans', sans-serif;
+    background-color: var(--paper);
+    font-family: var(--font-sans);
 }
 
 .result-shell {
@@ -56,14 +55,14 @@ body {
 }
 
 .result-brand strong {
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 800;
 }
 
 .result-brand small {
     color: var(--result-muted);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
 }
 
@@ -92,15 +91,15 @@ body {
 .result-eyebrow {
     margin: 0 0 11px;
     color: var(--result-accent);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
 }
 
 .result-panel h1 {
     margin: 0;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-display);
     font-size: 28px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.28;
     overflow-wrap: anywhere;
 }
@@ -108,7 +107,7 @@ body {
 .result-description {
     margin: 12px 0 22px;
     color: var(--result-muted);
-    font-size: 13px;
+    font-size: 14.5px;
     line-height: 1.65;
 }
 
@@ -125,14 +124,14 @@ body {
 
 .registration-code span {
     color: var(--result-muted);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 800;
 }
 
 .registration-code strong {
     margin-top: 5px;
     color: var(--result-green);
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 20px;
     font-weight: 800;
 }
@@ -166,7 +165,7 @@ body {
 .summary-list dt {
     flex: 0 1 auto;
     color: var(--result-muted);
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .summary-list dd {
@@ -174,7 +173,7 @@ body {
     max-width: 62%;
     margin: 0;
     text-align: right;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     overflow-wrap: anywhere;
 }
@@ -190,7 +189,7 @@ body {
     display: flex;
     align-items: center;
     color: var(--result-green);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
 }
@@ -201,8 +200,8 @@ body {
 
 .submitted-data h2 {
     margin: 12px 0 0;
-    font-family: 'Manrope', sans-serif;
-    font-size: 12px;
+    font-family: var(--font-sans);
+    font-size: 14px;
     font-weight: 800;
 }
 
@@ -220,7 +219,7 @@ body {
     color: #fff;
     background: var(--result-green);
     border-radius: 4px;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     text-decoration: none;
 }
@@ -236,7 +235,7 @@ body {
 .result-note {
     margin: 13px 0 0;
     color: var(--result-muted);
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.6;
 }
 
@@ -248,13 +247,13 @@ body {
     color: #315345;
     background: #edf4ef;
     border-left: 3px solid var(--result-green);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
 .payment-guidance strong {
     color: var(--result-ink);
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .payment-guidance.is-warning,
@@ -270,7 +269,7 @@ body {
     border: 1px solid #e9b4a5;
     border-left: 4px solid var(--result-accent);
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.55;
 }
 
@@ -282,7 +281,7 @@ body {
 
 .payment-upload label {
     color: #34443d;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
 }
 
@@ -290,7 +289,7 @@ body {
     display: block;
     margin-top: 4px;
     color: var(--result-muted);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 400;
 }
 
@@ -303,14 +302,14 @@ body {
     border: 1px solid var(--result-line);
     border-radius: 4px;
     font: inherit;
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .secondary-download {
     display: inline-block;
     margin-top: 15px;
     color: var(--result-green);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     text-underline-offset: 3px;
 }
@@ -322,7 +321,7 @@ body {
 .result-shell footer {
     margin-top: 20px;
     color: var(--result-muted);
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .result-shell footer a {
@@ -377,7 +376,7 @@ body {
 .code-hint {
     margin: -6px 0 20px;
     color: var(--result-muted);
-    font-size: 10.5px;
+    font-size: 12.5px;
     line-height: 1.6;
 }
 
@@ -435,8 +434,8 @@ body {
     background: #fff;
     border: 2px solid var(--result-line);
     border-radius: 50%;
-    font-family: 'Manrope', sans-serif;
-    font-size: 11px;
+    font-family: var(--font-sans);
+    font-size: 13px;
     font-weight: 800;
 }
 
@@ -470,8 +469,8 @@ body {
 }
 
 .journey-step strong {
-    font-family: 'Manrope', sans-serif;
-    font-size: 12.5px;
+    font-family: var(--font-sans);
+    font-size: 14px;
     font-weight: 800;
 }
 
@@ -481,7 +480,7 @@ body {
 
 .journey-step small {
     color: var(--result-muted);
-    font-size: 10.5px;
+    font-size: 12.5px;
     line-height: 1.5;
 }
 
@@ -517,8 +516,8 @@ body {
     color: #fff;
     background: var(--result-green);
     border-radius: 50%;
-    font-family: 'Manrope', sans-serif;
-    font-size: 11px;
+    font-family: var(--font-sans);
+    font-size: 13px;
     font-weight: 800;
 }
 
@@ -528,13 +527,13 @@ body {
 }
 
 .next-steps strong {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
 }
 
 .next-steps small {
     color: var(--result-muted);
-    font-size: 10.5px;
+    font-size: 12.5px;
     line-height: 1.5;
 }
 
