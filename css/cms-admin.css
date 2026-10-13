@@ -490,6 +490,40 @@
     background: var(--success-fg);
 }
 
+/* Durasi slider */
+.cms-interval {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+}
+
+.cms-interval__field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--admin-muted);
+    font-size: 14px;
+}
+
+.cms-interval input {
+    width: 72px;
+    min-height: 38px;
+    padding: 6px 10px;
+    color: var(--admin-ink);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 14.5px;
+}
+
+.cms-interval input:focus {
+    border-color: var(--link);
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
 /* Daftar slide / koleksi */
 .cms-list {
     display: grid;

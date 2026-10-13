@@ -15,6 +15,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cms_redirect($self.'#teks');
         }
 
+        if ($action === 'save_interval') {
+            $seconds = (int) ($_POST['slider_interval'] ?? 5);
+            if ($seconds < 3 || $seconds > 30) {
+                throw new RuntimeException('Durasi per slide harus antara 3 dan 30 detik.');
+            }
+            cms_save_setting($conn, 'slider_interval', (string) $seconds);
+            cms_flash('success', 'Slide di beranda kini berganti setiap '.$seconds.' detik.');
+            cms_redirect($self.'#slider');
+        }
+
         if ($action === 'save_video') {
             $url = cms_post_text('home_video_url', 255);
             if ($url !== '' && cms_youtube_id($url) === '') {
@@ -113,6 +123,13 @@ require 'admin_header.php';
     <section class="panel" id="slider">
         <div class="panel-header">
             <div><h2>Slider beranda</h2><span class="panel-subtitle"><?php echo count($slides); ?> slide · urutan kecil tampil lebih dulu. Tanpa slide, beranda memakai foto wisuda bawaan.</span></div>
+            <form class="cms-interval" method="post" data-loading-form>
+                <?php echo cms_csrf_field(); ?>
+                <input type="hidden" name="action" value="save_interval">
+                <label class="cms-label" for="slider-interval">Durasi per slide</label>
+                <span class="cms-interval__field"><input id="slider-interval" name="slider_interval" type="number" min="3" max="30" step="1" value="<?php echo (int) cms_setting($conn, 'slider_interval', '5'); ?>" required><span>detik</span></span>
+                <button class="button-secondary" type="submit">Simpan</button>
+            </form>
         </div>
         <form class="cms-form cms-form--inline" method="post" enctype="multipart/form-data" data-loading-form>
             <?php echo cms_csrf_field(); ?>

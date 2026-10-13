@@ -89,6 +89,8 @@
         const dots = Array.from(slider.querySelectorAll('[data-slide-dot]'));
         const caption = slider.querySelector('[data-slide-caption]');
         const more = slider.querySelector('[data-slide-link]');
+        // Durasi per slide diatur admin (detik), bawaan 5 detik.
+        const interval = Math.min(30, Math.max(3, Number(slider.dataset.interval) || 5)) * 1000;
         let index = 0;
         let timer = null;
         const show = (next) => {
@@ -108,7 +110,7 @@
         const stop = () => { clearInterval(timer); timer = null; };
         const start = () => {
             if (reduceMotion || slides.length < 2 || timer) return;
-            timer = setInterval(() => show(index + 1), 6500);
+            timer = setInterval(() => show(index + 1), interval);
         };
         slider.querySelector('[data-slide-prev]')?.addEventListener('click', () => { stop(); show(index - 1); });
         slider.querySelector('[data-slide-next]')?.addEventListener('click', () => { stop(); show(index + 1); });

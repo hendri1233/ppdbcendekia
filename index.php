@@ -49,7 +49,7 @@ public_page_start($conn, [
     ]],
 ]);
 ?>
-<section class="hero-slider" aria-roledescription="carousel" aria-label="Sorotan kegiatan" data-slider>
+<section class="hero-slider" aria-roledescription="carousel" aria-label="Sorotan kegiatan" data-slider data-interval="<?= max(3, min(30, (int) cms_setting($conn, 'slider_interval', '5'))) ?>">
     <div class="hero-slider__track">
         <?php foreach ($slides as $index => $slide) { ?>
             <figure class="hero-slide<?= $index === 0 ? ' is-active' : '' ?>" data-slide data-caption="<?= h(trim(($slide['title'] ? $slide['title'].' — ' : '').($slide['caption'] ?? ''), ' —')) ?>" data-link="<?= h($slide['link_url'] ?? '') ?>" aria-roledescription="slide" aria-label="<?= $index + 1 ?> dari <?= count($slides) ?>"<?= $index === 0 ? '' : ' aria-hidden="true"' ?>>
