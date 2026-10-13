@@ -1,0 +1,116 @@
+{
+  "title": "Informasi & Petunjuk Teknis Seleksi Penerimaan Peserta Didik Baru (SPMB)",
+  "organization": "Yayasan Wakaf Cendekia Takengon",
+  "academicYear": "2026/2027",
+  "openingGreeting": "اَلسَّلاَمُ عَلَيْكُمْ وَرَحْمَةُ اللهِ وَبَرَكَاتُهُ",
+  "sections": [
+    {
+      "heading": "Pengantar",
+      "paragraphs": [
+        "Ayah/Bunda yang dirahmati Allah SWT,",
+        "Selamat datang dan terima kasih sudah berkenan mengikuti tahapan pertama dalam proses Seleksi Penerimaan Peserta Didik Baru (SPMB) di bawah naungan Yayasan Wakaf Cendekia Takengon.",
+        "Memasuki tahun ajaran 2026/2027, proses SPMB kami rancang dengan pola pendataan yang sangat detil. Dengan harapan semua informasi yang dibutuhkan untuk Data Pokok Peserta Didik (DAPODIK) di Dinas Pendidikan maupun data pendukung lainnya dapat kami ketahui secara lengkap dan lebih awal.",
+        "Data tersebut sangat berguna bagi kami untuk mempertimbangkan tingkat keseriusan orang tua dan sejauh mana orang tua siap bekerja sama serta mendukung berbagai program yang akan dijalankan ke depannya bersama pihak sekolah. Data ini juga secara otomatis akan kami gunakan pada jenjang sekolah berikutnya tanpa perlu ada pengulangan, kecuali yang membutuhkan pembaruan.",
+        "Untuk itu, kami sangat berharap Ayah/Bunda mengisinya dengan jelas, lengkap, dan jujur. Kami juga menjamin bahwa data tersebut insya Allah aman terjaga karena bersifat pribadi dan sangat rahasia."
+      ]
+    },
+    {
+      "heading": "Program Penawaran Calon Wali Siswa",
+      "description": "Berikut adalah beberapa program yang akan kami tawarkan kepada calon wali siswa yang akan kami seleksi berdasarkan syarat dan ketentuan yang ditetapkan:",
+      "programs": [
+        "Program Beasiswa Kurang Mampu/Yatim",
+        "Program Orang Tua Asuh dan Subsidi Silang",
+        "Program Siswa Indent via Dana Wakaf Berjangka",
+        "Program Wakaf Profesi dan Konseling Keluarga",
+        "Program Tabungan Wakaf (Persiapan dana sekolah ananda selanjutnya)"
+      ]
+    },
+    {
+      "heading": "Petunjuk Teknis dan Persetujuan",
+      "intro": "Ayah/Bunda, sebelum melangkah lebih jauh, mohon memperhatikan beberapa petunjuk berikut ini:",
+      "instructions": [
+        {
+          "title": "Niat karena Allah",
+          "text": "Jangan lupa meniatkan semua proses karena Allah dan menyerahkan hasil akhir juga kepada Allah SWT dengan membaca basmallah."
+        },
+        {
+          "title": "Pelibatan Pasangan",
+          "text": "Sebaiknya melibatkan pasangan atau siapa pun yang terlibat dalam pengasuhan ananda karena data-data dan informasi yang diperlukan saling terkait."
+        },
+        {
+          "title": "Acuan Usia Pendaftaran (Dinas Pendidikan)",
+          "ageGuidelines": [
+            {
+              "unit": "KB (Kelompok Bermain)",
+              "minimumYears": 0,
+              "maximumYears": 2
+            },
+            {
+              "unit": "TPA (Taman Penitipan Anak)",
+              "minimumYears": 2,
+              "maximumYears": 4
+            },
+            {
+              "unit": "TK A",
+              "minimumYears": 4,
+              "maximumYears": 5,
+              "note": "Usia ananda genap 4 tahun terhitung tanggal 1 Juli di setiap tahunnya."
+            },
+            {
+              "unit": "TK B",
+              "minimumYears": 5,
+              "maximumYears": 6,
+              "note": "Usia ananda genap 5 tahun terhitung tanggal 1 Juli di setiap tahunnya."
+            }
+          ]
+        },
+        {
+          "title": "Membaca SOP",
+          "text": "Mohon membaca seluruh Standar Operasional Prosedur (SOP) yang berlaku. Jika ada yang tidak dipahami, silakan menghubungi panitia.",
+          "note": "SOP terlampir dalam file setelah petunjuk awal ini."
+        },
+        {
+          "title": "Kerahasiaan Data",
+          "text": "Informasi yang ada dalam formulir ini bersifat pribadi dan sangat rahasia. Panitia menjamin dengan penuh rasa tanggung jawab tidak akan menyebarluaskan dan hanya akan mempergunakan sebagaimana mestinya."
+        },
+        {
+          "title": "Persetujuan Ketentuan",
+          "text": "Ketika Ayah/Bunda sudah selesai mengisi formulir dan mengirimkan semua data kepada panitia, kami menganggap Ayah/Bunda sudah siap menerima dan setuju dengan SOP serta ketentuan yang ditetapkan dalam seluruh tahapan proses seleksi SPMB ini."
+        },
+        {
+          "title": "Waktu Pengisian & Kelengkapan Administrasi",
+          "text": "Jika poin 1–6 telah dibaca dan dipahami, silakan menyediakan waktu terbaik (sekitar 1 jam) untuk mengisi seluruh data. Kelengkapan administrasi yang diperlukan meliputi:",
+          "requiredDocuments": [
+            "Data sekolah sebelumnya",
+            "NISN dari sekolah sebelumnya",
+            "Akte kelahiran ananda",
+            "Kartu Keluarga (KK)",
+            "KTP kedua orang tua atau KTP wali pengasuh (jika ananda diasuh pihak lain)",
+            "Print out NISN (apabila ada di sekolah sebelumnya)"
+          ]
+        },
+        {
+          "title": "Pertimbangan Kembali",
+          "text": "Pada poin ini silakan Ayah/Bunda mempertimbangkan kembali bersama pasangan, dan masih diberi kesempatan untuk setuju melanjutkan atau membatalkan pendaftaran jika ada hal-hal/aturan yang dirasa kurang berkenan."
+        },
+        {
+          "title": "Apresiasi & Doa",
+          "text": "Terima kasih atas kerja samanya. Semoga Allah SWT memberi petunjuk untuk menetapkan keputusan dan memberi kemudahan untuk melalui tahap berikutnya jika Ayah/Bunda telah memilih untuk melanjutkan."
+        },
+        {
+          "title": "Semangat Perjuangan",
+          "text": "Selamat berjuang Ayah/Bunda, semoga Allah meridhoi karena ini adalah bukti cinta kita pada amanah yang dititipkan oleh-Nya."
+        }
+      ]
+    },
+    {
+      "heading": "Penutup",
+      "paragraph": "Demikian sekilas informasi dari kami, semoga Allah SWT berkenan memberkahi setiap alasan dan niat baik kita semua. Kepada Allah SWT kita mohonkan petunjuk, semoga dipilihkan hasil akhir terbaik untuk semua pihak yang berjuang menyiapkan generasi terbaik insya Allah."
+    }
+  ],
+  "closingGreeting": "وَالسَّلاَمُ عَلَيْكُمْ وَرَحْمَةُ اللهِ وَبَرَكَاتُهُ",
+  "signOff": {
+    "greeting": "Salam Ta'dzim kami,",
+    "from": "Tim Panitia / Manajemen Yayasan Wakaf Cendekia Takengon"
+  }
+}
