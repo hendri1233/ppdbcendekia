@@ -190,19 +190,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'send_formulir_link') {
             try {
                 mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, "SELECT status_ppdb FROM tb_pendaftaran WHERE id_pendaftaran=? FOR UPDATE");
+                $lock = mysqli_prepare($conn, "SELECT status_ppdb,status_data,status_pembayaran FROM tb_pendaftaran WHERE id_pendaftaran=? FOR UPDATE");
                 mysqli_stmt_bind_param($lock, 's', $registrationId);
-                mysqli_stmt_execute($lock);
+                if (!mysqli_stmt_execute($lock)) {
+                    mysqli_stmt_close($lock);
+                    throw new RuntimeException('Status pendaftaran belum dapat diverifikasi.');
+                }
                 $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
                 mysqli_stmt_close($lock);
-                if (!$locked || !in_array($locked['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true)) {
+                $withdrawalRecovery = $locked
+                    && $locked['status_ppdb'] === 'ditolak'
+                    && $locked['status_data'] === 'belum_diperiksa'
+                    && $locked['status_pembayaran'] === 'terverifikasi';
+                if (
+                    !$locked
+                    || $locked['status_pembayaran'] !== 'terverifikasi'
+                    || (!in_array($locked['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true) && !$withdrawalRecovery)
+                ) {
                     throw new RuntimeException('Tautan formulir hanya dapat disiapkan setelah pembayaran disetujui.');
                 }
-                $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb=IF(status_ppdb='pembayaran_terverifikasi','menunggu_formulir',status_ppdb) WHERE id_pendaftaran=?");
+                $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='menunggu_formulir' WHERE id_pendaftaran=?");
                 mysqli_stmt_bind_param($update, 's', $registrationId);
-                mysqli_stmt_execute($update);
+                if (!mysqli_stmt_execute($update)) {
+                    mysqli_stmt_close($update);
+                    throw new RuntimeException('Status pendaftaran belum dapat diperbarui.');
+                }
                 mysqli_stmt_close($update);
-                mysqli_commit($conn);
+                if (!mysqli_commit($conn)) {
+                    throw new RuntimeException('Status pendaftaran belum dapat diperbarui.');
+                }
 
                 $shareLinks = ppdb_wablas_send_links(ppdb_prepare_formulir_link($conn, $registrationId));
                 $shareTitle = 'Tautan formulir lengkap siap dikirim. Pilih nomor di bawah untuk membuka WhatsApp.';
@@ -591,6 +607,16 @@ require 'admin_header.php';
             <p class="workflow-hint">Peserta telah diterima pada unit ini sesuai urutan dan kuota.</p>
         <?php } elseif ($participant['status_ppdb'] === 'daftar_tunggu') { ?>
             <p class="workflow-hint">Peserta berada pada daftar tunggu. Hubungi bila tersedia kursi sesuai antrean.</p>
+        <?php } elseif ($participant['status_ppdb'] === 'ditolak' && $participant['status_data'] === 'belum_diperiksa' && $participant['status_pembayaran'] === 'terverifikasi') { ?>
+            <p class="workflow-hint">Pendaftar memilih tidak melanjutkan pengisian formulir. Pilihan ini sudah tercatat untuk panitia. Jika pembatalan terjadi karena salah klik, Anda dapat mengirim ulang tautan formulir di bawah ini.</p>
+            <div class="workflow-actions">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                    <input type="hidden" name="workflow_action" value="send_formulir_link">
+                    <button class="button-primary" type="submit">Kirim ulang tautan formulir</button>
+                </form>
+            </div>
         <?php } elseif ($participant['status_ppdb'] === 'ditolak') { ?>
             <p class="workflow-hint">Pendaftaran ditolak. Peserta perlu menghubungi panitia untuk tindak lanjut.</p>
         <?php } ?>

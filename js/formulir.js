@@ -17,6 +17,10 @@
     const stepButtons = Array.from(document.querySelectorAll('[data-step-target]'));
     const stepValue = form ? form.querySelector('[data-step-value]') : null;
     const MAX_FILE_BYTES = 8 * 1024 * 1024;
+    const finalIntroDialog = document.querySelector('[data-final-intro-dialog]');
+    const finalIntroContinue = document.querySelector('[data-final-intro-continue]');
+    const finalIntroWarning = document.querySelector('[data-final-intro-warning]');
+    const declineForm = document.querySelector('[data-decline-form]');
 
     function formatBytes(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -530,6 +534,32 @@
             }
             if (materialConfirmValue) materialConfirmValue.value = '1';
             warning.remove();
+            if (finalIntroDialog && typeof finalIntroDialog.showModal === 'function') {
+                finalIntroDialog.showModal();
+            } else if (finalIntroDialog) {
+                finalIntroDialog.setAttribute('open', '');
+            }
+        });
+    }
+
+    if (finalIntroContinue) {
+        finalIntroContinue.addEventListener('click', function () {
+            const materialsReady = materialNext && materialNext.dataset.materialsReady === '1';
+            if (!materialsReady) {
+                if (finalIntroWarning) {
+                    finalIntroWarning.textContent = 'Formulir belum dapat dibuka karena brosur, rincian biaya, dan SOP untuk unit dan tahun ajaran ini belum lengkap. Silakan hubungi panitia PPDB agar dilengkapi.';
+                    finalIntroWarning.hidden = false;
+                    finalIntroWarning.setAttribute('tabindex', '-1');
+                    finalIntroWarning.focus();
+                }
+                return;
+            }
+            if (finalIntroWarning) finalIntroWarning.hidden = true;
+            if (finalIntroDialog && typeof finalIntroDialog.close === 'function' && finalIntroDialog.open) {
+                finalIntroDialog.close();
+            } else if (finalIntroDialog) {
+                finalIntroDialog.removeAttribute('open');
+            }
             materialStage.hidden = true;
             formSection.hidden = false;
             showStep(currentStep, true);
@@ -537,8 +567,17 @@
         });
     }
 
-    /* ---------- Berkas: pratinjau nama dan unggah langsung ---------- */
+    if (declineForm) {
+        for (const button of document.querySelectorAll('[data-intro-decline]')) {
+            button.addEventListener('click', function () {
+                button.disabled = true;
+                button.textContent = 'Menyimpan pilihan…';
+                declineForm.submit();
+            });
+        }
+    }
 
+    /* ---------- Berkas: pratinjau nama dan unggah langsung ---------- */
     for (const input of document.querySelectorAll('.file-drop input[type="file"]')) {
         const card = input.closest('[data-upload-card]');
         const nameField = card ? card.querySelector('[data-file-name]') : null;

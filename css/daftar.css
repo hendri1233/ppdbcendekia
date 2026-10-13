@@ -1037,6 +1037,125 @@ a {
     font-weight: 600;
 }
 
+.intro-dialog {
+    width: min(100% - 32px, 620px);
+    max-height: calc(100vh - 32px);
+}
+
+.intro-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+@supports (height: 100dvh) {
+    .intro-dialog {
+        max-height: calc(100dvh - 32px);
+    }
+}
+
+.intro-dialog .confirm-badge {
+    max-width: 170px;
+    white-space: normal;
+    text-align: right;
+}
+
+.intro-dialog__body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 18px 24px 0;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.intro-dialog__body h3 {
+    margin: 22px 0 8px;
+    color: var(--green-dark);
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.intro-dialog__body h3:first-child {
+    margin-top: 0;
+}
+
+.intro-dialog__body h4 {
+    margin: 16px 0 5px;
+    font-size: 13px;
+}
+
+.intro-dialog__body p {
+    margin: 0 0 12px;
+}
+
+.intro-dialog__body ul,
+.intro-dialog__body ol {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 14px;
+    padding-left: 20px;
+}
+
+.intro-dialog__section {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+}
+
+.intro-dialog__instruction + .intro-dialog__instruction {
+    margin-top: 12px;
+}
+
+.intro-dialog__greeting {
+    color: var(--green-dark);
+    font-weight: 700;
+    text-align: center;
+}
+
+.intro-dialog__note {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.intro-dialog__body .confirm-card__note {
+    padding: 2px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.intro-dialog__unit-note {
+    display: grid;
+    gap: 6px;
+    margin: 10px 0 14px;
+    padding: 12px 14px 12px 32px;
+    color: var(--green-dark);
+    background: #edf5ef;
+    border-left: 3px solid var(--green);
+    border-radius: 3px;
+}
+
+.intro-dialog__decline {
+    color: #8a3b22;
+    border-color: #e4b9ad;
+}
+
+.intro-dialog .confirm-card__actions {
+    flex: 0 0 auto;
+}
+
+.intro-dialog [data-final-intro-continue] {
+    grid-column: 1 / -1;
+}
+
+.intro-dialog [data-final-intro-warning] {
+    grid-column: 1 / -1;
+}
+
+.intro-dialog form {
+    display: none;
+}
+
 .materials-stage {
     display: grid;
     gap: 18px;

@@ -130,10 +130,16 @@ function formulir_load_documents(mysqli $conn, string $registrationId): array
 $code = strtoupper(trim($_GET['kode'] ?? $_POST['kode'] ?? ''));
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
 $errors = [];
+$notice = '';
+$sheetSyncFailed = false;
 $registration = formulir_lookup($conn, $code);
 $authorized = $registration !== null && formulir_token_matches($registration, $token);
 $formOpen = $authorized && formulir_is_open($registration);
 $alreadySubmitted = $authorized && in_array($registration['status_ppdb'], ['formulir_terisi', 'diterima', 'daftar_tunggu'], true);
+$isRegistrantWithdrawal = $authorized
+    && $registration['status_ppdb'] === 'ditolak'
+    && $registration['status_data'] === 'belum_diperiksa'
+    && $registration['status_pembayaran'] === 'terverifikasi';
 $materials = [];
 if ($authorized && $formOpen) {
     $materialQuery = mysqli_prepare($conn, 'SELECT id,jenis_materi,isi_html,nama_file_asli,mime_file_asli,nama_file_pratinjau,path_file_pratinjau,mime_file_pratinjau FROM tb_ppdb_materials WHERE kode_unit=? AND th_ajaran=?');
@@ -260,8 +266,82 @@ if ($registration && !$authorized && preg_match('/^P[0-9]{9}$/', $code)) {
 // Aturan wajib/opsional dari super admin dan isian khusus jenjang (mis. TK A/B).
 $dataSections = formulir_sections_for($conn, (string) ($registration['jenjang'] ?? ''));
 $inputFields = formulir_input_fields($dataSections);
+$guidePath = __DIR__ . '/petunjuk_teknis_spmb_wakaf_cendekia.json';
+$spmbGuide = null;
+$guideLoadError = '';
+if (!is_file($guidePath)) {
+    $guideLoadError = 'file tidak ditemukan';
+} else {
+    $guideContents = file_get_contents($guidePath);
+    if ($guideContents === false) {
+        $guideLoadError = 'file tidak dapat dibaca';
+    } else {
+        $spmbGuide = json_decode($guideContents, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($spmbGuide)) {
+            $guideLoadError = 'JSON tidak valid: ' . json_last_error_msg();
+        }
+    }
+}
+$spmbGuideAvailable = $guideLoadError === '';
+if (!$spmbGuideAvailable) {
+    error_log('Unable to load the SPMB guide JSON from ' . $guidePath . ': ' . $guideLoadError);
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') === 'decline_formulir') {
+    if (!$authorized) {
+        $errors[] = 'Tautan pendaftaran tidak sah. Gunakan tautan resmi dari panitia.';
+    } elseif (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Sesi formulir berakhir. Muat ulang halaman sebelum mencoba kembali.';
+    } else {
+        try {
+            mysqli_begin_transaction($conn);
+            $lock = mysqli_prepare($conn, 'SELECT status_ppdb,status_pembayaran FROM tb_pendaftaran WHERE id_pendaftaran=? FOR UPDATE');
+            mysqli_stmt_bind_param($lock, 's', $registration['id_pendaftaran']);
+            if (!mysqli_stmt_execute($lock)) {
+                mysqli_stmt_close($lock);
+                throw new RuntimeException('Status pendaftaran belum dapat diverifikasi. Silakan coba kembali.');
+            }
+            $lockedStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
+            mysqli_stmt_close($lock);
+            if (
+                !$lockedStatus
+                || !in_array($lockedStatus['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true)
+                || $lockedStatus['status_pembayaran'] !== 'terverifikasi'
+            ) {
+                throw new RuntimeException('Pendaftaran ini tidak dapat dibatalkan pada tahap saat ini. Hubungi panitia PPDB.');
+            }
+
+            $decline = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='ditolak',status_data='belum_diperiksa',data_diperiksa_oleh=NULL,data_diperiksa_pada=NULL WHERE id_pendaftaran=?");
+            mysqli_stmt_bind_param($decline, 's', $registration['id_pendaftaran']);
+            if (!mysqli_stmt_execute($decline)) {
+                mysqli_stmt_close($decline);
+                throw new RuntimeException('Pilihan Anda belum dapat disimpan. Silakan coba kembali.');
+            }
+            mysqli_stmt_close($decline);
+            enqueue_google_sheets_registration($conn, $registration['id_pendaftaran']);
+            if (!mysqli_commit($conn)) {
+                throw new RuntimeException('Pilihan Anda belum dapat disimpan. Silakan coba kembali.');
+            }
+
+            $sheetSyncFailed = !sync_google_sheets_registration($conn, $registration['id_pendaftaran']);
+            $registration['status_ppdb'] = 'ditolak';
+            $registration['status_data'] = 'belum_diperiksa';
+            $registration['status_pembayaran'] = $lockedStatus['status_pembayaran'];
+            $formOpen = false;
+            $isRegistrantWithdrawal = true;
+            $notice = 'Pilihan Anda telah dicatat di sistem dan tersedia pada panel panitia PPDB. Jika Anda salah memilih, panitia dapat mengirimkan tautan formulir kembali.';
+        } catch (Throwable $exception) {
+            mysqli_rollback($conn);
+            if ($exception instanceof RuntimeException) {
+                $errors[] = $exception->getMessage();
+            } else {
+                error_log('PPDB formulir withdrawal failed: '.$exception->getMessage());
+                $errors[] = 'Pilihan Anda belum dapat disimpan. Silakan coba kembali atau hubungi panitia.';
+            }
+        }
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
     if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Sesi formulir berakhir. Muat ulang halaman sebelum mencoba kembali.';
     }
@@ -526,6 +606,17 @@ header('Referrer-Policy: no-referrer');
                 </form>
             </section>
 
+        <?php } elseif (!$formOpen && $isRegistrantWithdrawal) { ?>
+            <section class="gate-panel">
+                <p class="eyebrow">STATUS PILIHAN ANDA</p>
+                <h1>Pendaftaran tidak<br><span>dilanjutkan.</span></h1>
+                <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
+                <?php if ($sheetSyncFailed) { ?><div class="error-summary" role="alert">Status pendaftaran sudah tersimpan dan terlihat di panel admin, tetapi sinkronisasi ke spreadsheet gagal. Panitia dapat memeriksanya langsung pada data peserta.</div><?php } ?>
+                <?php if ($errors) { ?><div class="error-summary" role="alert"><ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul></div><?php } ?>
+                <p class="intro-copy">Panitia PPDB telah menerima informasi bahwa Anda memilih tidak melanjutkan pengisian formulir untuk <?php echo h($registration['nama_unit'] ?? 'unit pilihan Anda'); ?>. Formulir sementara tidak dapat dibuka. Jika pilihan ini tidak disengaja, silakan hubungi panitia untuk meminta tautan pengisian dikirim kembali.</p>
+                <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran <span aria-hidden="true">&rarr;</span></a>
+            </section>
+
         <?php } elseif (!$formOpen) { ?>
             <section class="gate-panel">
                 <p class="eyebrow">Formulir belum tersedia</p>
@@ -566,6 +657,99 @@ header('Referrer-Policy: no-referrer');
                 </div>
                 <p class="confirm-card__note" data-confirm-note>Data di atas tidak dapat diubah pada tahap ini. Pilih <strong>Ya</strong> untuk membaca brosur, rincian biaya, dan SOP terlebih dahulu.</p>
                 <input type="hidden" name="konfirmasi_lanjut" value="<?php echo (($formValues['konfirmasi_lanjut'] ?? '') === '1') ? '1' : ''; ?>" data-confirm-value form="form-utama">
+            </dialog>
+
+            <dialog class="confirm-dialog intro-dialog" data-final-intro-dialog aria-labelledby="pengantar-lanjutan-judul">
+                <div class="confirm-card__head">
+                    <div>
+                        <p class="eyebrow">PENGANTAR SEBELUM MENGISI</p>
+                        <h2 id="pengantar-lanjutan-judul">Mohon siapkan diri dan kelengkapan</h2>
+                    </div>
+                    <span class="confirm-badge"><?php echo h($registration['nama_unit'] ?? 'Unit pilihan'); ?> · <?php echo h($registration['th_ajaran']); ?></span>
+                </div>
+                <div class="intro-dialog__body" id="pengantar-lanjutan-ringkas">
+                    <?php if ($spmbGuideAvailable) { ?>
+                        <p class="intro-dialog__greeting"><?php echo h($spmbGuide['openingGreeting'] ?? ''); ?></p>
+                        <?php foreach (($spmbGuide['sections'] ?? []) as $guideSection) { ?>
+                            <section class="intro-dialog__section">
+                                <h3><?php
+                                    $heading = (string) ($guideSection['heading'] ?? '');
+                                    $guideAcademicYear = (string) ($spmbGuide['academicYear'] ?? '');
+                                    echo h($guideAcademicYear !== '' ? str_replace($guideAcademicYear, $registration['th_ajaran'], $heading) : $heading);
+                                ?></h3>
+                                <?php foreach (($guideSection['paragraphs'] ?? []) as $paragraph) { ?>
+                                    <?php
+                                        $paragraph = (string) $paragraph;
+                                        echo '<p>'.h($guideAcademicYear !== '' ? str_replace($guideAcademicYear, $registration['th_ajaran'], $paragraph) : $paragraph).'</p>';
+                                    ?>
+                                <?php } ?>
+                                <?php if (!empty($guideSection['description'])) { ?><p><?php echo h($guideSection['description']); ?></p><?php } ?>
+                                <?php if (!empty($guideSection['programs'])) { ?>
+                                    <ol>
+                                        <?php foreach ($guideSection['programs'] as $program) { ?><li><?php echo h($program); ?></li><?php } ?>
+                                    </ol>
+                                <?php } ?>
+                                <?php if (!empty($guideSection['intro'])) { ?><p><?php echo h($guideSection['intro']); ?></p><?php } ?>
+                                <?php foreach (($guideSection['instructions'] ?? []) as $instruction) { ?>
+                                    <article class="intro-dialog__instruction">
+                                        <h4><?php echo h($instruction['title'] ?? ''); ?></h4>
+                                        <?php if (!empty($instruction['text'])) {
+                                            $instructionText = (string) $instruction['text'];
+                                            echo '<p>'.h($guideAcademicYear !== '' ? str_replace($guideAcademicYear, $registration['th_ajaran'], $instructionText) : $instructionText).'</p>';
+                                        } ?>
+                                        <?php if (!empty($instruction['note'])) { ?><p class="intro-dialog__note"><?php echo h($instruction['note']); ?></p><?php } ?>
+                                        <?php if (!empty($instruction['ageGuidelines'])) {
+                                            $unitGuidelines = array_filter(
+                                                $instruction['ageGuidelines'],
+                                                static function (array $guideline) use ($registration): bool {
+                                                    $unit = (string) ($registration['jenjang'] ?? '');
+                                                    return $unit === 'TK'
+                                                        ? str_starts_with((string) ($guideline['unit'] ?? ''), 'TK ')
+                                                        : strtoupper((string) ($guideline['unit'] ?? '')) === $unit
+                                                            || str_starts_with((string) ($guideline['unit'] ?? ''), $unit . ' ');
+                                                }
+                                            );
+                                            if ($unitGuidelines) { ?>
+                                                <ul class="intro-dialog__unit-note">
+                                                    <?php foreach ($unitGuidelines as $guideline) { ?>
+                                                        <li>
+                                                            <strong><?php echo h($guideline['unit'] ?? ''); ?>:</strong>
+                                                            <?php echo h('Usia ' . ($guideline['minimumYears'] ?? '') . ' sampai ' . ($guideline['maximumYears'] ?? '') . ' tahun.'); ?>
+                                                            <?php if (!empty($guideline['note'])) { ?> <?php echo h($guideline['note']); ?><?php } ?>
+                                                        </li>
+                                                    <?php } ?>
+                                                </ul>
+                                            <?php } else { ?>
+                                                <p class="intro-dialog__unit-note">Panduan usia untuk jenjang <?php echo h($registration['jenjang'] ?? $registration['nama_unit'] ?? 'pilihan Anda'); ?> tidak dicantumkan pada petunjuk ini. Silakan konfirmasi kepada panitia.</p>
+                                            <?php }
+                                        } ?>
+                                        <?php if (!empty($instruction['requiredDocuments'])) { ?>
+                                            <ul>
+                                                <?php foreach ($instruction['requiredDocuments'] as $document) { ?><li><?php echo h($document); ?></li><?php } ?>
+                                            </ul>
+                                        <?php } ?>
+                                    </article>
+                                <?php } ?>
+                                <?php if (!empty($guideSection['paragraph'])) { ?><p><?php echo h($guideSection['paragraph']); ?></p><?php } ?>
+                            </section>
+                        <?php } ?>
+                        <p class="intro-dialog__greeting"><?php echo h($spmbGuide['closingGreeting'] ?? ''); ?></p>
+                        <p><strong><?php echo h($spmbGuide['signOff']['greeting'] ?? ''); ?></strong><br><?php echo h($spmbGuide['signOff']['from'] ?? ''); ?></p>
+                    <?php } else { ?>
+                        <p class="error-summary" role="alert">Petunjuk teknis belum dapat dimuat. Silakan hubungi panitia PPDB sebelum melanjutkan.</p>
+                    <?php } ?>
+                </div>
+                <div class="confirm-card__actions">
+                    <p class="materials-stage__notice" data-final-intro-warning role="alert" hidden></p>
+                    <button type="button" class="choice-yes" data-final-intro-continue <?php echo $spmbGuideAvailable ? '' : 'disabled'; ?>>Saya memahami, mulai mengisi</button>
+                    <button type="button" class="choice-no intro-dialog__decline" data-intro-decline>Tidak lanjut</button>
+                </div>
+                <form method="post" data-decline-form>
+                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                    <input type="hidden" name="kode" value="<?php echo h($registration['id_pendaftaran']); ?>">
+                    <input type="hidden" name="token" value="<?php echo h($token); ?>">
+                    <input type="hidden" name="workflow_action" value="decline_formulir">
+                </form>
             </dialog>
 
             <section class="materials-stage" id="materi-pendaftaran" data-material-stage hidden aria-labelledby="materi-title">
@@ -626,7 +810,7 @@ header('Referrer-Policy: no-referrer');
                     <input type="checkbox" data-materials-read>
                     <span>Saya telah membaca brosur, rincian biaya, dan SOP di atas.</span>
                 </label>
-                <button class="submit-button materials-next" type="button" data-materials-next <?php echo !$allMaterialsPublished ? 'disabled' : ''; ?>>Lanjut ke formulir <span aria-hidden="true">&rarr;</span></button>
+                <button class="submit-button materials-next" type="button" data-materials-next data-materials-ready="<?php echo $allMaterialsPublished ? '1' : '0'; ?>" <?php echo !$allMaterialsPublished ? 'disabled' : ''; ?>>Lanjut ke formulir <span aria-hidden="true">&rarr;</span></button>
             </section>
 
             <div id="formulir-terbuka" <?php echo $showFullForm ? '' : 'hidden'; ?>>
