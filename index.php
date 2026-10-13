@@ -53,7 +53,7 @@ public_page_start($conn, [
     <div class="hero-slider__track">
         <?php foreach ($slides as $index => $slide) { ?>
             <figure class="hero-slide<?= $index === 0 ? ' is-active' : '' ?>" data-slide data-caption="<?= h(trim(($slide['title'] ? $slide['title'].' — ' : '').($slide['caption'] ?? ''), ' —')) ?>" data-link="<?= h($slide['link_url'] ?? '') ?>" aria-roledescription="slide" aria-label="<?= $index + 1 ?> dari <?= count($slides) ?>"<?= $index === 0 ? '' : ' aria-hidden="true"' ?>>
-                <img src="<?= h($slide['image_path']) ?>" alt="<?= h($slide['caption'] ?: ($slide['title'] ?: 'Kegiatan Yayasan Wakaf Cendekia Takengon')) ?>" width="1600" height="900"<?= $index === 0 ? ' fetchpriority="high"' : ' loading="lazy"' ?>>
+                <img src="<?= h($slide['image_path']) ?>" alt="<?= h($slide['caption'] ?: ($slide['title'] ?: 'Kegiatan Yayasan Wakaf Cendekia Takengon')) ?>" width="1600" height="900"<?= $index === 0 ? ' fetchpriority="high"' : ' fetchpriority="low"' ?> decoding="async">
             </figure>
         <?php } ?>
     </div>
@@ -78,11 +78,6 @@ public_page_start($conn, [
                 <?php foreach ($slides as $index => $slide) { ?>
                     <button type="button" data-slide-dot aria-label="Tampilkan slide <?= $index + 1 ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"></button>
                 <?php } ?>
-            </div>
-            <div class="slider-arrows">
-                <button class="slider-toggle" type="button" data-slide-toggle aria-pressed="false" aria-label="Jeda slide otomatis"><?= public_icon('pause') ?><?= public_icon('play') ?></button>
-                <button type="button" data-slide-prev aria-label="Slide sebelumnya"><?= public_icon('prev') ?></button>
-                <button type="button" data-slide-next aria-label="Slide berikutnya"><?= public_icon('next') ?></button>
             </div>
         </div>
     <?php } ?>

@@ -81,55 +81,79 @@
         });
     }
 
-    // --- Slider beranda ---
+    // --- Slider beranda: crossfade otomatis ---
     const slider = document.querySelector('[data-slider]');
     if (slider) {
         const slides = Array.from(slider.querySelectorAll('[data-slide]'));
         const dots = Array.from(slider.querySelectorAll('[data-slide-dot]'));
         const caption = slider.querySelector('[data-slide-caption]');
+        const captionBox = caption ? caption.parentElement : null;
         const more = slider.querySelector('[data-slide-link]');
-        // Durasi per slide diatur admin (detik), bawaan 5 detik.
+        // Durasi tampil per slide diatur admin (detik), bawaan 5 detik.
         const interval = Math.min(30, Math.max(3, Number(slider.dataset.interval) || 5)) * 1000;
+        const fade = 1400;
+        slider.style.setProperty('--slide-fade', fade + 'ms');
         let index = 0;
         let timer = null;
-        const show = (next) => {
-            index = (next + slides.length) % slides.length;
-            slides.forEach((slide, i) => {
-                slide.classList.toggle('is-active', i === index);
-                slide.setAttribute('aria-hidden', String(i !== index));
-            });
-            dots.forEach((dot, i) => dot.setAttribute('aria-current', String(i === index)));
-            if (caption) caption.textContent = slides[index].dataset.caption || '';
-            if (more) {
-                const link = slides[index].dataset.link || '';
-                more.hidden = !link;
-                if (link) more.href = link;
-            }
+        let leaveTimer = null;
+        let captionTimer = null;
+
+        const updateCaption = (slide) => {
+            if (!caption) return;
+            const apply = () => {
+                caption.textContent = slide.dataset.caption || '';
+                if (more) {
+                    const link = slide.dataset.link || '';
+                    more.hidden = !link;
+                    if (link) more.href = link;
+                }
+                captionBox.classList.remove('is-fading');
+            };
+            clearTimeout(captionTimer);
+            captionBox.classList.add('is-fading');
+            captionTimer = setTimeout(apply, 450);
         };
-        // Autoplay tetap berjalan; pengunjung menghentikannya lewat tombol jeda.
-        // Mode "kurangi gerakan" hanya menghilangkan efek transisi (lihat CSS).
-        const toggle = slider.querySelector('[data-slide-toggle]');
-        let paused = false;
+
+        // Gambar didekode lebih dulu agar pudar tidak menampilkan bingkai kosong.
+        const ready = (slide) => {
+            const image = slide.querySelector('img');
+            if (!image || (image.complete && image.naturalWidth > 0)) return Promise.resolve();
+            return (image.decode ? image.decode() : new Promise((resolve) => image.addEventListener('load', resolve, { once: true }))).catch(() => {});
+        };
+
+        const show = (next) => {
+            const target = (next + slides.length) % slides.length;
+            if (target === index) return;
+            const outgoing = slides[index];
+            const incoming = slides[target];
+            index = target;
+            dots.forEach((dot, i) => dot.setAttribute('aria-current', String(i === target)));
+            ready(incoming).then(() => {
+                if (slides[index] !== incoming) return;
+                for (const slide of slides) {
+                    if (slide !== incoming && slide !== outgoing) slide.classList.remove('is-active', 'is-leaving');
+                }
+                outgoing.classList.remove('is-active');
+                outgoing.classList.add('is-leaving');
+                incoming.classList.remove('is-leaving');
+                incoming.classList.add('is-active');
+                slides.forEach((slide) => slide.setAttribute('aria-hidden', String(slide !== incoming)));
+                updateCaption(incoming);
+                clearTimeout(leaveTimer);
+                leaveTimer = setTimeout(() => outgoing.classList.remove('is-leaving'), fade + 80);
+            });
+        };
+
         const stop = () => { clearInterval(timer); timer = null; };
         const start = () => {
             stop();
-            if (paused || document.hidden || slides.length < 2) return;
+            if (document.hidden || slides.length < 2) return;
             timer = setInterval(() => show(index + 1), interval);
         };
-        const go = (next) => { show(next); start(); };
-        slider.querySelector('[data-slide-prev]')?.addEventListener('click', () => go(index - 1));
-        slider.querySelector('[data-slide-next]')?.addEventListener('click', () => go(index + 1));
-        dots.forEach((dot, i) => dot.addEventListener('click', () => go(i)));
-        if (toggle) {
-            toggle.addEventListener('click', () => {
-                paused = !paused;
-                toggle.setAttribute('aria-pressed', String(paused));
-                toggle.setAttribute('aria-label', paused ? 'Putar slide otomatis' : 'Jeda slide otomatis');
-                start();
-            });
-        }
+        dots.forEach((dot, i) => dot.addEventListener('click', () => { show(i); start(); }));
         document.addEventListener('visibilitychange', start);
-        show(0);
+        // Muat gambar berikutnya di latar agar pergantian pertama sudah siap.
+        slides.slice(1).forEach((slide) => ready(slide));
         start();
     }
 
