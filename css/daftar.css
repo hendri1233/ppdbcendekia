@@ -1,13 +1,10 @@
+/* Alur pendaftaran publik. Warna dan font berasal dari css/tokens.css. */
 :root {
     color-scheme: light;
-    --ink: #182a24;
-    --muted: #63716b;
-    --green: #155b46;
-    --green-dark: #104635;
-    --accent: #c45b3c;
-    --paper: #f1f5f1;
-    --line: #dce5de;
-    --white: #fff;
+    --green: var(--brand-700);
+    --green-dark: var(--brand-800);
+    --accent: var(--maroon-700);
+    --white: var(--surface);
 }
 
 * {
@@ -22,10 +19,8 @@ html {
 body {
     margin: 0;
     color: var(--ink);
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--paper);
-    background-image: linear-gradient(rgba(21, 91, 70, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(21, 91, 70, 0.035) 1px, transparent 1px);
-    background-size: 34px 34px;
 }
 
 a {
@@ -66,20 +61,20 @@ a {
 }
 
 .brand-copy strong {
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 800;
 }
 
 .brand-copy small {
     color: var(--muted);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
 }
 
 .back-link {
     color: var(--green);
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     text-decoration-thickness: 1px;
     text-underline-offset: 4px;
@@ -93,16 +88,16 @@ a {
 .eyebrow {
     margin: 0 0 14px;
     color: var(--accent);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
 }
 
 .intro h1 {
     margin: 0;
     color: var(--ink);
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-display);
     font-size: 42px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.12;
 }
 
@@ -123,7 +118,7 @@ a {
     align-items: center;
     gap: 9px;
     color: var(--green-dark);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
 }
 
@@ -163,14 +158,21 @@ a {
     color: var(--green);
     background: #e8f1eb;
     border-radius: 4px;
-    font-family: 'Manrope', sans-serif;
-    font-size: 12px;
+    font-family: var(--font-sans);
+    font-size: 14px;
     font-weight: 800;
+}
+
+.section-heading .route-tag {
+    margin: 0 0 6px;
+    color: var(--maroon-700);
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .section-heading h2 {
     margin: 0;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 17px;
     font-weight: 800;
 }
@@ -178,7 +180,7 @@ a {
 .section-heading p {
     margin: 5px 0 0;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.5;
 }
 
@@ -204,7 +206,7 @@ a {
 .field label,
 .field legend {
     color: #34443d;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
 }
 
@@ -223,17 +225,17 @@ a {
     padding: 15px 17px;
     color: #593b21;
     background: #fff5e9;
-    border-left: 4px solid #c45b3c;
+    border-left: 4px solid var(--maroon-700);
 }
 
 .whatsapp-confirmation strong {
     color: #38291e;
-    font-size: 13px;
+    font-size: 14.5px;
 }
 
 .whatsapp-confirmation p {
     margin: 0;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.6;
 }
 
@@ -243,7 +245,7 @@ a {
     gap: 9px;
     margin-top: 3px;
     color: #34443d;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.5;
     cursor: pointer;
 }
@@ -259,7 +261,7 @@ a {
 .optional-mark {
     margin-left: 5px;
     color: #87928c;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
 }
 
@@ -298,7 +300,7 @@ a {
 .field-hint {
     margin-top: -2px;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .operator-note {
@@ -307,7 +309,7 @@ a {
     color: #52635a;
     background: #f3f7f3;
     border-left: 3px solid var(--green);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -317,7 +319,7 @@ a {
     color: #315345;
     background: #edf4ef;
     border-left: 3px solid var(--green);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -350,7 +352,7 @@ a {
 }
 
 .radio-option span {
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 600;
 }
 
@@ -367,7 +369,7 @@ a {
     max-width: 430px;
     margin: 0;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -387,7 +389,7 @@ a {
     border: 0;
     border-radius: 4px;
     font: inherit;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
@@ -412,7 +414,7 @@ a {
 .submit-button:focus-visible,
 .back-link:focus-visible,
 .brand:focus-visible {
-    outline: 3px solid rgba(196, 91, 60, 0.55);
+    outline: 3px solid rgba(140, 42, 40, 0.55);
     outline-offset: 3px;
 }
 
@@ -429,7 +431,7 @@ a {
     border: 1px solid #e9b4a5;
     border-left: 4px solid var(--accent);
     border-radius: 4px;
-    font-size: 13px;
+    font-size: 14.5px;
 }
 
 .error-summary strong {
@@ -450,7 +452,7 @@ a {
     justify-content: space-between;
     gap: 16px;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .site-footer a {
@@ -474,15 +476,15 @@ a {
     }
 
     .brand-copy strong {
-        font-size: 13px;
+        font-size: 14.5px;
     }
 
     .brand-copy small {
-        font-size: 9px;
+        font-size: 12px;
     }
 
     .back-link {
-        font-size: 11px;
+        font-size: 13px;
     }
 
     .intro {
@@ -545,7 +547,7 @@ a {
     color: #fff;
     background: var(--green-dark);
     border-radius: 0 0 6px 6px;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     text-decoration: none;
     transition: top 160ms ease;
@@ -563,7 +565,7 @@ a {
     color: var(--green);
     background: #e8f1eb;
     border-radius: 3px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-align: center;
@@ -638,8 +640,8 @@ a {
     background: var(--white);
     border: 2px solid var(--line);
     border-radius: 50%;
-    font-family: 'Manrope', sans-serif;
-    font-size: 12px;
+    font-family: var(--font-sans);
+    font-size: 14px;
     font-weight: 800;
 }
 
@@ -658,8 +660,8 @@ a {
 }
 
 .journey-list li strong {
-    font-family: 'Manrope', sans-serif;
-    font-size: 13px;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
     font-weight: 800;
 }
 
@@ -669,7 +671,7 @@ a {
 
 .journey-list li small {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.5;
 }
 
@@ -720,7 +722,7 @@ a {
     background: #edf4ef;
     border-left: 3px solid var(--green);
     border-radius: 0 4px 4px 0;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.6;
 }
 
@@ -730,13 +732,13 @@ a {
 }
 
 .offer-summary strong {
-    font-family: 'Manrope', sans-serif;
-    font-size: 13px;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
 }
 
 .offer-summary span {
     color: #4a6156;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .offer-list {
@@ -771,13 +773,13 @@ a {
 }
 
 .offer-list__item strong {
-    font-family: 'Manrope', sans-serif;
-    font-size: 13px;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
 }
 
 .offer-list__item small {
     color: #5e7167;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .offer-summary.is-flash {
@@ -800,7 +802,7 @@ a {
     background: #f7faf7;
     border: 1px solid var(--line);
     border-radius: 5px;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.6;
     cursor: pointer;
     transition: border-color 140ms ease, background-color 140ms ease;
@@ -849,9 +851,9 @@ a {
 
 .gate-panel h1 {
     margin: 0;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-display);
     font-size: 36px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.14;
 }
 
@@ -872,7 +874,7 @@ a {
 }
 
 .gate-form #kode {
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 19px;
     font-weight: 700;
     letter-spacing: 0.09em;
@@ -930,7 +932,7 @@ a {
 
 .confirm-card__head h2 {
     margin: 0;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 18px;
     font-weight: 800;
 }
@@ -941,7 +943,7 @@ a {
     color: var(--green);
     background: #e8f1eb;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
     white-space: nowrap;
 }
@@ -969,13 +971,13 @@ a {
 .confirm-grid dt {
     flex: 0 0 auto;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
 }
 
 .confirm-grid dd {
     margin: 0;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 700;
     text-align: right;
@@ -993,7 +995,7 @@ a {
     min-height: 48px;
     padding: 0 14px;
     font: inherit;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     border-radius: 5px;
     cursor: pointer;
@@ -1026,7 +1028,7 @@ a {
     margin: 0;
     padding: 12px 24px 20px;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
@@ -1052,7 +1054,7 @@ a {
 .materials-stage__heading h2 {
     margin: 0;
     color: var(--ink);
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: clamp(22px, 4vw, 30px);
     line-height: 1.2;
 }
@@ -1074,7 +1076,7 @@ a {
 .participant-material h3 {
     margin: 0 0 12px;
     color: #174b3a;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 18px;
 }
 
@@ -1132,14 +1134,14 @@ a {
 .participant-material__pdf-toolbar [data-pdf-page] {
     min-width: 105px;
     color: #33443d;
-    font-size: 13px;
+    font-size: 14.5px;
     text-align: center;
 }
 
 .participant-material__pdf-status {
     margin: 12px 0;
     color: #52645b;
-    font-size: 13px;
+    font-size: 14.5px;
     text-align: center;
 }
 
@@ -1177,7 +1179,7 @@ a {
     color: #14563f;
     border: 1px solid #14563f;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     text-decoration: none;
 }
@@ -1194,7 +1196,7 @@ a {
     display: inline-block;
     margin-top: 14px;
     color: #14563f;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     overflow-wrap: anywhere;
 }
@@ -1206,7 +1208,7 @@ a {
     background: #fff8e8;
     border: 1px solid #f0d9a6;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14.5px;
 }
 
 .materials-read-confirm {
@@ -1218,7 +1220,7 @@ a {
     border: 1px solid #d5e8da;
     border-radius: 9px;
     color: #244d3a;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
 }
 
@@ -1322,7 +1324,7 @@ a {
 .form-stage-intro .eyebrow {
     margin: 0 0 6px;
     color: #14563f;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: .08em;
 }
@@ -1330,7 +1332,7 @@ a {
 .form-stage-intro h2 {
     margin: 0;
     color: var(--ink);
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: clamp(21px, 4vw, 28px);
     line-height: 1.25;
 }
@@ -1384,26 +1386,26 @@ a {
     display: flex;
     align-items: baseline;
     gap: 6px;
-    font-size: 13px;
+    font-size: 14.5px;
 }
 
 .document-card__head strong {
-    font-family: 'Manrope', sans-serif;
-    font-size: 13px;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
     font-weight: 800;
 }
 
 .document-card__hint {
     margin: 0;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.5;
 }
 
 .document-card__done {
     margin: 0;
     color: #2f6a4d;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     word-break: break-word;
 }
@@ -1445,13 +1447,13 @@ a {
 
 .file-drop__label {
     color: var(--green);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
 }
 
 .file-drop__name {
     color: var(--muted);
-    font-size: 10.5px;
+    font-size: 12.5px;
     line-height: 1.45;
     word-break: break-word;
 }
@@ -1559,15 +1561,13 @@ a {
 
 .progress-ring__label {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .progress-ring__count {
     color: var(--green);
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
@@ -1603,7 +1603,7 @@ a {
 /* Fokus keyboard pada pilihan konfirmasi agar mudah dinavigasi. */
 .choice-yes:focus-visible,
 .choice-no:focus-visible {
-    outline: 3px solid rgba(196, 91, 60, 0.5);
+    outline: 3px solid rgba(140, 42, 40, 0.5);
     outline-offset: 3px;
 }
 

@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="admin-content">
     <header class="page-heading">
         <div>
-            <p class="eyebrow">AKSES PENGELOLA</p>
+            <p class="eyebrow">Akses pengelola</p>
             <h1>Buat akun admin</h1>
             <p>Tambahkan administrator yang dapat mengelola data dan pengaturan PPDB.</p>
         </div>
@@ -163,18 +163,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="description" content="Buat akun pengelola PPDB Yayasan Wakaf Cendekia Takengon.">
     <title><?php echo $isBootstrap ? 'Penyiapan Awal' : 'Admin Baru'; ?> · Panel PPDB Cendekia Takengon</title>
     <link rel="stylesheet" href="css/stlogin.css">
+    <link rel="icon" href="img/logo-display.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
 </head>
 <body>
     <main class="auth-shell">
         <a class="auth-brand" href="index.php">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
-            <span><strong>Wakaf Cendekia</strong><small>TAKENGON · PPDB</small></span>
+            <span><strong>Wakaf Cendekia</strong><small>Takengon · PPDB</small></span>
         </a>
         <section class="auth-panel">
-            <p class="eyebrow"><?php echo $isBootstrap ? 'PENYIAPAN AWAL' : 'AREA PENGELOLA'; ?></p>
+            <p class="eyebrow"><?php echo $isBootstrap ? 'PENYIAPAN AWAL' : 'Area pengelola'; ?></p>
             <h1>Buat akun admin.</h1>
             <p class="auth-copy"><?php echo $isBootstrap ? 'Buat akun pengelola pertama untuk memulai.' : 'Tambahkan akun pengelola PPDB.'; ?></p>
             <?php if ($error !== '') { ?><div class="auth-alert" role="alert"><?php echo h($error); ?></div><?php } ?>

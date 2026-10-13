@@ -63,18 +63,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="description" content="Area pengelola PPDB Yayasan Wakaf Cendekia Takengon.">
     <title>Masuk Admin · Panel PPDB Cendekia Takengon</title>
     <link rel="stylesheet" href="css/stlogin.css">
+    <link rel="icon" href="img/logo-display.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css">
 </head>
 <body>
     <main class="auth-shell">
         <a class="auth-brand" href="index.php">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
-            <span><strong>Wakaf Cendekia</strong><small>TAKENGON · PPDB</small></span>
+            <span><strong>Wakaf Cendekia</strong><small>Takengon · PPDB</small></span>
         </a>
         <section class="auth-panel">
-            <p class="eyebrow">AREA PENGELOLA</p>
+            <p class="eyebrow">Area pengelola</p>
             <h1>Selamat datang kembali.</h1>
             <p class="auth-copy">Pilih akses sesuai peran Anda untuk mengelola pendaftaran peserta didik.</p>
             <?php if ($error !== '') { ?><div class="auth-alert" role="alert"><?php echo h($error); ?></div><?php } ?>
@@ -91,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input id="password" type="password" name="password" autocomplete="current-password" required>
                 <button type="submit">Masuk ke dashboard <span aria-hidden="true">&rarr;</span></button>
             </form>
-            <p class="auth-note">Admin unit menggunakan email dan kata sandi sementara yang diberikan super admin. Login Google akan tersedia pada tahap berikutnya.</p>
+            <p class="auth-note">Admin unit menggunakan email dan kata sandi sementara yang diberikan super admin.</p>
             <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>
         </section>
         <footer>Yayasan Wakaf Cendekia Takengon</footer>

@@ -1,10 +1,11 @@
+/* Halaman masuk dan akun pengelola. Warna dan font berasal dari css/tokens.css. */
 :root {
-    --auth-ink: #182a24;
-    --auth-muted: #63716b;
-    --auth-green: #155b46;
-    --auth-green-dark: #104635;
-    --auth-accent: #c45b3c;
-    --auth-line: #dce5de;
+    --auth-ink: var(--ink);
+    --auth-muted: var(--muted);
+    --auth-green: var(--brand-700);
+    --auth-green-dark: var(--brand-800);
+    --auth-accent: var(--maroon-700);
+    --auth-line: var(--line);
 }
 
 * {
@@ -16,10 +17,8 @@ body {
     min-height: 100vh;
     margin: 0;
     color: var(--auth-ink);
-    background-color: #eef3ee;
-    background-image: linear-gradient(rgba(21, 91, 70, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(21, 91, 70, 0.04) 1px, transparent 1px);
-    background-size: 34px 34px;
-    font-family: 'DM Sans', sans-serif;
+    background-color: var(--paper);
+    font-family: var(--font-sans);
 }
 
 .auth-shell {
@@ -56,14 +55,14 @@ body {
 }
 
 .auth-brand strong {
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 800;
 }
 
 .auth-brand small {
     color: var(--auth-muted);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
 }
 
@@ -78,22 +77,22 @@ body {
 .eyebrow {
     margin: 0 0 11px;
     color: var(--auth-accent);
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
 }
 
 .auth-panel h1 {
     margin: 0;
-    font-family: 'Manrope', sans-serif;
+    font-family: var(--font-display);
     font-size: 27px;
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.25;
 }
 
 .auth-copy {
     margin: 10px 0 24px;
     color: var(--auth-muted);
-    font-size: 13px;
+    font-size: 14.5px;
     line-height: 1.6;
 }
 
@@ -104,7 +103,7 @@ body {
     background: #fff3ef;
     border: 1px solid #e9b4a5;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.5;
 }
 
@@ -116,13 +115,13 @@ body {
 .auth-form label {
     margin-top: 5px;
     color: #34443d;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
 }
 
 .auth-form label span {
     color: var(--auth-muted);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
 }
 
@@ -159,7 +158,7 @@ body {
     border: 0;
     border-radius: 4px;
     font: inherit;
-    font-size: 13px;
+    font-size: 14.5px;
     font-weight: 700;
     cursor: pointer;
 }
@@ -171,7 +170,7 @@ body {
 .auth-form button:focus-visible,
 .auth-back:focus-visible,
 .auth-brand:focus-visible {
-    outline: 3px solid rgba(196, 91, 60, 0.55);
+    outline: 3px solid rgba(140, 42, 40, 0.55);
     outline-offset: 3px;
 }
 
@@ -183,7 +182,7 @@ body {
     display: inline-block;
     margin-top: 20px;
     color: var(--auth-green);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     text-underline-offset: 3px;
 }
@@ -191,7 +190,7 @@ body {
 .auth-shell footer {
     margin-top: 22px;
     color: var(--auth-muted);
-    font-size: 11px;
+    font-size: 13px;
 }
 
 @media (max-width: 520px) {
@@ -221,14 +220,14 @@ body {
     background: #f3f7f4;
     border-left: 3px solid var(--admin-green);
     border-radius: 0 6px 6px 0;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.6;
 }
 
 .auth-hint {
     margin: -4px 0 0;
     color: #a33c28;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -265,6 +264,6 @@ body {
 
 .password-meter small {
     color: #6b7a73;
-    font-size: 10.5px;
+    font-size: 12.5px;
     font-weight: 600;
 }

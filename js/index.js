@@ -42,7 +42,7 @@
 
         // Tutup menu bila layar kembali lebar.
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 900) closeMenu();
+            if (window.innerWidth > 960) closeMenu();
         });
     }
 
