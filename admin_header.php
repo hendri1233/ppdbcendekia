@@ -15,10 +15,19 @@ foreach ($navigation as $item) {
 $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SESSION['admin_unit_name'] ?? 'Unit');
 ?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        // Tema dipasang sebelum halaman digambar agar tidak berkedip.
+        (function () {
+            var root = document.documentElement, theme = 'light';
+            try { theme = localStorage.getItem('cendekia-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (e) {}
+            root.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+            root.classList.add('js', 'is-loading');
+        })();
+    </script>
     <meta name="theme-color" content="#0d3227">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="<?php echo h($adminPageDescription); ?>">
@@ -27,10 +36,15 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/admin.css'); ?>">
+    <link rel="stylesheet" href="css/cms-admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/cms-admin.css'); ?>">
 </head>
 <body>
+<div class="page-loader" role="status" aria-live="polite" data-page-loader>
+    <span class="page-loader__ring" aria-hidden="true"><img src="img/logo-display.png" alt="" width="40" height="40"></span>
+    <span class="visually-hidden">Memuat halaman…</span>
+</div>
 <a class="skip-link" href="#admin-utama">Lompat ke konten</a>
 
 <div class="admin-shell">
@@ -88,6 +102,10 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
                     <?php } ?>
                 </ol>
             </nav>
+
+            <button class="theme-toggle" type="button" data-theme-toggle aria-label="Ganti ke mode gelap" title="Ganti tema">
+                <?php echo ppdb_admin_icon('moon'); ?><?php echo ppdb_admin_icon('sun'); ?>
+            </button>
 
             <div class="admin-user">
                 <span class="admin-user-text">

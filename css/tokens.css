@@ -58,4 +58,64 @@
     --focus-ring: 0 0 0 3px rgba(20, 86, 63, 0.28);
 
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* Peran semantik: teks tautan, permukaan lapis, dan latar media. */
+    --link: var(--brand-700);
+    --link-hover: var(--brand-800);
+    --on-brand: #fff;
+    --overlay: rgba(10, 22, 18, 0.62);
+    --surface-raised: #fff;
+    --input-bg: #fff;
+    --input-border: #c9d2cc;
+    color-scheme: light;
+}
+
+/* Mode gelap: dipasang lewat atribut data-theme pada <html>. */
+:root[data-theme="dark"] {
+    --brand-950: #06130e;
+    --brand-900: #0b2219;
+    --brand-800: #1a6a4c;
+    --brand-700: #1f7a57;
+    --brand-600: #2a8c66;
+    --brand-200: #2f5a4a;
+    --brand-100: #183a2e;
+    --brand-50: #132c23;
+
+    --maroon-800: #f0aaa1;
+    --maroon-700: #e8958b;
+    --maroon-600: #f0aaa1;
+    --maroon-100: #3a1f1c;
+
+    --ink: #e6ece9;
+    --ink-2: #c6d0cb;
+    --muted: #9eaba5;
+    --faint: #7f8d87;
+    --line-strong: #3b4a44;
+    --line: #2a3832;
+    --line-soft: #22302a;
+    --paper: #0f1714;
+    --paper-2: #1b2722;
+    --surface: #151f1b;
+
+    --success-fg: #86d6aa;
+    --success-bg: #163427;
+    --warning-fg: #f1c46e;
+    --warning-bg: #372b13;
+    --danger-fg: #f3a197;
+    --danger-bg: #3b1c19;
+    --info-fg: #93c6ea;
+    --info-bg: #15303f;
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-3: 0 18px 48px rgba(0, 0, 0, 0.55);
+    --focus-ring: 0 0 0 3px rgba(108, 199, 158, 0.35);
+
+    --link: #74cfa5;
+    --link-hover: #9be0bf;
+    --overlay: rgba(4, 10, 8, 0.7);
+    --surface-raised: #1b2722;
+    --input-bg: #111a17;
+    --input-border: #3b4a44;
+    color-scheme: dark;
 }
