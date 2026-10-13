@@ -24,6 +24,7 @@ function ppdb_admin_icon(string $name): string
         'wallet' => '<path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h11a2 2 0 0 1 2 2v1"/><rect x="3.5" y="7.5" width="17" height="11.5" rx="1.8"/><circle cx="16" cy="13.2" r="1.3"/>',
         'file' => '<path d="M6 3.5h7.5L18 8v12.5H6Z"/><path d="M13.5 3.5V8H18"/>',
         'chart' => '<path d="M4 20V9.5M9.3 20V4.5M14.7 20v-8M20 20v-5.5"/>',
+        'chevron' => '<path d="m9 6 6 6-6 6"/>',
     ];
 
     $path = $paths[$name] ?? $paths['dashboard'];
@@ -31,16 +32,16 @@ function ppdb_admin_icon(string $name): string
     return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $path . '</svg>';
 }
 
-/** Daftar navigasi admin, dipakai bersama oleh sidebar dan navigasi ponsel. */
+/** Daftar navigasi admin per kelompok fungsi, dipakai bersama oleh sidebar dan navigasi ponsel. */
 function ppdb_admin_navigation(string $activePage): array
 {
     $navigation = [
-        ['key' => 'dashboard', 'href' => 'admin.php', 'label' => 'Dashboard', 'icon' => 'dashboard', 'caption' => 'Ringkasan'],
-        ['key' => 'registrations', 'href' => 'daftar_peserta.php', 'label' => 'Data peserta', 'icon' => 'registrations', 'caption' => 'Antrean &amp; arsip'],
-        ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'caption' => 'Akses pengelola'],
-        ['key' => 'quota', 'href' => 'pengaturan-ppdb.php', 'label' => 'Kuota &amp; pembayaran', 'icon' => 'quota', 'caption' => 'Pengaturan penerimaan'],
-        ['key' => 'groups', 'href' => 'grup-whatsapp.php', 'label' => 'Grup WhatsApp', 'icon' => 'group', 'caption' => 'Tautan grup per unit'],
-        ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'caption' => 'Brosur, SOP &amp; form'],
+        ['key' => 'dashboard', 'href' => 'admin.php', 'label' => 'Dashboard', 'icon' => 'dashboard', 'group' => 'Penerimaan'],
+        ['key' => 'registrations', 'href' => 'daftar_peserta.php', 'label' => 'Data peserta', 'icon' => 'registrations', 'group' => 'Penerimaan'],
+        ['key' => 'quota', 'href' => 'pengaturan-ppdb.php', 'label' => 'Kuota &amp; pembayaran', 'icon' => 'quota', 'group' => 'Pengaturan'],
+        ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'group' => 'Pengaturan'],
+        ['key' => 'groups', 'href' => 'grup-whatsapp.php', 'label' => 'Grup WhatsApp', 'icon' => 'group', 'group' => 'Pengaturan'],
+        ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'group' => 'Pengaturan'],
     ];
 
     return ppdb_is_super_admin()

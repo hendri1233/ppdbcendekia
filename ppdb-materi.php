@@ -421,7 +421,7 @@ require 'admin_header.php';
 ?>
 <div class="admin-content materials-admin">
     <header class="page-heading">
-        <div><p class="eyebrow">INFORMASI PENDAFTARAN</p><h1>Materi &amp; kuisioner</h1><p>Kelola materi yang dilihat pendaftar setelah konfirmasi data awal, serta kuisioner sebelum formulir lengkap.</p></div>
+        <div><p class="eyebrow">Informasi pendaftaran</p><h1>Materi &amp; kuisioner</h1><p>Kelola materi yang dilihat pendaftar setelah konfirmasi data awal, serta kuisioner sebelum formulir lengkap.</p></div>
     </header>
     <?php foreach ($errors as $error) { ?><div class="alert-error" role="alert"><?php echo h($error); ?></div><?php } ?>
     <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
@@ -429,7 +429,7 @@ require 'admin_header.php';
     <section class="panel materials-overview">
         <div class="materials-overview__heading">
             <div>
-                <p class="eyebrow">STATUS PUBLIKASI</p>
+                <p class="eyebrow">Status publikasi</p>
                 <h2>Materi per unit dan tahun ajaran</h2>
                 <p>Pilih satu unit untuk meninjau berkas dan mengubah konten. Materi hanya ditampilkan kepada pendaftar pada unit dan tahun ajaran yang sama.</p>
             </div>
@@ -456,7 +456,7 @@ require 'admin_header.php';
                         <span class="materials-unit-card__status<?php echo $isReady ? ' is-ready' : ''; ?>"><?php echo $isReady ? 'Siap ditampilkan' : 'Belum lengkap'; ?></span>
                         <span class="materials-unit-card__year"><?php echo h($unitSummary['th_ajaran']); ?></span>
                     </span>
-                    <strong class="materials-unit-card__name"><?php echo h($unitSummary['nama_unit']); ?></strong>
+                    <strong class="materials-unit-card__name"><?php echo h(ppdb_unit_display_name($unitSummary['nama_unit'])); ?></strong>
                     <span class="materials-unit-card__counts"><?php echo $publishedCount; ?>/<?php echo count($materialTypes); ?> materi · <?php echo (int) $unitSummary['question_count']; ?> pertanyaan</span>
                     <span class="materials-unit-card__checklist">
                         <?php foreach ($materialTypes as $type => $label) { ?>

@@ -14,7 +14,6 @@ for ($year = 2027; $year <= 2040; $year++) {
 $adminUnitCode = ppdb_is_super_admin() ? '' : (string) $_SESSION['admin_unit_code'];
 $unitCondition = $adminUnitCode === '' ? '' : " WHERE kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
 $settingsUnitCondition = $adminUnitCode === '' ? '' : " WHERE c.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
-$tokensUnitCondition = $adminUnitCode === '' ? '' : " WHERE t.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
 $unitResult = mysqli_query($conn, "SELECT kode_unit,nama_unit,jenjang FROM tb_unit_pendidikan".$unitCondition." ORDER BY FIELD(jenjang,'KB','TPA','TK','SD','SMP')");
 $units = [];
 while ($unit = mysqli_fetch_assoc($unitResult)) {
@@ -289,7 +288,56 @@ while ($setting = mysqli_fetch_assoc($settings)) {
         'reserved_eksternal' => (int) $setting['eksternal_terisi'],
     ];
 }
-$internalTokens = mysqli_query($conn, "SELECT t.id,t.kode_token,t.kode_unit,t.th_ajaran,t.created_at,t.used_at,t.revoked_at,u.nama_unit FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit".$tokensUnitCondition." ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'),t.kode_token");
+// Tabel token dipaginasi di server karena satu pool bisa berisi 150 kode per unit.
+$tokenFilterUnit = $adminUnitCode !== '' ? $adminUnitCode : (is_string($_GET['token_unit'] ?? null) && isset($units[$_GET['token_unit']]) ? $_GET['token_unit'] : '');
+$tokenFilterStatus = in_array($_GET['token_status'] ?? '', ['available', 'used', 'revoked'], true) ? $_GET['token_status'] : '';
+$tokenSearch = is_string($_GET['token_q'] ?? null) ? substr(preg_replace('/[^A-Za-z0-9]/', '', $_GET['token_q']) ?? '', 0, 9) : '';
+$tokenWhere = ['1=1'];
+$tokenTypes = '';
+$tokenParams = [];
+if ($tokenFilterUnit !== '') {
+    $tokenWhere[] = 't.kode_unit=?';
+    $tokenTypes .= 's';
+    $tokenParams[] = $tokenFilterUnit;
+}
+if ($tokenFilterStatus === 'available') {
+    $tokenWhere[] = 't.used_at IS NULL AND t.revoked_at IS NULL';
+} elseif ($tokenFilterStatus === 'used') {
+    $tokenWhere[] = 't.used_at IS NOT NULL';
+} elseif ($tokenFilterStatus === 'revoked') {
+    $tokenWhere[] = 't.used_at IS NULL AND t.revoked_at IS NOT NULL';
+}
+if ($tokenSearch !== '') {
+    $tokenWhere[] = 't.kode_token LIKE ?';
+    $tokenTypes .= 's';
+    $tokenParams[] = '%'.$tokenSearch.'%';
+}
+$tokenWhereSql = implode(' AND ', $tokenWhere);
+$tokenCountStmt = mysqli_prepare($conn, 'SELECT COUNT(*) AS total FROM tb_token_internal t WHERE '.$tokenWhereSql);
+if ($tokenTypes !== '') {
+    mysqli_stmt_bind_param($tokenCountStmt, $tokenTypes, ...$tokenParams);
+}
+mysqli_stmt_execute($tokenCountStmt);
+$tokenTotal = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($tokenCountStmt))['total'];
+mysqli_stmt_close($tokenCountStmt);
+$tokenPerPage = 25;
+$tokenPages = max(1, (int) ceil($tokenTotal / $tokenPerPage));
+$tokenPage = min($tokenPages, max(1, (int) ($_GET['token_page'] ?? 1)));
+$tokenOffset = ($tokenPage - 1) * $tokenPerPage;
+$tokenListStmt = mysqli_prepare($conn, "SELECT t.id,t.kode_token,t.kode_unit,t.th_ajaran,t.created_at,t.used_at,t.revoked_at,u.nama_unit FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE ".$tokenWhereSql." ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'),t.kode_token LIMIT ".$tokenPerPage.' OFFSET '.$tokenOffset);
+if ($tokenTypes !== '') {
+    mysqli_stmt_bind_param($tokenListStmt, $tokenTypes, ...$tokenParams);
+}
+mysqli_stmt_execute($tokenListStmt);
+$internalTokens = mysqli_stmt_get_result($tokenListStmt);
+$tokenQuery = static function (array $overrides) use ($tokenFilterUnit, $tokenFilterStatus, $tokenSearch, $adminUnitCode): string {
+    $query = array_merge([
+        'token_unit' => $adminUnitCode === '' ? $tokenFilterUnit : '',
+        'token_status' => $tokenFilterStatus,
+        'token_q' => $tokenSearch,
+    ], $overrides);
+    return '?'.http_build_query(array_filter($query, static fn ($value) => $value !== '' && $value !== null && $value !== 1)).'#token-internal';
+};
 $internalTokensCondition = $adminUnitCode === '' ? '' : " AND t.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
 $internalTokenPools = mysqli_query($conn, "SELECT t.kode_unit,t.th_ajaran,u.nama_unit,COUNT(*) AS total_token FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.used_at IS NULL AND t.revoked_at IS NULL".$internalTokensCondition." GROUP BY t.kode_unit,t.th_ajaran,u.nama_unit ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
 $activeAdminPage = 'quota';
@@ -322,7 +370,7 @@ require 'admin_header.php';
                 <select id="kode_unit" name="kode_unit" required>
                     <option value="">Pilih unit</option>
                     <?php foreach ($units as $code => $unit) { ?>
-                        <option value="<?php echo h($code); ?>"<?php echo (($_POST['kode_unit'] ?? '') === $code) ? ' selected' : ''; ?>><?php echo h($unit['nama_unit']); ?></option>
+                        <option value="<?php echo h($code); ?>"<?php echo (($_POST['kode_unit'] ?? '') === $code) ? ' selected' : ''; ?>><?php echo h(ppdb_unit_display_name($unit['nama_unit'])); ?></option>
                     <?php } ?>
                 </select>
             </div>
@@ -380,7 +428,7 @@ require 'admin_header.php';
         </form>
     </section>
 
-    <section class="panel quota-current-panel">
+    <section class="panel quota-current-panel" id="token-internal">
         <div class="panel-header">
             <div><h2>Token internal SDM</h2><span class="panel-subtitle">Satu tautan bersama; setiap SDM memasukkan token 9 karakter dengan huruf besar, huruf kecil, dan angka. Pool dibuat maksimal 150 token per unit dan tahun ajaran. Admin dapat mengaktifkan kembali token yang dicabut setelah menyetujui penggunaan ulangnya.</span></div>
         </div>
@@ -391,7 +439,7 @@ require 'admin_header.php';
                 <label for="token-unit">Unit pendidikan</label>
                 <select id="token-unit" name="token_unit" required>
                     <option value="">Pilih unit</option>
-                    <?php foreach ($units as $code => $unit) { ?><option value="<?php echo h($code); ?>"><?php echo h($unit['nama_unit']); ?></option><?php } ?>
+                    <?php foreach ($units as $code => $unit) { ?><option value="<?php echo h($code); ?>"><?php echo h(ppdb_unit_display_name($unit['nama_unit'])); ?></option><?php } ?>
                 </select>
             </div>
             <div class="filter-field">
@@ -408,12 +456,12 @@ require 'admin_header.php';
         </form>
         <div class="table-wrap">
             <table class="data-table">
-                <thead><tr><th>UNIT</th><th>TAHUN AJARAN</th><th>TOKEN AKTIF</th><th>PDF</th></tr></thead>
+                <thead><tr><th scope="col">Unit</th><th scope="col">Tahun ajaran</th><th scope="col">Token aktif</th><th scope="col">PDF</th></tr></thead>
                 <tbody>
                 <?php if (mysqli_num_rows($internalTokenPools) === 0) { ?><tr><td colspan="4" class="empty-state">Belum ada token aktif yang dapat diekspor.</td></tr><?php } ?>
                 <?php while ($pool = mysqli_fetch_assoc($internalTokenPools)) { ?>
                     <tr>
-                        <td data-label="Unit" class="primary-cell"><?php echo h($pool['nama_unit']); ?></td>
+                        <td data-label="Unit" class="primary-cell"><?php echo h(ppdb_unit_display_name($pool['nama_unit'])); ?></td>
                         <td data-label="Tahun ajaran"><?php echo h($pool['th_ajaran']); ?></td>
                         <td data-label="Token aktif"><?php echo (int) $pool['total_token']; ?></td>
                         <td data-label="PDF"><a class="button-secondary" href="export-token-internal.php?unit=<?php echo rawurlencode($pool['kode_unit']); ?>&amp;tahun=<?php echo rawurlencode($pool['th_ajaran']); ?>">Unduh PDF token unit</a></td>
@@ -422,9 +470,40 @@ require 'admin_header.php';
                 </tbody>
             </table>
         </div>
+        <form class="filter-bar" method="get" action="pengaturan-ppdb.php#token-internal" aria-label="Filter token internal">
+            <div class="filter-field grow">
+                <label for="token-q">Cari kode token</label>
+                <input id="token-q" name="token_q" type="search" value="<?php echo h($tokenSearch); ?>" maxlength="9" autocomplete="off" spellcheck="false">
+            </div>
+            <?php if ($adminUnitCode === '') { ?>
+                <div class="filter-field">
+                    <label for="token-filter-unit">Unit</label>
+                    <select id="token-filter-unit" name="token_unit">
+                        <option value="">Semua unit</option>
+                        <?php foreach ($units as $code => $unit) { ?><option value="<?php echo h($code); ?>"<?php echo $tokenFilterUnit === $code ? ' selected' : ''; ?>><?php echo h(ppdb_unit_display_name($unit['nama_unit'])); ?></option><?php } ?>
+                    </select>
+                </div>
+            <?php } ?>
+            <div class="filter-field">
+                <label for="token-filter-status">Status</label>
+                <select id="token-filter-status" name="token_status">
+                    <option value="">Semua status</option>
+                    <option value="available"<?php echo $tokenFilterStatus === 'available' ? ' selected' : ''; ?>>Belum digunakan</option>
+                    <option value="used"<?php echo $tokenFilterStatus === 'used' ? ' selected' : ''; ?>>Sudah digunakan</option>
+                    <option value="revoked"<?php echo $tokenFilterStatus === 'revoked' ? ' selected' : ''; ?>>Dicabut</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button class="button-primary" type="submit">Terapkan</button>
+                <?php if ($tokenFilterStatus !== '' || $tokenSearch !== '' || ($adminUnitCode === '' && $tokenFilterUnit !== '')) { ?><a class="button-secondary" href="pengaturan-ppdb.php#token-internal">Reset</a><?php } ?>
+            </div>
+        </form>
+        <div class="table-meta">
+            <span><?php if ($tokenTotal > 0) { ?>Menampilkan <strong><?php echo $tokenOffset + 1; ?>&ndash;<?php echo min($tokenTotal, $tokenOffset + $tokenPerPage); ?></strong> dari <strong><?php echo $tokenTotal; ?></strong> token<?php } else { ?>Tidak ada token yang cocok<?php } ?></span>
+        </div>
         <div class="table-wrap">
             <table class="data-table">
-                <thead><tr><th>KODE TOKEN</th><th>UNIT / TAHUN</th><th>DIBUAT</th><th>STATUS</th><th>AKSI</th></tr></thead>
+                <thead><tr><th scope="col">Kode token</th><th scope="col">Unit / tahun</th><th scope="col">Dibuat</th><th scope="col">Status</th><th scope="col">Aksi</th></tr></thead>
                 <tbody>
                 <?php if (mysqli_num_rows($internalTokens) === 0) { ?><tr><td colspan="5" class="empty-state">Belum ada token internal. Pilih unit dan tahun ajaran untuk membuat pool.</td></tr><?php } ?>
                 <?php while ($tokenRow = mysqli_fetch_assoc($internalTokens)) {
@@ -433,7 +512,7 @@ require 'admin_header.php';
                 ?>
                     <tr>
                         <td data-label="Kode token" class="primary-cell"><code><?php echo h($tokenRow['kode_token']); ?></code></td>
-                        <td data-label="Unit / tahun"><?php echo h($tokenRow['nama_unit']); ?><br><?php echo h($tokenRow['th_ajaran']); ?></td>
+                        <td data-label="Unit / tahun"><span><?php echo h(ppdb_unit_display_name($tokenRow['nama_unit'])); ?> <small class="cell-sub"><?php echo h($tokenRow['th_ajaran']); ?></small></span></td>
                         <td data-label="Dibuat"><?php echo h($tokenRow['created_at']); ?></td>
                         <td data-label="Status">
                             <?php if ($tokenRow['used_at'] !== null) { ?>
@@ -479,6 +558,21 @@ require 'admin_header.php';
                 </tbody>
             </table>
         </div>
+        <?php if ($tokenPages > 1) { ?>
+            <nav class="pagination" aria-label="Halaman token internal">
+                <?php if ($tokenPage > 1) { ?><a class="page-step" href="<?php echo h($tokenQuery(['token_page' => $tokenPage - 1])); ?>" rel="prev">&larr; Sebelumnya</a><?php } else { ?><span class="page-step is-disabled">&larr; Sebelumnya</span><?php } ?>
+                <div class="page-numbers">
+                    <?php for ($page = 1; $page <= $tokenPages; $page++) {
+                        if ($page === 1 || $page === $tokenPages || abs($page - $tokenPage) <= 1) {
+                            echo '<a class="page-number'.($page === $tokenPage ? ' is-current' : '').'" href="'.h($tokenQuery(['token_page' => $page])).'"'.($page === $tokenPage ? ' aria-current="page"' : '').'>'.$page.'</a>';
+                        } elseif (abs($page - $tokenPage) === 2) {
+                            echo '<span class="page-gap">&hellip;</span>';
+                        }
+                    } ?>
+                </div>
+                <?php if ($tokenPage < $tokenPages) { ?><a class="page-step" href="<?php echo h($tokenQuery(['token_page' => $tokenPage + 1])); ?>" rel="next">Berikutnya &rarr;</a><?php } else { ?><span class="page-step is-disabled">Berikutnya &rarr;</span><?php } ?>
+            </nav>
+        <?php } ?>
     </section>
 
     <section class="panel quota-current-panel">
@@ -492,9 +586,9 @@ require 'admin_header.php';
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th scope="col">UNIT</th><th scope="col">TAHUN</th><th scope="col">KUOTA INTERNAL</th>
-                        <th scope="col">KUOTA EKSTERNAL</th><th scope="col">DITERIMA</th><th scope="col">BIAYA</th>
-                        <th scope="col">STATUS</th><th scope="col">AKSI</th>
+                        <th scope="col">Unit</th><th scope="col">Tahun</th><th scope="col">Kuota internal</th>
+                        <th scope="col">Kuota eksternal</th><th scope="col">Diterima</th><th scope="col">Biaya</th>
+                        <th scope="col">Status</th><th scope="col">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -504,7 +598,7 @@ require 'admin_header.php';
                 <?php foreach ($settingsRows as $row) {
                 ?>
                     <tr>
-                        <td data-label="Unit" class="primary-cell"><?php echo h($row['nama_unit']); ?></td>
+                        <td data-label="Unit" class="primary-cell"><?php echo h(ppdb_unit_display_name($row['nama_unit'])); ?></td>
                         <td data-label="Tahun"><?php echo h($row['th_ajaran']); ?></td>
                         <td data-label="Kuota internal"><?php echo (int) $row['internal_terisi']; ?> / <?php echo (int) $row['kuota_internal']; ?> terisi<br><small><?php echo (int) $row['internal_diterima']; ?> diterima · <?php echo (int) $row['internal_token_belum_digunakan']; ?> token belum digunakan · <?php echo $row['internal_dibuka'] ? 'dibuka' : 'ditutup'; ?></small></td>
                         <td data-label="Kuota eksternal"><?php echo (int) $row['eksternal_terisi']; ?> / <?php echo (int) $row['kuota_eksternal']; ?> terisi<br><small><?php echo (int) $row['eksternal_diterima']; ?> diterima · <?php echo $row['eksternal_dibuka'] ? 'dibuka' : 'ditutup'; ?></small></td>

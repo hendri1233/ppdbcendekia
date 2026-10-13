@@ -409,9 +409,9 @@ require 'admin_header.php';
 <div class="admin-content">
     <div class="page-heading">
         <div>
-            <p class="eyebrow">DATA PESERTA DIDIK</p>
+            <p class="eyebrow">Data peserta didik</p>
             <h1><?php echo h($participant['nm_peserta']); ?></h1>
-            <p><?php echo h($participant['id_pendaftaran']); ?> · <?php echo h($participant['nama_unit'] ?? 'Data lama'); ?> · <?php echo h($participant['th_ajaran']); ?></p>
+            <p><?php echo h($participant['id_pendaftaran']); ?> · <?php echo h(ppdb_unit_display_name($participant['nama_unit'] ?? 'Data lama')); ?> · <?php echo h($participant['th_ajaran']); ?></p>
         </div>
         <div class="table-actions">
             <a class="button-secondary" href="cetak-bukti.php?id=<?php echo rawurlencode($registrationId); ?>">Unduh bukti PDF</a>
