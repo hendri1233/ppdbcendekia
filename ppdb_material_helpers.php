@@ -132,8 +132,13 @@ function ppdb_validate_questions($input): array
         if (!preg_match('/^[a-zA-Z0-9_-]{1,40}$/', $key)) {
             $key = 'q'.(int) $index;
         }
+        $section = trim((string) ($question['section'] ?? ''));
+        if (mb_strlen($section) > 120) {
+            throw new RuntimeException('Nama bagian kuisioner maksimal 120 karakter.');
+        }
         $questions[] = [
             'key' => $key,
+            'section' => $section,
             'prompt' => $prompt,
             'type' => $type,
             'choices' => $choices,
@@ -287,7 +292,7 @@ function ppdb_read_questionnaire_spreadsheet(array $file): array
     $requiredHeaders = ['pertanyaan', 'tipe', 'pilihan'];
     foreach ($requiredHeaders as $header) {
         if (!in_array($header, $headers, true)) {
-            throw new RuntimeException('Judul kolom wajib: Pertanyaan, Tipe, dan Pilihan. Kolom Wajib bersifat opsional.');
+            throw new RuntimeException('Judul kolom wajib: Pertanyaan, Tipe, dan Pilihan. Kolom Wajib dan Bagian bersifat opsional.');
         }
     }
     $column = array_flip($headers);
@@ -310,9 +315,12 @@ function ppdb_read_questionnaire_spreadsheet(array $file): array
             throw new RuntimeException('Tipe pertanyaan pada baris '.($index + 2).' tidak valid.');
         }
         $requiredColumn = $column['wajib'] ?? null;
-        $requiredValue = $requiredColumn === null ? 'ya' : mb_strtolower(trim((string) ($row[$requiredColumn] ?? 'ya')));
+        // Sel kosong pada XLSX tidak tersimpan, jadi kolom Wajib yang kosong berarti opsional.
+        $requiredValue = $requiredColumn === null ? 'ya' : mb_strtolower(trim((string) ($row[$requiredColumn] ?? '')));
+        $sectionColumn = $column['bagian'] ?? null;
         $questions[] = [
             'key' => 'import_'.($index + 1),
+            'section' => $sectionColumn === null ? '' : trim((string) ($row[$sectionColumn] ?? '')),
             'prompt' => $prompt,
             'type' => $typeMap[$sourceType],
             'choices' => trim((string) ($row[$column['pilihan']] ?? '')),

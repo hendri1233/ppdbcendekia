@@ -3,6 +3,7 @@ require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
 require_once 'ppdb_material_helpers.php';
+require_once 'formulir_helpers.php';
 start_app_session();
 
 $materialLabels = [
@@ -12,7 +13,7 @@ $materialLabels = [
 ];
 $documentSlots = [
     'foto' => ['label' => 'Foto peserta didik', 'required' => false, 'hint' => 'Foto formal terbaru, latar polos.'],
-    'nisn' => ['label' => 'Foto / scan NISN', 'required' => false, 'hint' => 'Kosongkan bila ananda belum memiliki NISN.'],
+    'nisn' => ['label' => 'Foto / scan NISN', 'required' => false, 'hint' => 'Tangkapan layar dari laman Cek NISN. Kosongkan bila belum ada.'],
     'kk' => ['label' => 'Scan Kartu Keluarga', 'required' => true, 'hint' => 'Halaman depan yang memuat nama ayah dan ibu.'],
     'akta_lahir' => ['label' => 'Scan Akta Kelahiran', 'required' => true, 'hint' => 'Akta kelahiran ananda.'],
     'ktp_ayah' => ['label' => 'Scan KTP Ayah', 'required' => true, 'hint' => 'Kartu Tanda Penduduk ayah / wali.'],
@@ -25,7 +26,7 @@ function formulir_lookup(mysqli $conn, string $code): ?array
     if (!preg_match('/^P[0-9]{9}$/', $code)) {
         return null;
     }
-    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.status_ppdb,p.status_data,p.status_pembayaran,p.pendaftar,p.no_hp_pendaftar,p.th_ajaran,p.kode_unit,p.token_formulir,p.token_bukti,p.token_whatsapp,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
+    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.status_ppdb,p.status_data,p.status_pembayaran,p.pendaftar,p.no_hp_pendaftar,p.th_ajaran,p.kode_unit,p.token_formulir,p.token_bukti,p.token_whatsapp,u.nama_unit,u.jenjang FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
     mysqli_stmt_bind_param($stmt, 's', $code);
     mysqli_stmt_execute($stmt);
     $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -53,10 +54,89 @@ function formulir_is_open(array $registration): bool
     return in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true);
 }
 
+/** Status yang masih boleh menyimpan draf atau mengirim formulir. */
+function formulir_is_editable(string $status): bool
+{
+    return in_array($status, ['pembayaran_terverifikasi', 'menunggu_formulir'], true);
+}
+
+/** Ambil hanya isian yang dikenal formulir agar draf tidak menyimpan data liar. */
+function formulir_draft_payload(array $input, array $questions): array
+{
+    $data = [];
+    foreach (formulir_input_fields() as $name => $_field) {
+        $value = $input[$name] ?? '';
+        if (is_string($value)) {
+            $data[$name] = mb_substr($value, 0, 2000);
+        }
+    }
+    $submitted = is_array($input['kuisioner'] ?? null) ? $input['kuisioner'] : [];
+    $answers = [];
+    foreach ($questions as $question) {
+        $key = (string) $question['key'];
+        $answer = $submitted[$key] ?? null;
+        if (is_string($answer)) {
+            $answers[$key] = mb_substr($answer, 0, 2000);
+        } elseif (is_array($answer)) {
+            $answers[$key] = array_values(array_filter($answer, 'is_string'));
+        }
+    }
+    $data['kuisioner'] = $answers;
+    foreach (['konfirmasi_lanjut', 'materi_dikonfirmasi'] as $flag) {
+        $data[$flag] = ($input[$flag] ?? '') === '1' ? '1' : '';
+    }
+    return $data;
+}
+
+/** Simpan satu dokumen peserta dan kembalikan path berkas lama yang tergantikan. */
+function formulir_upsert_document(mysqli $conn, string $registrationId, string $slot, array $stored): ?string
+{
+    $oldPath = null;
+    $existing = mysqli_prepare($conn, 'SELECT path_file FROM tb_dokumen_peserta WHERE id_pendaftaran=? AND jenis_dokumen=? LIMIT 1');
+    mysqli_stmt_bind_param($existing, 'ss', $registrationId, $slot);
+    mysqli_stmt_execute($existing);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($existing));
+    mysqli_stmt_close($existing);
+    if ($row && $row['path_file'] !== $stored['path']) {
+        $oldPath = $row['path_file'];
+    }
+
+    $originalName = (string) $stored['original_name'];
+    $storedPath = (string) $stored['path'];
+    $storedMime = (string) $stored['mime'];
+    $documentUpsert = mysqli_prepare($conn, 'INSERT INTO tb_dokumen_peserta (id_pendaftaran,jenis_dokumen,nama_file_asli,path_file,mime_type,ukuran_byte) VALUES (?,?,?,?,?,?) ON DUPLICATE KEY UPDATE nama_file_asli=VALUES(nama_file_asli),path_file=VALUES(path_file),mime_type=VALUES(mime_type),ukuran_byte=VALUES(ukuran_byte),diunggah_pada=NOW()');
+    mysqli_stmt_bind_param($documentUpsert, 'sssssi', $registrationId, $slot, $originalName, $storedPath, $storedMime, $stored['size']);
+    mysqli_stmt_execute($documentUpsert);
+    mysqli_stmt_close($documentUpsert);
+    return $oldPath;
+}
+
+function formulir_delete_files(array $paths): void
+{
+    foreach ($paths as $path) {
+        if ($path && is_file($path)) {
+            unlink($path);
+        }
+    }
+}
+
+function formulir_load_documents(mysqli $conn, string $registrationId): array
+{
+    $documents = [];
+    $documentQuery = mysqli_prepare($conn, 'SELECT jenis_dokumen,nama_file_asli,ukuran_byte,diunggah_pada FROM tb_dokumen_peserta WHERE id_pendaftaran=?');
+    mysqli_stmt_bind_param($documentQuery, 's', $registrationId);
+    mysqli_stmt_execute($documentQuery);
+    $result = mysqli_stmt_get_result($documentQuery);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $documents[$row['jenis_dokumen']] = $row;
+    }
+    mysqli_stmt_close($documentQuery);
+    return $documents;
+}
+
 $code = strtoupper(trim($_GET['kode'] ?? $_POST['kode'] ?? ''));
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
 $errors = [];
-$notice = '';
 $registration = formulir_lookup($conn, $code);
 $authorized = $registration !== null && formulir_token_matches($registration, $token);
 $formOpen = $authorized && formulir_is_open($registration);
@@ -98,99 +178,99 @@ foreach ($materialLabels as $materialType => $_materialLabel) {
         break;
     }
 }
-$canShowFullForm = ($_POST['konfirmasi_lanjut'] ?? '') === '1' && ($_POST['materi_dikonfirmasi'] ?? '') === '1';
+$uploadedDocuments = $authorized ? formulir_load_documents($conn, $registration['id_pendaftaran']) : [];
+
+// Simpan draf (dipanggil otomatis oleh js/formulir.js). Balasan berupa JSON.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['aksi'] ?? '') === 'simpan_draf') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, private');
+    if (!$formOpen || !formulir_is_editable($registration['status_ppdb'])) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'message' => 'Formulir ini sudah tidak dapat diubah.']);
+        exit;
+    }
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        http_response_code(419);
+        echo json_encode(['ok' => false, 'message' => 'Sesi berakhir. Muat ulang halaman; isian yang sudah tersimpan tidak hilang.']);
+        exit;
+    }
+    $draftData = json_encode(formulir_draft_payload($_POST, $questions), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $draftStep = max(0, min(20, (int) ($_POST['langkah'] ?? 0)));
+    $draftUpsert = mysqli_prepare($conn, 'INSERT INTO tb_formulir_draf (id_pendaftaran,data_json,langkah) VALUES (?,?,?) ON DUPLICATE KEY UPDATE data_json=VALUES(data_json),langkah=VALUES(langkah)');
+    mysqli_stmt_bind_param($draftUpsert, 'ssi', $registration['id_pendaftaran'], $draftData, $draftStep);
+    mysqli_stmt_execute($draftUpsert);
+    mysqli_stmt_close($draftUpsert);
+
+    // Berkas yang dipilih langsung disimpan agar tidak perlu diunggah ulang.
+    $draftErrors = [];
+    foreach ($documentSlots as $slot => $meta) {
+        $file = $_FILES['dokumen__'.$slot] ?? null;
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+        try {
+            $stored = ppdb_store_private_upload($file, 'participant-documents/'.$registration['id_pendaftaran'], $documentMimes, 8 * 1024 * 1024);
+            try {
+                formulir_delete_files([formulir_upsert_document($conn, $registration['id_pendaftaran'], $slot, $stored)]);
+            } catch (Throwable $exception) {
+                formulir_delete_files([$stored['path']]);
+                throw $exception;
+            }
+        } catch (RuntimeException $exception) {
+            $draftErrors[] = $meta['label'].': '.$exception->getMessage();
+        } catch (Throwable $exception) {
+            error_log('PPDB draft upload failed: '.$exception->getMessage());
+            $draftErrors[] = $meta['label'].' belum dapat disimpan.';
+        }
+    }
+
+    $documents = [];
+    foreach (formulir_load_documents($conn, $registration['id_pendaftaran']) as $slot => $document) {
+        $documents[$slot] = ['name' => $document['nama_file_asli'], 'size' => (int) $document['ukuran_byte']];
+    }
+    // Jam diambil dari basis data agar sama dengan zona waktu yang tercatat.
+    $savedAtQuery = mysqli_prepare($conn, "SELECT DATE_FORMAT(updated_at,'%H:%i') AS jam FROM tb_formulir_draf WHERE id_pendaftaran=? LIMIT 1");
+    mysqli_stmt_bind_param($savedAtQuery, 's', $registration['id_pendaftaran']);
+    mysqli_stmt_execute($savedAtQuery);
+    $savedAt = (string) (mysqli_fetch_assoc(mysqli_stmt_get_result($savedAtQuery))['jam'] ?? '');
+    mysqli_stmt_close($savedAtQuery);
+    echo json_encode(['ok' => true, 'saved_at' => $savedAt, 'documents' => $documents, 'errors' => $draftErrors], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// Isian awal: kiriman yang gagal divalidasi, lalu draf tersimpan.
+$draftSavedAt = null;
+$formValues = [];
+$currentStep = 0;
+if ($formOpen) {
+    $draftQuery = mysqli_prepare($conn, 'SELECT data_json,langkah,updated_at FROM tb_formulir_draf WHERE id_pendaftaran=? LIMIT 1');
+    mysqli_stmt_bind_param($draftQuery, 's', $registration['id_pendaftaran']);
+    mysqli_stmt_execute($draftQuery);
+    $draftRow = mysqli_fetch_assoc(mysqli_stmt_get_result($draftQuery));
+    mysqli_stmt_close($draftQuery);
+    if ($draftRow) {
+        $decodedDraft = json_decode($draftRow['data_json'], true);
+        if (is_array($decodedDraft)) {
+            $formValues = $decodedDraft;
+            $currentStep = (int) $draftRow['langkah'];
+            $draftSavedAt = $draftRow['updated_at'];
+        }
+    }
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $formValues = $_POST;
+    $currentStep = (int) ($_POST['langkah'] ?? $currentStep);
+}
+$canShowFullForm = ($formValues['konfirmasi_lanjut'] ?? '') === '1' && ($formValues['materi_dikonfirmasi'] ?? '') === '1';
 $questionAnswers = [];
 
 if ($registration && !$authorized && preg_match('/^P[0-9]{9}$/', $code)) {
     $errors[] = 'Kode pendaftaran tidak dikenali atau tautan tidak sah. Gunakan kode yang diterima melalui WhatsApp dari panitia.';
 }
 
-$educationOptions = ['Tidak sekolah', 'SD/sederajat', 'SMP/sederajat', 'SMA/sederajat', 'D1', 'D2', 'D3', 'D4/S1', 'S2', 'S3'];
-$incomeOptions = ['Tidak berpenghasilan', 'Di bawah Rp500.000', 'Rp500.000–Rp1.000.000', 'Rp1.000.000–Rp2.000.000', 'Rp2.000.000–Rp5.000.000', 'Di atas Rp5.000.000'];
-$formValues = $_POST;
-
-function formulir_render_field(array $field, array $values): void
-{
-    $name = $field['name'];
-    $value = (string) ($values[$name] ?? '');
-    $wideClass = !empty($field['wide']) ? ' field-wide' : '';
-    echo '<div class="field'.$wideClass.'" data-field="'.h($name).'">';
-    echo '<label for="'.h($name).'">'.h($field['label']);
-    if (!empty($field['required'])) {
-        echo ' <span class="required-mark" aria-hidden="true">*</span>';
-    } else {
-        echo ' <span class="optional-mark">Opsional</span>';
-    }
-    echo '</label>';
-
-    $type = $field['type'] ?? 'text';
-    if ($type === 'select') {
-        echo '<select id="'.h($name).'" name="'.h($name).'"'.(!empty($field['required']) ? ' required' : '').'>';
-        echo '<option value="">'.h($field['placeholder'] ?? 'Pilih salah satu').'</option>';
-        foreach ($field['options'] as $optionValue => $optionLabel) {
-            echo '<option value="'.h($optionValue).'"'.($value === (string) $optionValue ? ' selected' : '').'>'.h($optionLabel).'</option>';
-        }
-        echo '</select>';
-    } else {
-        $attributes = '';
-        foreach (['maxlength', 'min', 'max', 'step', 'inputmode', 'pattern', 'placeholder'] as $attribute) {
-            if (isset($field[$attribute])) {
-                $attributes .= ' '.$attribute.'="'.h($field[$attribute]).'"';
-            }
-        }
-        echo '<input id="'.h($name).'" type="'.h($type).'" name="'.h($name).'" value="'.h($value).'"'.$attributes.(!empty($field['required']) ? ' required' : '').'>';
-    }
-    if (!empty($field['hint'])) {
-        echo '<small class="field-hint">'.h($field['hint']).'</small>';
-    }
-    echo '</div>';
-}
-
-$identityFields = [
-    ['name' => 'nik', 'label' => 'NIK calon peserta didik', 'required' => true, 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka'],
-    ['name' => 'nomor_kk', 'label' => 'Nomor Kartu Keluarga', 'required' => true, 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka'],
-    ['name' => 'NISN', 'label' => 'NISN', 'maxlength' => 10, 'inputmode' => 'numeric', 'pattern' => '[0-9]{10}', 'placeholder' => '10 digit angka', 'hint' => 'Kosongkan jika belum memiliki NISN.'],
-    ['name' => 'tmp_lahir', 'label' => 'Tempat lahir', 'required' => true, 'maxlength' => 50],
-    ['name' => 'nomor_registrasi_akta', 'label' => 'Nomor registrasi akta kelahiran', 'maxlength' => 100, 'wide' => true],
-    ['name' => 'agama', 'label' => 'Agama/kepercayaan', 'type' => 'select', 'required' => true, 'options' => ['Islam' => 'Islam', 'Kristen' => 'Kristen', 'Katolik' => 'Katolik', 'Hindu' => 'Hindu', 'Buddha' => 'Buddha', 'Khonghucu' => 'Khonghucu', 'Kepercayaan' => 'Kepercayaan lainnya']],
-    ['name' => 'kewarganegaraan', 'label' => 'Kewarganegaraan', 'type' => 'select', 'required' => true, 'options' => ['WNI' => 'WNI', 'WNA' => 'WNA']],
-    ['name' => 'kebutuhan_khusus', 'label' => 'Berkebutuhan khusus', 'maxlength' => 120, 'placeholder' => 'Tidak ada jika tidak memiliki', 'wide' => true],
-    ['name' => 'asal_sekolah', 'label' => 'Sekolah asal', 'maxlength' => 100],
-    ['name' => 'pernah_paud_tk', 'label' => 'Pernah mengikuti PAUD/TK', 'type' => 'select', 'required' => true, 'options' => ['Ya' => 'Ya', 'Tidak' => 'Tidak', 'Belum diketahui' => 'Belum diketahui']],
-];
-$addressFields = [
-    ['name' => 'alamat_jalan', 'label' => 'Alamat jalan/dusun', 'required' => true, 'maxlength' => 200, 'wide' => true],
-    ['name' => 'rt', 'label' => 'RT', 'maxlength' => 5],
-    ['name' => 'rw', 'label' => 'RW', 'maxlength' => 5],
-    ['name' => 'desa_kelurahan', 'label' => 'Desa/kelurahan', 'required' => true, 'maxlength' => 100],
-    ['name' => 'kecamatan', 'label' => 'Kecamatan', 'required' => true, 'maxlength' => 100],
-    ['name' => 'kabupaten', 'label' => 'Kabupaten/kota', 'required' => true, 'maxlength' => 100],
-    ['name' => 'provinsi', 'label' => 'Provinsi', 'required' => true, 'maxlength' => 100],
-    ['name' => 'jenis_tinggal', 'label' => 'Jenis tinggal', 'type' => 'select', 'required' => true, 'options' => ['Bersama orang tua' => 'Bersama orang tua', 'Bersama wali' => 'Bersama wali', 'Kos' => 'Kos', 'Asrama' => 'Asrama', 'Panti asuhan' => 'Panti asuhan', 'Lainnya' => 'Lainnya']],
-    ['name' => 'alat_transportasi', 'label' => 'Alat transportasi ke sekolah', 'type' => 'select', 'required' => true, 'options' => ['Jalan kaki' => 'Jalan kaki', 'Sepeda' => 'Sepeda', 'Sepeda motor' => 'Sepeda motor', 'Mobil' => 'Mobil', 'Angkutan umum' => 'Angkutan umum', 'Antar jemput' => 'Antar jemput', 'Lainnya' => 'Lainnya']],
-];
-$parentGroups = [];
-foreach (['ayah' => 'Data ayah', 'ibu' => 'Data ibu', 'wali' => 'Data wali (jika ada)'] as $prefix => $title) {
-    $parentGroups[] = [
-        'title' => $title,
-        'fields' => [
-            ['name' => $prefix.'_nama', 'label' => 'Nama lengkap', 'maxlength' => 100],
-            ['name' => $prefix.'_nik', 'label' => 'NIK', 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka'],
-            ['name' => $prefix.'_tahun_lahir', 'label' => 'Tahun lahir', 'type' => 'number', 'min' => 1900, 'max' => date('Y')],
-            ['name' => $prefix.'_pendidikan', 'label' => 'Pendidikan terakhir', 'type' => 'select', 'options' => array_combine($educationOptions, $educationOptions)],
-            ['name' => $prefix.'_pekerjaan', 'label' => 'Pekerjaan', 'maxlength' => 100],
-            ['name' => $prefix.'_penghasilan', 'label' => 'Penghasilan bulanan', 'type' => 'select', 'options' => array_combine($incomeOptions, $incomeOptions)],
-        ],
-    ];
-}
-$periodicFields = [
-    ['name' => 'tinggi_badan_cm', 'label' => 'Tinggi badan (cm)', 'type' => 'number', 'min' => 30, 'max' => 250, 'step' => '0.1'],
-    ['name' => 'berat_badan_kg', 'label' => 'Berat badan (kg)', 'type' => 'number', 'min' => 1, 'max' => 300, 'step' => '0.1'],
-    ['name' => 'lingkar_kepala_cm', 'label' => 'Lingkar kepala (cm)', 'type' => 'number', 'min' => 20, 'max' => 100, 'step' => '0.1'],
-    ['name' => 'jarak_ke_sekolah_km', 'label' => 'Jarak rumah ke sekolah (km)', 'type' => 'number', 'min' => 0, 'max' => 500, 'step' => '0.1'],
-    ['name' => 'waktu_tempuh_menit', 'label' => 'Waktu tempuh (menit)', 'type' => 'number', 'min' => 0, 'max' => 1440],
-    ['name' => 'jumlah_saudara_kandung', 'label' => 'Jumlah saudara kandung', 'type' => 'number', 'min' => 0, 'max' => 30],
-];
+// Aturan wajib/opsional dari super admin dan isian khusus jenjang (mis. TK A/B).
+$dataSections = formulir_sections_for($conn, (string) ($registration['jenjang'] ?? ''));
+$inputFields = formulir_input_fields($dataSections);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
     if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
@@ -241,72 +321,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
         $questionAnswers[$key] = $answer;
     }
 
-    foreach (['nik' => 'NIK', 'nomor_kk' => 'Nomor KK'] as $field => $label) {
-        if (!preg_match('/^[0-9]{16}$/', trim($_POST[$field] ?? ''))) {
-            $errors[] = $label.' harus terdiri dari 16 digit angka.';
-        }
-    }
-    if (($nisn = trim($_POST['NISN'] ?? '')) !== '' && !preg_match('/^[0-9]{10}$/', $nisn)) {
-        $errors[] = 'NISN harus terdiri dari 10 digit angka.';
-    }
-    if (trim($_POST['tmp_lahir'] ?? '') === '') {
-        $errors[] = 'Tempat lahir wajib diisi.';
-    }
-    foreach (['ayah_nik' => 'NIK ayah', 'ibu_nik' => 'NIK ibu', 'wali_nik' => 'NIK wali'] as $field => $label) {
-        $parentNik = trim($_POST[$field] ?? '');
-        if ($parentNik !== '' && !preg_match('/^[0-9]{16}$/', $parentNik)) {
-            $errors[] = $label.' harus terdiri dari 16 digit jika diisi.';
-        }
-    }
-    foreach (['ayah_tahun_lahir', 'ibu_tahun_lahir', 'wali_tahun_lahir'] as $field) {
-        $birthYear = trim($_POST[$field] ?? '');
-        if ($birthYear !== '' && (!preg_match('/^[0-9]{4}$/', $birthYear) || (int) $birthYear < 1900 || (int) $birthYear > (int) date('Y'))) {
-            $errors[] = 'Periksa kembali tahun lahir orang tua/wali.';
-        }
-    }
-    foreach (['alamat_jalan', 'desa_kelurahan', 'kecamatan', 'kabupaten', 'provinsi'] as $requiredAddress) {
-        if (trim($_POST[$requiredAddress] ?? '') === '') {
-            $errors[] = 'Lengkapi alamat jalan/dusun, desa, kecamatan, kabupaten, dan provinsi.';
-            break;
-        }
-    }
-    $allowedValues = [
-        'kewarganegaraan' => ['WNI', 'WNA'],
-        'pernah_paud_tk' => ['Ya', 'Tidak', 'Belum diketahui'],
-        'jenis_pendaftaran' => ['Siswa baru', 'Pindahan', 'Kembali aktif'],
-        'agama' => ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Khonghucu', 'Kepercayaan'],
-        'jenis_tinggal' => ['Bersama orang tua', 'Bersama wali', 'Kos', 'Asrama', 'Panti asuhan', 'Lainnya'],
-        'alat_transportasi' => ['Jalan kaki', 'Sepeda', 'Sepeda motor', 'Mobil', 'Angkutan umum', 'Antar jemput', 'Lainnya'],
-    ];
-    foreach ($allowedValues as $field => $validValues) {
-        if (!in_array($_POST[$field] ?? '', $validValues, true)) {
-            $errors[] = 'Pilih nilai yang valid untuk '.str_replace('_', ' ', $field).'.';
-        }
-    }
-    foreach (['tinggi_badan_cm' => [30, 250], 'berat_badan_kg' => [1, 300], 'lingkar_kepala_cm' => [20, 100], 'jarak_ke_sekolah_km' => [0, 500], 'waktu_tempuh_menit' => [0, 1440], 'jumlah_saudara_kandung' => [0, 30]] as $field => [$minimum, $maximum]) {
-        $numericValue = trim($_POST[$field] ?? '');
-        if ($numericValue !== '' && (!is_numeric($numericValue) || (float) $numericValue < $minimum || (float) $numericValue > $maximum)) {
-            $errors[] = 'Periksa kembali nilai '.str_replace('_', ' ', $field).'.';
-        }
-    }
+    $errors = array_merge($errors, formulir_validate_fields($_POST, $dataSections));
+    // NIK: kekeliruan pasti ditolak; ketidakcocokan dengan data lain hanya ditandai.
+    $identityChecks = formulir_identity_checks($_POST, $registration, $inputFields);
+    $errors = array_merge($errors, $identityChecks['errors']);
 
-    // Dokumen wajib diperiksa lebih dulu agar tidak ada berkas orphan.
+    // Dokumen yang sudah tersimpan lewat draf tidak perlu diunggah ulang.
     // Nama berkas dikirim sebagai dokumen__foto, dokumen__kk, dan seterusnya.
     // Notasi kurung siku tidak selalu diurai oleh PHP, sehingga slot dapat
     // tertukar. Nama datar di bawah ini aman di setiap konfigurasi.
     $uploads = [];
     foreach ($documentSlots as $slot => $meta) {
-        $fieldName = 'dokumen__'.$slot;
-        $file = $_FILES[$fieldName] ?? null;
+        $file = $_FILES['dokumen__'.$slot] ?? null;
         $hasFile = is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
         if (!$hasFile) {
-            if (!empty($meta['required'])) {
+            if (!empty($meta['required']) && !isset($uploadedDocuments[$slot])) {
                 $errors[] = $meta['label'].' wajib diunggah.';
             }
             continue;
         }
         if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
             $errors[] = $meta['label'].' gagal diunggah. Silakan pilih ulang berkas.';
+            continue;
+        }
+        if ($errors) {
             continue;
         }
         try {
@@ -317,29 +355,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
     }
 
     if (!$errors) {
-        $fullAddressParts = [trim($_POST['alamat_jalan'] ?? '')];
-        $rt = trim($_POST['rt'] ?? '');
-        $rw = trim($_POST['rw'] ?? '');
-        if ($rt !== '' || $rw !== '') {
-            $fullAddressParts[] = 'RT '.($rt !== '' ? $rt : '-').' / RW '.($rw !== '' ? $rw : '-');
+        $value = static fn (string $name): string => trim((string) ($_POST[$name] ?? ''));
+
+        $fullAddressParts = [$value('alamat_jalan')];
+        if ($value('dusun') !== '') {
+            $fullAddressParts[] = 'Dusun '.$value('dusun');
         }
-        foreach (['desa_kelurahan', 'kecamatan', 'kabupaten', 'provinsi'] as $addressPart) {
-            $value = trim($_POST[$addressPart] ?? '');
-            if ($value !== '') {
-                $fullAddressParts[] = $value;
+        if ($value('rt') !== '' || $value('rw') !== '') {
+            $fullAddressParts[] = 'RT '.($value('rt') !== '' ? $value('rt') : '-').' / RW '.($value('rw') !== '' ? $value('rw') : '-');
+        }
+        foreach (['desa_kelurahan', 'kecamatan', 'kabupaten', 'provinsi', 'kode_pos'] as $addressPart) {
+            if ($value($addressPart) !== '') {
+                $fullAddressParts[] = $value($addressPart);
             }
         }
         $fullAddress = implode(', ', $fullAddressParts);
 
-        $detailFields = [
-            'nik', 'nomor_kk', 'nomor_registrasi_akta', 'kewarganegaraan', 'kebutuhan_khusus', 'alamat_jalan', 'rt', 'rw', 'desa_kelurahan', 'kecamatan', 'kabupaten', 'provinsi', 'jenis_tinggal', 'alat_transportasi',
-            'ayah_nama', 'ayah_nik', 'ayah_tahun_lahir', 'ayah_pendidikan', 'ayah_pekerjaan', 'ayah_penghasilan',
-            'ibu_nama', 'ibu_nik', 'ibu_tahun_lahir', 'ibu_pendidikan', 'ibu_pekerjaan', 'ibu_penghasilan',
-            'wali_nama', 'wali_nik', 'wali_tahun_lahir', 'wali_pendidikan', 'wali_pekerjaan', 'wali_penghasilan',
-            'tinggi_badan_cm', 'berat_badan_kg', 'lingkar_kepala_cm', 'jarak_ke_sekolah_km', 'waktu_tempuh_menit', 'jumlah_saudara_kandung', 'jenis_pendaftaran', 'pernah_paud_tk',
-        ];
-        $nullableNumericFields = ['ayah_tahun_lahir', 'ibu_tahun_lahir', 'wali_tahun_lahir', 'tinggi_badan_cm', 'berat_badan_kg', 'lingkar_kepala_cm', 'jarak_ke_sekolah_km', 'waktu_tempuh_menit', 'jumlah_saudara_kandung'];
+        // Isian bersyarat yang tersembunyi (mis. data wali saat tidak ada wali) disimpan kosong.
+        $fieldValue = static function (array $field) use ($value): ?string {
+            $fieldInput = formulir_condition_met($field, $_POST) ? $value($field['name']) : '';
+            return $fieldInput === '' && !empty($field['numeric']) ? null : $fieldInput;
+        };
 
+        $detailValues = ['id_pendaftaran' => $registration['id_pendaftaran'], 'catatan_validasi' => $identityChecks['flags'] ? implode("\n", $identityChecks['flags']) : null];
+        $dataStatus = $identityChecks['flags'] ? 'perlu_perbaikan' : 'belum_diperiksa';
+        $parentRows = ['ayah' => [], 'ibu' => [], 'wali' => []];
+        foreach ($inputFields as $name => $field) {
+            if ($field['store'] === 'detail') {
+                $detailValues[$name] = $fieldValue($field);
+            } elseif ($field['store'] === 'ortu') {
+                $parentRows[$field['peran']][$field['column']] = $fieldValue($field);
+            }
+        }
+
+        $replacedFiles = [];
         try {
             mysqli_begin_transaction($conn);
             $lock = mysqli_prepare($conn, 'SELECT status_ppdb FROM tb_pendaftaran WHERE id_pendaftaran=? FOR UPDATE');
@@ -347,43 +396,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
             mysqli_stmt_execute($lock);
             $lockedStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
             mysqli_stmt_close($lock);
-            if (!$lockedStatus || !in_array($lockedStatus['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true)) {
+            if (!$lockedStatus || !formulir_is_editable($lockedStatus['status_ppdb'])) {
                 throw new RuntimeException('Formulir ini sudah tidak dapat diisi. Hubungi panitia PPDB.');
             }
 
-            $detailValues = [$registration['id_pendaftaran']];
-            foreach ($detailFields as $field) {
-                $value = trim($_POST[$field] ?? '');
-                $detailValues[] = $value === '' ? (in_array($field, $nullableNumericFields, true) ? null : '') : $value;
-            }
-            $detailColumns = array_merge(['id_pendaftaran'], $detailFields);
-            $columnSql = '`'.implode('`, `', $detailColumns).'`';
-            $placeholders = implode(', ', array_fill(0, count($detailColumns), '?'));
-            $detailInsert = mysqli_prepare($conn, 'INSERT INTO tb_detail_dapodik ('.$columnSql.') VALUES ('.$placeholders.') ON DUPLICATE KEY UPDATE '.implode(', ', array_map(static fn ($column) => '`'.$column.'`=VALUES(`'.$column.'`)', $detailFields)));
-            $references = [];
-            foreach ($detailValues as $key => &$value) {
-                $references[$key] = &$value;
-            }
-            mysqli_stmt_bind_param($detailInsert, str_repeat('s', count($detailValues)), ...$references);
+            $detailColumns = array_keys($detailValues);
+            $updateColumns = array_slice($detailColumns, 1);
+            $detailInsert = mysqli_prepare($conn, 'INSERT INTO tb_detail_dapodik (`'.implode('`, `', $detailColumns).'`) VALUES ('.implode(', ', array_fill(0, count($detailColumns), '?')).') ON DUPLICATE KEY UPDATE '.implode(', ', array_map(static fn ($column) => '`'.$column.'`=VALUES(`'.$column.'`)', $updateColumns)));
+            $detailParams = array_values($detailValues);
+            mysqli_stmt_bind_param($detailInsert, str_repeat('s', count($detailParams)), ...$detailParams);
             mysqli_stmt_execute($detailInsert);
             mysqli_stmt_close($detailInsert);
 
-            foreach ($uploads as $slot => $stored) {
-                $originalName = (string) $stored['original_name'];
-                $storedPath = (string) $stored['path'];
-                $storedMime = (string) $stored['mime'];
-                $documentUpsert = mysqli_prepare($conn, 'INSERT INTO tb_dokumen_peserta (id_pendaftaran,jenis_dokumen,nama_file_asli,path_file,mime_type,ukuran_byte) VALUES (?,?,?,?,?,?) ON DUPLICATE KEY UPDATE nama_file_asli=VALUES(nama_file_asli),path_file=VALUES(path_file),mime_type=VALUES(mime_type),ukuran_byte=VALUES(ukuran_byte),diunggah_pada=NOW()');
-                mysqli_stmt_bind_param($documentUpsert, 'sssssi', $registration['id_pendaftaran'], $slot, $originalName, $storedPath, $storedMime, $stored['size']);
-                mysqli_stmt_execute($documentUpsert);
-                mysqli_stmt_close($documentUpsert);
+            foreach ($parentRows as $role => $columns) {
+                $parentColumns = array_merge(['id_pendaftaran', 'peran'], FORMULIR_PARENT_EXTRA_COLUMNS);
+                $parentParams = [$registration['id_pendaftaran'], $role];
+                foreach (FORMULIR_PARENT_EXTRA_COLUMNS as $column) {
+                    $parentParams[] = (string) ($columns[$column] ?? '');
+                }
+                $parentUpsert = mysqli_prepare($conn, 'INSERT INTO tb_orang_tua_peserta (`'.implode('`, `', $parentColumns).'`) VALUES ('.implode(', ', array_fill(0, count($parentColumns), '?')).') ON DUPLICATE KEY UPDATE '.implode(', ', array_map(static fn ($column) => '`'.$column.'`=VALUES(`'.$column.'`)', FORMULIR_PARENT_EXTRA_COLUMNS)));
+                mysqli_stmt_bind_param($parentUpsert, str_repeat('s', count($parentParams)), ...$parentParams);
+                mysqli_stmt_execute($parentUpsert);
+                mysqli_stmt_close($parentUpsert);
             }
 
-            $sourceSchool = trim($_POST['asal_sekolah'] ?? '');
-            $birthPlace = trim($_POST['tmp_lahir'] ?? '');
-            $religion = (string) ($_POST['agama'] ?? '');
-            $informationSource = trim($_POST['sumber_informasi'] ?? '');
-            $statusUpdate = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='formulir_terisi',status_data='belum_diperiksa',NISN=?,asal_sekolah=?,tmp_lahir=?,agama=?,alamat=?,sumber_informasi=? WHERE id_pendaftaran=?");
-            mysqli_stmt_bind_param($statusUpdate, 'sssssss', $nisn, $sourceSchool, $birthPlace, $religion, $fullAddress, $informationSource, $registration['id_pendaftaran']);
+            foreach ($uploads as $slot => $stored) {
+                $replacedFiles[] = formulir_upsert_document($conn, $registration['id_pendaftaran'], $slot, $stored);
+            }
+
+            $nisn = formulir_condition_met($inputFields['NISN'], $_POST) ? $value('NISN') : '';
+            // Sekolah asal di bawah yayasan cukup dipilih; namanya diisikan otomatis.
+            $previousSchool = $value('jenjang_sekolah_asal');
+            $sourceSchool = $previousSchool === 'Sekolah lain' ? $value('asal_sekolah') : (str_ends_with($previousSchool, 'IT Cendekia') ? $previousSchool : '');
+            $birthPlace = $value('tmp_lahir');
+            $religion = $value('agama');
+            $informationSource = $value('sumber_informasi');
+            $statusUpdate = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='formulir_terisi',status_data=?,NISN=?,asal_sekolah=?,tmp_lahir=?,agama=?,alamat=?,sumber_informasi=? WHERE id_pendaftaran=?");
+            mysqli_stmt_bind_param($statusUpdate, 'ssssssss', $dataStatus, $nisn, $sourceSchool, $birthPlace, $religion, $fullAddress, $informationSource, $registration['id_pendaftaran']);
             mysqli_stmt_execute($statusUpdate);
             mysqli_stmt_close($statusUpdate);
 
@@ -393,20 +442,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
             mysqli_stmt_execute($answerUpsert);
             mysqli_stmt_close($answerUpsert);
 
+            $draftDelete = mysqli_prepare($conn, 'DELETE FROM tb_formulir_draf WHERE id_pendaftaran=?');
+            mysqli_stmt_bind_param($draftDelete, 's', $registration['id_pendaftaran']);
+            mysqli_stmt_execute($draftDelete);
+            mysqli_stmt_close($draftDelete);
+
             enqueue_google_sheets_registration($conn, $registration['id_pendaftaran']);
             mysqli_commit($conn);
+            formulir_delete_files($replacedFiles);
 
-            $statusToken = $token;
             sync_google_sheets_registration($conn, $registration['id_pendaftaran']);
-            header('Location: status-pendaftaran.php?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $statusToken]));
+            header('Location: status-pendaftaran.php?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $token]));
             exit;
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
-            foreach ($uploads as $stored) {
-                if (is_file($stored['path'])) {
-                    unlink($stored['path']);
-                }
-            }
             if ($exception instanceof RuntimeException) {
                 $errors[] = $exception->getMessage();
             } else {
@@ -418,24 +467,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formOpen) {
 
     // Berkas yang gagal disimpan harus dikembalikan agar tidak menggantung di server.
     if ($errors) {
-        foreach ($uploads as $stored) {
-            if (is_file($stored['path'])) {
-                unlink($stored['path']);
-            }
-        }
+        formulir_delete_files(array_column($uploads, 'path'));
     }
 }
 
-$uploadedDocuments = [];
-if ($authorized) {
-    $documentQuery = mysqli_prepare($conn, 'SELECT jenis_dokumen,nama_file_asli,ukuran_byte,diunggah_pada FROM tb_dokumen_peserta WHERE id_pendaftaran=?');
-    mysqli_stmt_bind_param($documentQuery, 's', $registration['id_pendaftaran']);
-    mysqli_stmt_execute($documentQuery);
-    while ($row = mysqli_fetch_assoc(mysqli_stmt_get_result($documentQuery))) {
-        $uploadedDocuments[$row['jenis_dokumen']] = $row;
+$showFullForm = $formOpen && $canShowFullForm && $allMaterialsPublished && $questionnaireReady;
+
+// Langkah formulir: bagian data, wawancara, lalu dokumen dan konfirmasi.
+$steps = [];
+foreach ($dataSections as $sectionKey => $section) {
+    $steps[] = ['key' => $sectionKey, 'title' => $section['title']];
+}
+$steps[] = ['key' => 'wawancara', 'title' => 'Wawancara'];
+$steps[] = ['key' => 'dokumen', 'title' => 'Dokumen & kirim'];
+$currentStep = max(0, min(count($steps) - 1, $currentStep));
+$draftAnswers = is_array($formValues['kuisioner'] ?? null) ? $formValues['kuisioner'] : [];
+
+function formulir_step_actions(int $index, int $total): void
+{
+    echo '<div class="step-actions">';
+    echo $index > 0 ? '<button type="button" class="step-button step-button--back" data-step-prev>&larr; Sebelumnya</button>' : '<span></span>';
+    echo '<span class="draft-status" data-draft-status aria-live="polite"></span>';
+    if ($index < $total - 1) {
+        echo '<button type="button" class="submit-button" data-step-next>Simpan &amp; lanjut <span aria-hidden="true">&rarr;</span></button>';
     }
-    $showFullForm = $formOpen && $canShowFullForm && $allMaterialsPublished && $questionnaireReady;
-    mysqli_stmt_close($documentQuery);
+    echo '</div>';
 }
 
 header('Cache-Control: no-store, private');
@@ -454,7 +510,7 @@ header('Referrer-Policy: no-referrer');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="css/daftar.css">
+    <link rel="stylesheet" href="css/daftar.css?v=<?php echo (int) filemtime(__DIR__.'/css/daftar.css'); ?>">
 </head>
 <body>
 <a class="skip-link" href="#form-utama">Lompat ke formulir</a>
@@ -527,7 +583,7 @@ header('Referrer-Policy: no-referrer');
                     <button type="button" class="choice-no" data-confirm-choice="0">Tidak, ada yang keliru</button>
                 </div>
                 <p class="confirm-card__note" data-confirm-note>Data di atas tidak dapat diubah pada tahap ini. Pilih <strong>Ya</strong> untuk membaca brosur, rincian biaya, dan SOP terlebih dahulu.</p>
-                <input type="hidden" name="konfirmasi_lanjut" value="<?php echo (($_POST['konfirmasi_lanjut'] ?? '') === '1') ? '1' : ''; ?>" data-confirm-value form="form-utama">
+                <input type="hidden" name="konfirmasi_lanjut" value="<?php echo (($formValues['konfirmasi_lanjut'] ?? '') === '1') ? '1' : ''; ?>" data-confirm-value form="form-utama">
             </dialog>
 
             <section class="materials-stage" id="materi-pendaftaran" data-material-stage hidden aria-labelledby="materi-title">
@@ -589,118 +645,107 @@ header('Referrer-Policy: no-referrer');
                     <input type="checkbox" data-materials-read>
                     <span>Saya telah membaca brosur, rincian biaya, dan SOP di atas.</span>
                 </label>
-                <button class="submit-button materials-next" type="button" data-materials-next <?php echo (!$allMaterialsPublished || !$questionnaireReady) ? 'disabled' : ''; ?>>Lanjut ke kuisioner &amp; formulir <span aria-hidden="true">&rarr;</span></button>
+                <button class="submit-button materials-next" type="button" data-materials-next <?php echo (!$allMaterialsPublished || !$questionnaireReady) ? 'disabled' : ''; ?>>Lanjut ke formulir <span aria-hidden="true">&rarr;</span></button>
             </section>
 
             <div id="formulir-terbuka" <?php echo $showFullForm ? '' : 'hidden'; ?>>
                 <div class="form-stage-intro">
                     <p class="eyebrow">Tahap 3 dari 3</p>
-                    <h2>Kuisioner dan formulir data lengkap</h2>
-                    <p>Isi kuisioner terlebih dahulu, lalu lengkapi data peserta didik dan dokumen pendukung.</p>
+                    <h2>Formulir data lengkap</h2>
+                    <p>Isian tersimpan otomatis. Jika terhenti, buka kembali tautan dari WhatsApp untuk melanjutkan dari langkah terakhir.</p>
+                    <?php if ($draftSavedAt && $_SERVER['REQUEST_METHOD'] !== 'POST') { ?><p class="draft-restored" role="status">Isian Anda yang tersimpan pada <?php echo h(date('d-m-Y H:i', strtotime($draftSavedAt))); ?> sudah dimuat kembali.</p><?php } ?>
                 </div>
-                <form class="registration-form" id="form-utama" action="formulir.php" method="post" enctype="multipart/form-data" autocomplete="on" novalidate>
+                <ol class="form-steps" data-step-nav aria-label="Langkah formulir">
+                    <?php foreach ($steps as $stepIndex => $step) { ?>
+                        <li><button type="button" data-step-target="<?php echo (int) $stepIndex; ?>"<?php echo $stepIndex === $currentStep ? ' aria-current="step"' : ''; ?>><span class="form-steps__number"><?php echo $stepIndex + 1; ?></span><span class="form-steps__label"><?php echo h($step['title']); ?></span></button></li>
+                    <?php } ?>
+                </ol>
+                <form class="registration-form" id="form-utama" action="formulir.php" method="post" enctype="multipart/form-data" autocomplete="on" novalidate data-current-step="<?php echo (int) $currentStep; ?>" data-birth-date="<?php echo h((string) $registration['tgl_lahir']); ?>" data-gender="<?php echo h((string) $registration['jenis_kelamin']); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <input type="hidden" name="kode" value="<?php echo h($registration['id_pendaftaran']); ?>">
                     <input type="hidden" name="token" value="<?php echo h($token); ?>">
+                    <input type="hidden" name="langkah" value="<?php echo (int) $currentStep; ?>" data-step-value>
                     <input type="hidden" name="materi_dikonfirmasi" value="<?php echo $showFullForm ? '1' : ''; ?>" data-material-confirm-value>
 
-                    <section class="form-section questionnaire-section" aria-labelledby="questionnaire-title">
-                        <div class="section-heading"><span class="section-number">01</span><div><h2 id="questionnaire-title">Kuisioner pendaftar</h2><p>Jawab pertanyaan berikut. Pertanyaan bertanda wajib harus dijawab.</p></div></div>
-                        <?php foreach ($questions as $questionIndex => $question) {
+                    <?php $stepIndex = 0; foreach ($dataSections as $sectionKey => $section) { ?>
+                        <section class="form-section" data-step="<?php echo $stepIndex; ?>" aria-labelledby="bagian-<?php echo h($sectionKey); ?>">
+                            <div class="section-heading"><span class="section-number"><?php echo sprintf('%02d', $stepIndex + 1); ?></span><div><h2 id="bagian-<?php echo h($sectionKey); ?>"><?php echo h($section['title']); ?></h2><p><?php echo h($section['description']); ?></p></div></div>
+                            <div class="field-grid">
+                                <?php foreach ($section['fields'] as $field) { formulir_render_field($field, $formValues); } ?>
+                            </div>
+                            <?php if ($sectionKey === 'alamat') { ?><p class="operator-note">Koordinat lintang dan bujur dicatat operator sekolah melalui peta digital.</p><?php } ?>
+                            <?php formulir_step_actions($stepIndex, count($steps)); ?>
+                        </section>
+                    <?php $stepIndex++; } ?>
+
+                    <section class="form-section questionnaire-section" data-step="<?php echo $stepIndex; ?>" aria-labelledby="questionnaire-title">
+                        <div class="section-heading"><span class="section-number"><?php echo sprintf('%02d', $stepIndex + 1); ?></span><div><h2 id="questionnaire-title">Wawancara orang tua · <?php echo h($registration['jenjang'] ?? $registration['nama_unit'] ?? ''); ?></h2><p>Jawab dengan jujur sesuai keadaan keluarga. Pertanyaan bertanda bintang wajib dijawab.</p></div></div>
+                        <?php $previousSection = null; foreach ($questions as $question) {
                             $questionKey = (string) ($question['key'] ?? '');
-                            $questionPrompt = (string) ($question['prompt'] ?? '');
                             $questionType = (string) ($question['type'] ?? '');
                             $questionChoices = is_array($question['choices'] ?? null) ? $question['choices'] : [];
-                            $postedAnswer = $_POST['kuisioner'][$questionKey] ?? ($questionType === 'multiple' ? [] : '');
+                            $savedAnswer = $draftAnswers[$questionKey] ?? ($questionType === 'multiple' ? [] : '');
                             $questionName = 'kuisioner['.$questionKey.']';
+                            $questionSection = (string) ($question['section'] ?? '');
+                            if ($questionSection !== '' && $questionSection !== $previousSection) { ?>
+                                <h3 class="questionnaire-group-title"><?php echo h($questionSection); ?></h3>
+                            <?php }
+                            $previousSection = $questionSection;
                         ?>
                             <fieldset class="participant-question" data-question-required="<?php echo !empty($question['required']) ? '1' : '0'; ?>">
-                                <legend><?php echo h($questionPrompt); ?><?php if (!empty($question['required'])) { ?> <span class="required-mark">*</span><?php } else { ?> <span class="optional-mark">Opsional</span><?php } ?></legend>
+                                <legend><?php echo h((string) ($question['prompt'] ?? '')); ?><?php if (!empty($question['required'])) { ?> <span class="required-mark">*</span><?php } else { ?> <span class="optional-mark">Opsional</span><?php } ?></legend>
                                 <?php if ($questionType === 'text') { ?>
-                                    <textarea name="<?php echo h($questionName); ?>" maxlength="2000" rows="3" <?php echo !empty($question['required']) ? 'required' : ''; ?>><?php echo h(is_string($postedAnswer) ? $postedAnswer : ''); ?></textarea>
+                                    <textarea name="<?php echo h($questionName); ?>" maxlength="2000" rows="3" <?php echo !empty($question['required']) ? 'required' : ''; ?>><?php echo h(is_string($savedAnswer) ? $savedAnswer : ''); ?></textarea>
                                 <?php } elseif ($questionType === 'single') { ?>
                                     <div class="participant-question__choices">
                                         <?php foreach ($questionChoices as $choice) { ?>
-                                            <label><input type="radio" name="<?php echo h($questionName); ?>" value="<?php echo h($choice); ?>"<?php echo $postedAnswer === $choice ? ' checked' : ''; ?> <?php echo !empty($question['required']) ? 'required' : ''; ?>><span><?php echo h($choice); ?></span></label>
+                                            <label><input type="radio" name="<?php echo h($questionName); ?>" value="<?php echo h($choice); ?>"<?php echo $savedAnswer === $choice ? ' checked' : ''; ?> <?php echo !empty($question['required']) ? 'required' : ''; ?>><span><?php echo h($choice); ?></span></label>
                                         <?php } ?>
                                     </div>
                                 <?php } elseif ($questionType === 'multiple') { ?>
                                     <div class="participant-question__choices">
                                         <?php foreach ($questionChoices as $choice) { ?>
-                                            <label><input type="checkbox" name="<?php echo h($questionName); ?>[]" value="<?php echo h($choice); ?>"<?php echo is_array($postedAnswer) && in_array($choice, $postedAnswer, true) ? ' checked' : ''; ?>><span><?php echo h($choice); ?></span></label>
+                                            <label><input type="checkbox" name="<?php echo h($questionName); ?>[]" value="<?php echo h($choice); ?>"<?php echo is_array($savedAnswer) && in_array($choice, $savedAnswer, true) ? ' checked' : ''; ?>><span><?php echo h($choice); ?></span></label>
                                         <?php } ?>
                                     </div>
                                 <?php } ?>
                             </fieldset>
                         <?php } ?>
+                        <?php formulir_step_actions($stepIndex, count($steps)); ?>
                     </section>
+                    <?php $stepIndex++; ?>
 
-                    <section class="form-section" aria-labelledby="dokumen-title">
-                        <div class="section-heading"><span class="section-number">01</span><div><h2 id="dokumen-title">Dokumen pendukung</h2><p>Unggah berkas hasil pindai atau foto. Format JPG, PNG, atau PDF · maks. 8 MB per berkas.</p></div></div>
+                    <section class="form-section" data-step="<?php echo $stepIndex; ?>" aria-labelledby="dokumen-title">
+                        <div class="section-heading"><span class="section-number"><?php echo sprintf('%02d', $stepIndex + 1); ?></span><div><h2 id="dokumen-title">Dokumen pendukung</h2><p>Unggah berkas hasil pindai atau foto. Format JPG, PNG, atau PDF · maks. 8 MB per berkas. Berkas langsung tersimpan setelah dipilih.</p></div></div>
                         <div class="document-grid">
                             <?php foreach ($documentSlots as $slot => $meta) {
                                 $already = $uploadedDocuments[$slot] ?? null;
                             ?>
-                                <div class="document-card" data-upload-card="<?php echo h($slot); ?>">
+                                <div class="document-card<?php echo $already ? ' has-file' : ''; ?>" data-upload-card="<?php echo h($slot); ?>" data-upload-required="<?php echo !empty($meta['required']) ? '1' : '0'; ?>">
                                     <div class="document-card__head">
                                         <strong><?php echo h($meta['label']); ?></strong>
                                         <?php if (!empty($meta['required'])) { ?><span class="required-mark" aria-hidden="true">*</span><?php } else { ?><span class="optional-mark">Opsional</span><?php } ?>
                                     </div>
                                     <p class="document-card__hint"><?php echo h($meta['hint']); ?></p>
-                                    <?php if ($already) { ?>
-                                        <p class="document-card__done">Tersimpan · <?php echo h($already['nama_file_asli']); ?> (<?php echo h(number_format((int) $already['ukuran_byte'] / 1048576, 2)); ?> MB)</p>
-                                    <?php } ?>
+                                    <p class="document-card__done" data-upload-saved<?php echo $already ? '' : ' hidden'; ?>><?php if ($already) { ?>Tersimpan · <?php echo h($already['nama_file_asli']); ?> (<?php echo h(number_format((int) $already['ukuran_byte'] / 1048576, 2)); ?> MB)<?php } ?></p>
                                     <label class="file-drop" for="dokumen-<?php echo h($slot); ?>">
-                                        <input id="dokumen-<?php echo h($slot); ?>" type="file" name="dokumen__<?php echo h($slot); ?>" accept="image/jpeg,image/png,application/pdf" <?php echo !empty($meta['required']) ? 'required' : ''; ?>
-                                        <span class="file-drop__label">Pilih berkas</span>
-                                        <span class="file-drop__name" data-file-name>Belum ada berkas dipilih</span>
+                                        <input id="dokumen-<?php echo h($slot); ?>" type="file" name="dokumen__<?php echo h($slot); ?>" accept="image/jpeg,image/png,application/pdf"<?php echo !empty($meta['required']) && !$already ? ' required' : ''; ?>>
+                                        <span class="file-drop__label"><?php echo $already ? 'Ganti berkas' : 'Pilih berkas'; ?></span>
+                                        <span class="file-drop__name" data-file-name>Belum ada berkas baru dipilih</span>
                                     </label>
                                 </div>
                             <?php } ?>
                         </div>
-                    </section>
-
-                    <section class="form-section" aria-labelledby="identitas-title">
-                        <div class="section-heading"><span class="section-number">02</span><div><h2 id="identitas-title">Identitas peserta didik</h2><p>Gunakan ejaan dan angka sesuai dokumen kependudukan.</p></div></div>
-                        <div class="field-grid">
-                            <?php foreach ($identityFields as $field) { formulir_render_field($field, $formValues); } ?>
-                            <?php formulir_render_field(['name' => 'jenis_pendaftaran', 'label' => 'Jenis pendaftaran', 'type' => 'select', 'required' => true, 'options' => ['Siswa baru' => 'Siswa baru', 'Pindahan' => 'Pindahan / mutasi', 'Kembali aktif' => 'Kembali aktif']], $formValues); ?>
+                        <div class="form-footer">
+                            <label class="consent-check" for="konfirmasi_data">
+                                <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
+                                <span>Saya memastikan seluruh data di atas benar dan dapat dipertanggungjawabkan.</span>
+                            </label>
+                            <p>NIPD dan tanggal masuk sekolah ditetapkan operator setelah peserta diterima. Data bertanda opsional boleh dikosongkan.</p>
+                            <button type="submit" name="submit" value="1" class="submit-button" data-final-submit>Kirim formulir lengkap <span aria-hidden="true">&rarr;</span></button>
                         </div>
+                        <?php formulir_step_actions($stepIndex, count($steps)); ?>
                     </section>
-
-                    <section class="form-section" aria-labelledby="alamat-title">
-                        <div class="section-heading"><span class="section-number">03</span><div><h2 id="alamat-title">Alamat tempat tinggal</h2><p>Isi alamat domisili saat ini.</p></div></div>
-                        <div class="field-grid">
-                            <?php foreach ($addressFields as $field) { formulir_render_field($field, $formValues); } ?>
-                        </div>
-                        <p class="operator-note">Koordinat lintang dan bujur dicatat operator sekolah melalui peta digital.</p>
-                    </section>
-
-                    <?php foreach ($parentGroups as $index => $group) { ?>
-                        <section class="form-section" aria-labelledby="keluarga-title-<?php echo (int) $index; ?>">
-                            <div class="section-heading"><span class="section-number">0<?php echo 4 + $index; ?></span><div><h2 id="keluarga-title-<?php echo (int) $index; ?>"><?php echo h($group['title']); ?></h2><p>Tulis nama tanpa gelar; isi NIK dan tahun lahir sesuai Kartu Keluarga.</p></div></div>
-                            <div class="field-grid">
-                                <?php foreach ($group['fields'] as $field) { formulir_render_field($field, $formValues); } ?>
-                            </div>
-                        </section>
-                    <?php } ?>
-
-                    <section class="form-section" aria-labelledby="periodik-title">
-                        <div class="section-heading"><span class="section-number">07</span><div><h2 id="periodik-title">Data periodik</h2><p>Data terbaru jika sudah diketahui.</p></div></div>
-                        <div class="field-grid">
-                            <?php foreach ($periodicFields as $field) { formulir_render_field($field, $formValues); } ?>
-                            <?php formulir_render_field(['name' => 'sumber_informasi', 'label' => 'Mengetahui PPDB dari', 'type' => 'select', 'options' => ['Keluarga atau alumni' => 'Keluarga atau alumni', 'Guru atau karyawan' => 'Guru atau karyawan', 'Brosur' => 'Brosur', 'Media sosial' => 'Media sosial', 'Website' => 'Website', 'Lainnya' => 'Lainnya'], 'wide' => true], $formValues); ?>
-                        </div>
-                    </section>
-
-                    <div class="form-footer">
-                        <label class="consent-check" for="konfirmasi_data">
-                            <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
-                            <span>Saya memastikan seluruh data di atas benar dan dapat dipertanggungjawabkan.</span>
-                        </label>
-                        <p>NIPD dan tanggal masuk sekolah ditetapkan operator setelah peserta diterima. Data bertanda opsional boleh dikosongkan.</p>
-                        <button type="submit" name="submit" value="1" class="submit-button">Kirim formulir lengkap <span aria-hidden="true">&rarr;</span></button>
-                    </div>
                 </form>
             </div>
         <?php } ?>
@@ -709,7 +754,7 @@ header('Referrer-Policy: no-referrer');
     <footer class="site-footer"><span>Yayasan Wakaf Cendekia Takengon</span><a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
 </div>
 <script src="js/daftar.js"></script>
-<script src="js/formulir.js"></script>
+<script src="js/formulir.js?v=<?php echo (int) filemtime(__DIR__.'/js/formulir.js'); ?>"></script>
 <script src="js/reveal.js"></script>
 <script type="module" src="js/materials-pdf.js"></script>
 </body>

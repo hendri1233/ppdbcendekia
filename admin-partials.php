@@ -47,6 +47,7 @@ function ppdb_admin_navigation(string $activePage): array
         ['key' => 'registrations', 'href' => 'daftar_peserta.php', 'label' => 'Data peserta', 'icon' => 'registrations', 'group' => 'Penerimaan'],
         ['key' => 'quota', 'href' => 'pengaturan-ppdb.php', 'label' => 'Kuota &amp; pembayaran', 'icon' => 'quota', 'group' => 'Pengaturan'],
         ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'group' => 'Pengaturan'],
+        ['key' => 'form-fields', 'href' => 'pengaturan-formulir.php', 'label' => 'Isian formulir', 'icon' => 'page', 'group' => 'Pengaturan'],
         ['key' => 'groups', 'href' => 'grup-whatsapp.php', 'label' => 'Grup WhatsApp', 'icon' => 'group', 'group' => 'Pengaturan'],
         ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'group' => 'Pengaturan'],
         ['key' => 'cms-home', 'href' => 'cms-beranda.php', 'label' => 'Beranda &amp; slider', 'icon' => 'image', 'group' => 'Situs web'],

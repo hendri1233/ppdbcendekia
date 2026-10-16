@@ -3,6 +3,7 @@ require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
 require_once 'wablas.php';
+require_once 'formulir_helpers.php';
 require_admin();
 require_once __DIR__ . '/admin-partials.php';
 
@@ -311,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$stmt = mysqli_prepare($conn, 'SELECT p.*,u.nama_unit,d.*,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.bank_nama,c.nomor_rekening,c.nama_pemilik_rekening,c.masa_pembayaran_hari,i.nama_sdm,i.unit_kerja FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_detail_dapodik d ON d.id_pendaftaran=p.id_pendaftaran LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran LEFT JOIN tb_undangan_internal i ON i.id=p.undangan_internal_id WHERE p.id_pendaftaran=? LIMIT 1');
+$stmt = mysqli_prepare($conn, 'SELECT p.*,u.nama_unit,u.jenjang,d.*,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.bank_nama,c.nomor_rekening,c.nama_pemilik_rekening,c.masa_pembayaran_hari,i.nama_sdm,i.unit_kerja FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_detail_dapodik d ON d.id_pendaftaran=p.id_pendaftaran LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran LEFT JOIN tb_undangan_internal i ON i.id=p.undangan_internal_id WHERE p.id_pendaftaran=? LIMIT 1');
 mysqli_stmt_bind_param($stmt, 's', $registrationId);
 mysqli_stmt_execute($stmt);
 $participantResult = mysqli_stmt_get_result($stmt);
@@ -324,6 +325,16 @@ if (!$participant) {
 }
 $dapodikAge = ppdb_dapodik_age($participant['tgl_lahir'], $participant['th_ajaran']);
 $participant['umur_dapodik'] = ppdb_dapodik_age_label($dapodikAge);
+$participant += formulir_flatten_parent_profiles(formulir_parent_profiles($conn, $registrationId));
+$participant['draf_formulir'] = '';
+$draftQuery = mysqli_prepare($conn, 'SELECT langkah,updated_at FROM tb_formulir_draf WHERE id_pendaftaran=? LIMIT 1');
+mysqli_stmt_bind_param($draftQuery, 's', $registrationId);
+mysqli_stmt_execute($draftQuery);
+$draftRow = mysqli_fetch_assoc(mysqli_stmt_get_result($draftQuery));
+mysqli_stmt_close($draftQuery);
+if ($draftRow) {
+    $participant['draf_formulir'] = 'Sedang diisi · langkah '.((int) $draftRow['langkah'] + 1).' · disimpan '.date('d-m-Y H:i', strtotime($draftRow['updated_at']));
+}
 
 $paymentQuery = mysqli_prepare($conn, 'SELECT id,nomor_referensi,nama_file_asli,mime_type,ukuran_byte,status_verifikasi,catatan_admin,diunggah_pada,diperiksa_pada FROM tb_bukti_pembayaran WHERE id_pendaftaran=? ORDER BY id DESC LIMIT 1');
 mysqli_stmt_bind_param($paymentQuery, 's', $registrationId);
@@ -597,8 +608,14 @@ require 'admin_header.php';
         <?php } ?>
     </section>
 
+    <?php if (!empty($participant['catatan_validasi'])) { ?>
+        <div class="alert-warning" role="status">
+            <div><strong>Pemeriksaan NIK otomatis menemukan ketidakcocokan.</strong> Cocokkan dengan scan KK dan akta sebelum memverifikasi data.
+            <ul style="margin: 6px 0 0; padding-left: 18px;"><?php foreach (explode("\n", (string) $participant['catatan_validasi']) as $flag) { ?><li><?php echo h($flag); ?></li><?php } ?></ul></div>
+        </div>
+    <?php } ?>
     <div class="detail-grid">
-        <?php render_detail_panel('Registrasi awal', [['Kode pendaftaran', 'id_pendaftaran'], ['Tanggal pendaftaran', 'tgl_daftar'], ['Unit pendidikan', 'nama_unit'], ['Tahun ajaran', 'th_ajaran'], ['Nomor antrean', 'nomor_antrian'], ['Nama ananda', 'nm_peserta'], ['Tanggal lahir', 'tgl_lahir'], ['Umur ananda terdeteksi berdasarkan Dapodik dari tanggal ' . ($dapodikAge['reference_date'] ?? '-') . ' berumur:', 'umur_dapodik'], ['Jenis kelamin', 'jenis_kelamin'], ['Yang mendaftarkan', 'pendaftar'], ['WhatsApp pendaftar', 'no_hp_pendaftar'], ['WhatsApp ayah', 'no_hp_ayah'], ['WhatsApp ibu', 'no_hp_ibu']], $participant); ?>
+        <?php render_detail_panel('Registrasi awal', [['Kode pendaftaran', 'id_pendaftaran'], ['Tanggal pendaftaran', 'tgl_daftar'], ['Unit pendidikan', 'nama_unit'], ['Tahun ajaran', 'th_ajaran'], ['Nomor antrean', 'nomor_antrian'], ['Nama ananda', 'nm_peserta'], ['Tanggal lahir', 'tgl_lahir'], ['Umur ananda terdeteksi berdasarkan Dapodik dari tanggal ' . ($dapodikAge['reference_date'] ?? '-') . ' berumur:', 'umur_dapodik'], ['Jenis kelamin', 'jenis_kelamin'], ['Yang mendaftarkan', 'pendaftar'], ['WhatsApp pendaftar', 'no_hp_pendaftar'], ['WhatsApp ayah', 'no_hp_ayah'], ['WhatsApp ibu', 'no_hp_ibu'], ['Draf formulir lengkap', 'draf_formulir']], $participant); ?>
         <section class="detail-panel wide">
             <h2>Jawaban kuisioner</h2>
             <?php if (!$questionnaireAnswers || empty($questionnaireAnswers['questions'])) { ?>
@@ -619,12 +636,19 @@ require 'admin_header.php';
                 <p class="panel-note" style="padding: 0 17px 17px;">Dikirim pada <?php echo h($questionnaireRow['submitted_at']); ?>.</p>
             <?php } ?>
         </section>
-        <?php render_detail_panel('Identitas pribadi', [['NIK', 'nik'], ['Nomor KK', 'nomor_kk'], ['NISN', 'NISN'], ['Tempat lahir', 'tmp_lahir'], ['Nomor registrasi akta', 'nomor_registrasi_akta'], ['Agama/kepercayaan', 'agama'], ['Kewarganegaraan', 'kewarganegaraan'], ['Berkebutuhan khusus', 'kebutuhan_khusus'], ['Jenis pendaftaran', 'jenis_pendaftaran'], ['Sekolah asal', 'asal_sekolah'], ['Pernah PAUD/TK', 'pernah_paud_tk']], $participant); ?>
-        <?php render_detail_panel('Alamat dan tempat tinggal', [['Alamat jalan/dusun', 'alamat_jalan'], ['RT', 'rt'], ['RW', 'rw'], ['Desa/kelurahan', 'desa_kelurahan'], ['Kecamatan', 'kecamatan'], ['Kabupaten/kota', 'kabupaten'], ['Provinsi', 'provinsi'], ['Jenis tinggal', 'jenis_tinggal'], ['Transportasi', 'alat_transportasi'], ['Lintang', 'latitude'], ['Bujur', 'longitude']], $participant); ?>
-        <?php render_detail_panel('Data ayah', [['Nama', 'ayah_nama'], ['NIK', 'ayah_nik'], ['Tahun lahir', 'ayah_tahun_lahir'], ['Pendidikan', 'ayah_pendidikan'], ['Pekerjaan', 'ayah_pekerjaan'], ['Penghasilan bulanan', 'ayah_penghasilan']], $participant); ?>
-        <?php render_detail_panel('Data ibu', [['Nama', 'ibu_nama'], ['NIK', 'ibu_nik'], ['Tahun lahir', 'ibu_tahun_lahir'], ['Pendidikan', 'ibu_pendidikan'], ['Pekerjaan', 'ibu_pekerjaan'], ['Penghasilan bulanan', 'ibu_penghasilan']], $participant); ?>
-        <?php render_detail_panel('Data wali', [['Nama', 'wali_nama'], ['NIK', 'wali_nik'], ['Tahun lahir', 'wali_tahun_lahir'], ['Pendidikan', 'wali_pendidikan'], ['Pekerjaan', 'wali_pekerjaan'], ['Penghasilan bulanan', 'wali_penghasilan']], $participant); ?>
-        <?php render_detail_panel('Data periodik', [['Tinggi badan (cm)', 'tinggi_badan_cm'], ['Berat badan (kg)', 'berat_badan_kg'], ['Lingkar kepala (cm)', 'lingkar_kepala_cm'], ['Jarak ke sekolah (km)', 'jarak_ke_sekolah_km'], ['Waktu tempuh (menit)', 'waktu_tempuh_menit'], ['Jumlah saudara kandung', 'jumlah_saudara_kandung']], $participant); ?>
+        <?php foreach (formulir_sections_for(null, (string) ($participant['jenjang'] ?? '')) as $sectionKey => $section) {
+            $panelFields = [];
+            foreach ($section['fields'] as $field) {
+                if (($field['type'] ?? 'text') !== 'heading') {
+                    $panelFields[] = [$field['label'], $field['name']];
+                }
+            }
+            if ($sectionKey === 'alamat') {
+                $panelFields[] = ['Lintang', 'latitude'];
+                $panelFields[] = ['Bujur', 'longitude'];
+            }
+            render_detail_panel($section['title'], $panelFields, $participant);
+        } ?>
         <?php render_detail_panel('Pembayaran', [['Biaya pendaftaran', 'biaya_pendaftaran'], ['Bank', 'bank_nama'], ['Nomor rekening', 'nomor_rekening'], ['Atas nama', 'nama_pemilik_rekening'], ['Batas pembayaran', 'tanggal_batas_bayar']], $participant); ?>
         <section class="detail-panel wide">
             <h2>Data operator sekolah</h2>

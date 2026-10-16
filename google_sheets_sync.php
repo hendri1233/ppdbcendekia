@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/formulir_helpers.php';
 
 function google_sheets_spreadsheet_id(): string
 {
@@ -86,7 +87,36 @@ function google_sheets_columns(): array
         'NIPD' => 'nipd',
         'Tanggal masuk sekolah' => 'tanggal_masuk_sekolah',
         'Sumber informasi' => 'sumber_informasi',
+    ] + google_sheets_form_columns();
+}
+
+/**
+ * Kolom tambahan dari formulir lengkap (migrasi 016), selalu di ujung kanan
+ * agar urutan kolom lama di spreadsheet tidak bergeser.
+ */
+function google_sheets_form_columns(): array
+{
+    $existing = [
+        'nik', 'nomor_kk', 'NISN', 'tmp_lahir', 'nomor_registrasi_akta', 'agama', 'kewarganegaraan', 'kebutuhan_khusus', 'pernah_paud_tk',
+        'asal_sekolah', 'jenis_pendaftaran', 'alamat_jalan', 'rt', 'rw', 'desa_kelurahan', 'kecamatan', 'kabupaten', 'provinsi',
+        'jenis_tinggal', 'alat_transportasi', 'tinggi_badan_cm', 'berat_badan_kg', 'lingkar_kepala_cm', 'jarak_ke_sekolah_km',
+        'waktu_tempuh_menit', 'jumlah_saudara_kandung', 'sumber_informasi',
     ];
+    foreach (array_keys(FORMULIR_PARENT_ROLES) as $role) {
+        foreach (['nama', 'nik', 'tahun_lahir', 'pendidikan', 'pekerjaan', 'penghasilan'] as $column) {
+            $existing[] = $role.'_'.$column;
+        }
+    }
+    $columns = [];
+    foreach (formulir_data_sections() as $section) {
+        foreach ($section['fields'] as $field) {
+            if (($field['type'] ?? 'text') === 'heading' || in_array($field['name'], $existing, true)) {
+                continue;
+            }
+            $columns[$section['title'].' · '.$field['label']] = $field['name'];
+        }
+    }
+    return $columns;
 }
 
 function google_sheets_quoted_tab(): string
@@ -142,6 +172,7 @@ function google_sheets_registration_values(mysqli $conn, string $registrationId)
         throw new RuntimeException('Data pendaftaran tidak ditemukan.');
     }
 
+    $record += formulir_flatten_parent_profiles(formulir_parent_profiles($conn, $registrationId));
     $values = [];
     foreach (google_sheets_columns() as $column) {
         $values[] = (string) ($record[$column] ?? '');
@@ -163,7 +194,9 @@ function sync_google_sheets_registration(mysqli $conn, string $registrationId): 
         $headers = array_keys(google_sheets_columns());
         $headerResponse = $service->spreadsheets_values->get($spreadsheetId, $tab.'A1:ZZ1');
         $existingHeaders = $headerResponse->getValues()[0] ?? [];
-        if (!$existingHeaders) {
+        // Header lama yang merupakan awalan header baru cukup diperluas ke kanan.
+        $isPrefix = $existingHeaders && array_slice($headers, 0, count($existingHeaders)) === $existingHeaders;
+        if (!$existingHeaders || ($isPrefix && count($existingHeaders) < count($headers))) {
             $service->spreadsheets_values->update(
                 $spreadsheetId,
                 $tab.'A1',

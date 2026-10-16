@@ -1617,3 +1617,202 @@ a {
         margin-bottom: 18px;
     }
 }
+
+/* ============================================================
+   Formulir lengkap bertahap + simpan draf otomatis
+   ============================================================ */
+.form-section[hidden],
+.field[hidden],
+.field-subheading[hidden],
+.document-card__done[hidden] {
+    display: none;
+}
+
+.draft-restored {
+    margin: 10px 0 0;
+    padding: 9px 12px;
+    color: var(--success-fg);
+    background: var(--success-bg);
+    border-radius: var(--r-sm);
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.form-steps {
+    display: flex;
+    gap: 6px;
+    margin: 0 0 14px;
+    padding: 0 0 4px;
+    overflow-x: auto;
+    list-style: none;
+    scrollbar-width: thin;
+}
+
+.form-steps li {
+    flex: 1 0 auto;
+}
+
+.form-steps button {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px 7px 8px;
+    color: var(--muted);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.form-steps__number {
+    flex: 0 0 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    color: var(--green);
+    background: var(--brand-100);
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.form-steps button.is-done .form-steps__number {
+    color: var(--white);
+    background: var(--brand-600);
+}
+
+.form-steps button[aria-current="step"] {
+    color: var(--ink);
+    border-color: var(--green);
+    box-shadow: inset 0 -3px 0 var(--green);
+}
+
+.form-steps button[aria-current="step"] .form-steps__number {
+    color: var(--white);
+    background: var(--green);
+}
+
+.form-steps button:focus-visible,
+.step-button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.field-subheading {
+    margin-top: 6px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line-strong);
+}
+
+.field-subheading h3 {
+    margin: 0;
+    color: var(--green-dark);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.field-subheading p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.questionnaire-group-title {
+    margin: 10px 0 0;
+    color: var(--green-dark);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.step-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.step-button {
+    min-height: 48px;
+    padding: 0 16px;
+    color: var(--green-dark);
+    background: var(--white);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.step-button:hover {
+    background: var(--brand-50);
+}
+
+.draft-status {
+    flex: 1 1 auto;
+    color: var(--faint);
+    font-size: 12.5px;
+    text-align: center;
+}
+
+.draft-status[data-state="saved"] {
+    color: var(--success-fg);
+}
+
+.draft-status[data-state="error"] {
+    color: var(--danger-fg);
+    font-weight: 600;
+}
+
+.form-section .form-footer {
+    margin: 26px -36px 0;
+}
+
+@media (max-width: 640px) {
+    .form-steps__label {
+        display: none;
+    }
+
+    .form-steps button[aria-current="step"] .form-steps__label {
+        display: inline;
+    }
+
+    .step-actions {
+        flex-wrap: wrap;
+    }
+
+    .draft-status {
+        order: -1;
+        flex-basis: 100%;
+    }
+
+    .step-actions .submit-button,
+    .step-button {
+        flex: 1 1 0;
+        width: auto;
+    }
+
+    .form-section .form-footer {
+        margin: 22px -20px 0;
+    }
+}
+
+.field-warning {
+    padding: 7px 10px;
+    color: var(--warning-fg);
+    background: var(--warning-bg);
+    border-radius: var(--r-sm);
+    font-size: 12.5px;
+    line-height: 1.45;
+}

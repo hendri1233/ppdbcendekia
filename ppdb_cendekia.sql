@@ -205,17 +205,34 @@ CREATE TABLE `tb_pendaftaran` (
 CREATE TABLE `tb_detail_dapodik` (
   `id_pendaftaran` char(10) NOT NULL,
   `nik` char(16) NOT NULL DEFAULT '',
+  `nama_panggilan` varchar(50) NOT NULL DEFAULT '',
+  `golongan_darah` varchar(20) NOT NULL DEFAULT '',
   `nomor_kk` char(16) NOT NULL DEFAULT '',
   `nomor_registrasi_akta` varchar(100) NOT NULL DEFAULT '',
   `kewarganegaraan` enum('WNI','WNA') NOT NULL DEFAULT 'WNI',
   `kebutuhan_khusus` varchar(120) NOT NULL DEFAULT 'Tidak ada',
+  `status_nisn` varchar(20) NOT NULL DEFAULT '',
+  `alasan_tanpa_nisn` varchar(255) NOT NULL DEFAULT '',
+  `npsn_sekolah_asal` varchar(8) NOT NULL DEFAULT '',
+  `jenjang_sekolah_asal` varchar(20) NOT NULL DEFAULT '',
+  `riwayat_penyakit` enum('','Tidak ada','Ada') NOT NULL DEFAULT '',
+  `nama_penyakit` varchar(255) NOT NULL DEFAULT '',
+  `pantangan_penyakit` varchar(255) NOT NULL DEFAULT '',
+  `karakter_menonjol` varchar(255) NOT NULL DEFAULT '',
+  `kecerdasan_menonjol` varchar(255) NOT NULL DEFAULT '',
+  `minat_bakat` varchar(255) NOT NULL DEFAULT '',
+  `hobi` varchar(150) NOT NULL DEFAULT '',
+  `cita_cita` varchar(150) NOT NULL DEFAULT '',
   `alamat_jalan` varchar(200) NOT NULL DEFAULT '',
   `rt` varchar(5) NOT NULL DEFAULT '',
   `rw` varchar(5) NOT NULL DEFAULT '',
+  `dusun` varchar(100) NOT NULL DEFAULT '',
   `desa_kelurahan` varchar(100) NOT NULL DEFAULT '',
   `kecamatan` varchar(100) NOT NULL DEFAULT '',
   `kabupaten` varchar(100) NOT NULL DEFAULT '',
   `provinsi` varchar(100) NOT NULL DEFAULT '',
+  `kode_pos` varchar(5) NOT NULL DEFAULT '',
+  `email` varchar(120) NOT NULL DEFAULT '',
   `latitude` decimal(10,7) DEFAULT NULL,
   `longitude` decimal(10,7) DEFAULT NULL,
   `jenis_tinggal` varchar(40) NOT NULL DEFAULT '',
@@ -232,6 +249,7 @@ CREATE TABLE `tb_detail_dapodik` (
   `ibu_pendidikan` varchar(40) NOT NULL DEFAULT '',
   `ibu_pekerjaan` varchar(100) NOT NULL DEFAULT '',
   `ibu_penghasilan` varchar(40) NOT NULL DEFAULT '',
+  `mempunyai_wali` enum('','Ya','Tidak') NOT NULL DEFAULT '',
   `wali_nama` varchar(100) NOT NULL DEFAULT '',
   `wali_nik` char(16) NOT NULL DEFAULT '',
   `wali_tahun_lahir` smallint unsigned DEFAULT NULL,
@@ -244,10 +262,13 @@ CREATE TABLE `tb_detail_dapodik` (
   `jarak_ke_sekolah_km` decimal(6,2) DEFAULT NULL,
   `waktu_tempuh_menit` smallint unsigned DEFAULT NULL,
   `jumlah_saudara_kandung` tinyint unsigned DEFAULT NULL,
+  `anak_ke` tinyint unsigned DEFAULT NULL,
   `jenis_pendaftaran` enum('Siswa baru','Pindahan','Kembali aktif') NOT NULL DEFAULT 'Siswa baru',
+  `kelompok_tk` varchar(10) NOT NULL DEFAULT '',
   `nipd` varchar(30) DEFAULT NULL,
   `tanggal_masuk_sekolah` date DEFAULT NULL,
   `pernah_paud_tk` enum('Ya','Tidak','Belum diketahui') NOT NULL DEFAULT 'Belum diketahui',
+  `catatan_validasi` text DEFAULT NULL,
   PRIMARY KEY (`id_pendaftaran`),
   CONSTRAINT `fk_detail_dapodik_pendaftaran` FOREIGN KEY (`id_pendaftaran`) REFERENCES `tb_pendaftaran` (`id_pendaftaran`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -342,6 +363,60 @@ CREATE TABLE `tb_ppdb_questionnaire_answers` (
   `submitted_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id_pendaftaran`),
   CONSTRAINT `fk_ppdb_questionnaire_answer_registration` FOREIGN KEY (`id_pendaftaran`) REFERENCES `tb_pendaftaran` (`id_pendaftaran`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tb_orang_tua_peserta` (
+  `id_pendaftaran` char(10) NOT NULL,
+  `peran` enum('ayah','ibu','wali') NOT NULL,
+  `status_hidup` varchar(20) NOT NULL DEFAULT '',
+  `tempat_lahir` varchar(50) NOT NULL DEFAULT '',
+  `nama_panggilan` varchar(50) NOT NULL DEFAULT '',
+  `suku` varchar(50) NOT NULL DEFAULT '',
+  `golongan_darah` varchar(20) NOT NULL DEFAULT '',
+  `status_pekerjaan` varchar(60) NOT NULL DEFAULT '',
+  `nama_instansi` varchar(150) NOT NULL DEFAULT '',
+  `alamat_instansi` varchar(255) NOT NULL DEFAULT '',
+  `bidang_spesifik` varchar(150) NOT NULL DEFAULT '',
+  `pengeluaran_bulanan` varchar(60) NOT NULL DEFAULT '',
+  `hubungan_keluarga` varchar(60) NOT NULL DEFAULT '',
+  `no_hp` varchar(20) NOT NULL DEFAULT '',
+  `tinggal_bersama_ananda` enum('','Ya','Tidak') NOT NULL DEFAULT '',
+  `alamat` varchar(200) NOT NULL DEFAULT '',
+  `dusun` varchar(100) NOT NULL DEFAULT '',
+  `kampung` varchar(100) NOT NULL DEFAULT '',
+  `kecamatan` varchar(100) NOT NULL DEFAULT '',
+  `kabupaten` varchar(100) NOT NULL DEFAULT '',
+  `ibadah_sering_tertinggal` varchar(255) NOT NULL DEFAULT '',
+  `jumlah_buku` varchar(50) NOT NULL DEFAULT '',
+  `judul_buku_dibaca` text DEFAULT NULL,
+  `hobi` varchar(150) NOT NULL DEFAULT '',
+  `tokoh_dikagumi` varchar(255) NOT NULL DEFAULT '',
+  `riwayat_penyakit` enum('','Tidak ada','Ada') NOT NULL DEFAULT '',
+  `nama_penyakit` varchar(255) NOT NULL DEFAULT '',
+  `perilaku_positif` text DEFAULT NULL,
+  `perilaku_negatif` text DEFAULT NULL,
+  `sosok_terdekat` varchar(150) NOT NULL DEFAULT '',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id_pendaftaran`,`peran`),
+  CONSTRAINT `fk_orang_tua_pendaftaran` FOREIGN KEY (`id_pendaftaran`) REFERENCES `tb_pendaftaran` (`id_pendaftaran`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tb_formulir_aturan_isian` (
+  `nama_isian` varchar(60) NOT NULL,
+  `wajib` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_by` int DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`nama_isian`),
+  CONSTRAINT `fk_aturan_isian_admin` FOREIGN KEY (`updated_by`) REFERENCES `tbadmin` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tb_formulir_draf` (
+  `id_pendaftaran` char(10) NOT NULL,
+  `data_json` mediumtext NOT NULL,
+  `langkah` tinyint unsigned NOT NULL DEFAULT 0,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id_pendaftaran`),
+  CONSTRAINT `fk_formulir_draf_pendaftaran` FOREIGN KEY (`id_pendaftaran`) REFERENCES `tb_pendaftaran` (`id_pendaftaran`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
