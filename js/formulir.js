@@ -254,14 +254,108 @@
         return null;
     }
 
+    /* ---------- Validasi langsung per isian ---------- */
+
+    function validationMessage(control) {
+        const validity = control.validity;
+        if (validity.valueMissing) {
+            if (control.type === 'file') return 'Berkas ini wajib diunggah.';
+            return control.tagName === 'SELECT' ? 'Pilih salah satu.' : 'Wajib diisi.';
+        }
+        if (validity.badInput) return 'Isi dengan angka.';
+        if (validity.patternMismatch) return control.dataset.patternMessage || 'Format belum sesuai.';
+        if (validity.typeMismatch && control.type === 'email') return 'Format email belum benar, contoh: nama@gmail.com.';
+        if (validity.rangeUnderflow) return 'Nilai minimal ' + control.min + '.';
+        if (validity.rangeOverflow) return 'Nilai maksimal ' + control.max + '.';
+        if (validity.stepMismatch) return 'Gunakan paling banyak satu angka di belakang koma.';
+        if (validity.tooLong) return 'Maksimal ' + control.maxLength + ' karakter.';
+        return control.validationMessage || 'Periksa kembali isian ini.';
+    }
+
+    function questionAnswered(question) {
+        const textarea = question.querySelector('textarea');
+        return textarea ? textarea.value.trim() !== '' : Boolean(question.querySelector('input:checked'));
+    }
+
+    function setFieldError(wrapper, message) {
+        let error = wrapper.querySelector(':scope > [data-field-error]');
+        const control = wrapper.querySelector('input:not([type="hidden"]), select, textarea');
+        wrapper.classList.toggle('is-invalid', Boolean(message));
+        wrapper.dataset.hasError = message ? '1' : '';
+        if (control) control.setAttribute('aria-invalid', message ? 'true' : 'false');
+        if (!message) {
+            if (error) error.remove();
+            return;
+        }
+        if (!error) {
+            error = document.createElement('small');
+            error.className = 'field-error';
+            error.dataset.fieldError = '1';
+            error.setAttribute('role', 'alert');
+            error.id = 'galat-' + Math.random().toString(36).slice(2);
+            if (control) control.setAttribute('aria-describedby', error.id);
+            wrapper.appendChild(error);
+        }
+        error.textContent = message;
+    }
+
+    // Periksa satu isian. Isian kosong baru ditegur setelah pernah disentuh,
+    // kecuali `force` (saat menekan lanjut atau kirim).
+    function validateControl(control, force) {
+        if (!control || control.type === 'hidden' || !control.name) return true;
+        const question = control.closest('.participant-question');
+        if (question) {
+            const required = question.dataset.questionRequired === '1';
+            const ok = !required || questionAnswered(question);
+            if (ok || force || question.dataset.touched === '1') setFieldError(question, ok ? '' : 'Pertanyaan ini wajib dijawab.');
+            return ok;
+        }
+        const wrapper = control.closest('.field') || control.closest('[data-upload-card]');
+        if (!wrapper) return true;
+        if (control.closest('[hidden]')) {
+            setFieldError(wrapper, '');
+            return true;
+        }
+        const valid = control.checkValidity();
+        const empty = control.type === 'file' ? !(control.files && control.files.length) : control.value.trim() === '';
+        if (!valid && empty && !force && wrapper.dataset.touched !== '1') return false;
+        setFieldError(wrapper, valid ? '' : validationMessage(control));
+        if (control.type !== 'file') wrapper.classList.toggle('is-valid', valid && !empty);
+        return valid;
+    }
+
     function showInvalid(control) {
-        const wrapper = control.closest('.field') || control.closest('[data-upload-card]') || control.closest('.participant-question');
-        if (wrapper) wrapper.classList.add('is-invalid');
+        validateControl(control, true);
         control.focus({ preventScroll: true });
         control.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        if (typeof control.reportValidity === 'function' && !control.closest('.participant-question')) {
-            control.reportValidity();
-        }
+    }
+
+    if (form) {
+        // Tandai isian yang pernah disentuh, lalu periksa saat keluar dari isian.
+        form.addEventListener('focusout', function (event) {
+            const control = event.target;
+            if (!control.name || control.type === 'hidden') return;
+            const holder = control.closest('.participant-question') || control.closest('.field') || control.closest('[data-upload-card]');
+            if (holder) holder.dataset.touched = '1';
+            validateControl(control, false);
+        });
+        // Saat mengetik/memilih: perbarui langsung agar pesan hilang begitu sudah benar.
+        const live = function (event) {
+            const control = event.target;
+            if (control.getAttribute('inputmode') === 'numeric' && control.tagName === 'INPUT') {
+                const digits = control.value.replace(/\D+/g, '');
+                if (digits !== control.value) control.value = digits;
+            }
+            const holder = control.closest('.participant-question') || control.closest('.field') || control.closest('[data-upload-card]');
+            if (!holder) return;
+            if (event.type === 'change') holder.dataset.touched = '1';
+            // Isian yang baru pertama kali diketik tidak langsung ditegur;
+            // pesan muncul saat keluar dari isian, lalu diperbarui setiap ketikan.
+            if (event.type === 'input' && holder.dataset.touched !== '1' && holder.dataset.hasError !== '1') return;
+            validateControl(control, false);
+        };
+        form.addEventListener('input', live);
+        form.addEventListener('change', live);
     }
 
     function showStep(index, focusHeading) {
@@ -298,6 +392,10 @@
         showStep(currentStep, false);
         updateConditionalFields();
         updateNikWarnings();
+        // Isian draf yang dimuat ulang langsung diperiksa bila sudah berisi.
+        for (const control of form.querySelectorAll('.field input:not([type="hidden"]), .field select, .field textarea')) {
+            if (control.value.trim() !== '') validateControl(control, true);
+        }
         form.addEventListener('focusout', function (event) {
             if (/(^|_)(nik|tahun_lahir)$|^nomor_kk$/.test(event.target.name || '')) updateNikWarnings();
         });
@@ -495,12 +593,30 @@
                     return;
                 }
             }
+            // Skrip lain (mis. versi lama dari cache) bisa membatalkan pengiriman;
+            // jangan tampilkan spinner bila pengiriman tidak benar-benar berjalan.
+            if (event.defaultPrevented) return;
             window.clearTimeout(saveTimer);
             dirty = false;
             const button = form.querySelector('[data-final-submit]');
             if (button) {
                 button.disabled = true;
                 button.classList.add('is-busy');
+                // Pengaman: bila server tidak membalas, tombol dapat ditekan lagi.
+                window.setTimeout(function () {
+                    button.disabled = false;
+                    button.classList.remove('is-busy');
+                    setDraftStatus('Pengiriman belum mendapat balasan. Periksa koneksi lalu tekan Kirim lagi; isian Anda tetap tersimpan.', 'error');
+                }, 45000);
+            }
+        });
+        // Kembali lewat tombol Back: pulihkan tombol kirim.
+        window.addEventListener('pageshow', function (event) {
+            if (!event.persisted) return;
+            const button = form.querySelector('[data-final-submit]');
+            if (button) {
+                button.disabled = false;
+                button.classList.remove('is-busy');
             }
         });
     }

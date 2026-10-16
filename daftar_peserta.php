@@ -82,7 +82,7 @@ $currentPage = (int) ($_GET['page'] ?? 1);
 $currentPage = min(max(1, $currentPage), $totalPages);
 $offset = ($currentPage - 1) * $perPage;
 
-$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
+$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_formulir IS NOT NULL AS link_formulir_terkirim,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
     .' ORDER BY FIELD(p.status_ppdb,\'menunggu_kontak\',\'pembayaran_diperiksa\',\'pembayaran_terverifikasi\',\'formulir_terisi\',\'menunggu_pembayaran\',\'menunggu_formulir\',\'daftar_tunggu\',\'diterima\',\'ditolak\',\'data_lama\'), p.waktu_daftar DESC, p.id_pendaftaran DESC'
     .' LIMIT '.$perPage.' OFFSET '.$offset;
@@ -141,7 +141,18 @@ require 'admin_header.php';
         </div>
     </header>
 
-    <?php if ($waNotice) { ?><div class="<?php echo $waNotice['ok'] ? 'alert-success' : 'alert-error'; ?>" role="status"><?php echo h($waNotice['text']); ?></div><?php } ?>
+    <?php if ($waNotice) { ?>
+        <div class="<?php echo $waNotice['ok'] ? 'alert-success' : 'alert-error'; ?>" role="status">
+            <div>
+                <?php echo h($waNotice['text']); ?>
+                <?php if (!empty($waNotice['links'])) { ?>
+                    <div class="table-actions" style="margin-top: 8px;">
+                        <?php foreach ($waNotice['links'] as $link) { ?><a class="table-action stage-wa" href="<?php echo h($link['url']); ?>" target="_blank" rel="noopener">WA <?php echo h($link['role']); ?> · <?php echo h($link['display']); ?></a><?php } ?>
+                    </div>
+                <?php } ?>
+            </div>
+        </div>
+    <?php } ?>
 
     <section class="panel">
         <form class="filter-bar" action="daftar_peserta.php" method="get">
@@ -234,7 +245,7 @@ require 'admin_header.php';
                         $waNumber = (string) array_key_first(ppdb_registrant_recipients($row));
                         $canNotify = !$isArchived && !$isAccepted && $waNumber !== '';
                         $waLink = $canNotify && !$useWablas ? ppdb_whatsapp_link($waNumber, ppdb_status_reminder_message($row)) : ''; ?>
-                        <tr>
+                        <tr data-row-id="<?php echo h($row['id_pendaftaran']); ?>">
                             <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
                             <td data-label="Nama" class="primary-cell">
@@ -250,6 +261,15 @@ require 'admin_header.php';
                             <td data-label="Aksi">
                                 <div class="table-actions">
                                     <a class="table-action" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>">Detail</a>
+                                    <?php if (!empty($row['link_formulir_terkirim']) && in_array($row['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) { ?>
+                                        <form action="revisi-formulir.php" method="post" class="revision-action" data-revisi>
+                                            <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                                            <input type="hidden" name="id" value="<?php echo h($row['id_pendaftaran']); ?>">
+                                            <input type="hidden" name="return" value="<?php echo h(with_query([])); ?>">
+                                            <button class="table-action revision-action__button" type="submit" title="Buka kembali formulir dan kirim tautannya ke WhatsApp wali murid">Revisi</button>
+                                            <span class="revision-action__status" data-revisi-status aria-live="polite"></span>
+                                        </form>
+                                    <?php } ?>
                                     <form action="hapus-peserta.php" method="post" data-confirm="Hapus pendaftaran ini? Data Dapodik, dokumen, dan bukti pembayaran terkait juga akan terhapus.">
                                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                                         <input type="hidden" name="id" value="<?php echo h($row['id_pendaftaran']); ?>">

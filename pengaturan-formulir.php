@@ -54,6 +54,9 @@ function pengaturan_formulir_condition_text(array $field, array $labels): string
     if (!empty($field['jenjang'])) {
         $parts[] = 'khusus '.implode(', ', $field['jenjang']);
     }
+    if (!empty($field['wajib_jenjang'])) {
+        $parts[] = '(selalu tampil dan wajib untuk '.implode(', ', $field['wajib_jenjang']).')';
+    }
     return $parts ? 'Tampil bila '.implode(' dan ', $parts) : '';
 }
 

@@ -556,3 +556,20 @@ body {
         margin: 0;
     }
 }
+
+.payment-success {
+    margin-bottom: 20px;
+    padding: 12px 14px;
+    color: #1c5b3f;
+    background: #ecf6f0;
+    border: 1px solid #b9dcc8;
+    border-left: 4px solid #1c6b45;
+    border-radius: 4px;
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+.payment-success strong {
+    display: block;
+    font-size: 15px;
+}

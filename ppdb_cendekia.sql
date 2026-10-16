@@ -161,6 +161,7 @@ CREATE TABLE `tb_pendaftaran` (
   `nomor_antrian` int unsigned DEFAULT NULL,
   `status_ppdb` enum('menunggu_kontak','menunggu_pembayaran','pembayaran_diperiksa','pembayaran_terverifikasi','menunggu_formulir','formulir_terisi','diterima','daftar_tunggu','ditolak','data_lama') NOT NULL DEFAULT 'data_lama',
   `status_data` enum('belum_diperiksa','terverifikasi','perlu_perbaikan') NOT NULL DEFAULT 'belum_diperiksa',
+  `revisi_dibuka` tinyint(1) NOT NULL DEFAULT 0,
   `status_pembayaran` enum('belum_bayar','menunggu_verifikasi','terverifikasi','ditolak') NOT NULL DEFAULT 'belum_bayar',
   `tanggal_batas_bayar` date DEFAULT NULL,
   `data_diperiksa_oleh` int DEFAULT NULL,
@@ -408,6 +409,17 @@ CREATE TABLE `tb_formulir_aturan_isian` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`nama_isian`),
   CONSTRAINT `fk_aturan_isian_admin` FOREIGN KEY (`updated_by`) REFERENCES `tbadmin` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tb_formulir_revisi` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `id_pendaftaran` char(10) NOT NULL,
+  `perubahan_json` mediumtext NOT NULL,
+  `jumlah_perubahan` smallint unsigned NOT NULL DEFAULT 0,
+  `dikirim_pada` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_formulir_revisi_pendaftaran` (`id_pendaftaran`,`dikirim_pada`),
+  CONSTRAINT `fk_formulir_revisi_pendaftaran` FOREIGN KEY (`id_pendaftaran`) REFERENCES `tb_pendaftaran` (`id_pendaftaran`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `tb_formulir_draf` (

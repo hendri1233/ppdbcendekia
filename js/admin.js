@@ -116,6 +116,68 @@
         });
     }
 
+    // --- Notifikasi melayang singkat untuk aksi tanpa muat ulang halaman ---
+    const showToast = (text, ok) => {
+        let toast = document.querySelector('[data-admin-toast]');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.dataset.adminToast = '1';
+            toast.setAttribute('role', 'status');
+            toast.setAttribute('aria-live', 'polite');
+            document.body.appendChild(toast);
+        }
+        toast.className = 'admin-toast ' + (ok ? 'is-ok' : 'is-error');
+        toast.textContent = text;
+        toast.hidden = false;
+        window.clearTimeout(toast.timer);
+        toast.timer = window.setTimeout(() => { toast.hidden = true; }, 6000);
+    };
+
+    // --- Revisi formulir: sekali klik, tautan langsung dikirim tanpa memuat ulang halaman ---
+    for (const form of document.querySelectorAll('form[data-revisi]')) {
+        const button = form.querySelector('button[type="submit"]');
+        const status = form.querySelector('[data-revisi-status]');
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (form.dataset.sending === '1') return;
+            form.dataset.sending = '1';
+            button.disabled = true;
+            button.textContent = 'Mengirim…';
+            status.className = 'revision-action__status';
+            status.replaceChildren();
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            })
+                .then((response) => response.json())
+                .catch(() => ({ ok: false, text: 'Koneksi terputus. Coba lagi.' }))
+                .then((result) => {
+                    form.dataset.sending = '';
+                    button.disabled = false;
+                    button.textContent = result.ok && result.sent ? 'Kirim ulang' : 'Revisi';
+                    status.classList.add(result.ok ? 'is-ok' : 'is-error');
+                    status.title = result.text;
+                    status.append(document.createTextNode(result.ok && result.sent ? '✓ Terkirim' : result.ok ? 'Formulir dibuka' : 'Gagal'));
+                    showToast(result.text, result.ok);
+                    for (const link of result.links || []) {
+                        const anchor = document.createElement('a');
+                        anchor.className = 'table-action stage-wa';
+                        anchor.href = link.url;
+                        anchor.target = '_blank';
+                        anchor.rel = 'noopener';
+                        anchor.textContent = 'WA ' + link.role + ' · ' + link.display;
+                        status.append(anchor);
+                    }
+                    // Perbarui label status di baris yang sama.
+                    const row = form.closest('tr');
+                    const pill = row && row.querySelector('td[data-label="Status"] .status-pill');
+                    if (pill && result.status_label) pill.textContent = result.status_label;
+                });
+        });
+    }
+
     // --- Pencarian dengan tunda agar tidak mengirim setiap ketikan ---
     const searchInput = document.querySelector('.search-field input[type="search"]');
     const filterForm = searchInput ? searchInput.closest('form') : null;

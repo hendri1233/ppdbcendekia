@@ -365,6 +365,17 @@ if ($documentResult) {
 }
 mysqli_stmt_close($documentQuery);
 
+$revisions = [];
+$revisionQuery = mysqli_prepare($conn, 'SELECT perubahan_json,jumlah_perubahan,dikirim_pada FROM tb_formulir_revisi WHERE id_pendaftaran=? ORDER BY dikirim_pada DESC, id DESC');
+mysqli_stmt_bind_param($revisionQuery, 's', $registrationId);
+mysqli_stmt_execute($revisionQuery);
+$revisionResult = mysqli_stmt_get_result($revisionQuery);
+while ($revisionRow = mysqli_fetch_assoc($revisionResult)) {
+    $revisionRow['perubahan'] = json_decode($revisionRow['perubahan_json'], true) ?: [];
+    $revisions[] = $revisionRow;
+}
+mysqli_stmt_close($revisionQuery);
+
 $questionnaireAnswers = null;
 $questionnaireQuery = mysqli_prepare($conn, 'SELECT jawaban_json,submitted_at FROM tb_ppdb_questionnaire_answers WHERE id_pendaftaran=? LIMIT 1');
 mysqli_stmt_bind_param($questionnaireQuery, 's', $registrationId);
@@ -616,6 +627,40 @@ require 'admin_header.php';
     <?php } ?>
     <div class="detail-grid">
         <?php render_detail_panel('Registrasi awal', [['Kode pendaftaran', 'id_pendaftaran'], ['Tanggal pendaftaran', 'tgl_daftar'], ['Unit pendidikan', 'nama_unit'], ['Tahun ajaran', 'th_ajaran'], ['Nomor antrean', 'nomor_antrian'], ['Nama ananda', 'nm_peserta'], ['Tanggal lahir', 'tgl_lahir'], ['Umur ananda terdeteksi berdasarkan Dapodik dari tanggal ' . ($dapodikAge['reference_date'] ?? '-') . ' berumur:', 'umur_dapodik'], ['Jenis kelamin', 'jenis_kelamin'], ['Yang mendaftarkan', 'pendaftar'], ['WhatsApp pendaftar', 'no_hp_pendaftar'], ['WhatsApp ayah', 'no_hp_ayah'], ['WhatsApp ibu', 'no_hp_ibu'], ['Draf formulir lengkap', 'draf_formulir']], $participant); ?>
+        <?php if ($revisions || !empty($participant['revisi_dibuka'])) { ?>
+        <section class="detail-panel wide revision-history">
+            <h2>Riwayat revisi wali murid</h2>
+            <?php if (!empty($participant['revisi_dibuka'])) { ?>
+                <p class="revision-history__waiting">Formulir sedang dibuka untuk revisi. Menunggu wali murid mengirim perbaikan.</p>
+            <?php } ?>
+            <?php foreach ($revisions as $index => $revision) { ?>
+                <div class="revision-history__item">
+                    <p class="revision-history__meta">
+                        <strong>Revisi <?php echo count($revisions) - $index; ?></strong>
+                        · dikirim <?php echo h(date('d-m-Y H:i', strtotime($revision['dikirim_pada']))); ?>
+                        · <?php echo (int) $revision['jumlah_perubahan'] > 0 ? (int) $revision['jumlah_perubahan'].' perubahan' : 'tanpa perubahan data'; ?>
+                    </p>
+                    <?php if ($revision['perubahan']) { ?>
+                        <div class="table-wrap">
+                            <table class="data-table revision-history__table">
+                                <thead><tr><th scope="col">Bagian</th><th scope="col">Isian</th><th scope="col">Sebelum</th><th scope="col">Sesudah</th></tr></thead>
+                                <tbody>
+                                <?php foreach ($revision['perubahan'] as [$sectionTitle, $fieldLabel, $before, $after]) { ?>
+                                    <tr>
+                                        <td data-label="Bagian"><?php echo h($sectionTitle); ?></td>
+                                        <td data-label="Isian"><strong><?php echo h($fieldLabel); ?></strong></td>
+                                        <td data-label="Sebelum" class="revision-history__old"><?php echo $before === '' ? '<em>kosong</em>' : h($before); ?></td>
+                                        <td data-label="Sesudah" class="revision-history__new"><?php echo $after === '' ? '<em>kosong</em>' : h($after); ?></td>
+                                    </tr>
+                                <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php } ?>
+                </div>
+            <?php } ?>
+        </section>
+        <?php } ?>
         <section class="detail-panel wide">
             <h2>Jawaban kuisioner</h2>
             <?php if (!$questionnaireAnswers || empty($questionnaireAnswers['questions'])) { ?>

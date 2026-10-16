@@ -2894,3 +2894,115 @@ select:focus-visible {
         height: 220px;
     }
 }
+
+/* Aksi revisi formulir di daftar peserta: sekali klik, hasil tampil di baris */
+.revision-action {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.revision-action__button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.revision-action__status:empty {
+    display: none;
+}
+
+.revision-action__status {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.revision-action__status.is-ok {
+    color: var(--tone-green-fg);
+    background: var(--tone-green-bg);
+}
+
+.revision-action__status.is-error {
+    color: var(--tone-red-fg);
+    background: var(--tone-red-bg);
+}
+
+.table-actions:has(.revision-action) {
+    flex-wrap: wrap;
+}
+
+.admin-toast {
+    position: fixed;
+    z-index: 1000;
+    right: 16px;
+    bottom: 16px;
+    max-width: min(420px, calc(100vw - 32px));
+    padding: 12px 16px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-3);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.admin-toast.is-ok {
+    color: var(--tone-green-fg);
+    background: var(--tone-green-bg);
+    border: 1px solid var(--brand-200);
+}
+
+.admin-toast.is-error {
+    color: var(--tone-red-fg);
+    background: var(--tone-red-bg);
+    border: 1px solid color-mix(in srgb, var(--danger-fg) 32%, transparent);
+}
+
+.admin-toast[hidden] {
+    display: none;
+}
+
+/* Riwayat revisi wali murid di detail peserta */
+.revision-history__waiting {
+    margin: 0 17px 12px;
+    padding: 9px 12px;
+    color: var(--tone-amber-fg);
+    background: var(--tone-amber-bg);
+    border-radius: 6px;
+    font-size: 13.5px;
+}
+
+.revision-history__item {
+    padding: 0 17px 16px;
+}
+
+.revision-history__item + .revision-history__item {
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.revision-history__meta {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 13.5px;
+}
+
+.revision-history__meta strong {
+    color: var(--ink);
+}
+
+.revision-history__old {
+    color: var(--tone-red-fg);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.revision-history__new {
+    color: var(--tone-green-fg);
+    font-weight: 700;
+}

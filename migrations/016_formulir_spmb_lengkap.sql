@@ -5,6 +5,11 @@
 -- 2) Data orang tua/wali tambahan: satu baris per peran (ayah, ibu, wali).
 -- 3) Draf formulir agar isian yang terhenti di tengah jalan tidak hilang.
 -- 4) Aturan wajib/opsional per isian yang diatur super admin.
+-- 5) Penanda revisi formulir untuk peserta yang sudah diterima.
+-- 6) Riwayat perubahan data setiap kali wali murid mengirim revisi.
+
+ALTER TABLE `tb_pendaftaran`
+  ADD COLUMN `revisi_dibuka` tinyint(1) NOT NULL DEFAULT 0 AFTER `status_data`;
 
 ALTER TABLE `tb_detail_dapodik`
   ADD COLUMN `nama_panggilan` varchar(50) NOT NULL DEFAULT '' AFTER `nik`,
@@ -72,6 +77,17 @@ CREATE TABLE `tb_formulir_aturan_isian` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`nama_isian`),
   CONSTRAINT `fk_aturan_isian_admin` FOREIGN KEY (`updated_by`) REFERENCES `tbadmin` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tb_formulir_revisi` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `id_pendaftaran` char(10) NOT NULL,
+  `perubahan_json` mediumtext NOT NULL,
+  `jumlah_perubahan` smallint unsigned NOT NULL DEFAULT 0,
+  `dikirim_pada` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_formulir_revisi_pendaftaran` (`id_pendaftaran`,`dikirim_pada`),
+  CONSTRAINT `fk_formulir_revisi_pendaftaran` FOREIGN KEY (`id_pendaftaran`) REFERENCES `tb_pendaftaran` (`id_pendaftaran`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `tb_formulir_draf` (

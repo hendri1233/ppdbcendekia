@@ -182,8 +182,10 @@
     sync.call(control);
   }
 
+  // Formulir lengkap bertahap (formulir.php) memvalidasi sendiri di js/formulir.js,
+  // karena validasi bawaan ikut memeriksa isian bersyarat yang sedang tersembunyi.
   const form = document.getElementById("form-utama");
-  if (form) {
+  if (form && !form.hasAttribute("data-current-step")) {
     form.addEventListener("submit", function (event) {
       if (form.checkValidity()) {
         const button = form.querySelector(".submit-button");

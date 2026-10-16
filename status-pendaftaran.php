@@ -24,6 +24,7 @@ $statusInfo = $registration ? ppdb_status_info($registration['status_ppdb']) : n
 $currentStep = $statusInfo['step'] ?? 0;
 $paymentDeadlinePassed = $registration && $registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d');
 $uploadError = trim($_GET['upload_error'] ?? '');
+$revisionCount = isset($_GET['revisi']) && ctype_digit((string) $_GET['revisi']) ? (int) $_GET['revisi'] : null;
 
 $journeySteps = [
     ['title' => 'Registrasi awal', 'description' => 'Data dasar ananda diterima.'],
@@ -58,7 +59,7 @@ header('Referrer-Policy: no-referrer');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="css/result.css">
+    <link rel="stylesheet" href="css/result.css?v=<?php echo (int) filemtime(__DIR__.'/css/result.css'); ?>">
 </head>
 <body>
 <main class="result-shell">
@@ -68,6 +69,12 @@ header('Referrer-Policy: no-referrer');
     </a>
 
     <?php if ($registration) { ?>
+        <?php if ($revisionCount !== null) { ?>
+            <div class="payment-success" role="status">
+                <strong>Revisi data berhasil dikirim.</strong>
+                <?php echo $revisionCount > 0 ? h($revisionCount.' perubahan tercatat dan akan diperiksa panitia.') : 'Tidak ada data yang berubah; panitia tetap akan memeriksa ulang.'; ?>
+            </div>
+        <?php } ?>
         <?php if ($uploadError !== '') { ?>
             <div class="payment-error" role="alert"><?php echo h($uploadError); ?></div>
         <?php } ?>

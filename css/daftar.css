@@ -1816,3 +1816,26 @@ a {
     font-size: 12.5px;
     line-height: 1.45;
 }
+
+.field-error {
+    color: var(--danger-fg);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.participant-question .field-error,
+.document-card .field-error {
+    display: block;
+    margin-top: 8px;
+}
+
+.field-image {
+    display: block;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--white);
+}

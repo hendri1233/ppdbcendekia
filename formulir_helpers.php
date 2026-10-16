@@ -14,6 +14,8 @@
  * - 'locked'   : selalu wajib (pengendali percabangan atau data inti DAPODIK).
  * - 'show_if'  : daftar syarat [[nama_field, [nilai...]], ...]; semua harus terpenuhi.
  * - 'jenjang'  : hanya tampil untuk jenjang unit tertentu, mis. ['TK'].
+ * - 'wajib_jenjang' : pada jenjang ini field selalu tampil dan selalu wajib
+ *                     (syarat tampil diabaikan), mis. NISN untuk SD dan SMP.
  */
 
 const FORMULIR_PARENT_ROLES = ['ayah' => 'Ayah', 'ibu' => 'Ibu', 'wali' => 'Wali'];
@@ -175,9 +177,10 @@ function formulir_data_sections(): array
                 ['name' => 'nama_panggilan', 'label' => 'Nama panggilan ananda', 'maxlength' => 50, 'store' => 'detail'],
                 ['name' => 'tmp_lahir', 'label' => 'Tempat lahir', 'locked' => true, 'maxlength' => 50, 'hint' => 'Sesuai akta kelahiran.', 'store' => 'pendaftaran'],
                 ['name' => 'nomor_registrasi_akta', 'label' => 'Nomor registrasi akta kelahiran', 'maxlength' => 100, 'wide' => true, 'placeholder' => 'Contoh: 1104-LT-14082017-0011 atau 1.337/Ist/2002', 'store' => 'detail'],
-                ['name' => 'status_nisn', 'label' => 'NISN ananda', 'type' => 'select', 'locked' => true, 'store' => 'detail', 'options' => formulir_options(['Sudah ada NISN', 'Belum ada NISN']), 'hint' => 'NISN wajib dimiliki ananda yang naik dari TK ke jenjang berikutnya.'],
-                ['name' => 'NISN', 'label' => 'Nomor NISN', 'required' => true, 'maxlength' => 10, 'inputmode' => 'numeric', 'pattern' => '[0-9]{10}', 'placeholder' => 'Contoh: 3991095271', 'store' => 'pendaftaran', 'show_if' => $hasNisn],
-                ['name' => 'alasan_tanpa_nisn', 'label' => 'Penjelasan belum ada NISN', 'required' => true, 'maxlength' => 255, 'placeholder' => 'Contoh: belum terbit', 'store' => 'detail', 'show_if' => [['status_nisn', ['Belum ada NISN']]]],
+                // KB, TPA, TK boleh belum memiliki NISN; SD dan SMP wajib mengisi NISN.
+                ['name' => 'status_nisn', 'label' => 'NISN ananda', 'type' => 'select', 'locked' => true, 'store' => 'detail', 'jenjang' => ['KB', 'TPA', 'TK'], 'options' => formulir_options(['Sudah ada NISN', 'Belum ada NISN']), 'hint' => 'Jenjang KB, TPA, dan TK boleh belum memiliki NISN.'],
+                ['name' => 'NISN', 'label' => 'Nomor NISN', 'required' => true, 'wajib_jenjang' => ['SD', 'SMP'], 'maxlength' => 10, 'inputmode' => 'numeric', 'pattern' => '[0-9]{10}', 'placeholder' => 'Contoh: 3991095271', 'hint' => 'NISN 10 digit dari sekolah sebelumnya. Wajib untuk pendaftar SD dan SMP.', 'store' => 'pendaftaran', 'show_if' => $hasNisn],
+                ['name' => 'alasan_tanpa_nisn', 'label' => 'Penjelasan belum ada NISN', 'required' => true, 'maxlength' => 255, 'placeholder' => 'Contoh: belum terbit', 'store' => 'detail', 'jenjang' => ['KB', 'TPA', 'TK'], 'show_if' => [['status_nisn', ['Belum ada NISN']]]],
                 ['name' => 'agama', 'label' => 'Agama/kepercayaan', 'type' => 'select', 'locked' => true, 'store' => 'pendaftaran', 'options' => ['Islam' => 'Islam', 'Kristen' => 'Kristen', 'Katolik' => 'Katolik', 'Hindu' => 'Hindu', 'Buddha' => 'Buddha', 'Khonghucu' => 'Khonghucu', 'Kepercayaan' => 'Kepercayaan lainnya']],
                 ['name' => 'kewarganegaraan', 'label' => 'Kewarganegaraan', 'type' => 'select', 'locked' => true, 'store' => 'detail', 'options' => formulir_options(['WNI', 'WNA'])],
                 ['name' => 'golongan_darah', 'label' => 'Golongan darah', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options(['A', 'B', 'AB', 'O', 'Belum diketahui'])],
@@ -200,7 +203,7 @@ function formulir_data_sections(): array
                 ['name' => 'nama_penyakit', 'label' => 'Penyakit yang pernah diderita', 'maxlength' => 255, 'store' => 'detail', 'show_if' => [['riwayat_penyakit', ['Ada']]]],
                 ['name' => 'pantangan_penyakit', 'label' => 'Pantangan / hal yang harus dihindari', 'maxlength' => 255, 'wide' => true, 'store' => 'detail', 'show_if' => [['riwayat_penyakit', ['Ada']]]],
                 ['name' => 'karakter_menonjol', 'label' => 'Karakter ananda yang paling menonjol', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
-                ['name' => 'kecerdasan_menonjol', 'label' => 'Kecerdasan / gaya belajar yang paling menonjol', 'type' => 'select', 'wide' => true, 'store' => 'detail', 'options' => [
+                ['name' => 'kecerdasan_menonjol', 'label' => 'Kecerdasan / gaya belajar yang paling menonjol', 'type' => 'select', 'wide' => true, 'store' => 'detail', 'image' => ['src' => 'img/gaya-belajar.png', 'alt' => 'Ilustrasi tiga gaya belajar: visual, auditori, dan kinestetik', 'width' => 820, 'height' => 509], 'options' => [
                     'Visual' => 'Visual — cepat menangkap warna, bentuk, arah, dan ruang',
                     'Auditori' => 'Auditori — lebih mudah memahami dengan mendengarkan',
                     'Kinestetik' => 'Kinestetik — belajar lewat gerak tubuh dan keterampilan tangan',
@@ -280,6 +283,10 @@ function formulir_sections_for(?mysqli $conn, string $jenjang = ''): array
             if ($jenjang !== '' && isset($field['jenjang']) && !in_array($jenjang, $field['jenjang'], true)) {
                 continue;
             }
+            if ($jenjang !== '' && in_array($jenjang, $field['wajib_jenjang'] ?? [], true)) {
+                unset($field['show_if']);
+                $field['locked'] = true;
+            }
             if (($field['type'] ?? 'text') !== 'heading') {
                 $field['required'] = !empty($field['locked']) || ($rules[$field['name']] ?? !empty($field['required']));
             }
@@ -341,6 +348,10 @@ function formulir_render_field(array $field, array $values): void
     echo '<label for="'.h($name).'">'.h($field['label']);
     echo $required !== '' ? ' <span class="required-mark" aria-hidden="true">*</span>' : ' <span class="optional-mark">Opsional</span>';
     echo '</label>';
+    if (!empty($field['image'])) {
+        $image = $field['image'];
+        echo '<img class="field-image" src="'.h($image['src']).'" alt="'.h($image['alt']).'" width="'.(int) $image['width'].'" height="'.(int) $image['height'].'" loading="lazy">';
+    }
 
     if ($type === 'select') {
         echo '<select id="'.h($name).'" name="'.h($name).'"'.$required.'>';
@@ -358,6 +369,13 @@ function formulir_render_field(array $field, array $values): void
             if (isset($field[$attribute])) {
                 $attributes .= ' '.$attribute.'="'.h((string) $field[$attribute]).'"';
             }
+        }
+        // Pesan galat format untuk validasi langsung di js/formulir.js.
+        if (isset($field['pattern'])) {
+            $patternMessage = preg_match('/^\[0-9\]\{(\d+)\}$/', $field['pattern'], $digits)
+                ? 'Harus '.$digits[1].' digit angka.'
+                : ($type === 'tel' ? 'Gunakan nomor WhatsApp berawalan 08, 10–13 digit.' : 'Format belum sesuai.');
+            $attributes .= ' data-pattern-message="'.h($patternMessage).'"';
         }
         echo '<input id="'.h($name).'" type="'.h($type).'" name="'.h($name).'" value="'.h($value).'"'.$attributes.$required.'>';
     }
@@ -545,4 +563,61 @@ function formulir_identity_checks(array $input, array $registration, array $inpu
     }
 
     return ['errors' => $errors, 'flags' => $flags];
+}
+
+/**
+ * Isian formulir yang pernah dikirim, dalam bentuk nama_field => nilai.
+ * Mengembalikan array kosong bila formulir belum pernah dikirim.
+ */
+function formulir_saved_values(mysqli $conn, string $registrationId): array
+{
+    $query = mysqli_prepare($conn, 'SELECT p.NISN,p.tmp_lahir,p.agama,p.asal_sekolah,p.sumber_informasi,d.* FROM tb_pendaftaran p JOIN tb_detail_dapodik d ON d.id_pendaftaran=p.id_pendaftaran WHERE p.id_pendaftaran=? LIMIT 1');
+    mysqli_stmt_bind_param($query, 's', $registrationId);
+    mysqli_stmt_execute($query);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($query)) ?: [];
+    mysqli_stmt_close($query);
+    if (trim((string) ($row['nik'] ?? '')) === '') {
+        return [];
+    }
+    $row += formulir_flatten_parent_profiles(formulir_parent_profiles($conn, $registrationId));
+    $values = [];
+    foreach (formulir_input_fields() as $name => $_field) {
+        $values[$name] = (string) ($row[$name] ?? '');
+    }
+    return $values;
+}
+
+/** Samakan bentuk nilai agar 95.50 dan 95.5 tidak dianggap berubah. */
+function formulir_normalize_value(string $value, array $field): string
+{
+    $value = trim($value);
+    if (!empty($field['numeric']) && $value !== '' && is_numeric($value)) {
+        return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+    }
+    return $value;
+}
+
+/**
+ * Daftar perubahan antara isian lama dan baru: [[bagian, label, lama, baru], ...].
+ * Nilai pilihan ditampilkan dengan labelnya.
+ */
+function formulir_diff_values(array $old, array $new, array $sections): array
+{
+    $changes = [];
+    foreach ($sections as $section) {
+        foreach ($section['fields'] as $field) {
+            if (($field['type'] ?? 'text') === 'heading') {
+                continue;
+            }
+            $name = $field['name'];
+            $before = formulir_normalize_value((string) ($old[$name] ?? ''), $field);
+            $after = formulir_normalize_value((string) ($new[$name] ?? ''), $field);
+            if ($before === $after) {
+                continue;
+            }
+            $label = static fn (string $value): string => ($field['type'] ?? '') === 'select' && isset($field['options'][$value]) ? (string) $field['options'][$value] : $value;
+            $changes[] = [$section['title'], $field['label'], $label($before), $label($after)];
+        }
+    }
+    return $changes;
 }

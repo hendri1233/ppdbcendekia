@@ -547,7 +547,7 @@ function ppdb_prepare_payment_link(mysqli $conn, string $registrationId): array
  * Tautan formulir lengkap dibuat secara lokal: token formulir disimpan sekali
  * dan tetap berlaku, lalu teks WhatsApp disiapkan untuk dibuka admin.
  */
-function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId): array
+function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string $revisionNote = '', bool $isRevision = false): array
 {
     $lookup = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.nm_peserta,p.kode_unit,p.th_ajaran,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_formulir,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
     mysqli_stmt_bind_param($lookup, 's', $registrationId);
@@ -557,7 +557,7 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId): array
     if (!$registration) {
         throw new RuntimeException('Data pendaftaran tidak ditemukan.');
     }
-    if (!in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true)) {
+    if (!in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true) && !($isRevision && $registration['status_ppdb'] === 'diterima')) {
         throw new RuntimeException('Formulir hanya dapat dibuka setelah pembayaran disetujui.');
     }
 
@@ -576,6 +576,17 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId): array
         'token' => $formToken,
     ], '', '&', PHP_QUERY_RFC3986);
 
+    if ($isRevision) {
+        $lines = [
+            'Assalamualaikum Bapak/Ibu pendaftar PPDB Cendekia Takengon.',
+            'Panitia membuka kembali formulir ananda '.$registration['nm_peserta'].' ('.$registration['nama_unit'].') untuk diperbaiki.',
+            'Kode pendaftaran: '.$registrationId,
+        ];
+        if ($revisionNote !== '') {
+            $lines[] = 'Yang perlu diperbaiki: '.$revisionNote;
+        }
+        array_push($lines, '', 'Isian sebelumnya sudah tersimpan. Silakan buka tautan berikut, perbaiki data, lalu kirim ulang:', $formUrl, '', 'Terima kasih.');
+    } else {
     $lines = [
         'Assalamualaikum, terima kasih telah menyelesaikan pembayaran PPDB Cendekia.',
         'Pembayaran untuk '.$registration['nm_peserta'].' ('.$registration['nama_unit'].') telah disetujui panitia.',
@@ -586,6 +597,7 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId): array
         '',
         'Catatan: formulir hanya dapat diisi satu kali. Pastikan data sesuai dokumen resmi.',
     ];
+    }
 
     $recipients = ppdb_registrant_recipients($registration);
     if ($recipients === []) {
