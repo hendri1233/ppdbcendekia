@@ -41,8 +41,19 @@ function public_icon(string $name): string
     return '<svg class="icon icon--'.$name.'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'.($paths[$name] ?? '').'</svg>';
 }
 
-function public_navigation(): array
+function public_navigation(mysqli $conn): array
 {
+    $unitChildren = [
+        ['href' => 'index.php#unit-title', 'label' => 'Semua unit pendidikan'],
+        ['href' => 'direktori-unit.php', 'label' => 'Direktori unit'],
+    ];
+    foreach (cms_units($conn) as $unit) {
+        $unitChildren[] = [
+            'href' => 'unit.php?kode='.rawurlencode((string) $unit['kode_unit']),
+            'label' => ppdb_unit_display_name((string) $unit['nama_unit']),
+        ];
+    }
+
     return [
         ['key' => 'beranda', 'href' => 'index.php', 'label' => 'Beranda'],
         ['key' => 'tentang', 'href' => 'tentang.php', 'label' => 'Tentang', 'children' => [
@@ -51,11 +62,19 @@ function public_navigation(): array
             ['href' => 'tentang.php#visi-misi', 'label' => 'Visi dan misi'],
             ['href' => 'tentang.php#fasilitas', 'label' => 'Fasilitas'],
         ]],
+        ['key' => 'unit', 'href' => 'index.php#unit-title', 'label' => 'Unit Pendidikan', 'children' => $unitChildren],
         ['key' => 'kurikulum', 'href' => 'kurikulum.php', 'label' => 'Kurikulum JSIT', 'children' => [
             ['href' => 'kurikulum.php#penggerak', 'label' => 'Program Penggerak'],
             ['href' => 'kurikulum.php#k13', 'label' => 'Kurikulum 2013'],
             ['href' => 'kurikulum.php#merdeka', 'label' => 'Merdeka Belajar'],
             ['href' => 'kurikulum.php#deep_learning', 'label' => 'Deep Learning'],
+        ]],
+        ['key' => 'inspirasi', 'href' => 'program.php', 'label' => 'Program & Inspirasi', 'children' => [
+            ['href' => 'program.php', 'label' => 'Program yayasan'],
+            ['href' => 'galeri.php', 'label' => 'Galeri kegiatan'],
+            ['href' => 'cerita.php#prestasi', 'label' => 'Prestasi'],
+            ['href' => 'cerita.php#testimoni', 'label' => 'Testimoni'],
+            ['href' => 'cerita.php#alumni', 'label' => 'Cerita alumni'],
         ]],
         ['key' => 'berita', 'href' => 'berita.php', 'label' => 'Berita'],
         ['key' => 'ppdb', 'href' => 'ppdb.php', 'label' => 'PPDB'],
@@ -137,7 +156,7 @@ function public_page_start(mysqli $conn, array $page): void
 
         <nav class="primary-navigation" id="navigasi-utama" aria-label="Navigasi utama" data-navigation>
             <ul class="nav-list">
-                <?php foreach (public_navigation() as $item) {
+                <?php foreach (public_navigation($conn) as $item) {
                     $isActive = $active === $item['key']; ?>
                     <li class="nav-item<?= !empty($item['children']) ? ' has-children' : '' ?>">
                         <a class="nav-link<?= $isActive ? ' is-current' : '' ?>" href="<?= h($item['href']) ?>"<?= $isActive ? ' aria-current="page"' : '' ?>><?= h($item['label']) ?><?php if (!empty($item['children'])) { echo public_icon('chevron'); } ?></a>
@@ -213,6 +232,10 @@ function public_page_end(mysqli $conn): void
             <h2 class="footer-heading">Jelajahi</h2>
             <ul class="footer-list">
                 <li><a href="tentang.php">Tentang yayasan</a></li>
+                <li><a href="program.php">Program yayasan</a></li>
+                <li><a href="galeri.php">Galeri kegiatan</a></li>
+                <li><a href="cerita.php">Prestasi &amp; cerita</a></li>
+                <li><a href="direktori-unit.php">Direktori unit</a></li>
                 <li><a href="kurikulum.php">Kurikulum JSIT</a></li>
                 <li><a href="berita.php">Berita</a></li>
                 <li><a href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a></li>

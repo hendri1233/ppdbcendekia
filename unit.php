@@ -11,7 +11,7 @@ foreach (cms_units($conn) as $row) {
 
 if (!$unit) {
     http_response_code(404);
-    public_page_start($conn, ['title' => 'Unit tidak ditemukan', 'path' => 'unit.php']);
+    public_page_start($conn, ['title' => 'Unit tidak ditemukan', 'active' => 'unit', 'path' => 'unit.php']);
     ?>
     <section class="page-hero">
         <div class="shell">
@@ -42,6 +42,7 @@ $name = ppdb_unit_display_name($unit['nama_unit']);
 
 public_page_start($conn, [
     'title' => $name,
+    'active' => 'unit',
     'description' => $unit['tagline'] ?: $name.' — '.ppdb_jenjang_label($unit['jenjang']).' di bawah Yayasan Wakaf Cendekia Takengon.',
     'path' => 'unit.php?kode='.rawurlencode($code),
     'image' => $unit['photo_path'] ?: 'img/wisuda-1200.jpg',

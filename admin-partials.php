@@ -54,6 +54,7 @@ function ppdb_admin_navigation(string $activePage): array
         ['key' => 'cms-pages', 'href' => 'cms-halaman.php', 'label' => 'Tentang &amp; kurikulum', 'icon' => 'page', 'group' => 'Situs web'],
         ['key' => 'cms-news', 'href' => 'cms-berita.php', 'label' => 'Berita', 'icon' => 'news', 'group' => 'Situs web'],
         ['key' => 'cms-units', 'href' => 'cms-unit.php', 'label' => 'Profil unit', 'icon' => 'building', 'group' => 'Situs web'],
+        ['key' => 'cms-showcase', 'href' => 'cms-konten.php', 'label' => 'Program, galeri &amp; cerita', 'icon' => 'page', 'group' => 'Situs web'],
         ['key' => 'cms-settings', 'href' => 'cms-pengaturan.php', 'label' => 'Kontak &amp; pengaturan', 'icon' => 'settings', 'group' => 'Situs web'],
     ];
 

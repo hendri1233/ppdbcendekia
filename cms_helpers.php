@@ -202,6 +202,32 @@ function cms_items(mysqli $conn, string $type, bool $activeOnly = true): array
     return $rows;
 }
 
+/** Konten program, galeri, prestasi, testimoni, dan alumni yang diterbitkan. */
+function cms_showcase_items(mysqli $conn, string $type, int $limit = 100, string $unitCode = ''): array
+{
+    $allowedTypes = ['program', 'gallery', 'prestasi', 'testimoni', 'alumni'];
+    if (!in_array($type, $allowedTypes, true)) {
+        return [];
+    }
+
+    $sql = 'SELECT id,content_type,category,title,subtitle,body_html,image_path,person_name,person_role,kode_unit,sort_order
+        FROM tb_cms_showcase WHERE content_type=? AND is_active=1';
+    if ($unitCode !== '') {
+        $sql .= ' AND kode_unit=?';
+    }
+    $sql .= ' ORDER BY sort_order,id DESC LIMIT '.max(1, min(200, $limit));
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($unitCode !== '') {
+        mysqli_stmt_bind_param($stmt, 'ss', $type, $unitCode);
+    } else {
+        mysqli_stmt_bind_param($stmt, 's', $type);
+    }
+    mysqli_stmt_execute($stmt);
+    $rows = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+    return $rows;
+}
+
 /** Unit pendidikan beserta profil situsnya, urut jenjang. */
 function cms_units(mysqli $conn): array
 {

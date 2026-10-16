@@ -1,0 +1,14 @@
+<?php
+require_once __DIR__.'/public_layout.php';
+$sections = [
+    'prestasi' => ['title' => 'Prestasi', 'intro' => 'Apresiasi atas ikhtiar dan pencapaian peserta didik serta unit Cendekia.', 'items' => cms_showcase_items($conn, 'prestasi'), 'empty' => 'Prestasi yang telah diverifikasi akan ditampilkan di sini.'],
+    'testimoni' => ['title' => 'Cerita keluarga Cendekia', 'intro' => 'Pengalaman wali murid, pendidik, dan mitra yang tumbuh bersama Cendekia.', 'items' => cms_showcase_items($conn, 'testimoni'), 'empty' => 'Cerita dari keluarga dan mitra Cendekia akan segera hadir.'],
+    'alumni' => ['title' => 'Cerita alumni', 'intro' => 'Perjalanan dan kontribusi alumni setelah menyelesaikan pendidikan.', 'items' => cms_showcase_items($conn, 'alumni'), 'empty' => 'Kisah perjalanan alumni sedang disiapkan.'],
+];
+public_page_start($conn, ['title' => 'Prestasi & cerita Cendekia', 'description' => 'Prestasi, testimoni, dan perjalanan alumni Yayasan Wakaf Cendekia Takengon.', 'active' => 'inspirasi', 'path' => 'cerita.php']);
+?>
+<section class="page-hero"><div class="shell"><ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">Prestasi &amp; cerita</li></ol><p class="kicker">Tumbuh bersama Cendekia</p><h1>Prestasi dan cerita</h1><p>Apresiasi, pengalaman, dan perjalanan dari keluarga besar Cendekia.</p></div></section>
+<?php foreach ($sections as $key => $section) { ?><section class="section<?= $key === 'testimoni' ? ' section--tinted' : '' ?>" id="<?= h($key) ?>" aria-labelledby="story-<?= h($key) ?>"><div class="shell"><header class="section-head"><p class="kicker">Cendekia bertumbuh</p><h2 id="story-<?= h($key) ?>"><?= h($section['title']) ?></h2><p><?= h($section['intro']) ?></p></header>
+<?php if (!$section['items']) { ?><div class="empty-note"><strong>Konten sedang disiapkan.</strong><span><?= h($section['empty']) ?></span></div><?php } else { ?><div class="showcase-grid showcase-grid--stories"><?php foreach ($section['items'] as $item) { ?><article class="showcase-card showcase-card--story"><?php if ($item['image_path']) { ?><img class="showcase-card__image" src="<?= h($item['image_path']) ?>" alt="" loading="lazy"><?php } ?><div class="showcase-card__body"><?php if ($key === 'testimoni' && $item['body_html']) { ?><blockquote class="prose"><?= $item['body_html'] ?></blockquote><?php } elseif ($item['body_html']) { ?><div class="prose"><?= $item['body_html'] ?></div><?php } ?><?php if ($item['subtitle']) { ?><p class="showcase-card__summary"><?= h($item['subtitle']) ?></p><?php } ?><h3><?= h($item['person_name'] ?: $item['title']) ?></h3><?php if ($item['person_name'] && $item['person_role']) { ?><p class="showcase-card__byline"><?= h($item['person_role']) ?></p><?php } ?></div></article><?php } ?></div><?php } ?>
+</div></section><?php } ?>
+<?php public_page_end($conn); ?>
