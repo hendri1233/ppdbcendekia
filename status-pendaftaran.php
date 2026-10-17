@@ -23,6 +23,22 @@ if (!$registration) {
 $statusInfo = $registration ? ppdb_status_info($registration['status_ppdb']) : null;
 $currentStep = $statusInfo['step'] ?? 0;
 $paymentDeadlinePassed = $registration && $registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d');
+$hasPaymentAccount = $registration
+    && !empty($registration['bank_nama'])
+    && !empty($registration['nomor_rekening'])
+    && !empty($registration['nama_pemilik_rekening']);
+$bankNameWords = $registration ? preg_split('/\s+/', trim((string) ($registration['bank_nama'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) : [];
+$bankMonogram = '';
+foreach (array_slice($bankNameWords ?: [], 0, 3) as $bankNameWord) {
+    $bankMonogram .= strtoupper(substr($bankNameWord, 0, 1));
+}
+$normalizedBankName = strtolower(trim(preg_replace('/[^a-z0-9]+/i', ' ', (string) ($registration['bank_nama'] ?? ''))));
+$bankLogo = '';
+if ($normalizedBankName === 'bsi' || strpos($normalizedBankName, 'syariah indonesia') !== false) {
+    $bankLogo = 'img/Bank_Syariah_Indonesia.svg';
+} elseif ($normalizedBankName === 'bas' || strpos($normalizedBankName, 'aceh syariah') !== false || strpos($normalizedBankName, 'bank aceh') !== false) {
+    $bankLogo = 'img/Logo_Bank_Aceh_Syariah.png';
+}
 $uploadError = trim($_GET['upload_error'] ?? '');
 $revisionCount = isset($_GET['revisi']) && ctype_digit((string) $_GET['revisi']) ? (int) $_GET['revisi'] : null;
 
@@ -146,23 +162,69 @@ header('Referrer-Policy: no-referrer');
                 <?php if ($paymentDeadlinePassed) { ?>
                     <div class="payment-guidance is-warning">Batas pembayaran telah lewat. Hubungi panitia sebelum mengirim pembayaran.</div>
                 <?php } else { ?>
-                    <div class="payment-guidance">
-                        <strong>Instruksi pembayaran</strong>
-                        <span>Jumlah: <?php echo (float) $registration['biaya_pendaftaran'] > 0 ? 'Rp '.h(number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.')) : 'Tidak dipungut biaya'; ?></span>
-                        <?php if ($registration['bank_nama'] && $registration['nomor_rekening'] && $registration['nama_pemilik_rekening']) { ?>
-                            <span><?php echo h($registration['bank_nama']); ?> · <?php echo h($registration['nomor_rekening']); ?></span>
-                            <span>a.n. <?php echo h($registration['nama_pemilik_rekening']); ?></span>
+                    <section class="payment-instruction" aria-labelledby="payment-instruction-title">
+                        <div class="payment-instruction__heading">
+                            <span class="payment-instruction__step">01</span>
+                            <div>
+                                <p class="payment-instruction__eyebrow">Langkah pembayaran</p>
+                                <h2 id="payment-instruction-title">Instruksi pembayaran</h2>
+                                <p>Periksa nominal dan tujuan transfer sebelum melakukan pembayaran.</p>
+                            </div>
+                        </div>
+
+                        <?php if ((float) $registration['biaya_pendaftaran'] > 0) { ?>
+                            <div class="payment-amount">
+                                <span>Nominal yang perlu dibayarkan</span>
+                                <strong>Rp <?php echo h(number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.')); ?></strong>
+                            </div>
+                            <?php if ($hasPaymentAccount) { ?>
+                                <div class="payment-bank-brand" aria-label="Bank tujuan: <?php echo h($registration['bank_nama']); ?>">
+                                    <?php if ($bankLogo !== '') { ?>
+                                        <img class="payment-bank-brand__logo" src="<?php echo h($bankLogo); ?>" alt="Logo <?php echo h($registration['bank_nama']); ?>">
+                                    <?php } else { ?>
+                                        <span class="payment-bank-brand__mark" aria-hidden="true">
+                                            <svg viewBox="0 0 32 32" focusable="false"><path d="M4 12h24L16 5 4 12Zm2 3v9H4v3h24v-3h-2v-9h-3v9h-5v-9h-4v9H9v-9H6Z"/></svg>
+                                            <b><?php echo h($bankMonogram ?: 'BANK'); ?></b>
+                                        </span>
+                                    <?php } ?>
+                                    <span class="payment-bank-brand__name"><small>TRANSFER KE</small><strong><?php echo h($registration['bank_nama']); ?></strong></span>
+                                </div>
+                                <dl class="payment-detail-list">
+                                    <div><dt>Bank tujuan</dt><dd><?php echo h($registration['bank_nama']); ?></dd></div>
+                                    <div><dt>Nomor rekening</dt><dd class="payment-account-number"><?php echo h($registration['nomor_rekening']); ?></dd></div>
+                                    <div><dt>Nama pemilik rekening</dt><dd><?php echo h($registration['nama_pemilik_rekening']); ?></dd></div>
+                                    <div><dt>Batas pembayaran</dt><dd><?php echo $registration['tanggal_batas_bayar'] ? h(ppdb_format_date_id($registration['tanggal_batas_bayar'])) : 'Belum ditentukan'; ?></dd></div>
+                                </dl>
+                                <div class="payment-reference">
+                                    <span>Berita transfer / keterangan</span>
+                                    <strong><?php echo h($registration['id_pendaftaran']); ?></strong>
+                                    <small>Mohon cantumkan kode ini agar pembayaran dapat dikenali dan diverifikasi.</small>
+                                </div>
+                                <ol class="payment-steps">
+                                    <li>Transfer sesuai nominal ke rekening tujuan yang tertera.</li>
+                                    <li>Cantumkan kode pendaftaran pada berita transfer.</li>
+                                    <li>Unggah bukti transfer yang jelas melalui formulir di bawah.</li>
+                                </ol>
+                            <?php } else { ?>
+                                <div class="payment-error" role="alert">Informasi rekening belum tersedia. Jangan melakukan transfer terlebih dahulu. Hubungi admin PPDB untuk mendapatkan arahan pembayaran.</div>
+                            <?php } ?>
+                        <?php } else { ?>
+                            <div class="payment-free">
+                                <strong>Tidak ada biaya pendaftaran</strong>
+                                <span>Bapak/Ibu tidak perlu melakukan transfer. Silakan hubungi admin PPDB untuk arahan proses selanjutnya.</span>
+                            </div>
                         <?php } ?>
-                        <span>Gunakan kode <?php echo h($registration['id_pendaftaran']); ?> sebagai berita transfer.</span>
                     </div>
+                    <?php if ((float) $registration['biaya_pendaftaran'] > 0 && $hasPaymentAccount) { ?>
                     <form class="payment-upload" action="upload-bukti-pembayaran.php" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="id" value="<?php echo h($registration['id_pendaftaran']); ?>">
                         <input type="hidden" name="token" value="<?php echo h($receiptToken); ?>">
                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                        <label for="bukti_transfer">Bukti transfer <span>JPG, PNG, atau PDF · maks. 5 MB</span></label>
+                        <label for="bukti_transfer">Unggah bukti transfer <span>Pastikan nama rekening, nominal, dan waktu transaksi terlihat jelas. Format JPG, PNG, atau PDF · maksimal 5 MB.</span></label>
                         <input id="bukti_transfer" type="file" name="bukti_transfer" accept="image/jpeg,image/png,application/pdf" required>
-                        <button class="download-button" type="submit">Unggah bukti pembayaran <span aria-hidden="true">&uarr;</span></button>
+                        <button class="download-button" type="submit">Kirim bukti untuk diperiksa <span aria-hidden="true">&uarr;</span></button>
                     </form>
+                    <?php } ?>
                 <?php } ?>
             <?php } elseif ($panel === 'cek-bayar') { ?>
                 <div class="payment-guidance">
@@ -185,6 +247,13 @@ header('Referrer-Policy: no-referrer');
 
             <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh ringkasan PDF</a>
             <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain.</p>
+            <div class="admin-contact">
+                <span>Perlu bantuan? Hubungi admin PPDB.</span>
+                <a class="whatsapp-button" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait pendaftaran '.$registration['id_pendaftaran'].'.')); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi WhatsApp admin PPDB <?php echo h(ppdb_admin_whatsapp_display()); ?>">
+                    <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm0 23.54h-.01c-1.93 0-3.83-.52-5.48-1.51l-.39-.23-4.09 1.07 1.09-3.96-.25-.4a10.62 10.62 0 0 1-1.65-5.63c0-5.92 4.85-10.74 10.79-10.74 2.88 0 5.59 1.12 7.62 3.14a10.61 10.61 0 0 1 3.16 7.59c0 5.92-4.85 10.74-10.79 10.74Zm5.92-8.04c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
+                    <span><?php echo h(ppdb_admin_whatsapp_display()); ?></span>
+                </a>
+            </div>
         </section>
     <?php } else { ?>
         <section class="result-panel result-error">
@@ -195,7 +264,7 @@ header('Referrer-Policy: no-referrer');
         </section>
     <?php } ?>
 
-    <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
+    <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a> · WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?></footer>
 </main>
 <script src="js/status.js"></script>
 </body>

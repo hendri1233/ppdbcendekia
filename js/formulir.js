@@ -21,6 +21,202 @@
     const finalIntroContinue = document.querySelector('[data-final-intro-continue]');
     const finalIntroWarning = document.querySelector('[data-final-intro-warning]');
     const declineForm = document.querySelector('[data-decline-form]');
+    const REGION_API_BASE = 'https://www.emsifa.com/api-wilayah-indonesia/api';
+    const regionLevels = ['province', 'regency', 'district', 'village'];
+    const regionSelects = new Map(regionLevels.map(function (level) {
+        return [level, form ? form.querySelector('[data-region-select="' + level + '"]') : null];
+    }).filter(function (entry) { return Boolean(entry[1]); }));
+
+    function regionStatus(select, message, isError) {
+        const field = select.closest('.field');
+        const status = field ? field.querySelector('[data-region-status]') : null;
+        if (!status) return;
+        status.textContent = message;
+        status.classList.toggle('is-error', Boolean(isError));
+    }
+
+    function normalizeRegionName(name) {
+        return String(name || '').trim().toLocaleUpperCase('id-ID')
+            .replace(/^(KABUPATEN ADMINISTRASI|KOTA ADMINISTRASI|KABUPATEN|KOTA)\s+/, '')
+            .replace(/[^A-Z0-9]+/g, ' ')
+            .trim();
+    }
+
+    function savedRegionValues() {
+        const values = new Map();
+        regionSelects.forEach(function (select, level) {
+            const saved = select.querySelector('[data-region-saved]');
+            values.set(level, saved ? saved.value : '');
+        });
+        return values;
+    }
+
+    function resetRegionSelect(select, enabled) {
+        if (!select) return;
+        select.replaceChildren(new Option(select.dataset.placeholder || 'Pilih wilayah', ''));
+        select.disabled = !enabled;
+    }
+
+    function fillRegionSelect(select, regions, savedValue) {
+        resetRegionSelect(select, true);
+        let matched = null;
+        regions.forEach(function (region) {
+            const option = new Option(region.name, region.name);
+            option.dataset.regionId = region.id;
+            select.add(option);
+            if (savedValue && normalizeRegionName(region.name) === normalizeRegionName(savedValue)) {
+                matched = region;
+            }
+        });
+        if (matched) {
+            select.value = matched.name;
+        } else if (savedValue) {
+            const oldValue = new Option(savedValue, savedValue);
+            oldValue.dataset.regionSaved = '1';
+            select.add(oldValue);
+            select.value = savedValue;
+        }
+        return matched;
+    }
+
+    function regionEndpoint(childLevel, parentId) {
+        const endpoint = { regency: 'regencies', district: 'districts', village: 'villages' }[childLevel];
+        return REGION_API_BASE + '/' + endpoint + '/' + encodeURIComponent(parentId) + '.json';
+    }
+
+    async function fetchRegions(url) {
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const regions = await response.json();
+        if (!Array.isArray(regions)) throw new Error('Format data wilayah tidak sesuai.');
+        return regions;
+    }
+
+    async function loadChildRegions(parentLevel, parentId, restoreValues) {
+        const parentIndex = regionLevels.indexOf(parentLevel);
+        const childLevel = regionLevels[parentIndex + 1];
+        const childSelect = regionSelects.get(childLevel);
+        if (!childSelect) return null;
+
+        const saved = restoreValues ? restoreValues.get(childLevel) || '' : '';
+        resetRegionSelect(childSelect, false);
+        regionStatus(childSelect, 'Memuat daftar wilayah…');
+        try {
+            const regions = await fetchRegions(regionEndpoint(childLevel, parentId));
+            const match = fillRegionSelect(childSelect, regions, saved);
+            const childLabel = childSelect.closest('.field').querySelector('label').childNodes[0].textContent.trim();
+            regionStatus(childSelect, match ? childLabel + ' terpilih.' : 'Pilih ' + childLabel.toLowerCase() + '.');
+            return match;
+        } catch (error) {
+            resetRegionSelect(childSelect, Boolean(saved));
+            if (saved) {
+                const savedOption = new Option(saved, saved);
+                savedOption.dataset.regionSaved = '1';
+                childSelect.add(savedOption);
+                childSelect.value = saved;
+            }
+            regionStatus(childSelect, 'Daftar wilayah gagal dimuat. Periksa koneksi, lalu pilih ulang wilayah di atas untuk mencoba kembali.', true);
+            return null;
+        }
+    }
+
+    async function restoreRegionHierarchy() {
+        if (!regionSelects.size) return;
+        const saved = savedRegionValues();
+        const province = regionSelects.get('province');
+        regionStatus(province, 'Memuat daftar provinsi…');
+        try {
+            const provinces = await fetchRegions(REGION_API_BASE + '/provinces.json');
+            const selectedProvince = fillRegionSelect(province, provinces, saved.get('province'));
+            const provinceLabel = province.closest('.field').querySelector('label').childNodes[0].textContent.trim();
+            regionStatus(province, selectedProvince ? provinceLabel + ' terpilih.' : 'Pilih provinsi.');
+
+            if (!selectedProvince) {
+                regionLevels.slice(1).forEach(function (level) {
+                    const select = regionSelects.get(level);
+                    const oldValue = saved.get(level);
+                    resetRegionSelect(select, Boolean(oldValue));
+                    if (oldValue) {
+                        const option = new Option(oldValue, oldValue);
+                        option.dataset.regionSaved = '1';
+                        select.add(option);
+                        select.value = oldValue;
+                    }
+                    regionStatus(select, 'Pilih provinsi terlebih dahulu.');
+                });
+                return;
+            }
+
+            let parentLevel = 'province';
+            let parent = selectedProvince;
+            for (const childLevel of regionLevels.slice(1)) {
+                const matched = await loadChildRegions(parentLevel, parent.id, saved);
+                if (!matched) {
+                    const currentIndex = regionLevels.indexOf(childLevel);
+                    regionLevels.slice(currentIndex + 1).forEach(function (level) {
+                        const select = regionSelects.get(level);
+                        const oldValue = saved.get(level);
+                        resetRegionSelect(select, Boolean(oldValue));
+                        if (oldValue) {
+                            const option = new Option(oldValue, oldValue);
+                            option.dataset.regionSaved = '1';
+                            select.add(option);
+                            select.value = oldValue;
+                        }
+                        regionStatus(select, 'Pilih wilayah di atas terlebih dahulu.');
+                    });
+                    break;
+                }
+                parentLevel = childLevel;
+                parent = matched;
+            }
+        } catch (error) {
+            resetRegionSelect(province, true);
+            const savedProvince = saved.get('province');
+            if (savedProvince) {
+                const savedOption = new Option(savedProvince, savedProvince);
+                savedOption.dataset.regionSaved = '1';
+                province.add(savedOption);
+                province.value = savedProvince;
+            }
+            regionStatus(province, 'Daftar provinsi gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.', true);
+            regionLevels.slice(1).forEach(function (level) {
+                const select = regionSelects.get(level);
+                const oldValue = saved.get(level);
+                resetRegionSelect(select, Boolean(oldValue));
+                if (oldValue) {
+                    const savedOption = new Option(oldValue, oldValue);
+                    savedOption.dataset.regionSaved = '1';
+                    select.add(savedOption);
+                    select.value = oldValue;
+                }
+                regionStatus(select, oldValue ? 'Data alamat tersimpan; daftar wilayah tidak dapat diperbarui saat ini.' : 'Pilih provinsi terlebih dahulu.');
+            });
+        }
+    }
+
+    function initializeRegionSelectors() {
+        if (!regionSelects.size) return;
+        restoreRegionHierarchy();
+        regionLevels.forEach(function (level, index) {
+            const select = regionSelects.get(level);
+            if (!select) return;
+            select.addEventListener('change', function () {
+                regionLevels.slice(index + 1).forEach(function (childLevel) {
+                    const child = regionSelects.get(childLevel);
+                    resetRegionSelect(child, false);
+                    regionStatus(child, 'Pilih wilayah di atas terlebih dahulu.');
+                });
+                const selected = select.selectedOptions[0];
+                const id = selected ? selected.dataset.regionId : '';
+                if (id && index < regionLevels.length - 1) {
+                    loadChildRegions(level, id, null);
+                }
+            });
+        });
+    }
+
+    initializeRegionSelectors();
 
     function formatBytes(bytes) {
         if (bytes < 1024) return bytes + ' B';
@@ -161,10 +357,26 @@
         });
     }
 
+    function disabledByCondition(element) {
+        let conditions = [];
+        try {
+            conditions = JSON.parse(element.dataset.disableIf || '[]');
+        } catch (error) {
+            return false;
+        }
+        return conditions.some(function (condition) {
+            return condition[1].indexOf(controllerValue(condition[0])) !== -1;
+        });
+    }
+
     function updateConditionalFields() {
         if (!form) return;
         for (const element of form.querySelectorAll('[data-show-if]')) {
             element.hidden = !conditionsMet(element);
+        }
+        for (const element of form.querySelectorAll('[data-disable-if]')) {
+            const control = element.querySelector('input, select, textarea');
+            if (control) control.disabled = disabledByCondition(element);
         }
     }
 
@@ -606,6 +818,21 @@
 
     if (form) {
         form.addEventListener('submit', function (event) {
+            const incompleteRegion = regionLevels
+                .map(function (level) { return regionSelects.get(level); })
+                .find(function (select) { return select && !select.value; });
+            if (incompleteRegion) {
+                event.preventDefault();
+                const addressStep = incompleteRegion.closest('[data-step]');
+                if (addressStep) showStep(parseInt(addressStep.dataset.step, 10), false);
+                if (incompleteRegion.disabled) {
+                    incompleteRegion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    regionStatus(incompleteRegion, 'Pilih wilayah sebelumnya terlebih dahulu, lalu tunggu daftar wilayah dimuat.', true);
+                } else {
+                    showInvalid(incompleteRegion);
+                }
+                return;
+            }
             const confirmField = document.querySelector('[data-confirm-value]');
             if (confirmField && confirmField.value !== '1') {
                 event.preventDefault();

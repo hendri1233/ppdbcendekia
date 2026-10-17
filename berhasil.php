@@ -17,6 +17,10 @@ if (preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]
     }
 }
 $dapodikAge = $registration ? ppdb_dapodik_age($registration['tgl_lahir'], $registration['th_ajaran']) : null;
+$adminWhatsAppMessage = $registration
+    ? 'Assalamu’alaikum, saya ingin bertanya mengenai pendaftaran ananda '.$registration['nm_peserta'].' dengan kode '.$registration['id_pendaftaran'].'.'
+    : 'Assalamu’alaikum, saya ingin bertanya mengenai pendaftaran PPDB Cendekia.';
+$adminWhatsAppUrl = ppdb_admin_whatsapp_url($adminWhatsAppMessage);
 header('Cache-Control: no-store, private');
 header('Referrer-Policy: no-referrer');
 ?>
@@ -33,7 +37,7 @@ header('Referrer-Policy: no-referrer');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="css/result.css">
+    <link rel="stylesheet" href="css/result.css?v=20261017-2">
 </head>
 <body>
 <main class="result-shell">
@@ -74,8 +78,15 @@ header('Referrer-Policy: no-referrer');
             </ol>
 
             <a class="download-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lihat status pendaftaran <span aria-hidden="true">&rarr;</span></a>
-            <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti PDF</a>
+            <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>"><span aria-hidden="true">▤</span> Unduh bukti pendaftaran (PDF)</a>
             <p class="result-note">Halaman status memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain.</p>
+            <div class="admin-contact">
+                <span>Butuh bantuan dari panitia?</span>
+                <a class="whatsapp-button" href="<?php echo h($adminWhatsAppUrl); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi admin PPDB melalui WhatsApp di 0851 8483 9694">
+                    <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm0 23.54h-.01c-1.93 0-3.83-.52-5.48-1.51l-.39-.23-4.09 1.07 1.09-3.96-.25-.4a10.62 10.62 0 0 1-1.65-5.63c0-5.92 4.85-10.74 10.79-10.74 2.88 0 5.59 1.12 7.62 3.14a10.61 10.61 0 0 1 3.16 7.59c0 5.92-4.85 10.74-10.79 10.74Zm5.92-8.04c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
+                    <span><?php echo h(ppdb_admin_whatsapp_display()); ?></span>
+                </a>
+            </div>
         </section>
     <?php } else { ?>
         <section class="result-panel result-error">

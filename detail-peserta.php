@@ -293,6 +293,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $messageLines[] = '';
                                 $messageLines[] = 'Informasi grup WhatsApp akan disampaikan oleh panitia.';
                             }
+                            $messageLines[] = '';
+                            $messageLines[] = ppdb_admin_contact_message();
 
                             try {
                                 $delivery = ppdb_wablas_send($recipientPhone, implode("\n", $messageLines));

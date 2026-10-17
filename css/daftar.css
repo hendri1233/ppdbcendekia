@@ -289,6 +289,12 @@ a {
     color: #929c96;
 }
 
+.field select:disabled {
+    color: #7c8881;
+    background-color: #f2f5f2;
+    cursor: wait;
+}
+
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
@@ -301,6 +307,10 @@ a {
     margin-top: -2px;
     color: var(--muted);
     font-size: 13px;
+}
+
+.field-hint.is-error {
+    color: #9b352d;
 }
 
 .operator-note {
@@ -461,6 +471,27 @@ a {
     text-underline-offset: 3px;
 }
 
+.site-footer .admin-wa-link {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    color: #176b47;
+    background: #eff7f1;
+    border: 1px solid #cfe2d4;
+    border-radius: 5px;
+    font-size: 11px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.site-footer .admin-wa-link svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
 @media (max-width: 640px) {
     .page-shell {
         width: min(100% - 32px, 1000px);
@@ -468,6 +499,13 @@ a {
 
     .site-header {
         min-height: 74px;
+    }
+
+    .site-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: center;
+        padding: 16px 0;
     }
 
     .brand-logo {

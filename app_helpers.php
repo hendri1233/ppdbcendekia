@@ -418,6 +418,28 @@ function ppdb_whatsapp_link(string $phone, string $message): string
     return 'https://wa.me/'.$number.'?text='.rawurlencode($message);
 }
 
+/** Kontak resmi admin PPDB untuk ditampilkan dan dicantumkan pada pesan pendaftar. */
+function ppdb_admin_whatsapp_number(): string
+{
+    return '6285184839694';
+}
+
+function ppdb_admin_whatsapp_display(): string
+{
+    return '0851 8483 9694';
+}
+
+function ppdb_admin_whatsapp_url(string $message = ''): string
+{
+    $url = 'https://wa.me/'.ppdb_admin_whatsapp_number();
+    return $message === '' ? $url : $url.'?text='.rawurlencode($message);
+}
+
+function ppdb_admin_contact_message(): string
+{
+    return 'Bantuan panitia PPDB: '.ppdb_admin_whatsapp_display().' ('.ppdb_admin_whatsapp_url().')';
+}
+
 /** Daftar nomor pendaftar beserta perannya, tanpa duplikat dan tanpa yang kosong. */
 function ppdb_registrant_recipients(array $registration): array
 {
@@ -461,6 +483,7 @@ function ppdb_status_reminder_message(array $registration): string
         'Assalamualaikum Bapak/Ibu pendaftar PPDB Cendekia Takengon.',
         $body,
         'Kode pendaftaran: '.$code,
+        ppdb_admin_contact_message(),
         'Terima kasih.',
     ]);
 }
@@ -500,9 +523,11 @@ function ppdb_prepare_payment_link(mysqli $conn, string $registrationId): array
     ], '', '&', PHP_QUERY_RFC3986);
 
     $lines = [
-        'Assalamualaikum Bapak/Ibu pendaftar PPDB Cendekia Takengon.',
-        'Registrasi awal ananda '.$registration['nm_peserta'].' sudah kami terima.',
-        'Unit: '.($registration['nama_unit'] ?? '-').' · '.$registration['th_ajaran'],
+        'Assalamu’alaikum warahmatullahi wabarakatuh, Bapak/Ibu.',
+        'Terima kasih telah mendaftarkan ananda '.$registration['nm_peserta'].' pada PPDB Yayasan Wakaf Cendekia Takengon.',
+        'Berikut kami sampaikan informasi pembayaran pendaftaran:',
+        'Unit pendidikan: '.($registration['nama_unit'] ?? '-'),
+        'Tahun ajaran: '.$registration['th_ajaran'],
         'Kode pendaftaran: '.$registrationId,
     ];
     if ((float) $registration['biaya_pendaftaran'] > 0) {
@@ -516,10 +541,15 @@ function ppdb_prepare_payment_link(mysqli $conn, string $registrationId): array
     if ($registration['tanggal_batas_bayar']) {
         $lines[] = 'Batas pembayaran: '.date('d-m-Y', strtotime($registration['tanggal_batas_bayar']));
     }
-    $lines[] = 'Gunakan kode '.$registrationId.' sebagai berita transfer.';
-    $lines[] = 'Buka tautan ini untuk mengunggah bukti pembayaran:';
+    $lines[] = 'Mohon cantumkan kode pendaftaran '.$registrationId.' pada berita transfer.';
+    $lines[] = 'Silakan klik tautan di bawah ini untuk melihat status pendaftaran dan mengunggah bukti pembayaran:';
     $lines[] = $statusUrl;
-    $lines[] = 'Terima kasih.';
+    $lines[] = '';
+    $lines[] = 'Apabila Bapak/Ibu memerlukan bantuan, silakan membalas pesan ini.';
+    $lines[] = 'Terima kasih atas perhatian dan kepercayaan Bapak/Ibu.';
+    $lines[] = 'Wassalamu’alaikum warahmatullahi wabarakatuh.';
+    $lines[] = '';
+    $lines[] = ppdb_admin_contact_message();
 
     $recipients = ppdb_registrant_recipients($registration);
     if ($recipients === []) {
@@ -578,26 +608,53 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
 
     if ($isRevision) {
         $lines = [
-            'Assalamualaikum Bapak/Ibu pendaftar PPDB Cendekia Takengon.',
-            'Panitia membuka kembali formulir ananda '.$registration['nm_peserta'].' ('.$registration['nama_unit'].') untuk diperbaiki.',
+            'Assalamu’alaikum warahmatullahi wabarakatuh.',
+            '',
+            'Yth. Ayah/Bunda/Wali dari Ananda '.$registration['nm_peserta'].',',
+            'Panitia PPDB Yayasan Wakaf Cendekia Takengon membuka kembali formulir pendaftaran Ananda untuk diperbaiki.',
             'Kode pendaftaran: '.$registrationId,
         ];
         if ($revisionNote !== '') {
-            $lines[] = 'Yang perlu diperbaiki: '.$revisionNote;
+            $lines[] = '';
+            $lines[] = 'Catatan perbaikan dari panitia: '.$revisionNote;
         }
-        array_push($lines, '', 'Isian sebelumnya sudah tersimpan. Silakan buka tautan berikut, perbaiki data, lalu kirim ulang:', $formUrl, '', 'Terima kasih.');
+        array_push(
+            $lines,
+            '',
+            'Isian yang telah dikirim sebelumnya tetap tersimpan. Mohon Ayah/Bunda memperbaiki bagian yang diminta, memeriksa kembali seluruh data, kemudian mengirimkan ulang formulir melalui tautan berikut:',
+            $formUrl,
+            '',
+            'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
+            'Wassalamu’alaikum warahmatullahi wabarakatuh.'
+        );
     } else {
-    $lines = [
-        'Assalamualaikum, terima kasih telah menyelesaikan pembayaran PPDB Cendekia.',
-        'Pembayaran untuk '.$registration['nm_peserta'].' ('.$registration['nama_unit'].') telah disetujui panitia.',
-        'Kode pendaftaran: '.$registrationId,
-        '',
-        'Silakan buka tautan berikut untuk mengisi formulir lengkap dan mengunggah berkas:',
-        $formUrl,
-        '',
-        'Catatan: formulir hanya dapat diisi satu kali. Pastikan data sesuai dokumen resmi.',
-    ];
+        $lines = [
+            'Assalamu’alaikum warahmatullahi wabarakatuh.',
+            '',
+            'Yth. Ayah/Bunda/Wali dari Ananda '.$registration['nm_peserta'].',',
+            'Pembayaran pendaftaran Ananda pada '.($registration['nama_unit'] ?? 'unit pendidikan pilihan Ayah/Bunda').' telah kami verifikasi dan disetujui.',
+            'Terima kasih atas kepercayaan Ayah/Bunda kepada Yayasan Wakaf Cendekia Takengon.',
+            '',
+            'Kode pendaftaran: '.$registrationId,
+            '',
+            'Mohon Ayah/Bunda melanjutkan proses pendaftaran dengan membuka tautan berikut untuk mengisi formulir lengkap dan mengunggah dokumen persyaratan:',
+            $formUrl,
+            '',
+            'Panduan pengisian:',
+            '1. Isi setiap data dengan benar dan sesuai dokumen resmi.',
+            '2. Unggah dokumen atau foto yang lengkap, jelas, dan mudah dibaca.',
+            '3. Periksa kembali seluruh isian sebelum menekan tombol kirim.',
+            '',
+            'Formulir hanya dapat dikirim satu kali. Mohon pastikan seluruh data sudah benar sebelum dikirim.',
+            'Apabila Ayah/Bunda memerlukan bantuan, silakan hubungi admin PPDB melalui nomor di bawah.',
+            '',
+            'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
+            'Wassalamu’alaikum warahmatullahi wabarakatuh.',
+        ];
     }
+
+    $lines[] = '';
+    $lines[] = ppdb_admin_contact_message();
 
     $recipients = ppdb_registrant_recipients($registration);
     if ($recipients === []) {

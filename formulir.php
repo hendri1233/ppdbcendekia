@@ -129,6 +129,16 @@ function formulir_load_documents(mysqli $conn, string $registrationId): array
 
 $code = strtoupper(trim($_GET['kode'] ?? $_POST['kode'] ?? ''));
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
+// Terima koma atau titik dari input desimal, lalu simpan dengan format titik
+// agar konsisten untuk draf, validasi, dan kolom DECIMAL di basis data.
+foreach (['tinggi_badan_cm', 'berat_badan_kg', 'lingkar_kepala_cm'] as $decimalField) {
+    if (isset($_POST[$decimalField]) && is_string($_POST[$decimalField])) {
+        $decimalValue = trim($_POST[$decimalField]);
+        if (preg_match('/^[0-9]+(?:[,.][0-9]{1,2})?$/D', $decimalValue)) {
+            $_POST[$decimalField] = str_replace(',', '.', $decimalValue);
+        }
+    }
+}
 $errors = [];
 $notice = '';
 $sheetSyncFailed = false;
@@ -836,7 +846,7 @@ header('Referrer-Policy: no-referrer');
                         <section class="form-section" data-step="<?php echo $stepIndex; ?>" aria-labelledby="bagian-<?php echo h($sectionKey); ?>">
                             <div class="section-heading"><span class="section-number"><?php echo sprintf('%02d', $stepIndex + 1); ?></span><div><h2 id="bagian-<?php echo h($sectionKey); ?>"><?php echo h($section['title']); ?></h2><p><?php echo h($section['description']); ?></p></div></div>
                             <div class="field-grid">
-                                <?php foreach ($section['fields'] as $field) { formulir_render_field($field, $formValues); } ?>
+                                <?php foreach ($section['fields'] as $field) { if (($field['name'] ?? '') !== 'sumber_informasi') { formulir_render_field($field, $formValues); } } ?>
                             </div>
                             <?php if ($sectionKey === 'alamat') { ?><p class="operator-note">Koordinat lintang dan bujur dicatat operator sekolah melalui peta digital.</p><?php } ?>
                             <?php formulir_step_actions($stepIndex, count($steps)); ?>
@@ -864,6 +874,9 @@ header('Referrer-Policy: no-referrer');
                                 </div>
                             <?php } ?>
                         </div>
+                        <div class="field-grid document-source-field">
+                            <?php formulir_render_field($inputFields['sumber_informasi'], $formValues); ?>
+                        </div>
                         <div class="form-footer">
                             <label class="consent-check" for="konfirmasi_data">
                                 <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
@@ -879,7 +892,14 @@ header('Referrer-Policy: no-referrer');
         <?php } ?>
     </main>
 
-    <footer class="site-footer"><span>Yayasan Wakaf Cendekia Takengon</span><a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
+    <footer class="site-footer">
+        <span>Yayasan Wakaf Cendekia Takengon</span>
+        <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a>
+        <a class="admin-wa-link" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait formulir PPDB.')); ?>" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm0 23.54h-.01c-1.93 0-3.83-.52-5.48-1.51l-.39-.23-4.09 1.07 1.09-3.96-.25-.4a10.62 10.62 0 0 1-1.65-5.63c0-5.92 4.85-10.74 10.79-10.74 2.88 0 5.59 1.12 7.62 3.14a10.61 10.61 0 0 1 3.16 7.59c0 5.92-4.85 10.74-10.79 10.74Zm5.92-8.04c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
+            WhatsApp Admin <?php echo h(ppdb_admin_whatsapp_display()); ?>
+        </a>
+    </footer>
 </div>
 <script src="js/daftar.js?v=<?php echo (int) filemtime(__DIR__.'/js/daftar.js'); ?>"></script>
 <script src="js/formulir.js?v=<?php echo (int) filemtime(__DIR__.'/js/formulir.js'); ?>"></script>

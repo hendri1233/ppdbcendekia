@@ -256,6 +256,251 @@ body {
     font-size: 14px;
 }
 
+.payment-instruction {
+    display: grid;
+    gap: 16px;
+    margin: 20px 0;
+    padding: 20px;
+    background: #fbfcfb;
+    border: 1px solid #dce7df;
+    border-radius: 10px;
+}
+
+.payment-instruction__heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.payment-instruction__step {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: var(--result-green);
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.payment-instruction__heading > div {
+    min-width: 0;
+}
+
+.payment-instruction__eyebrow {
+    margin: 0 0 3px;
+    color: var(--result-accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.payment-instruction__heading h2 {
+    margin: 0;
+    color: var(--result-ink);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.payment-instruction__heading p:last-child {
+    margin: 4px 0 0;
+    color: var(--result-muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.payment-amount {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px;
+    background: #eef5ef;
+    border: 1px solid #d8e7da;
+    border-radius: 7px;
+}
+
+.payment-amount span,
+.payment-reference > span {
+    color: #52665b;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.payment-amount strong {
+    color: #155b46;
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.payment-detail-list {
+    margin: 0;
+    padding: 2px 0;
+}
+
+.payment-bank-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    background: #fff;
+    border: 1px solid #e2e9e4;
+    border-radius: 8px;
+}
+
+.payment-bank-brand__mark {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    grid-template-rows: 22px auto;
+    place-content: center;
+    justify-items: center;
+    gap: 1px;
+    color: #fff;
+    background: linear-gradient(145deg, #1b7556, #124b3b);
+    border-radius: 11px;
+    box-shadow: 0 4px 10px rgba(18, 75, 59, 0.16);
+}
+
+.payment-bank-brand__mark svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.payment-bank-brand__mark b {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    line-height: 1;
+}
+
+.payment-bank-brand__logo {
+    width: min(42%, 170px);
+    height: 44px;
+    flex: 0 0 auto;
+    display: block;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.payment-bank-brand__name {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.payment-bank-brand__name small {
+    color: var(--result-muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.payment-bank-brand__name strong {
+    color: var(--result-ink);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.payment-detail-list > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--result-line);
+}
+
+.payment-detail-list > div:last-child {
+    border-bottom: 0;
+}
+
+.payment-detail-list dt {
+    color: var(--result-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.payment-detail-list dd {
+    margin: 0;
+    color: var(--result-ink);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.payment-detail-list .payment-account-number {
+    color: var(--result-green);
+    font-size: 15px;
+    letter-spacing: .02em;
+}
+
+.payment-reference {
+    display: grid;
+    gap: 5px;
+    padding: 13px 15px;
+    background: #fff9f2;
+    border: 1px solid #f0dfc9;
+    border-radius: 7px;
+}
+
+.payment-reference strong {
+    color: #713e2f;
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.payment-reference small {
+    color: #75685e;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.payment-steps {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding-left: 20px;
+    color: #46584e;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.payment-steps li::marker {
+    color: var(--result-green);
+    font-weight: 800;
+}
+
+.payment-free {
+    display: grid;
+    gap: 5px;
+    padding: 14px 16px;
+    color: #315345;
+    background: #edf4ef;
+    border-left: 3px solid var(--result-green);
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.payment-free strong {
+    color: var(--result-ink);
+    font-size: 14px;
+}
+
 .payment-guidance.is-warning,
 .payment-error {
     color: #7b2d20;
@@ -283,6 +528,7 @@ body {
     color: #34443d;
     font-size: 13px;
     font-weight: 700;
+    line-height: 1.5;
 }
 
 .payment-upload label span {
@@ -314,6 +560,87 @@ body {
     text-underline-offset: 3px;
 }
 
+.admin-contact {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--result-line);
+    color: var(--result-muted);
+    font-size: 12px;
+}
+
+.admin-contact__copy {
+    display: grid;
+    gap: 4px;
+}
+
+.admin-contact__copy strong {
+    color: var(--result-ink);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.admin-contact__copy span {
+    color: var(--result-muted);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.whatsapp-button {
+    min-height: 32px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    color: #fff;
+    background: #168454;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.whatsapp-button:hover {
+    background: #116d44;
+    transform: translateY(-1px);
+}
+
+.whatsapp-button:focus-visible,
+.download-button:focus-visible,
+.secondary-download:focus-visible {
+    outline: 3px solid #d49a50;
+    outline-offset: 3px;
+}
+
+.whatsapp-button svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    fill: currentColor;
+}
+
+.whatsapp-button span {
+    display: grid;
+    gap: 2px;
+}
+
+.whatsapp-button strong {
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.whatsapp-button small {
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 10px;
+}
+
+.whatsapp-button span {
+    font-size: 11px;
+    font-weight: 700;
+}
+
 .result-error {
     border-top: 4px solid var(--result-accent);
 }
@@ -336,6 +663,66 @@ body {
 
     .result-panel h1 {
         font-size: 24px;
+    }
+
+    .payment-instruction {
+        gap: 13px;
+        padding: 16px 14px;
+        border-radius: 8px;
+    }
+
+    .payment-detail-list > div {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3px;
+    }
+
+    .payment-detail-list dd {
+        text-align: left;
+    }
+
+}
+
+@media print {
+    body {
+        min-width: 0;
+        background: #fff;
+    }
+
+    .result-shell {
+        width: 100%;
+        min-height: 0;
+        padding: 0;
+    }
+
+    .result-brand {
+        margin-bottom: 14px;
+    }
+
+    .result-panel {
+        padding: 24px;
+        border: 1px solid #cfd8d1;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .download-button,
+    .secondary-download,
+    .result-note {
+        display: none;
+    }
+
+    .admin-contact {
+        break-inside: avoid;
+        print-color-adjust: exact;
+    }
+
+    .next-steps,
+    .registration-code {
+        print-color-adjust: exact;
+    }
+
+    .result-shell footer {
+        margin-top: 12px;
     }
 }
 /* ============================================================
