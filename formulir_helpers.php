@@ -24,7 +24,7 @@ const FORMULIR_PARENT_ROLES = ['ayah' => 'Ayah', 'ibu' => 'Ibu', 'wali' => 'Wali
 const FORMULIR_PARENT_EXTRA_COLUMNS = [
     'status_hidup', 'tempat_lahir', 'gelar', 'nama_panggilan', 'suku', 'golongan_darah', 'status_pekerjaan', 'nama_instansi', 'alamat_instansi',
     'bidang_spesifik', 'pengeluaran_bulanan', 'hubungan_keluarga', 'no_hp', 'tinggal_bersama_ananda', 'alamat', 'dusun',
-    'kampung', 'kecamatan', 'kabupaten', 'ibadah_sering_tertinggal', 'jumlah_buku', 'judul_buku_dibaca', 'hobi',
+    'provinsi', 'kabupaten', 'kecamatan', 'kampung', 'ibadah_sering_tertinggal', 'jumlah_buku', 'judul_buku_dibaca', 'hobi',
     'tokoh_dikagumi', 'riwayat_penyakit', 'nama_penyakit', 'perilaku_positif', 'perilaku_negatif', 'sosok_terdekat',
 ];
 
@@ -56,38 +56,32 @@ function formulir_with_condition(array $fields, array $conditions): array
     return $fields;
 }
 
-/** Profil pribadi orang tua/wali; seluruhnya opsional secara bawaan. */
-function formulir_profile_fields(string $role, callable $ortu): array
-{
-    return [
-        ['type' => 'heading', 'label' => 'Profil pribadi', 'hint' => 'Hanya dibaca panitia untuk mengenal keluarga ananda.'],
-        $ortu('ibadah_sering_tertinggal', ['label' => 'Ibadah wajib yang masih sering tertinggal', 'maxlength' => 255, 'wide' => true]),
-        $ortu('jumlah_buku', ['label' => 'Jumlah buku yang dimiliki di rumah', 'maxlength' => 50]),
-        $ortu('hobi', ['label' => 'Hobi yang masih sering dilakukan', 'maxlength' => 150]),
-        $ortu('judul_buku_dibaca', ['label' => 'Beberapa judul buku yang pernah dibaca', 'type' => 'textarea', 'maxlength' => 1000]),
-        $ortu('tokoh_dikagumi', ['label' => 'Tokoh agama, politik, atau publik figur yang dikagumi', 'maxlength' => 255, 'wide' => true]),
-        $ortu('riwayat_penyakit', ['label' => 'Riwayat penyakit yang pernah diderita', 'type' => 'select', 'options' => formulir_options(['Tidak ada', 'Ada'])]),
-        $ortu('nama_penyakit', ['label' => 'Sebutkan penyakitnya', 'maxlength' => 255, 'show_if' => [[$role.'_riwayat_penyakit', ['Ada']]]]),
-        $ortu('perilaku_positif', ['label' => 'Perilaku positif yang sering muncul', 'type' => 'textarea', 'maxlength' => 1000]),
-        $ortu('perilaku_negatif', ['label' => 'Perilaku negatif yang sering muncul', 'type' => 'textarea', 'maxlength' => 1000]),
-        $ortu('sosok_terdekat', ['label' => 'Sosok yang paling dekat secara emosional', 'maxlength' => 150, 'placeholder' => 'Sahabat, orang tua, atau pasangan', 'wide' => true]),
-    ];
-}
-
 /** Isian pekerjaan dan ekonomi orang tua/wali. */
-function formulir_work_fields(callable $ortu, callable $detail): array
+function formulir_work_fields(callable $ortu, callable $detail, string $role): array
 {
-    return [
+    $jobs = [
+        'Karyawan Swasta', 'Pedagang Kecil', 'Pedagang Besar', 'Wiraswasta', 'Wirausaha',
+        'Buruh', 'Pensiunan', 'Tenaga Kerja Indonesia', 'Sudah Meninggal', 'Karyawan BUMN',
+        'TNI', 'PNS', 'POLRI', 'Guru PPPK', 'BUMN', 'Tidak dapat diterapkan', 'IRT', 'PETANI',
+    ];
+    $jobsWithInstitution = [
+        'Karyawan Swasta', 'Buruh', 'Tenaga Kerja Indonesia', 'Karyawan BUMN',
+        'TNI', 'PNS', 'POLRI', 'Guru PPPK', 'BUMN',
+    ];
+
+    return array_merge([
         ['type' => 'heading', 'label' => 'Pendidikan dan pekerjaan'],
         $detail('pendidikan', ['label' => 'Pendidikan terakhir', 'type' => 'select', 'options' => formulir_options(formulir_education_options())]),
-        $ortu('status_pekerjaan', ['label' => 'Status pekerjaan', 'maxlength' => 60, 'placeholder' => 'Contoh: PNS, wiraswasta, IRT']),
-        $detail('pekerjaan', ['label' => 'Pekerjaan', 'maxlength' => 100]),
+        $ortu('status_pekerjaan', ['label' => 'Status kepegawaian', 'maxlength' => 60, 'placeholder' => 'Contoh: tetap, kontrak, atau honorer']),
+        $detail('pekerjaan', ['label' => 'Pekerjaan', 'type' => 'select', 'options' => formulir_options($jobs)]),
+    ], formulir_with_condition([
         $ortu('nama_instansi', ['label' => 'Nama instansi tempat bekerja', 'maxlength' => 150]),
         $ortu('alamat_instansi', ['label' => 'Alamat instansi tempat bekerja', 'maxlength' => 255, 'wide' => true]),
         $ortu('bidang_spesifik', ['label' => 'Bidang spesifik yang ditangani', 'maxlength' => 150, 'wide' => true]),
+    ], [[$role.'_pekerjaan', $jobsWithInstitution]]), [
         $detail('penghasilan', ['label' => 'Penghasilan bulanan', 'type' => 'select', 'options' => formulir_options(formulir_income_options())]),
         $ortu('pengeluaran_bulanan', ['label' => 'Pengeluaran rata-rata per bulan', 'type' => 'select', 'options' => formulir_options(formulir_income_options())]),
-    ];
+    ]);
 }
 
 function formulir_parent_fields(string $role): array
@@ -100,68 +94,63 @@ function formulir_parent_fields(string $role): array
     $nik = $detail('nik', ['label' => 'NIK '.$label.' (sesuai KTP)', 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka', 'hint' => 'Masukkan 16 digit NIK yang tercantum pada KTP.']);
 
     if ($role !== 'wali') {
-        // Status perkawinan adalah satu data bersama untuk ayah dan ibu,
-        // sehingga ditampilkan sekali pada bagian data ayah.
         $alive = [[$role.'_status_hidup', ['Masih hidup']]];
-        $maritalStatus = $role === 'ayah'
-            ? [$detail('status_pernikahan_orang_tua', ['label' => 'Status pernikahan orang tua', 'type' => 'select', 'locked' => true, 'disable_if' => [
-                ['ayah_status_hidup', ['Meninggal dunia']],
-                ['ibu_status_hidup', ['Meninggal dunia']],
-            ], 'options' => formulir_options(['Kawin/menikah', 'Cerai hidup', 'Cerai mati'])])]
-            : [];
         return array_merge(
             [
                 $detail('nama', ['label' => 'Nama lengkap '.$label, 'maxlength' => 100, 'required' => true, 'hint' => $nameHint]),
-                $ortu('status_hidup', ['label' => 'Keadaan '.$label.' kandung', 'type' => 'select', 'locked' => true, 'options' => formulir_options(['Masih hidup', 'Meninggal dunia'])]),
-                ...$maritalStatus,
+                $ortu('status_hidup', ['label' => 'Keadaan '.$label.' kandung', 'type' => 'select', 'locked' => true, 'options' => ['Masih hidup' => 'Masih hidup', 'Meninggal dunia' => 'Meninggal/lainnya']]),
+            ],
+            formulir_with_condition([
+                $ortu('gelar', ['label' => 'Gelar akademik '.$label, 'maxlength' => 80, 'placeholder' => 'Contoh: S.Pd., M.Pd.']),
+            ], $alive),
+            [
                 $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50, 'required' => true]),
                 $detail('tahun_lahir', ['label' => 'Tahun lahir (sesuai KTP)', 'type' => 'number', 'min' => 1900, 'max' => (int) date('Y'), 'numeric' => true]),
                 $nik,
             ],
             formulir_with_condition([
-                $ortu('gelar', ['label' => 'Gelar akademik '.$label, 'maxlength' => 80, 'placeholder' => 'Contoh: S.Pd., M.Pd.']),
                 $ortu('nama_panggilan', ['label' => 'Nama panggilan / sebutan di daerah', 'maxlength' => 50, 'placeholder' => $role === 'ayah' ? 'Contoh: Aman Hafidz' : 'Contoh: Inen Hafidz']),
                 $ortu('suku', ['label' => 'Suku', 'maxlength' => 50]),
                 $ortu('golongan_darah', ['label' => 'Golongan darah', 'type' => 'select', 'options' => $bloodTypes]),
             ], $alive),
-            formulir_with_condition(formulir_work_fields($ortu, $detail), $alive),
-            formulir_with_condition(formulir_profile_fields($role, $ortu), $alive)
+            formulir_with_condition(formulir_work_fields($ortu, $detail, $role), $alive),
         );
     }
 
     // Wali: identitas bila mempunyai wali; data lengkap bila ananda tinggal bersama wali.
-    $hasGuardian = [['mempunyai_wali', ['Ya']]];
-    $livesWithGuardian = [['mempunyai_wali', ['Ya']], ['wali_tinggal_bersama_ananda', ['Ya']]];
+    $livesWithGuardian = [['jenis_tinggal', ['Bersama wali']]];
     return array_merge(
-        [
-            ['name' => 'mempunyai_wali', 'label' => 'Ananda mempunyai wali', 'type' => 'select', 'locked' => true, 'store' => 'detail', 'options' => formulir_options(['Tidak', 'Ya']), 'hint' => 'Wali adalah anggota keluarga terdekat yang ikut mengasuh, misalnya kakek, nenek, paman, atau bibi.'],
-        ],
         formulir_with_condition([
-            $ortu('tinggal_bersama_ananda', ['label' => 'Ananda sekarang tinggal bersama wali', 'type' => 'select', 'locked' => true, 'options' => formulir_options(['Ya', 'Tidak']), 'hint' => 'Jika "Ya", lengkapi seluruh data wali. Jika "Tidak", cukup identitas dan kontak.']),
-            $ortu('hubungan_keluarga', ['label' => 'Ikatan keluarga dengan wali', 'type' => 'select', 'options' => formulir_options(['Kakek', 'Nenek', 'Paman', 'Bibik', 'Cicik', 'Saudara kandung', 'Lainnya'])]),
-            $detail('nama', ['label' => 'Nama lengkap wali', 'maxlength' => 100, 'hint' => $nameHint]),
+            $detail('nama', ['label' => 'Nama lengkap wali', 'maxlength' => 100, 'required' => true, 'hint' => $nameHint]),
+        ], []),
+        formulir_with_condition([
             $ortu('gelar', ['label' => 'Gelar akademik wali', 'maxlength' => 80, 'placeholder' => 'Contoh: S.Pd., M.Pd.']),
-            $nik,
-            $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50]),
+        ], $livesWithGuardian),
+        formulir_with_condition([
+            $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50, 'required' => true]),
             $detail('tahun_lahir', ['label' => 'Tahun lahir (sesuai KTP)', 'type' => 'number', 'min' => 1900, 'max' => (int) date('Y'), 'numeric' => true]),
+            $nik,
+        ], []),
+        formulir_with_condition([
+            $ortu('hubungan_keluarga', ['label' => 'Ikatan keluarga dengan wali', 'type' => 'select', 'options' => formulir_options(['Kakek', 'Nenek', 'Paman', 'Bibik', 'Cicik', 'Saudara kandung', 'Lainnya'])]),
             $ortu('suku', ['label' => 'Suku', 'maxlength' => 50]),
             $ortu('no_hp', ['label' => 'Nomor WhatsApp wali', 'type' => 'tel', 'maxlength' => 20, 'inputmode' => 'tel', 'pattern' => '(\+62|62|0)8[0-9]{8,11}', 'placeholder' => '081234567890']),
             $detail('pendidikan', ['label' => 'Pendidikan terakhir', 'type' => 'select', 'options' => formulir_options(formulir_education_options())]),
             $detail('penghasilan', ['label' => 'Penghasilan bulanan', 'type' => 'select', 'options' => formulir_options(formulir_income_options())]),
-        ], $hasGuardian),
+        ], $livesWithGuardian),
         formulir_with_condition(array_merge(
             [
                 ['type' => 'heading', 'label' => 'Alamat wali'],
+                $ortu('provinsi', ['label' => 'Provinsi', 'type' => 'region', 'region_level' => 'province', 'region_group' => 'wali', 'placeholder' => 'Pilih provinsi', 'maxlength' => 100]),
+                $ortu('kabupaten', ['label' => 'Kabupaten/kota', 'type' => 'region', 'region_level' => 'regency', 'region_group' => 'wali', 'placeholder' => 'Pilih kabupaten/kota', 'maxlength' => 100]),
+                $ortu('kecamatan', ['label' => 'Kecamatan', 'type' => 'region', 'region_level' => 'district', 'region_group' => 'wali', 'placeholder' => 'Pilih kecamatan', 'maxlength' => 100]),
+                $ortu('kampung', ['label' => 'Desa/kelurahan', 'type' => 'region', 'region_level' => 'village', 'region_group' => 'wali', 'placeholder' => 'Pilih desa/kelurahan', 'maxlength' => 100]),
                 $ortu('alamat', ['label' => 'Alamat jalan', 'maxlength' => 200, 'wide' => true]),
                 $ortu('dusun', ['label' => 'Dusun', 'maxlength' => 100]),
-                $ortu('kampung', ['label' => 'Kampung/desa', 'maxlength' => 100]),
-                $ortu('kecamatan', ['label' => 'Kecamatan', 'maxlength' => 100]),
-                $ortu('kabupaten', ['label' => 'Kabupaten/kota', 'maxlength' => 100]),
                 $ortu('nama_panggilan', ['label' => 'Nama panggilan / sebutan di daerah', 'maxlength' => 50, 'placeholder' => 'Contoh: Inen/Aman Hafidz']),
                 $ortu('golongan_darah', ['label' => 'Golongan darah', 'type' => 'select', 'options' => $bloodTypes]),
             ],
-            array_values(array_filter(formulir_work_fields($ortu, $detail), static fn ($field) => !in_array($field['name'] ?? '', ['wali_pendidikan', 'wali_penghasilan'], true))),
-            formulir_profile_fields($role, $ortu)
+            array_values(array_filter(formulir_work_fields($ortu, $detail, $role), static fn ($field) => !in_array($field['name'] ?? '', ['wali_pendidikan', 'wali_penghasilan'], true))),
         ), $livesWithGuardian)
     );
 }
@@ -217,8 +206,20 @@ function formulir_data_sections(): array
                     'Kinestetik' => 'Kinestetik — belajar lewat gerak tubuh dan keterampilan tangan',
                 ]],
                 ['name' => 'minat_bakat', 'label' => 'Minat dan bakat yang perlu didukung', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
-                ['name' => 'hobi', 'label' => 'Hobi ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options(['Olah Raga', 'Kesenian', 'Membaca', 'Menulis', 'Traveling', 'Lainnya'])],
-                ['name' => 'cita_cita', 'label' => 'Cita-cita ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options(['PNS', 'TNI/Polri', 'Guru/Dosen', 'Dokter', 'Politikus', 'Wiraswasta', 'Seni/Lukis/Artis/Sejenis', 'Lainnya'])],
+                ['name' => 'hobi', 'label' => 'Hobi ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
+                    'Olah Raga', 'Kesenian', 'Membaca', 'Menulis', 'Traveling', 'Lainnya', 'Fotografi', 'Fitness', 'Belanja',
+                    'Menggambar', 'Bermain Musik', 'Mendaki', 'Jogging', 'Bermain Gitar', 'Bermain Bola', 'Bermain Bulu Tangkis',
+                    'Bermain Bola Tenis', 'Bermain Biola', 'Bermain Piano', 'Berlari', 'Berkemah', 'Memancing', 'Berselancar',
+                    'Bermain Boneka', 'Makan', 'Menjahit', 'Main Puzzle', 'Mewarnai',
+                ])],
+                ['name' => 'cita_cita', 'label' => 'Cita-cita ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
+                    'PNS / Pegawai Negeri Sipil', 'TNI/Polri', 'Guru', 'Dokter', 'Politikus', 'Wiraswasta', 'Seni/Lukis/Artis/Sejenis',
+                    'Lainnya', 'Penghafal Al-Qur\'an', 'Atlet E-Sport Profesional', 'Atlet', 'Content Creator', 'Vloger', 'Koki',
+                    'Pendeta', 'Perawat', 'Pilot', 'Pembalap', 'Atlit Olahraga', 'Pengacara', 'Da\'i / Ustadz',
+                    'Entertainer / Pekerja Seni', 'Wartawan', 'Pengusaha / Bisnismen', 'Penulis', 'Penyiar Radio',
+                    'Pembawa Acara / Master Ceremony', 'Polisi', 'Pemadam Kebakaran', 'Astronot', 'Masinis Kereta Api',
+                    'Perawat / Suster', 'Bidan', 'Presiden', 'Translator', 'Designer', 'Pelaut', 'Arsitek', 'Dosen',
+                ])],
             ],
         ],
         'alamat' => [
@@ -328,12 +329,6 @@ function formulir_condition_met(array $field, array $input): bool
             return false;
         }
     }
-    foreach ($field['disable_if'] ?? [] as [$controller, $values]) {
-        $value = $input[$controller] ?? '';
-        if (is_string($value) && in_array(trim($value), $values, true)) {
-            return false;
-        }
-    }
     return true;
 }
 
@@ -343,9 +338,6 @@ function formulir_render_field(array $field, array $values): void
     if (!empty($field['show_if'])) {
         $showIf = ' data-show-if="'.h(json_encode($field['show_if'], JSON_UNESCAPED_UNICODE)).'"';
     }
-    $disableIf = !empty($field['disable_if'])
-        ? ' data-disable-if="'.h(json_encode($field['disable_if'], JSON_UNESCAPED_UNICODE)).'"'
-        : '';
     $type = $field['type'] ?? 'text';
     if ($type === 'heading') {
         echo '<div class="field-subheading field-wide"'.$showIf.'><h3>'.h($field['label']).'</h3>';
@@ -361,8 +353,7 @@ function formulir_render_field(array $field, array $values): void
     $value = is_scalar($value) ? (string) $value : '';
     $wideClass = !empty($field['wide']) || $type === 'textarea' ? ' field-wide' : '';
     $required = !empty($field['required']) ? ' required' : '';
-    $initiallyDisabled = !empty($field['disable_if']) && !formulir_condition_met($field, $values);
-    echo '<div class="field'.$wideClass.'" data-field="'.h($name).'"'.$showIf.$disableIf.'>';
+    echo '<div class="field'.$wideClass.'" data-field="'.h($name).'"'.$showIf.'>';
     echo '<label for="'.h($name).'">'.h($field['label']);
     echo $required !== '' ? ' <span class="required-mark" aria-hidden="true">*</span>' : ' <span class="optional-mark">Opsional</span>';
     echo '</label>';
@@ -373,8 +364,9 @@ function formulir_render_field(array $field, array $values): void
 
     if ($type === 'region') {
         $regionLevel = (string) ($field['region_level'] ?? '');
+        $regionGroup = isset($field['region_group']) ? ' data-region-group="'.h((string) $field['region_group']).'"' : '';
         $disabled = $regionLevel === 'province' ? '' : ' disabled';
-        echo '<select id="'.h($name).'" name="'.h($name).'" data-region-select="'.h($regionLevel).'" data-placeholder="'.h($field['placeholder'] ?? 'Pilih wilayah').'"'.$required.$disabled.'>';
+        echo '<select id="'.h($name).'" name="'.h($name).'" data-region-select="'.h($regionLevel).'"'.$regionGroup.' data-placeholder="'.h($field['placeholder'] ?? 'Pilih wilayah').'"'.$required.$disabled.'>';
         echo '<option value="">'.h($field['placeholder'] ?? 'Pilih wilayah').'</option>';
         if ($value !== '') {
             echo '<option value="'.h($value).'" data-region-saved="1" selected>'.h($value).'</option>';
@@ -382,7 +374,7 @@ function formulir_render_field(array $field, array $values): void
         echo '</select>';
         echo '<small class="field-hint" data-region-status role="status" aria-live="polite">'.($regionLevel === 'province' ? 'Memuat daftar provinsi…' : 'Pilih wilayah di atas terlebih dahulu.').'</small>';
     } elseif ($type === 'select') {
-        echo '<select id="'.h($name).'" name="'.h($name).'"'.$required.($initiallyDisabled ? ' disabled' : '').'>';
+        echo '<select id="'.h($name).'" name="'.h($name).'"'.$required.'>';
         echo '<option value="">'.h($field['placeholder'] ?? 'Pilih salah satu').'</option>';
         foreach ($field['options'] as $optionValue => $optionLabel) {
             echo '<option value="'.h($optionValue).'"'.($value === (string) $optionValue ? ' selected' : '').'>'.h($optionLabel).'</option>';
@@ -490,7 +482,12 @@ function formulir_flatten_parent_profiles(array $profiles): array
     $flat = [];
     foreach ($profiles as $role => $row) {
         foreach (FORMULIR_PARENT_EXTRA_COLUMNS as $column) {
-            $flat[$role.'_'.$column] = $row[$column] ?? '';
+            $value = $row[$column] ?? '';
+            // Satukan nilai lama "Lainnya" ke pilihan meninggal/lainnya.
+            if ($column === 'status_hidup' && $value === 'Lainnya') {
+                $value = 'Meninggal dunia';
+            }
+            $flat[$role.'_'.$column] = $value;
         }
     }
     return $flat;

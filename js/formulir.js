@@ -23,9 +23,14 @@
     const declineForm = document.querySelector('[data-decline-form]');
     const REGION_API_BASE = 'https://www.emsifa.com/api-wilayah-indonesia/api';
     const regionLevels = ['province', 'regency', 'district', 'village'];
-    const regionSelects = new Map(regionLevels.map(function (level) {
-        return [level, form ? form.querySelector('[data-region-select="' + level + '"]') : null];
-    }).filter(function (entry) { return Boolean(entry[1]); }));
+    const regionSets = new Map();
+    if (form) {
+        form.querySelectorAll('[data-region-select]').forEach(function (select) {
+            const group = select.dataset.regionGroup || 'default';
+            if (!regionSets.has(group)) regionSets.set(group, new Map());
+            regionSets.get(group).set(select.dataset.regionSelect, select);
+        });
+    }
 
     function regionStatus(select, message, isError) {
         const field = select.closest('.field');
@@ -42,7 +47,7 @@
             .trim();
     }
 
-    function savedRegionValues() {
+    function savedRegionValues(regionSelects) {
         const values = new Map();
         regionSelects.forEach(function (select, level) {
             const saved = select.querySelector('[data-region-saved]');
@@ -92,7 +97,7 @@
         return regions;
     }
 
-    async function loadChildRegions(parentLevel, parentId, restoreValues) {
+    async function loadChildRegions(regionSelects, parentLevel, parentId, restoreValues) {
         const parentIndex = regionLevels.indexOf(parentLevel);
         const childLevel = regionLevels[parentIndex + 1];
         const childSelect = regionSelects.get(childLevel);
@@ -120,9 +125,9 @@
         }
     }
 
-    async function restoreRegionHierarchy() {
+    async function restoreRegionHierarchy(regionSelects) {
         if (!regionSelects.size) return;
-        const saved = savedRegionValues();
+        const saved = savedRegionValues(regionSelects);
         const province = regionSelects.get('province');
         regionStatus(province, 'Memuat daftar provinsi…');
         try {
@@ -150,7 +155,7 @@
             let parentLevel = 'province';
             let parent = selectedProvince;
             for (const childLevel of regionLevels.slice(1)) {
-                const matched = await loadChildRegions(parentLevel, parent.id, saved);
+                const matched = await loadChildRegions(regionSelects, parentLevel, parent.id, saved);
                 if (!matched) {
                     const currentIndex = regionLevels.indexOf(childLevel);
                     regionLevels.slice(currentIndex + 1).forEach(function (level) {
@@ -196,22 +201,23 @@
     }
 
     function initializeRegionSelectors() {
-        if (!regionSelects.size) return;
-        restoreRegionHierarchy();
-        regionLevels.forEach(function (level, index) {
-            const select = regionSelects.get(level);
-            if (!select) return;
-            select.addEventListener('change', function () {
-                regionLevels.slice(index + 1).forEach(function (childLevel) {
-                    const child = regionSelects.get(childLevel);
-                    resetRegionSelect(child, false);
-                    regionStatus(child, 'Pilih wilayah di atas terlebih dahulu.');
+        regionSets.forEach(function (regionSelects) {
+            restoreRegionHierarchy(regionSelects);
+            regionLevels.forEach(function (level, index) {
+                const select = regionSelects.get(level);
+                if (!select) return;
+                select.addEventListener('change', function () {
+                    regionLevels.slice(index + 1).forEach(function (childLevel) {
+                        const child = regionSelects.get(childLevel);
+                        resetRegionSelect(child, false);
+                        regionStatus(child, 'Pilih wilayah di atas terlebih dahulu.');
+                    });
+                    const selected = select.selectedOptions[0];
+                    const id = selected ? selected.dataset.regionId : '';
+                    if (id && index < regionLevels.length - 1) {
+                        loadChildRegions(regionSelects, level, id, null);
+                    }
                 });
-                const selected = select.selectedOptions[0];
-                const id = selected ? selected.dataset.regionId : '';
-                if (id && index < regionLevels.length - 1) {
-                    loadChildRegions(level, id, null);
-                }
             });
         });
     }
@@ -357,26 +363,10 @@
         });
     }
 
-    function disabledByCondition(element) {
-        let conditions = [];
-        try {
-            conditions = JSON.parse(element.dataset.disableIf || '[]');
-        } catch (error) {
-            return false;
-        }
-        return conditions.some(function (condition) {
-            return condition[1].indexOf(controllerValue(condition[0])) !== -1;
-        });
-    }
-
     function updateConditionalFields() {
         if (!form) return;
         for (const element of form.querySelectorAll('[data-show-if]')) {
             element.hidden = !conditionsMet(element);
-        }
-        for (const element of form.querySelectorAll('[data-disable-if]')) {
-            const control = element.querySelector('input, select, textarea');
-            if (control) control.disabled = disabledByCondition(element);
         }
     }
 
@@ -818,9 +808,9 @@
 
     if (form) {
         form.addEventListener('submit', function (event) {
-            const incompleteRegion = regionLevels
-                .map(function (level) { return regionSelects.get(level); })
-                .find(function (select) { return select && !select.value; });
+            const incompleteRegion = Array.from(regionSets.values())
+                .flatMap(function (regionSelects) { return regionLevels.map(function (level) { return regionSelects.get(level); }); })
+                .find(function (select) { return select && !select.value && !select.closest('[hidden]'); });
             if (incompleteRegion) {
                 event.preventDefault();
                 const addressStep = incompleteRegion.closest('[data-step]');

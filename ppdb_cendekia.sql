@@ -386,6 +386,7 @@ CREATE TABLE `tb_orang_tua_peserta` (
   `tinggal_bersama_ananda` enum('','Ya','Tidak') NOT NULL DEFAULT '',
   `alamat` varchar(200) NOT NULL DEFAULT '',
   `dusun` varchar(100) NOT NULL DEFAULT '',
+  `provinsi` varchar(100) NOT NULL DEFAULT '',
   `kampung` varchar(100) NOT NULL DEFAULT '',
   `kecamatan` varchar(100) NOT NULL DEFAULT '',
   `kabupaten` varchar(100) NOT NULL DEFAULT '',

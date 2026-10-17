@@ -433,6 +433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
                 $parentRows[$field['peran']][$field['column']] = $fieldValue($field);
             }
         }
+        $parentRows['wali']['tinggal_bersama_ananda'] = $value('jenis_tinggal') === 'Bersama wali' ? 'Ya' : 'Tidak';
 
         $replacedFiles = [];
         try {
