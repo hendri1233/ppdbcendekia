@@ -47,6 +47,11 @@
 
     const carousel = panel.querySelector('[data-chain-carousel]');
     const carouselExpanded = () => Boolean(carousel) && (document.fullscreenElement === carousel || carousel.classList.contains('is-expanded'));
+    // Tinggi grafik saat kartu unit layar penuh; layar pendek (HP mendatar) memakai ruang tersisa.
+    const fullChartHeight = (min, max, overhead) => {
+        const room = window.innerHeight - (window.innerHeight < 520 ? 150 : overhead);
+        return Math.max(min, Math.min(max, room));
+    };
     const isExpanded = () => document.fullscreenElement === panel || panel.classList.contains('is-expanded') || carouselExpanded();
 
     const updateStats = (visible) => {
@@ -108,7 +113,7 @@
         const visibleDays = days.slice(-range);
         const points = route.points.slice(-range);
         const width = Math.max(container.clientWidth, 240);
-        const height = carouselExpanded() ? Math.max(220, Math.min(420, window.innerHeight - 330)) : (isExpanded() ? 240 : 180);
+        const height = carouselExpanded() ? fullChartHeight(window.innerHeight < 520 ? 140 : 220, 420, 330) : (isExpanded() ? 240 : 180);
         const plotWidth = width - PAD.left - PAD.right;
         const plotHeight = height - PAD.top - PAD.bottom;
         // Puncak sumbu = kuota; bila terisi melebihi kuota, sumbu ikut naik agar titik tidak terpotong.
@@ -202,7 +207,7 @@
 
         const pad = { top: 26, right: 14, bottom: 44, left: 40 };
         const width = Math.max(container.clientWidth, 280);
-        const height = carouselExpanded() ? Math.max(260, window.innerHeight - 300) : (isExpanded() ? 320 : 260);
+        const height = carouselExpanded() ? fullChartHeight(window.innerHeight < 520 ? 160 : 260, 2000, 300) : (isExpanded() ? 320 : 260);
         const plotWidth = width - pad.left - pad.right;
         const plotHeight = height - pad.top - pad.bottom;
         const top = Math.max(1, ...bars.map((bar) => Math.max(bar.quota, bar.filled)));
@@ -335,6 +340,8 @@
         const prev = carousel.querySelector('[data-carousel-prev]');
         const next = carousel.querySelector('[data-carousel-next]');
         let active = 0;
+        // Satu kartu saja (admin unit): tombol geser dan penanda unit tidak diperlukan.
+        carousel.classList.toggle('is-single', slides.length < 2);
 
         // Tinggi area geser mengikuti kartu yang sedang tampil (kecuali saat layar penuh).
         const fitHeight = () => {

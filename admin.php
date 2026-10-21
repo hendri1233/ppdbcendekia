@@ -501,12 +501,14 @@ require 'admin_header.php';
     <section class="panel progress-panel" data-progress-chart>
         <div class="panel-header">
             <div><h2>Capaian harian</h2><span class="panel-subtitle">Kursi terisi per hari di setiap jalur yang dibuka; puncak grafik sama dengan kuota</span></div>
-            <div class="range-toggle" role="group" aria-label="Rentang hari">
-                <button type="button" data-range="7">7 hari</button>
-                <button type="button" data-range="14" aria-pressed="true">14 hari</button>
-                <button type="button" data-range="30">30 hari</button>
+            <div class="progress-tools">
+                <div class="range-toggle" role="group" aria-label="Rentang hari">
+                    <button type="button" data-range="7">7 hari</button>
+                    <button type="button" data-range="14" aria-pressed="true">14 hari</button>
+                    <button type="button" data-range="30">30 hari</button>
+                </div>
+                <button class="progress-fullscreen" type="button" data-progress-fullscreen aria-pressed="false" aria-label="Tampilan penuh" title="Tampilan penuh">⛶</button>
             </div>
-            <button class="progress-fullscreen" type="button" data-progress-fullscreen aria-pressed="false" aria-label="Tampilan penuh" title="Tampilan penuh">⛶</button>
         </div>
         <dl class="progress-stats">
             <div><dt>Akses tautan</dt><dd data-stat="visits">0</dd></div>

@@ -272,7 +272,9 @@ function cms_published_news(mysqli $conn, int $limit, int $offset = 0, string $u
 
 function cms_news_excerpt(array $news, int $length = 160): string
 {
-    return trim((string) ($news['excerpt'] ?? '')) !== '' ? (string) $news['excerpt'] : cms_plain_excerpt($news['body_html'] ?? '', $length);
+    // Ringkasan manual yang terlalu panjang dipotong rapi di akhir kata, sama seperti ringkasan otomatis.
+    $excerpt = trim((string) ($news['excerpt'] ?? ''));
+    return cms_plain_excerpt($excerpt !== '' ? $excerpt : ($news['body_html'] ?? ''), $length);
 }
 
 /** Tanggal & jam Indonesia ringkas untuk metadata berita. */

@@ -4335,3 +4335,58 @@ select:focus-visible {
         text-overflow: ellipsis;
     }
 }
+
+/* Pilihan rentang dan tombol layar penuh selalu bersama di kanan judul */
+.progress-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.progress-panel .progress-tools .range-toggle {
+    margin-left: 0;
+}
+
+.chain-carousel.is-single .chain-carousel__nav,
+.chain-carousel.is-single .chain-carousel__dots {
+    display: none;
+}
+
+.chain-carousel.is-single .chain-carousel__status {
+    text-align: left;
+}
+
+/* Layar pendek (HP mendatar): tampilan penuh kartu unit lebih rapat */
+@media (max-height: 520px) {
+    .chain-carousel:fullscreen,
+    .chain-carousel.is-expanded {
+        padding: 8px 14px;
+    }
+
+    .chain-carousel:fullscreen .chain-carousel__bar,
+    .chain-carousel.is-expanded .chain-carousel__bar {
+        margin-bottom: 4px;
+    }
+
+    .chain-carousel:fullscreen .chain-unit,
+    .chain-carousel.is-expanded .chain-unit {
+        padding: 8px 12px 6px;
+    }
+
+    .chain-carousel:fullscreen .quota-progress__meta,
+    .chain-carousel.is-expanded .quota-progress__meta {
+        display: none;
+    }
+
+    .chain-carousel:fullscreen .chain-routes,
+    .chain-carousel.is-expanded .chain-routes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 4px;
+    }
+
+    .chain-carousel:fullscreen .chain-carousel__dots,
+    .chain-carousel.is-expanded .chain-carousel__dots {
+        margin-top: 4px;
+    }
+}
