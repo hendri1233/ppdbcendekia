@@ -4303,3 +4303,35 @@ select:focus-visible {
     max-width: 100%;
     height: auto;
 }
+
+/* Sel kuota: angka dan keterangan kecil tetap satu blok di kolom isi */
+.quota-cell-text {
+    display: block;
+    min-width: 0;
+}
+
+@media (max-width: 620px) {
+    .data-table td > .quota-cell-text .cell-sub {
+        margin-top: 2px;
+    }
+
+    /* Bilah atas sempit: tampilkan judul halaman saja agar tidak terpotong */
+    .breadcrumb li:first-child:not(:last-child) {
+        display: none;
+    }
+
+    .breadcrumb li + li::before {
+        content: none;
+    }
+
+    .topbar-context {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .breadcrumb [aria-current="page"] {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
