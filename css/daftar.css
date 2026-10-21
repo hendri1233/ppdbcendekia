@@ -1996,3 +1996,71 @@ a {
     border-radius: var(--r-sm);
     background: var(--white);
 }
+
+.contact-notice {
+    margin: 0 0 20px;
+    padding: 13px 16px;
+    color: var(--warning-fg);
+    background: var(--warning-bg);
+    border-left: 3px solid currentColor;
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.contact-notice a {
+    color: inherit;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Isian yang belum sesuai: garis merah tegas agar mudah ditemukan */
+.field.is-invalid input,
+.field.is-invalid select,
+.field.is-invalid textarea {
+    border-color: #d0342c;
+    border-width: 2px;
+    background-color: #fff7f6;
+    box-shadow: 0 0 0 3px rgba(208, 52, 44, 0.14);
+}
+
+.field.is-invalid label {
+    color: #b42a22;
+}
+
+.document-card.is-invalid,
+.participant-question.is-invalid {
+    border-color: #d0342c;
+    border-width: 2px;
+    box-shadow: 0 0 0 3px rgba(208, 52, 44, 0.14);
+}
+
+.consent-check.is-invalid {
+    border-color: #d0342c;
+    background: #fff7f6;
+    box-shadow: 0 0 0 3px rgba(208, 52, 44, 0.14);
+}
+
+.consent-check.is-invalid {
+    flex-wrap: wrap;
+}
+
+.consent-check .field-error {
+    flex-basis: 100%;
+    margin-left: 29px;
+}
+
+.error-summary p {
+    margin: 0 0 8px;
+}
+
+.error-summary a {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.error-summary a:hover {
+    color: #d0342c;
+}

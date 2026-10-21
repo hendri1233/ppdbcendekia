@@ -140,6 +140,8 @@ foreach (['tinggi_badan_cm', 'berat_badan_kg', 'lingkar_kepala_cm'] as $decimalF
     }
 }
 $errors = [];
+// Isian yang ditolak server: [nama isian => pesan], untuk ditandai merah di formulir.
+$fieldErrors = [];
 $notice = '';
 $sheetSyncFailed = false;
 $registration = formulir_lookup($conn, $code);
@@ -356,7 +358,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
         $errors[] = 'Sesi formulir berakhir. Muat ulang halaman sebelum mencoba kembali.';
     }
     if (($_POST['konfirmasi_data'] ?? '') !== '1') {
-        $errors[] = 'Anda harus menyetujui konfirmasi data sebelum mengirim formulir.';
+        $errors[] = $fieldErrors['konfirmasi_data'] = 'Anda harus menyetujui konfirmasi data sebelum mengirim formulir.';
     }
     if (($_POST['konfirmasi_lanjut'] ?? '') !== '1') {
         $errors[] = 'Isian data registrasi awal belum dikonfirmasi.';
@@ -367,10 +369,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
     if (!$allMaterialsPublished) {
         $errors[] = 'Materi pendaftaran belum lengkap. Hubungi panitia PPDB sebelum melanjutkan.';
     }
-    $errors = array_merge($errors, formulir_validate_fields($_POST, $dataSections));
+    $errors = array_merge($errors, formulir_validate_fields($_POST, $dataSections, $validatedFields));
+    $fieldErrors += $validatedFields;
     // NIK: kekeliruan pasti ditolak; ketidakcocokan dengan data lain hanya ditandai.
     $identityChecks = formulir_identity_checks($_POST, $registration, $inputFields);
     $errors = array_merge($errors, $identityChecks['errors']);
+    $fieldErrors += $identityChecks['fields'];
 
     // Dokumen yang sudah tersimpan lewat draf tidak perlu diunggah ulang.
     // Nama berkas dikirim sebagai dokumen__foto, dokumen__kk, dan seterusnya.
@@ -382,12 +386,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
         $hasFile = is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
         if (!$hasFile) {
             if (!empty($meta['required']) && !isset($uploadedDocuments[$slot])) {
-                $errors[] = $meta['label'].' wajib diunggah.';
+                $errors[] = $fieldErrors['dokumen__'.$slot] = $meta['label'].' wajib diunggah.';
             }
             continue;
         }
         if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-            $errors[] = $meta['label'].' gagal diunggah. Silakan pilih ulang berkas.';
+            $errors[] = $fieldErrors['dokumen__'.$slot] = $meta['label'].' gagal diunggah. Silakan pilih ulang berkas.';
             continue;
         }
         if ($errors) {
@@ -396,7 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
         try {
             $uploads[$slot] = ppdb_store_private_upload($file, 'participant-documents/'.$registration['id_pendaftaran'], $documentMimes, 8 * 1024 * 1024);
         } catch (RuntimeException $exception) {
-            $errors[] = $meta['label'].': '.$exception->getMessage();
+            $errors[] = $fieldErrors['dokumen__'.$slot] = $meta['label'].': '.$exception->getMessage();
         }
     }
 
@@ -642,10 +646,15 @@ header('Referrer-Policy: no-referrer');
 
         <?php } else { ?>
             <?php if ($errors) { ?>
-                <div class="error-summary" role="alert" aria-labelledby="formulir-error">
+                <div class="error-summary" role="alert" aria-labelledby="formulir-error" data-server-errors>
                     <strong id="formulir-error">Formulir belum terkirim</strong>
-                    <ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul>
+                    <?php if ($fieldErrors) { ?><p>Isian yang perlu diperbaiki ditandai garis merah. Pilih salah satu pesan di bawah untuk langsung menuju isiannya.</p><?php } ?>
+                    <ul><?php foreach ($errors as $error) {
+                        $errorField = array_search($error, $fieldErrors, true); ?>
+                        <li><?php if ($errorField !== false) { ?><a href="#<?php echo h($errorField); ?>" data-error-field="<?php echo h($errorField); ?>"><?php echo h($error); ?></a><?php } else { echo h($error); } ?></li>
+                    <?php } ?></ul>
                 </div>
+                <script type="application/json" id="server-field-errors"><?php echo json_encode((object) $fieldErrors, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>
             <?php } ?>
 
             <dialog class="confirm-dialog" id="konfirmasi-awal" data-confirmation aria-labelledby="konfirmasi-judul">

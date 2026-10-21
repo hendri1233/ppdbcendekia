@@ -26,6 +26,7 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
             try { theme = localStorage.getItem('cendekia-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (e) {}
             root.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
             root.classList.add('js', 'is-loading');
+            try { if (localStorage.getItem('cendekia-sidebar') === 'collapsed') root.classList.add('sidebar-collapsed'); } catch (e) {}
         })();
     </script>
     <meta name="theme-color" content="#0d3227">
@@ -63,7 +64,7 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
             <?php foreach ($navigationGroups as $groupLabel => $items) { ?>
                 <p class="admin-nav__group"><?php echo h($groupLabel); ?></p>
                 <?php foreach ($items as $item) { ?>
-                    <a href="<?php echo h($item['href']); ?>"<?php echo $activeAdminPage === $item['key'] ? ' aria-current="page"' : ''; ?>>
+                    <a href="<?php echo h($item['href']); ?>" title="<?php echo strip_tags($item['label']); ?>"<?php echo $activeAdminPage === $item['key'] ? ' aria-current="page"' : ''; ?>>
                         <?php echo ppdb_admin_icon($item['icon']); ?>
                         <span><?php echo $item['label']; ?></span>
                     </a>
@@ -72,13 +73,13 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
         </nav>
 
         <div class="sidebar-bottom">
-            <a class="sidebar-link" href="index.php" target="_blank" rel="noopener">
+            <a class="sidebar-link" href="index.php" target="_blank" rel="noopener" title="Buka situs PPDB">
                 <?php echo ppdb_admin_icon('external'); ?>
                 <span>Buka situs PPDB<span class="visually-hidden"> (tab baru)</span></span>
             </a>
             <form action="keluar.php" method="post">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                <button class="sidebar-link" type="submit">
+                <button class="sidebar-link" type="submit" title="Keluar">
                     <?php echo ppdb_admin_icon('logout'); ?>
                     <span>Keluar</span>
                 </button>
@@ -92,6 +93,9 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
                 <span></span><span></span><span></span>
             </button>
 
+            <button class="sidebar-collapse" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Ciutkan menu" title="Ciutkan menu">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
             <nav class="topbar-context" aria-label="Breadcrumb">
                 <ol class="breadcrumb">
                     <li><a href="admin.php">Panel PPDB</a></li>

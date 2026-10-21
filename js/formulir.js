@@ -379,8 +379,13 @@
         const female = day > 40;
         if (female) day -= 40;
         const month = parseInt(nik.substr(8, 2), 10);
-        if (day < 1 || day > 31 || month < 1 || month > 12) return { invalid: true };
-        return { day: day, month: month, year2: parseInt(nik.substr(10, 2), 10), female: female };
+        return {
+            day: day,
+            month: month,
+            year2: parseInt(nik.substr(10, 2), 10),
+            female: female,
+            invalid: day < 1 || day > 31 || month < 1 || month > 12,
+        };
     }
 
     function pad(number) {
@@ -392,8 +397,8 @@
         const parsed = parseNik(nik);
         if (!parsed) return '';
         if (nik === controllerValue('nomor_kk').trim()) return 'NIK ini sama dengan nomor KK. Periksa kembali.';
-        if (parsed.invalid) return 'Bagian tanggal lahir pada NIK ini tidak terbaca. Periksa kembali angkanya.';
         if (name === 'nik') {
+            if (parsed.invalid) return 'Bagian tanggal lahir pada NIK ini tidak terbaca. Periksa kembali angkanya.';
             const birth = (form.dataset.birthDate || '').split('-');
             const messages = [];
             if (birth.length === 3 && (parsed.day !== parseInt(birth[2], 10) || parsed.month !== parseInt(birth[1], 10) || parsed.year2 !== parseInt(birth[0], 10) % 100)) {
@@ -410,6 +415,8 @@
         if (/^[0-9]{4}$/.test(year) && parseInt(year, 10) % 100 !== parsed.year2) {
             return 'Tahun lahir (' + year + ') berbeda dengan tahun pada NIK (' + pad(parsed.year2) + ').';
         }
+        // Jenis kelamin hanya dinilai bila kode tanggal wajar (01-31 atau 41-71).
+        if (parsed.day < 1 || parsed.day > 31) return '';
         if (role === 'ayah' && parsed.female) return 'NIK ini terbaca sebagai NIK perempuan.';
         if (role === 'ibu' && !parsed.female) return 'NIK ini terbaca sebagai NIK laki-laki.';
         return '';
@@ -445,6 +452,27 @@
         return !control.closest('[hidden]') && !control.disabled && control.type !== 'hidden';
     }
 
+    // Wadah tempat pesan galat sebuah isian ditampilkan.
+    function holderOf(control) {
+        return control.closest('.participant-question') || control.closest('.field')
+            || control.closest('[data-upload-card]') || control.closest('.consent-check');
+    }
+
+    function controlValue(control) {
+        if (control.type === 'checkbox' || control.type === 'radio') return control.checked ? '1' : '';
+        return control.value;
+    }
+
+    // Galat dari server tetap berlaku selama isiannya belum diubah.
+    function serverErrorActive(control) {
+        const holder = holderOf(control);
+        if (!holder || !holder.dataset.serverError) return false;
+        if (controlValue(control) === holder.dataset.serverValue) return true;
+        delete holder.dataset.serverError;
+        delete holder.dataset.serverValue;
+        return false;
+    }
+
     function firstInvalidIn(container) {
         for (const question of container.querySelectorAll('[data-question-required="1"]')) {
             const textarea = question.querySelector('textarea');
@@ -455,7 +483,7 @@
             if (!answered) return question.querySelector('textarea, input');
         }
         for (const control of container.querySelectorAll('input, select, textarea')) {
-            if (isVisibleControl(control) && !control.checkValidity()) return control;
+            if (isVisibleControl(control) && (!control.checkValidity() || serverErrorActive(control))) return control;
         }
         return null;
     }
@@ -487,6 +515,7 @@
         let error = wrapper.querySelector(':scope > [data-field-error]');
         const control = wrapper.querySelector('input:not([type="hidden"]), select, textarea');
         wrapper.classList.toggle('is-invalid', Boolean(message));
+        if (message) wrapper.classList.remove('is-valid');
         wrapper.dataset.hasError = message ? '1' : '';
         if (control) control.setAttribute('aria-invalid', message ? 'true' : 'false');
         if (!message) {
@@ -516,11 +545,15 @@
             if (ok || force || question.dataset.touched === '1') setFieldError(question, ok ? '' : 'Pertanyaan ini wajib dijawab.');
             return ok;
         }
-        const wrapper = control.closest('.field') || control.closest('[data-upload-card]');
+        const wrapper = control.closest('.field') || control.closest('[data-upload-card]') || control.closest('.consent-check');
         if (!wrapper) return true;
         if (control.closest('[hidden]')) {
             setFieldError(wrapper, '');
             return true;
+        }
+        if (serverErrorActive(control)) {
+            setFieldError(wrapper, wrapper.dataset.serverError);
+            return false;
         }
         const valid = control.checkValidity();
         const empty = control.type === 'file' ? !(control.files && control.files.length) : control.value.trim() === '';
@@ -552,7 +585,7 @@
                 const digits = control.value.replace(/\D+/g, '');
                 if (digits !== control.value) control.value = digits;
             }
-            const holder = control.closest('.participant-question') || control.closest('.field') || control.closest('[data-upload-card]');
+            const holder = holderOf(control);
             if (!holder) return;
             if (event.type === 'change') holder.dataset.touched = '1';
             // Isian yang baru pertama kali diketik tidak langsung ditegur;
@@ -604,6 +637,44 @@
         }
         form.addEventListener('focusout', function (event) {
             if (/(^|_)(nik|tahun_lahir)$|^nomor_kk$/.test(event.target.name || '')) updateNikWarnings();
+        });
+
+        const goToControl = function (control) {
+            const step = control.closest('[data-step]');
+            if (step) showStep(parseInt(step.dataset.step, 10), false);
+            showInvalid(control);
+        };
+        const controlByName = function (name) {
+            return form.querySelector('[name="' + CSS.escape(name) + '"]:not([type="hidden"])');
+        };
+        let serverErrors = {};
+        try {
+            serverErrors = JSON.parse((document.getElementById('server-field-errors') || {}).textContent || '{}') || {};
+        } catch (error) {
+            serverErrors = {};
+        }
+        let firstServerError = null;
+        for (const control of form.querySelectorAll('input, select, textarea')) {
+            const message = serverErrors[control.name];
+            const holder = message && control.type !== 'hidden' ? holderOf(control) : null;
+            if (!holder || holder.dataset.serverError) continue;
+            holder.dataset.serverError = message;
+            holder.dataset.serverValue = controlValue(control);
+            holder.dataset.touched = '1';
+            setFieldError(holder, message);
+            if (!firstServerError) firstServerError = control;
+        }
+        if (firstServerError) {
+            // Tunggu tata letak selesai agar guliran berhenti tepat di isian.
+            window.setTimeout(function () { goToControl(firstServerError); }, 250);
+        }
+        // Pesan di ringkasan galat membawa langsung ke isiannya.
+        document.addEventListener('click', function (event) {
+            const link = event.target.closest('[data-error-field]');
+            const control = link ? controlByName(link.dataset.errorField) : null;
+            if (!control) return;
+            event.preventDefault();
+            goToControl(control);
         });
 
         form.addEventListener('click', function (event) {

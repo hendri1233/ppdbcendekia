@@ -234,7 +234,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_execute($lock);
                 $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
                 mysqli_stmt_close($lock);
-                if (!$locked || $locked['status_ppdb'] !== 'formulir_terisi') {
+                // Peserta daftar tunggu dapat diterima saat kursi tersedia, atau ditolak.
+                $fromWaitlist = $locked && $locked['status_ppdb'] === 'daftar_tunggu' && $action !== 'waitlist_final';
+                if (!$locked || ($locked['status_ppdb'] !== 'formulir_terisi' && !$fromWaitlist)) {
                     throw new RuntimeException('Formulir lengkap belum masuk antrean pemeriksaan.');
                 }
 
@@ -344,6 +346,20 @@ if (!$participant) {
 $dapodikAge = ppdb_dapodik_age($participant['tgl_lahir'], $participant['th_ajaran']);
 $participant['umur_dapodik'] = ppdb_dapodik_age_label($dapodikAge);
 $participant += formulir_flatten_parent_profiles(formulir_parent_profiles($conn, $registrationId));
+
+// Daftar tunggu: posisi antrean (urut nomor antrean pendaftaran) dan kursi di jalur yang sama.
+$waitlist = null;
+if ($participant['status_ppdb'] === 'daftar_tunggu') {
+    $waitlistQuery = mysqli_prepare($conn, "SELECT id_pendaftaran FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND status_ppdb='daftar_tunggu' ORDER BY nomor_antrian IS NULL, nomor_antrian, waktu_daftar, id_pendaftaran");
+    mysqli_stmt_bind_param($waitlistQuery, 'sss', $participant['kode_unit'], $participant['th_ajaran'], $participant['jalur_pendaftaran']);
+    mysqli_stmt_execute($waitlistQuery);
+    $waitlistIds = array_column(mysqli_fetch_all(mysqli_stmt_get_result($waitlistQuery), MYSQLI_ASSOC), 'id_pendaftaran');
+    mysqli_stmt_close($waitlistQuery);
+    $waitlist = ppdb_seat_availability($conn, $participant) + [
+        'position' => (int) array_search($registrationId, $waitlistIds, true) + 1,
+        'total' => count($waitlistIds),
+    ];
+}
 $participant['draf_formulir'] = '';
 $draftQuery = mysqli_prepare($conn, 'SELECT langkah,updated_at FROM tb_formulir_draf WHERE id_pendaftaran=? LIMIT 1');
 mysqli_stmt_bind_param($draftQuery, 's', $registrationId);
@@ -608,7 +624,30 @@ require 'admin_header.php';
         <?php } elseif ($participant['status_ppdb'] === 'diterima') { ?>
             <p class="workflow-hint">Peserta telah diterima pada unit ini sesuai urutan dan kuota.</p>
         <?php } elseif ($participant['status_ppdb'] === 'daftar_tunggu') { ?>
-            <p class="workflow-hint">Peserta berada pada daftar tunggu. Hubungi bila tersedia kursi sesuai antrean.</p>
+            <p class="workflow-hint">
+                Peserta berada pada daftar tunggu jalur <?php echo h($participant['jalur_pendaftaran']); ?>, urutan ke-<?php echo $waitlist['position']; ?> dari <?php echo $waitlist['total']; ?>.
+                Kursi terisi <?php echo $waitlist['accepted']; ?> dari <?php echo $waitlist['quota']; ?>:
+                <?php echo $waitlist['seat_available']
+                    ? '<strong>masih ada '.($waitlist['quota'] - $waitlist['accepted']).' kursi kosong</strong>, peserta dapat diterima sekarang.'
+                    : 'kuota masih penuh. Terima peserta setelah ada kursi kosong, atau tambah kuota di menu Kuota &amp; pembayaran.'; ?>
+                <?php if ($waitlist['seat_available'] && $waitlist['position'] > 1) { ?>Ada <?php echo $waitlist['position'] - 1; ?> peserta yang lebih dahulu masuk daftar tunggu.<?php } ?>
+            </p>
+            <div class="workflow-actions payment-actions">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                    <input type="hidden" name="workflow_action" value="accept_final">
+                    <button class="button-primary" type="submit"<?php echo $waitlist['seat_available'] ? '' : ' disabled title="Kuota jalur ini masih penuh"'; ?>>Terima dari daftar tunggu</button>
+                </form>
+                <form method="post" class="stacked-action">
+                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                    <input type="hidden" name="workflow_action" value="reject_formulir">
+                    <label for="reject-waitlist-note">Alasan penolakan</label>
+                    <input id="reject-waitlist-note" name="catatan_admin" maxlength="500" required placeholder="Contoh: mengundurkan diri, kuota tahun ini sudah final">
+                    <button class="button-danger" type="submit">Tolak dari daftar tunggu</button>
+                </form>
+            </div>
         <?php } elseif ($participant['status_ppdb'] === 'ditolak' && $participant['status_data'] === 'belum_diperiksa' && $participant['status_pembayaran'] === 'terverifikasi') { ?>
             <p class="workflow-hint">Pendaftar memilih tidak melanjutkan pengisian formulir. Pilihan ini sudah tercatat untuk panitia. Jika pembatalan terjadi karena salah klik, Anda dapat mengirim ulang tautan formulir di bawah ini.</p>
             <div class="workflow-actions">

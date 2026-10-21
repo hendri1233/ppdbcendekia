@@ -49,6 +49,28 @@
     }
     syncTheme();
 
+    // --- Ciutkan/buka menu samping (layar lebar), diingat antarhalaman ---
+    const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
+    const syncSidebar = () => {
+        if (!sidebarToggle) return;
+        const collapsed = root.classList.contains('sidebar-collapsed');
+        sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+        sidebarToggle.setAttribute('aria-label', collapsed ? 'Buka menu' : 'Ciutkan menu');
+        sidebarToggle.title = collapsed ? 'Buka menu' : 'Ciutkan menu';
+    };
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            root.classList.toggle('sidebar-collapsed');
+            try {
+                localStorage.setItem('cendekia-sidebar', root.classList.contains('sidebar-collapsed') ? 'collapsed' : 'open');
+            } catch (e) { /* mode privat */ }
+            syncSidebar();
+            // Grafik dan peta di dashboard menyesuaikan lebar baru setelah animasi selesai.
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 500);
+        });
+    }
+    syncSidebar();
+
     // --- Tombol kirim menampilkan status memproses ---
     for (const form of document.querySelectorAll('form[data-loading-form]')) {
         form.addEventListener('submit', (event) => {

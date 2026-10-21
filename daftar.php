@@ -2,6 +2,7 @@
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
+require_once 'web_stats.php';
 start_app_session();
 if (isset($_GET['internal'])) {
     header('Referrer-Policy: no-referrer');
@@ -147,6 +148,10 @@ if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
             $routeOffer = $candidate;
         }
     }
+}
+
+if ($routeOffer && $routeError === '') {
+    ppdb_track_unit_link_visit($conn, (string) $routeOffer['kode_unit']);
 }
 
 $formAction = 'daftar.php';
@@ -445,8 +450,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <section class="form-section" aria-labelledby="data-title">
                         <div class="section-heading">
-                            <div><p class="route-tag">Pendaftaran umum &middot; jalur eksternal</p><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Pilih unit dan tahun ajaran, lalu isi tujuh data awal. NIK dan dokumen menyusul setelah pembayaran.</p></div>
+                            <div><p class="route-tag">Pendaftaran</p><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Pilih unit dan tahun ajaran, lalu isi tujuh data awal. NIK dan dokumen menyusul setelah pembayaran.</p></div>
                         </div>
+                        <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi PPDB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
                         <div class="field-grid">
                             <div class="field field-wide">
                                 <label for="external_route">Unit pendidikan dan tahun ajaran <span class="required-mark" aria-hidden="true">*</span></label>
@@ -500,17 +506,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 <section class="form-section" aria-labelledby="route-title">
                     <div class="section-heading">
                         <span class="section-number">01</span>
-                        <div><h2 id="route-title"><?php echo $routeType === 'internal' ? 'Undangan pendaftaran internal' : 'Pendaftaran umum'; ?></h2>
+                        <div><h2 id="route-title">Pendaftaran</h2>
                             <p><?php echo h($routeOffer['nama_unit']); ?> · Tahun ajaran <?php echo h($routeOffer['th_ajaran']); ?></p>
                         </div>
                     </div>
-                    <?php if ($routeType === 'internal') { ?>
-                        <p class="field-hint">Kode internal ini berlaku untuk satu peserta dan hanya dapat digunakan sekali.</p>
-                    <?php } ?>
-                    <div class="offer-summary">
-                        <strong>Jalur <?php echo $routeType === 'internal' ? 'internal SDM yayasan' : 'eksternal umum'; ?></strong>
-                        <span>Unit dan tahun ajaran terikat pada tautan ini dan tidak dapat diubah di formulir.</span>
-                    </div>
+                    <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi PPDB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
                 </section>
 
                 <?php if ($errors) { ?>

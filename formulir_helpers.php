@@ -407,18 +407,30 @@ function formulir_render_field(array $field, array $values): void
 
 /**
  * Validasi seluruh field data berdasarkan definisinya. Field yang syarat
- * tampilnya tidak terpenuhi dilewati. Mengembalikan daftar pesan galat.
+ * tampilnya tidak terpenuhi dilewati. Mengembalikan daftar pesan galat;
+ * $fieldErrors diisi [nama isian => pesan] agar isiannya dapat ditandai.
  */
-function formulir_validate_fields(array $input, array $sections): array
+function formulir_validate_fields(array $input, array $sections, ?array &$fieldErrors = null): array
 {
     $errors = [];
+    $fieldErrors ??= [];
+    // Pesan pertama dari isian sebelumnya dicatat sebelum isian berikutnya diperiksa.
+    $pending = null;
+    $record = static function () use (&$pending, &$errors, &$fieldErrors): void {
+        if ($pending !== null && count($errors) > $pending[1]) {
+            $fieldErrors[$pending[0]] ??= $errors[$pending[1]];
+        }
+        $pending = null;
+    };
     foreach ($sections as $section) {
         foreach ($section['fields'] as $field) {
+            $record();
             $type = $field['type'] ?? 'text';
             if ($type === 'heading' || !formulir_condition_met($field, $input)) {
                 continue;
             }
             $label = $section['title'].' · '.$field['label'];
+            $pending = [$field['name'], count($errors)];
             $value = $input[$field['name']] ?? '';
             $value = is_string($value) ? trim($value) : '';
             if ($value === '') {
@@ -458,6 +470,7 @@ function formulir_validate_fields(array $input, array $sections): array
             }
         }
     }
+    $record();
     return $errors;
 }
 
@@ -540,22 +553,30 @@ function formulir_identity_checks(array $input, array $registration, array $inpu
         }
     }
 
+    // Nama isian NIK tiap pemilik, untuk menandai isian yang keliru.
+    $nikField = static fn (string $owner): string => $owner === 'ananda' ? 'nik' : $owner.'_nik';
+    $fields = [];
+    $reject = static function (string $field, string $message) use (&$errors, &$fields): void {
+        $errors[] = $message;
+        $fields[$field] ??= $message;
+    };
+
     foreach ($niks as $owner => $nik) {
         if ($nik === $familyCard && $nik !== '') {
-            $errors[] = 'NIK '.$owner.' sama dengan nomor KK. Periksa kembali, keduanya berbeda walau sama-sama 16 digit.';
+            $reject($nikField($owner), 'NIK '.$owner.' sama dengan nomor KK. Periksa kembali, keduanya berbeda walau sama-sama 16 digit.');
         }
         if (preg_match('/^[0-9]{16}$/', $nik) && !in_array(substr($nik, 0, 2), FORMULIR_PROVINCE_CODES, true)) {
-            $errors[] = 'Kode wilayah pada NIK '.$owner.' tidak dikenal. Periksa dua digit pertama NIK.';
+            $reject($nikField($owner), 'Kode wilayah pada NIK '.$owner.' tidak dikenal. Periksa dua digit pertama NIK.');
         }
     }
     if (preg_match('/^[0-9]{16}$/', $familyCard) && !in_array(substr($familyCard, 0, 2), FORMULIR_PROVINCE_CODES, true)) {
-        $errors[] = 'Kode wilayah pada nomor KK tidak dikenal. Periksa dua digit pertama nomor KK.';
+        $reject('nomor_kk', 'Kode wilayah pada nomor KK tidak dikenal. Periksa dua digit pertama nomor KK.');
     }
     $owners = array_keys($niks);
     foreach ($owners as $i => $first) {
         foreach (array_slice($owners, $i + 1) as $second) {
             if ($niks[$first] !== '' && $niks[$first] === $niks[$second]) {
-                $errors[] = 'NIK '.$first.' dan NIK '.$second.' tidak boleh sama.';
+                $reject($nikField($second), 'NIK '.$first.' dan NIK '.$second.' tidak boleh sama.');
             }
         }
     }
@@ -577,28 +598,30 @@ function formulir_identity_checks(array $input, array $registration, array $inpu
         }
     }
 
-    // Orang tua/wali: tahun lahir isian dan jenis kelamin yang wajar.
+    // Orang tua/wali: hanya tahun lahir yang dicocokkan; tanggal dan bulan
+    // pada NIK tidak diperiksa. Jenis kelamin tetap dibaca dari kode tanggal.
     foreach (['ayah', 'ibu', 'wali'] as $role) {
         if (!isset($niks[$role]) || !preg_match('/^[0-9]{16}$/', $niks[$role])) {
             continue;
         }
-        $parentParsed = formulir_nik_parse($niks[$role]);
-        if ($parentParsed === null) {
-            $flags[] = 'Bagian tanggal lahir pada NIK '.$role.' tidak terbaca sebagai tanggal yang sah.';
-            continue;
-        }
+        $dayCode = (int) substr($niks[$role], 6, 2);
+        $parentParsed = [
+            'year2' => (int) substr($niks[$role], 10, 2),
+            // Kode tanggal 01-31 laki-laki, 41-71 perempuan; selain itu tidak dinilai.
+            'female' => $dayCode >= 41 && $dayCode <= 71 ? true : ($dayCode >= 1 && $dayCode <= 31 ? false : null),
+        ];
         $birthYear = $value($role.'_tahun_lahir');
         if (preg_match('/^[0-9]{4}$/', $birthYear) && (int) $birthYear % 100 !== $parentParsed['year2']) {
             $flags[] = sprintf('Tahun lahir %s (%s) berbeda dengan tahun pada NIK (%02d).', $role, $birthYear, $parentParsed['year2']);
         }
-        if ($role === 'ayah' && $parentParsed['female']) {
+        if ($role === 'ayah' && $parentParsed['female'] === true) {
             $flags[] = 'NIK ayah terbaca sebagai NIK perempuan.';
-        } elseif ($role === 'ibu' && !$parentParsed['female']) {
+        } elseif ($role === 'ibu' && $parentParsed['female'] === false) {
             $flags[] = 'NIK ibu terbaca sebagai NIK laki-laki.';
         }
     }
 
-    return ['errors' => $errors, 'flags' => $flags];
+    return ['errors' => $errors, 'fields' => $fields, 'flags' => $flags];
 }
 
 /**

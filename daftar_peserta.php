@@ -217,7 +217,7 @@ require 'admin_header.php';
             </div>
         <?php } else { ?>
             <div class="table-wrap">
-                <table class="data-table">
+                <table class="data-table data-table--single-line">
                     <thead>
                         <tr>
                             <th scope="col">Kode</th>
