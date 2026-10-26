@@ -170,6 +170,7 @@ function public_page_start(mysqli $conn, array $page): void
                     </li>
                 <?php } ?>
             </ul>
+            <a class="button button--secondary nav-apply" href="login.php">Login</a>
             <a class="button button--primary nav-apply" href="daftar.php">Daftar PPDB</a>
         </nav>
 
