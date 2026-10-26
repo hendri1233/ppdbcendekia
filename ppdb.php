@@ -26,6 +26,11 @@ while ($unit = mysqli_fetch_assoc($unitQuery)) {
     $unit['internal_terbuka'] = (int) ($unit['internal_dibuka'] ?? 0) === 1 && $unit['kuota_internal'] > 0 && $unit['internal_sisa'] > 0;
     $unit['terbuka'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1 && $unit['kuota_eksternal'] > 0 && $unit['sisa'] > 0;
     $unit['penuh'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1 && $unit['kuota_eksternal'] > 0 && $unit['sisa'] === 0;
+    // Tampilan publik menggabungkan jalur internal dan eksternal.
+    $unit['kuota_total'] = $unit['kuota_internal'] + $unit['kuota_eksternal'];
+    $unit['pendaftar_total'] = $unit['terisi'] + $unit['internal_terisi'];
+    $unit['sisa_total'] = max(0, $unit['kuota_total'] - $unit['pendaftar_total']);
+    $unit['dibuka_total'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1 || (int) ($unit['internal_dibuka'] ?? 0) === 1;
     $units[] = $unit;
     if ($unit['terbuka']) {
         $openUnits[] = $unit;
@@ -138,8 +143,9 @@ public_page_start($conn, [
         <div class="shell">
             <header class="section-head section-head--split">
                 <div>
+                    <p class="kicker">Daya tampung</p>
                     <h2 id="unit-title">Unit pendidikan dan kuota</h2>
-                    <p>Status jalur umum tahun ajaran <?= h($activeYear) ?>. Angka kuota dan pendaftar diambil langsung dari sistem pendaftaran.</p>
+                    <p>Status pendaftaran tahun ajaran <?= h($activeYear) ?>. Angka kuota dan pendaftar diambil langsung dari sistem pendaftaran.</p>
                 </div>
                 <p class="section-head__meta">Diperbarui <?= h(ppdb_format_date_id(ppdb_stats_today()->format('Y-m-d'))) ?></p>
             </header>
@@ -147,29 +153,41 @@ public_page_start($conn, [
             <ol class="unit-board">
                 <?php foreach ($units as $unit) {
                     $ageText = $ageSummary((string) $unit['jenjang']);
-                    $unitTotal = $unit['terisi'] + $unit['internal_terisi'];
+                    $fillPercent = $unit['kuota_total'] > 0 ? min(100, (int) round($unit['pendaftar_total'] / $unit['kuota_total'] * 100)) : 0;
+                    $isOpen = $unit['dibuka_total'] && $unit['kuota_total'] > 0 && $unit['sisa_total'] > 0;
                 ?>
-                    <li class="unit-row<?= $unit['terbuka'] ? ' is-open' : '' ?>">
+                    <li class="unit-row<?= $isOpen ? ' is-open' : '' ?>">
                         <span class="unit-row__code" aria-hidden="true"><?= h($unit['jenjang']) ?></span>
                         <div class="unit-row__identity">
                             <h3><a href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></h3>
                             <p><?= h(implode(' · ', array_filter([ppdb_jenjang_label($unit['jenjang']), $unit['npsn'] ? 'NPSN '.$unit['npsn'] : '', $ageText]))) ?></p>
                         </div>
-                        <dl class="unit-row__numbers">
-                            <div>
-                                <dt>Kuota umum</dt>
-                                <dd><?= $unit['kuota_eksternal'] > 0 ? $unit['kuota_eksternal'] : '&ndash;' ?></dd>
-                            </div>
-                            <div>
-                                <dt>Pendaftar</dt>
-                                <dd><?= $unitTotal ?></dd>
-                            </div>
-                        </dl>
+                        <div class="unit-row__capacity">
+                            <dl class="unit-row__numbers">
+                                <div>
+                                    <dt>Kuota</dt>
+                                    <dd><?= $unit['kuota_total'] > 0 ? $unit['kuota_total'] : '&ndash;' ?></dd>
+                                </div>
+                                <div>
+                                    <dt>Pendaftar</dt>
+                                    <dd><?= $unit['pendaftar_total'] ?></dd>
+                                </div>
+                                <div>
+                                    <dt>Sisa kursi</dt>
+                                    <dd><?= $unit['kuota_total'] > 0 ? $unit['sisa_total'] : '&ndash;' ?></dd>
+                                </div>
+                            </dl>
+                            <?php if ($unit['kuota_total'] > 0) { ?>
+                                <span class="unit-row__meter" role="img" aria-label="<?= $fillPercent ?> persen kuota terisi"><span style="width: <?= $fillPercent ?>%"></span></span>
+                            <?php } ?>
+                        </div>
                         <div class="unit-row__status">
-                            <?php if ($unit['terbuka']) { ?>
-                                <span class="badge badge--success">Dibuka &middot; <?= $unit['sisa'] ?> kursi tersisa</span>
-                                <a class="button button--secondary button--sm" href="daftar.php?unit=<?= rawurlencode($unit['kode_unit']) ?>&amp;tahun=<?= rawurlencode($activeYear) ?>">Daftar ke <?= h($unit['jenjang']) ?><span class="visually-hidden"> <?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></span></a>
-                            <?php } elseif ($unit['penuh']) { ?>
+                            <?php if ($isOpen) { ?>
+                                <span class="badge badge--success">Dibuka</span>
+                                <?php if ($unit['terbuka']) { ?>
+                                    <a class="button button--secondary button--sm" href="daftar.php?unit=<?= rawurlencode($unit['kode_unit']) ?>&amp;tahun=<?= rawurlencode($activeYear) ?>">Daftar ke <?= h($unit['jenjang']) ?><span class="visually-hidden"> <?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></span></a>
+                                <?php } ?>
+                            <?php } elseif ($unit['kuota_total'] > 0 && $unit['sisa_total'] === 0) { ?>
                                 <span class="badge badge--warning">Kuota terpenuhi</span>
                             <?php } else { ?>
                                 <span class="badge badge--neutral">Belum dibuka</span>
@@ -178,7 +196,7 @@ public_page_start($conn, [
                     </li>
                 <?php } ?>
             </ol>
-            <p class="unit-board__note">Jalur internal SDM yayasan memakai kode undangan terpisah dan tidak mengurangi kuota umum. Pendaftar dihitung dari kedua jalur, tidak termasuk yang ditolak.</p>
+            <p class="unit-board__note">Kuota dan pendaftar mencakup seluruh jalur pendaftaran, tidak termasuk pendaftar yang ditolak.</p>
         </div>
     </section>
 

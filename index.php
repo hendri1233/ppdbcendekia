@@ -110,6 +110,7 @@ public_page_start($conn, [
     <div class="shell">
         <header class="section-head section-head--split">
             <div>
+                <p class="kicker">Satuan pendidikan</p>
                 <h2 id="unit-title">Unit pendidikan</h2>
                 <p>Lima jenjang di bawah satu yayasan. Pilih unit untuk melihat profil, kontak, dan beritanya.</p>
             </div>
@@ -155,6 +156,7 @@ public_page_start($conn, [
     <div class="shell">
         <header class="section-head section-head--split">
             <div>
+                <p class="kicker">Kabar terbaru</p>
                 <h2 id="berita-title">Berita dan kegiatan</h2>
                 <p>Kabar terbaru dari yayasan dan setiap unit.</p>
             </div>
@@ -173,11 +175,13 @@ public_page_start($conn, [
 <section class="section section--tight" aria-labelledby="ppdb-title">
     <div class="shell">
         <div class="ppdb-band">
+            <img class="ppdb-band__mark" src="img/logo-512.png" alt="" width="320" height="320" loading="lazy">
             <div>
+                <p class="kicker">Penerimaan peserta didik baru</p>
                 <h2 id="ppdb-title">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
                 <p><?= $openUnitCount > 0
-                    ? h($openUnitCount.' dari '.count($units).' unit sedang menerima pendaftar jalur umum. Registrasi awal hanya butuh beberapa menit.')
-                    : 'Pendaftaran jalur umum belum dibuka. Lihat informasi kuota, alur, dan persyaratan terlebih dahulu.' ?></p>
+                    ? h($openUnitCount.' dari '.count($units).' unit sedang menerima pendaftar. Registrasi awal hanya butuh beberapa menit.')
+                    : 'Pendaftaran belum dibuka. Lihat informasi kuota, alur, dan persyaratan terlebih dahulu.' ?></p>
             </div>
             <div class="ppdb-band__actions">
                 <a class="button button--light button--lg" href="ppdb.php">Info PPDB</a>

@@ -238,15 +238,24 @@ function public_page_end(mysqli $conn): void
                 <li><a href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a></li>
                 <li><a href="kontak.php">Kontak</a></li>
             </ul>
+        </div>
+
+        <div>
+            <h2 class="footer-heading">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
+            <p class="footer-note">Pendaftaran dibuka per unit. Registrasi awal hanya butuh beberapa menit.</p>
+            <a class="button button--light button--sm footer-cta" href="daftar.php">Daftar sekarang</a>
             <?php if ($socials) { ?>
-                <h2 class="footer-heading footer-heading--spaced">Media sosial</h2>
-                <ul class="footer-list">
+                <h2 class="footer-heading footer-heading--spaced">Ikuti kami</h2>
+                <ul class="footer-social">
                     <?php foreach ($socials as $label => $url) { ?><li><a href="<?= h($url) ?>" rel="noopener" target="_blank"><?= h($label) ?></a></li><?php } ?>
                 </ul>
             <?php } ?>
         </div>
     </div>
-    <p class="shell footer-legal">&copy; <?= date('Y') ?> <?= h(PUBLIC_SITE_NAME) ?></p>
+    <div class="shell footer-legal">
+        <p>&copy; <?= date('Y') ?> <?= h(PUBLIC_SITE_NAME) ?>. Seluruh hak dilindungi.</p>
+        <p>Takengon, Aceh Tengah</p>
+    </div>
 </footer>
 
 <?php if ($aiReady) { ?>
