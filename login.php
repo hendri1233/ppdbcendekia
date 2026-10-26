@@ -8,6 +8,44 @@ if (!empty($_SESSION['admin_id'])) {
     exit;
 }
 
+// Jumlah percobaan gagal dari IP ini dalam jendela 15 menit yang masih berjalan.
+function login_failed_attempts(mysqli $conn, string $ipHash): int
+{
+    try {
+        $stmt = mysqli_prepare($conn, 'SELECT attempts FROM tb_login_attempts WHERE ip_hash=? AND window_started_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)');
+        mysqli_stmt_bind_param($stmt, 's', $ipHash);
+        mysqli_stmt_execute($stmt);
+        $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+        mysqli_stmt_close($stmt);
+
+        return (int) ($row['attempts'] ?? 0);
+    } catch (Throwable $exception) {
+        error_log('Admin login rate check failed: '.$exception->getMessage());
+
+        return 0;
+    }
+}
+
+// Berhasil masuk menghapus catatan; gagal menambah hitungan atau memulai jendela baru.
+function login_record_attempt(mysqli $conn, string $ipHash, bool $success): void
+{
+    try {
+        if ($success) {
+            $stmt = mysqli_prepare($conn, 'DELETE FROM tb_login_attempts WHERE ip_hash=?');
+        } else {
+            $stmt = mysqli_prepare($conn, 'INSERT INTO tb_login_attempts (ip_hash,window_started_at,attempts) VALUES (?,NOW(),1)
+                ON DUPLICATE KEY UPDATE
+                    attempts=IF(window_started_at <= DATE_SUB(NOW(), INTERVAL 15 MINUTE), 1, LEAST(attempts+1, 255)),
+                    window_started_at=IF(window_started_at <= DATE_SUB(NOW(), INTERVAL 15 MINUTE), NOW(), window_started_at)');
+        }
+        mysqli_stmt_bind_param($stmt, 's', $ipHash);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    } catch (Throwable $exception) {
+        error_log('Admin login rate update failed: '.$exception->getMessage());
+    }
+}
+
 $error = '';
 $email = trim($_POST['email'] ?? '');
 $role = $_POST['role'] ?? 'super_admin';
@@ -17,6 +55,8 @@ if (!in_array($role, ['super_admin', 'admin_unit'], true)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi formulir kedaluwarsa. Muat ulang halaman dan coba kembali.';
+    } elseif (login_failed_attempts($conn, $ipHash = hash('sha256', (string) ($_SERVER['REMOTE_ADDR'] ?? ''))) >= 10) {
+        $error = 'Terlalu banyak percobaan masuk. Silakan coba kembali setelah 15 menit.';
     } else {
         $password = $_POST['password'] ?? '';
         $stmt = mysqli_prepare($conn, 'SELECT a.id,a.username,a.password,a.role,a.kode_unit,u.nama_unit FROM tbadmin a LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=a.kode_unit WHERE a.email=? AND a.role=? LIMIT 1');
@@ -24,20 +64,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         $admin = mysqli_fetch_assoc($result);
-        $authenticated = false;
-
-        if ($admin && ($admin['role'] === 'super_admin' || $admin['kode_unit'] !== null) && password_verify($password, $admin['password'])) {
-            $authenticated = true;
-        } elseif ($admin && ($admin['role'] === 'super_admin' || $admin['kode_unit'] !== null) && hash_equals($admin['password'], md5($password))) {
-            $newHash = password_hash($password, PASSWORD_DEFAULT);
-            $update = mysqli_prepare($conn, 'UPDATE tbadmin SET password = ? WHERE id = ?');
-            mysqli_stmt_bind_param($update, 'si', $newHash, $admin['id']);
-            mysqli_stmt_execute($update);
-            mysqli_stmt_close($update);
-            $authenticated = true;
-        }
+        $authenticated = $admin
+            && ($admin['role'] === 'super_admin' || $admin['kode_unit'] !== null)
+            && password_verify($password, $admin['password']);
 
         if ($authenticated) {
+            login_record_attempt($conn, $ipHash, true);
             session_regenerate_id(true);
             $_SESSION['admin_id'] = (int) $admin['id'];
             $_SESSION['admin_name'] = $admin['username'];
@@ -48,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        login_record_attempt($conn, $ipHash, false);
         $error = 'Email atau kata sandi tidak cocok.';
         mysqli_stmt_close($stmt);
     }

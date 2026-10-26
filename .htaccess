@@ -1,7 +1,27 @@
-<IfModule env_module>
-    SetEnv GOOGLE_APPLICATION_CREDENTIALS "C:/xampp/private/ppdb-sheets-service-account.json"
+# Konfigurasi (kredensial, path Google service account, dll.) diatur di .env, bukan di sini.
+
+Options -Indexes
+
+# Folder kode dan data internal tidak disajikan langsung.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(vendor|migrations|storage|templates|partials|deploy)(/|$) - [F,L]
 </IfModule>
 
-<FilesMatch "^\.env">
+<FilesMatch "^\.">
     Require all denied
 </FilesMatch>
+
+<FilesMatch "(?i)(\.(sql|md|json|lock|xlsx|bak|log|mmdb|tar\.gz)|^env\.example)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Header always set Strict-Transport-Security "max-age=31536000" env=HTTPS
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>

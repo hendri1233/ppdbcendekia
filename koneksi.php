@@ -1,8 +1,13 @@
 <?php
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'ppdb_cendekia';
+require_once __DIR__ . '/vendor/autoload.php';
+if (file_exists(__DIR__ . '/.env')) {
+    Dotenv\Dotenv::createUnsafeImmutable(__DIR__)->safeLoad();
+}
+
+$host = getenv('DB_HOST') ?: 'localhost';
+$user = getenv('DB_USER') ?: 'root';
+$pass = getenv('DB_PASS') ?: '';
+$db = getenv('DB_NAME') ?: 'ppdb_cendekia';
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 if (!$conn) {
