@@ -216,7 +216,7 @@ if ($adminUnitCode === '' && $quotaProgress) {
 }
 $linkMapDays = 30;
 $linkMap = ppdb_unit_link_locations($conn, $adminUnitCode, $linkMapDays);
-$geoipReady = ppdb_geoip_ready();
+$geoipProblem = ppdb_geoip_problem();
 $unitVisitorMax = 1;
 $unitStageMax = 1;
 foreach ($unitStageRows as $row) {
@@ -599,8 +599,8 @@ require 'admin_header.php';
                 <li><span class="link-map-dot" aria-hidden="true"></span>Sebelumnya</li>
             </ul>
         </div>
-        <?php if (!$geoipReady) { ?>
-            <p class="link-map-alert" role="status">Database lokasi belum dipasang, jadi kunjungan baru belum diberi titik. Simpan berkas <code>GeoLite2-City.mmdb</code> di <code><?php echo h(ppdb_geoip_database_path()); ?></code> atau atur <code>GEOIP_DB_PATH</code> di <code>.env</code>.</p>
+        <?php if ($geoipProblem !== null) { ?>
+            <p class="link-map-alert" role="status">Database lokasi belum dapat dipakai, jadi kunjungan baru belum diberi titik. <?php echo h($geoipProblem); ?> Unggah <code>GeoLite2-City.mmdb</code> ke <code>storage/geoip/</code> di folder situs, atau isi <code>GEOIP_DB_PATH</code> di <code>.env</code> dengan lokasi lengkap berkasnya.</p>
         <?php } ?>
         <div class="link-map" data-link-map role="img" aria-label="Peta <?php echo count($linkMap['points']); ?> lokasi pengakses tautan pendaftaran"></div>
         <script type="application/json" id="link-map-data"><?php echo json_encode($linkMap['points'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>

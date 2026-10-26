@@ -60,15 +60,44 @@ function ppdb_track_visit(mysqli $conn): void
     }
 }
 
-/** Lokasi berkas GeoLite2-City.mmdb; atur lewat GEOIP_DB_PATH di .env. */
+/**
+ * Lokasi berkas GeoLite2-City.mmdb. GEOIP_DB_PATH di .env didahulukan; bila
+ * berkasnya tidak ada di sana, storage/geoip/ di folder aplikasi dipakai.
+ */
 function ppdb_geoip_database_path(): string
 {
-    return trim((string) getenv('GEOIP_DB_PATH')) ?: __DIR__.'/storage/geoip/GeoLite2-City.mmdb';
+    $default = __DIR__.'/storage/geoip/GeoLite2-City.mmdb';
+    $configured = trim((string) getenv('GEOIP_DB_PATH'));
+    if ($configured !== '' && (is_file($configured) || !is_file($default))) {
+        return $configured;
+    }
+
+    return $default;
+}
+
+/** Alasan database lokasi belum bisa dipakai, atau null bila siap. */
+function ppdb_geoip_problem(): ?string
+{
+    if (!class_exists(\MaxMind\Db\Reader::class)) {
+        return 'Pustaka maxmind-db/reader belum terpasang. Jalankan composer install atau unggah ulang folder vendor.';
+    }
+    $path = ppdb_geoip_database_path();
+    if (!is_file($path)) {
+        return 'Berkas GeoLite2-City.mmdb tidak ditemukan di '.$path.'.';
+    }
+    if (!is_readable($path)) {
+        return 'Berkas '.$path.' ada tetapi tidak dapat dibaca. Ubah izinnya menjadi 644.';
+    }
+    if (filesize($path) < 1048576) {
+        return 'Berkas '.$path.' terlalu kecil; kemungkinan unggahan terpotong. Unggah ulang berkas aslinya (sekitar 50 MB).';
+    }
+
+    return null;
 }
 
 function ppdb_geoip_ready(): bool
 {
-    return is_file(ppdb_geoip_database_path()) && class_exists(\MaxMind\Db\Reader::class);
+    return ppdb_geoip_problem() === null;
 }
 
 /**

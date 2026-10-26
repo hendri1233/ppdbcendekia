@@ -7,5 +7,6 @@
 *.pdf
 /uploads/cms/*
 !/uploads/.htaccess
-/storage/geoip/
+/storage/geoip/*
+!/storage/geoip/.htaccess
 /deploy/
