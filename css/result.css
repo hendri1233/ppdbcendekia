@@ -56,13 +56,13 @@ body {
 
 .result-brand strong {
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: var(--fs-sm);
     font-weight: 800;
 }
 
 .result-brand small {
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     font-weight: 700;
 }
 
@@ -70,7 +70,7 @@ body {
     padding: 34px;
     background: #fff;
     border: 1px solid var(--result-line);
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     box-shadow: 0 18px 48px rgba(20, 54, 41, 0.08);
 }
 
@@ -84,21 +84,21 @@ body {
     background: #e8f1eb;
     border: 1px solid #c9dfd0;
     border-radius: 50%;
-    font-size: 20px;
+    font-size: var(--fs-lg);
     font-weight: 700;
 }
 
 .result-eyebrow {
     margin: 0 0 11px;
     color: var(--result-accent);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     font-weight: 800;
 }
 
 .result-panel h1 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 28px;
+    font-size: var(--fs-2xl);
     font-weight: 700;
     line-height: 1.28;
     overflow-wrap: anywhere;
@@ -107,7 +107,7 @@ body {
 .result-description {
     margin: 12px 0 22px;
     color: var(--result-muted);
-    font-size: 14.5px;
+    font-size: var(--fs-sm);
     line-height: 1.65;
 }
 
@@ -124,7 +124,7 @@ body {
 
 .registration-code span {
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     font-weight: 800;
 }
 
@@ -132,7 +132,7 @@ body {
     margin-top: 5px;
     color: var(--result-green);
     font-family: var(--font-sans);
-    font-size: 20px;
+    font-size: var(--fs-lg);
     font-weight: 800;
 }
 
@@ -165,7 +165,7 @@ body {
 .summary-list dt {
     flex: 0 1 auto;
     color: var(--result-muted);
-    font-size: 13px;
+    font-size: var(--fs-sm);
 }
 
 .summary-list dd {
@@ -173,7 +173,7 @@ body {
     max-width: 62%;
     margin: 0;
     text-align: right;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 700;
     overflow-wrap: anywhere;
 }
@@ -189,7 +189,7 @@ body {
     display: flex;
     align-items: center;
     color: var(--result-green);
-    font-size: 14px;
+    font-size: var(--fs-sm);
     font-weight: 700;
     cursor: pointer;
 }
@@ -201,7 +201,7 @@ body {
 .submitted-data h2 {
     margin: 12px 0 0;
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: var(--fs-sm);
     font-weight: 800;
 }
 
@@ -218,8 +218,8 @@ body {
     padding: 0 17px;
     color: #fff;
     background: var(--result-green);
-    border-radius: 4px;
-    font-size: 14.5px;
+    border-radius: var(--r-xs);
+    font-size: var(--fs-sm);
     font-weight: 700;
     text-decoration: none;
 }
@@ -229,13 +229,13 @@ body {
 }
 
 .download-button span {
-    font-size: 18px;
+    font-size: var(--fs-md);
 }
 
 .result-note {
     margin: 13px 0 0;
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     line-height: 1.6;
 }
 
@@ -247,13 +247,13 @@ body {
     color: #315345;
     background: #edf4ef;
     border-left: 3px solid var(--result-green);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     line-height: 1.6;
 }
 
 .payment-guidance strong {
     color: var(--result-ink);
-    font-size: 14px;
+    font-size: var(--fs-sm);
 }
 
 .payment-instruction {
@@ -263,7 +263,7 @@ body {
     padding: 20px;
     background: #fbfcfb;
     border: 1px solid #dce7df;
-    border-radius: 10px;
+    border-radius: var(--r-md);
 }
 
 .payment-instruction__heading {
@@ -280,8 +280,8 @@ body {
     place-items: center;
     color: #fff;
     background: var(--result-green);
-    border-radius: 9px;
-    font-size: 12px;
+    border-radius: var(--r-sm);
+    font-size: var(--fs-xs);
     font-weight: 800;
 }
 
@@ -292,7 +292,7 @@ body {
 .payment-instruction__eyebrow {
     margin: 0 0 3px;
     color: var(--result-accent);
-    font-size: 10px;
+    font-size: var(--fs-xs);
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -302,7 +302,7 @@ body {
     margin: 0;
     color: var(--result-ink);
     font-family: var(--font-sans);
-    font-size: 17px;
+    font-size: var(--fs-md);
     font-weight: 800;
     line-height: 1.35;
 }
@@ -310,7 +310,7 @@ body {
 .payment-instruction__heading p:last-child {
     margin: 4px 0 0;
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     line-height: 1.55;
 }
 
@@ -320,19 +320,19 @@ body {
     padding: 14px 16px;
     background: #eef5ef;
     border: 1px solid #d8e7da;
-    border-radius: 7px;
+    border-radius: var(--r-sm);
 }
 
 .payment-amount span,
 .payment-reference > span {
     color: #52665b;
-    font-size: 11px;
+    font-size: var(--fs-xs);
     font-weight: 700;
 }
 
 .payment-amount strong {
     color: #155b46;
-    font-size: clamp(22px, 5vw, 28px);
+    font-size: var(--fs-2xl);
     font-weight: 800;
     letter-spacing: -.02em;
     line-height: 1.2;
@@ -351,7 +351,7 @@ body {
     padding: 13px 14px;
     background: #fff;
     border: 1px solid #e2e9e4;
-    border-radius: 8px;
+    border-radius: var(--r-sm);
 }
 
 .payment-bank-brand__mark {
@@ -365,7 +365,7 @@ body {
     gap: 1px;
     color: #fff;
     background: linear-gradient(145deg, #1b7556, #124b3b);
-    border-radius: 11px;
+    border-radius: var(--r-md);
     box-shadow: 0 4px 10px rgba(18, 75, 59, 0.16);
 }
 
@@ -376,7 +376,7 @@ body {
 }
 
 .payment-bank-brand__mark b {
-    font-size: 9px;
+    font-size: var(--fs-xs);
     font-weight: 800;
     letter-spacing: .06em;
     line-height: 1;
@@ -399,14 +399,14 @@ body {
 
 .payment-bank-brand__name small {
     color: var(--result-muted);
-    font-size: 9px;
+    font-size: var(--fs-xs);
     font-weight: 800;
     letter-spacing: .1em;
 }
 
 .payment-bank-brand__name strong {
     color: var(--result-ink);
-    font-size: 14px;
+    font-size: var(--fs-sm);
     font-weight: 800;
     line-height: 1.35;
     overflow-wrap: anywhere;
@@ -426,14 +426,14 @@ body {
 
 .payment-detail-list dt {
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     line-height: 1.5;
 }
 
 .payment-detail-list dd {
     margin: 0;
     color: var(--result-ink);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 700;
     line-height: 1.5;
     text-align: right;
@@ -442,7 +442,7 @@ body {
 
 .payment-detail-list .payment-account-number {
     color: var(--result-green);
-    font-size: 15px;
+    font-size: var(--fs-base);
     letter-spacing: .02em;
 }
 
@@ -452,20 +452,20 @@ body {
     padding: 13px 15px;
     background: #fff9f2;
     border: 1px solid #f0dfc9;
-    border-radius: 7px;
+    border-radius: var(--r-sm);
 }
 
 .payment-reference strong {
     color: #713e2f;
     font-family: var(--font-sans);
-    font-size: 18px;
+    font-size: var(--fs-md);
     font-weight: 800;
     letter-spacing: .04em;
 }
 
 .payment-reference small {
     color: #75685e;
-    font-size: 11px;
+    font-size: var(--fs-xs);
     line-height: 1.55;
 }
 
@@ -475,7 +475,7 @@ body {
     margin: 0;
     padding-left: 20px;
     color: #46584e;
-    font-size: 12px;
+    font-size: var(--fs-xs);
     line-height: 1.55;
 }
 
@@ -491,14 +491,14 @@ body {
     color: #315345;
     background: #edf4ef;
     border-left: 3px solid var(--result-green);
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: var(--r-xs);
+    font-size: var(--fs-xs);
     line-height: 1.6;
 }
 
 .payment-free strong {
     color: var(--result-ink);
-    font-size: 14px;
+    font-size: var(--fs-sm);
 }
 
 .payment-guidance.is-warning,
@@ -513,8 +513,8 @@ body {
     padding: 12px 14px;
     border: 1px solid #e9b4a5;
     border-left: 4px solid var(--result-accent);
-    border-radius: 4px;
-    font-size: 13px;
+    border-radius: var(--r-xs);
+    font-size: var(--fs-sm);
     line-height: 1.55;
 }
 
@@ -526,7 +526,7 @@ body {
 
 .payment-upload label {
     color: #34443d;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 700;
     line-height: 1.5;
 }
@@ -535,7 +535,7 @@ body {
     display: block;
     margin-top: 4px;
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     font-weight: 400;
 }
 
@@ -546,16 +546,16 @@ body {
     color: var(--result-muted);
     background: #fff;
     border: 1px solid var(--result-line);
-    border-radius: 4px;
+    border-radius: var(--r-xs);
     font: inherit;
-    font-size: 12px;
+    font-size: var(--fs-xs);
 }
 
 .secondary-download {
     display: inline-block;
     margin-top: 15px;
     color: var(--result-green);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 700;
     text-underline-offset: 3px;
 }
@@ -568,7 +568,7 @@ body {
     padding-top: 14px;
     border-top: 1px solid var(--result-line);
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
 }
 
 .admin-contact__copy {
@@ -578,13 +578,13 @@ body {
 
 .admin-contact__copy strong {
     color: var(--result-ink);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 800;
 }
 
 .admin-contact__copy span {
     color: var(--result-muted);
-    font-size: 11.5px;
+    font-size: var(--fs-xs);
     line-height: 1.45;
 }
 
@@ -597,7 +597,7 @@ body {
     padding: 5px 9px;
     color: #fff;
     background: #168454;
-    border-radius: 5px;
+    border-radius: var(--r-xs);
     text-decoration: none;
     transition: background-color 160ms ease, transform 160ms ease;
 }
@@ -627,17 +627,17 @@ body {
 }
 
 .whatsapp-button strong {
-    font-size: 10px;
+    font-size: var(--fs-xs);
     white-space: nowrap;
 }
 
 .whatsapp-button small {
     color: rgba(255, 255, 255, 0.86);
-    font-size: 10px;
+    font-size: var(--fs-xs);
 }
 
 .whatsapp-button span {
-    font-size: 11px;
+    font-size: var(--fs-xs);
     font-weight: 700;
 }
 
@@ -648,7 +648,7 @@ body {
 .result-shell footer {
     margin-top: 20px;
     color: var(--result-muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
 }
 
 .result-shell footer a {
@@ -662,13 +662,13 @@ body {
     }
 
     .result-panel h1 {
-        font-size: 24px;
+        font-size: var(--fs-xl);
     }
 
     .payment-instruction {
         gap: 13px;
         padding: 16px 14px;
-        border-radius: 8px;
+        border-radius: var(--r-sm);
     }
 
     .payment-detail-list > div {
@@ -763,7 +763,7 @@ body {
 .code-hint {
     margin: -6px 0 20px;
     color: var(--result-muted);
-    font-size: 12.5px;
+    font-size: var(--fs-xs);
     line-height: 1.6;
 }
 
@@ -775,7 +775,7 @@ body {
     padding: 18px 20px 20px;
     background: #f8faf8;
     border: 1px solid var(--result-line);
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     list-style: none;
 }
 
@@ -822,7 +822,7 @@ body {
     border: 2px solid var(--result-line);
     border-radius: 50%;
     font-family: var(--font-sans);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 800;
 }
 
@@ -857,7 +857,7 @@ body {
 
 .journey-step strong {
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: var(--fs-sm);
     font-weight: 800;
 }
 
@@ -867,7 +867,7 @@ body {
 
 .journey-step small {
     color: var(--result-muted);
-    font-size: 12.5px;
+    font-size: var(--fs-xs);
     line-height: 1.5;
 }
 
@@ -884,7 +884,7 @@ body {
     padding: 18px 20px;
     background: #f7faf7;
     border: 1px solid var(--result-line);
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     list-style: none;
 }
 
@@ -904,7 +904,7 @@ body {
     background: var(--result-green);
     border-radius: 50%;
     font-family: var(--font-sans);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 800;
 }
 
@@ -914,13 +914,13 @@ body {
 }
 
 .next-steps strong {
-    font-size: 14px;
+    font-size: var(--fs-sm);
     font-weight: 800;
 }
 
 .next-steps small {
     color: var(--result-muted);
-    font-size: 12.5px;
+    font-size: var(--fs-xs);
     line-height: 1.5;
 }
 
@@ -951,12 +951,12 @@ body {
     background: #ecf6f0;
     border: 1px solid #b9dcc8;
     border-left: 4px solid #1c6b45;
-    border-radius: 4px;
-    font-size: 13.5px;
+    border-radius: var(--r-xs);
+    font-size: var(--fs-sm);
     line-height: 1.55;
 }
 
 .payment-success strong {
     display: block;
-    font-size: 15px;
+    font-size: var(--fs-base);
 }

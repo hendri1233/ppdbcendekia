@@ -220,13 +220,13 @@
 .cms-label {
     padding: 0;
     color: var(--admin-ink-soft);
-    font-size: 13.5px;
+    font-size: var(--fs-sm);
     font-weight: 700;
 }
 
 .cms-hint {
     color: var(--admin-muted);
-    font-size: 13px;
+    font-size: var(--fs-sm);
 }
 
 .cms-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
@@ -238,7 +238,7 @@
     border: 1px solid var(--input-border);
     border-radius: var(--radius-sm);
     font: inherit;
-    font-size: 14.5px;
+    font-size: var(--fs-sm);
 }
 
 .cms-field textarea {
@@ -257,7 +257,7 @@
 
 .cms-input--lg {
     min-height: 50px !important;
-    font-size: 18px !important;
+    font-size: var(--fs-md) !important;
     font-weight: 700;
 }
 
@@ -277,7 +277,7 @@
     color: var(--admin-muted);
     background: var(--admin-paper);
     border-right: 1px solid var(--input-border);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     white-space: nowrap;
 }
 
@@ -292,7 +292,7 @@
     gap: 9px;
     min-height: 42px;
     color: var(--admin-ink-soft);
-    font-size: 14.5px;
+    font-size: var(--fs-sm);
     font-weight: 600;
     cursor: pointer;
 }
@@ -361,7 +361,7 @@
 
 .cms-image__empty {
     color: var(--admin-muted);
-    font-size: 13.5px;
+    font-size: var(--fs-sm);
 }
 
 .cms-image input[type="file"] {
@@ -369,7 +369,7 @@
     max-width: 100%;
     color: var(--admin-ink-soft);
     font: inherit;
-    font-size: 13.5px;
+    font-size: var(--fs-sm);
 }
 
 .cms-image input[type="file"]::file-selector-button {
@@ -386,7 +386,7 @@
 
 .cms-image__error {
     color: var(--danger-fg);
-    font-size: 13px;
+    font-size: var(--fs-sm);
     font-weight: 600;
 }
 
@@ -408,9 +408,9 @@
     color: var(--admin-ink);
     background: var(--admin-white);
     border: 1px solid var(--admin-line);
-    border-radius: 5px;
+    border-radius: var(--r-xs);
     font: inherit;
-    font-size: 13px;
+    font-size: var(--fs-sm);
     cursor: pointer;
 }
 
@@ -428,7 +428,7 @@
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-    font-size: 15px;
+    font-size: var(--fs-base);
     line-height: 1.7;
 }
 
@@ -437,8 +437,8 @@
     color: var(--admin-faint);
 }
 
-.rich-editable h2 { margin: 16px 0 6px; font-size: 20px; }
-.rich-editable h3 { margin: 14px 0 6px; font-size: 17px; }
+.rich-editable h2 { margin: 16px 0 6px; font-size: var(--fs-lg); }
+.rich-editable h3 { margin: 14px 0 6px; font-size: var(--fs-md); }
 .rich-editable p { margin: 0 0 10px; }
 .rich-editable ul,
 .rich-editable ol { margin: 0 0 10px; padding-left: 22px; }
@@ -462,8 +462,8 @@
     color: var(--admin-ink-soft);
     background: var(--admin-white);
     border: 1px solid var(--admin-line);
-    border-radius: 999px;
-    font-size: 14px;
+    border-radius: var(--r-pill);
+    font-size: var(--fs-sm);
     font-weight: 600;
     text-decoration: none;
 }
@@ -503,7 +503,7 @@
     align-items: center;
     gap: 6px;
     color: var(--admin-muted);
-    font-size: 14px;
+    font-size: var(--fs-sm);
 }
 
 .cms-interval input {
@@ -515,7 +515,7 @@
     border: 1px solid var(--input-border);
     border-radius: var(--radius-sm);
     font: inherit;
-    font-size: 14.5px;
+    font-size: var(--fs-sm);
 }
 
 .cms-interval input:focus {
@@ -630,7 +630,7 @@
     color: var(--admin-muted);
     border: 1px dashed color-mix(in srgb, var(--danger-fg) 40%, transparent);
     border-radius: var(--radius);
-    font-size: 14px;
+    font-size: var(--fs-sm);
 }
 
 .page-heading .eyebrow a {
@@ -696,7 +696,7 @@
     grid-column: 1 / -1;
     margin: 12px 0 0;
     color: var(--muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     font-weight: 800;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -724,12 +724,12 @@
 .form-rule__text {
     display: grid;
     gap: 2px;
-    font-size: 14px;
+    font-size: var(--fs-sm);
 }
 
 .form-rule__text small {
     color: var(--muted);
-    font-size: 12px;
+    font-size: var(--fs-xs);
     line-height: 1.4;
 }
 

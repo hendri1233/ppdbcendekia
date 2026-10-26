@@ -1,34 +1,11 @@
 /**
- * Interaksi situs publik: tema terang/gelap, loader halaman, menu ponsel,
+ * Interaksi situs publik: tema terang/gelap, menu ponsel,
  * slider beranda, akordeon, penanda subnavigasi, dan asisten AI.
  */
 (function () {
     'use strict';
 
     const root = document.documentElement;
-
-    // --- Loader halaman ---
-    const finishLoading = () => root.classList.remove('is-loading');
-    if (document.readyState === 'complete') {
-        finishLoading();
-    } else {
-        window.addEventListener('load', finishLoading, { once: true });
-        // Jangan menahan pengunjung bila ada gambar/iframe yang lambat.
-        setTimeout(finishLoading, 2500);
-    }
-    window.addEventListener('pageshow', (event) => {
-        if (event.persisted) root.classList.remove('is-loading', 'is-leaving');
-    });
-    document.addEventListener('click', (event) => {
-        const link = event.target.closest('a[href]');
-        if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if (link.target && link.target !== '_self') return;
-        if (link.hasAttribute('download')) return;
-        const url = new URL(link.href, location.href);
-        if (url.origin !== location.origin || !/^https?:$/.test(url.protocol)) return;
-        if (url.pathname === location.pathname && url.search === location.search && url.hash) return;
-        root.classList.add('is-leaving');
-    });
 
     // --- Tema ---
     const themeButtons = document.querySelectorAll('[data-theme-toggle]');
@@ -77,7 +54,7 @@
             }
         });
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 1060) closeMenu();
+            if (window.innerWidth > 1320) closeMenu();
         });
     }
 

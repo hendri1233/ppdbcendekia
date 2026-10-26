@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Kerangka halaman publik situs yayasan: <head>, header bernavigasi, loader,
+ * Kerangka halaman publik situs yayasan: <head>, header bernavigasi,
  * footer, dan widget asisten AI. Dipakai semua halaman publik agar konsisten.
  */
 
@@ -109,7 +109,7 @@ function public_page_start(mysqli $conn, array $page): void
             var root = document.documentElement, theme = 'light';
             try { theme = localStorage.getItem('cendekia-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (e) {}
             root.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
-            root.classList.add('js', 'is-loading');
+            root.classList.add('js');
         })();
     </script>
     <meta name="theme-color" content="#14563f" media="(prefers-color-scheme: light)">
@@ -126,11 +126,11 @@ function public_page_start(mysqli $conn, array $page): void
     <meta property="og:url" content="<?= h($canonical) ?>">
     <meta property="og:image" content="<?= h($imageUrl) ?>">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="img/logo-display.png" type="image/png">
-    <link rel="apple-touch-icon" href="img/logo-display.png">
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="img/logo-512.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= public_asset('css/tokens.css') ?>">
     <link rel="stylesheet" href="<?= public_asset('style.css') ?>">
     <?php if (!empty($page['schema'])) { foreach ($page['schema'] as $schema) { ?>
@@ -138,10 +138,6 @@ function public_page_start(mysqli $conn, array $page): void
     <?php } } ?>
 </head>
 <body class="page-<?= h($active ?: 'umum') ?>">
-<div class="page-loader" role="status" aria-live="polite" data-page-loader>
-    <span class="page-loader__ring" aria-hidden="true"><img src="img/logo-display.png" alt="" width="40" height="40"></span>
-    <span class="visually-hidden">Memuat halaman…</span>
-</div>
 <a class="skip-link" href="#konten">Lompat ke konten utama</a>
 
 <header class="site-header">
@@ -158,7 +154,7 @@ function public_page_start(mysqli $conn, array $page): void
             <ul class="nav-list">
                 <?php foreach (public_navigation($conn) as $item) {
                     $isActive = $active === $item['key']; ?>
-                    <li class="nav-item<?= !empty($item['children']) ? ' has-children' : '' ?>">
+                    <li class="nav-item nav-item--<?= h($item['key']) ?><?= !empty($item['children']) ? ' has-children' : '' ?>">
                         <a class="nav-link<?= $isActive ? ' is-current' : '' ?>" href="<?= h($item['href']) ?>"<?= $isActive ? ' aria-current="page"' : '' ?>><?= h($item['label']) ?><?php if (!empty($item['children'])) { echo public_icon('chevron'); } ?></a>
                         <?php if (!empty($item['children'])) { ?>
                             <ul class="subnav">

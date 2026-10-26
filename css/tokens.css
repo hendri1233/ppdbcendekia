@@ -1,101 +1,152 @@
 /* ============================================================
    Token desain bersama — Yayasan Wakaf Cendekia Takengon
    Dipakai oleh situs publik, alur pendaftaran, dan panel admin.
-   Hijau tua sebagai warna kerja, marun diambil dari logo resmi.
+   Hijau tua sebagai warna kerja (60/30), marun logo sebagai aksen (10).
+   Semua ukuran teks, jarak, sudut, dan bayangan diambil dari skala di
+   bawah; jangan menulis nilai lepas di berkas komponen.
    ============================================================ */
 
 :root {
     /* Hijau lembaga */
-    --brand-950: #0a261e;
-    --brand-900: #0d3227;
-    --brand-800: #114133;
+    --brand-950: #071f17;
+    --brand-900: #0c2e23;
+    --brand-800: #103f30;
     --brand-700: #14563f;
-    --brand-600: #1b6a4f;
-    --brand-200: #c6dccf;
-    --brand-100: #e2eee7;
-    --brand-50: #f0f6f2;
+    --brand-600: #1a6a4e;
+    --brand-500: #2a8463;
+    --brand-400: #4fa283;
+    --brand-300: #8cc4ad;
+    --brand-200: #c3ddd0;
+    --brand-100: #e0eee7;
+    --brand-50: #f1f7f4;
 
-    /* Marun logo */
-    --maroon-800: #6f2020;
-    --maroon-700: #8c2a28;
-    --maroon-600: #a33a33;
-    --maroon-100: #f5e3e0;
+    /* Marun logo resmi (#A30A0C) */
+    --maroon-900: #4f0a0c;
+    --maroon-800: #6e0e11;
+    --maroon-700: #8a1014;
+    --maroon-600: #a30f14;
+    --maroon-500: #c02a2e;
+    --maroon-200: #f1c2c2;
+    --maroon-100: #f9e3e3;
+    --maroon-50: #fdf3f3;
 
-    /* Netral hangat */
-    --ink: #1a2420;
-    --ink-2: #33403a;
-    --muted: #5b6863;
-    --faint: #7d8984;
-    --line-strong: #cdd4cf;
-    --line: #e1e5e0;
-    --line-soft: #eef0ec;
-    --paper: #f7f7f3;
-    --paper-2: #efefe9;
+    /* Netral sedikit hangat */
+    --ink: #15201b;
+    --ink-2: #2f3c36;
+    --muted: #55635c;
+    --faint: #7a8781;
+    --line-strong: #c9d1cc;
+    --line: #dfe4e0;
+    --line-soft: #edf0ed;
+    --paper: #f6f7f4;
+    --paper-2: #eceee9;
     --surface: #fff;
 
     /* Status */
-    --success-fg: #1c6b45;
-    --success-bg: #e4f2e9;
-    --warning-fg: #835407;
-    --warning-bg: #fbf0da;
-    --danger-fg: #a12f28;
-    --danger-bg: #fbe6e3;
-    --info-fg: #1d5a80;
-    --info-bg: #e5eff6;
+    --success-fg: #17683f;
+    --success-bg: #e3f2e9;
+    --warning-fg: #7f5206;
+    --warning-bg: #fbefd6;
+    --danger-fg: #a3191a;
+    --danger-bg: #fbe5e3;
+    --info-fg: #1b5880;
+    --info-bg: #e4eef6;
 
-    /* Tipografi */
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-    --font-mono: ui-monospace, 'SF Mono', Consolas, monospace;
+    /* Tipografi: satu keluarga huruf untuk judul dan isi. */
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-display: var(--font-sans);
+    --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+
+    --fs-xs: 0.75rem;     /* 12 — label kecil, keterangan */
+    --fs-sm: 0.875rem;    /* 14 — meta, tabel, tombol kecil */
+    --fs-base: 1rem;      /* 16 — teks isi */
+    --fs-md: 1.125rem;    /* 18 — pengantar, judul kartu */
+    --fs-lg: 1.25rem;     /* 20 */
+    --fs-xl: 1.5rem;      /* 24 — judul blok */
+    --fs-2xl: clamp(1.625rem, 1.2rem + 1.4vw, 1.875rem);  /* 26–30 */
+    --fs-3xl: clamp(1.875rem, 1.3rem + 2vw, 2.375rem);    /* 30–38 — judul bagian */
+    --fs-4xl: clamp(2.25rem, 1.5rem + 2.8vw, 3rem);       /* 36–48 — judul halaman */
+    --fs-5xl: clamp(2.5rem, 1.6rem + 3.8vw, 3.75rem);     /* 40–60 — hero */
+
+    --lh-tight: 1.12;
+    --lh-snug: 1.35;
+    --lh-body: 1.65;
+    --tracking-tight: -0.022em;
+    --tracking-snug: -0.012em;
+    --tracking-caps: 0.08em;
+
+    /* Jarak berbasis 4px */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
 
     /* Bentuk */
-    --r-sm: 6px;
-    --r-md: 10px;
-    --r-lg: 14px;
-    --shadow-1: 0 1px 2px rgba(20, 36, 30, 0.06);
-    --shadow-2: 0 6px 20px rgba(20, 36, 30, 0.08);
-    --shadow-3: 0 18px 48px rgba(20, 36, 30, 0.14);
-    --focus-ring: 0 0 0 3px rgba(20, 86, 63, 0.28);
+    --r-xs: 4px;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 24px;
+    --r-pill: 999px;
+    --shadow-1: 0 1px 2px rgba(16, 32, 26, 0.06), 0 1px 1px rgba(16, 32, 26, 0.04);
+    --shadow-2: 0 4px 12px -2px rgba(16, 32, 26, 0.08), 0 2px 4px -2px rgba(16, 32, 26, 0.06);
+    --shadow-3: 0 20px 40px -12px rgba(16, 32, 26, 0.18), 0 8px 16px -8px rgba(16, 32, 26, 0.1);
+    --focus-ring: 0 0 0 3px rgba(20, 86, 63, 0.3);
 
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Peran semantik: teks tautan, permukaan lapis, dan latar media. */
     --link: var(--brand-700);
     --link-hover: var(--brand-800);
+    --accent: var(--maroon-600);
+    --accent-soft: var(--maroon-50);
     --on-brand: #fff;
-    --overlay: rgba(10, 22, 18, 0.62);
+    --overlay: rgba(7, 20, 15, 0.64);
     --surface-raised: #fff;
     --input-bg: #fff;
-    --input-border: #c9d2cc;
+    --input-border: #c4cdc7;
     color-scheme: light;
 }
 
 /* Mode gelap: dipasang lewat atribut data-theme pada <html>. */
 :root[data-theme="dark"] {
-    --brand-950: #06130e;
-    --brand-900: #0b2219;
+    --brand-950: #04110c;
+    --brand-900: #0a2018;
     --brand-800: #1a6a4c;
     --brand-700: #1f7a57;
     --brand-600: #2a8c66;
+    --brand-500: #3fa27b;
+    --brand-400: #62b893;
+    --brand-300: #3f6e5c;
     --brand-200: #2f5a4a;
     --brand-100: #183a2e;
-    --brand-50: #132c23;
+    --brand-50: #122a21;
 
-    --maroon-800: #f0aaa1;
-    --maroon-700: #e8958b;
-    --maroon-600: #f0aaa1;
-    --maroon-100: #3a1f1c;
+    --maroon-900: #fbd5d3;
+    --maroon-800: #f6b8b4;
+    --maroon-700: #f19c97;
+    --maroon-600: #ec8a85;
+    --maroon-500: #e57670;
+    --maroon-200: #5a2523;
+    --maroon-100: #3b1c1b;
+    --maroon-50: #2c1716;
 
-    --ink: #e6ece9;
-    --ink-2: #c6d0cb;
+    --ink: #e7ece9;
+    --ink-2: #c7d1cc;
     --muted: #9eaba5;
     --faint: #7f8d87;
     --line-strong: #3b4a44;
     --line: #2a3832;
-    --line-soft: #22302a;
-    --paper: #0f1714;
-    --paper-2: #1b2722;
-    --surface: #151f1b;
+    --line-soft: #212e29;
+    --paper: #0e1613;
+    --paper-2: #1a2621;
+    --surface: #141e1a;
 
     --success-fg: #86d6aa;
     --success-bg: #163427;
@@ -107,15 +158,17 @@
     --info-bg: #15303f;
 
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
-    --shadow-3: 0 18px 48px rgba(0, 0, 0, 0.55);
+    --shadow-2: 0 6px 18px -4px rgba(0, 0, 0, 0.5);
+    --shadow-3: 0 20px 44px -12px rgba(0, 0, 0, 0.6);
     --focus-ring: 0 0 0 3px rgba(108, 199, 158, 0.35);
 
     --link: #74cfa5;
     --link-hover: #9be0bf;
-    --overlay: rgba(4, 10, 8, 0.7);
-    --surface-raised: #1b2722;
-    --input-bg: #111a17;
+    --accent: var(--maroon-600);
+    --accent-soft: var(--maroon-50);
+    --overlay: rgba(3, 9, 7, 0.72);
+    --surface-raised: #1a2621;
+    --input-bg: #101915;
     --input-border: #3b4a44;
     color-scheme: dark;
 }

@@ -96,10 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="description" content="Area pengelola PPDB Yayasan Wakaf Cendekia Takengon.">
     <title>Masuk Admin · Panel PPDB Cendekia Takengon</title>
     <link rel="stylesheet" href="css/stlogin.css">
-    <link rel="icon" href="img/logo-display.png" type="image/png">
+    <link rel="icon" href="img/favicon.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css">
 </head>
 <body>
