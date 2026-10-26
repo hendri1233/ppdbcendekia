@@ -1,6 +1,8 @@
 /**
- * Peta pengakses tautan pendaftaran di dashboard: satu titik berkedip per
- * kota, ukurannya mengikuti jumlah pengunjung.
+ * Peta dashboard: pengunjung tautan pendaftaran (satu titik berkedip per
+ * kabupaten/kota, ukurannya mengikuti jumlah pengunjung) dan pendaftar yang
+ * telah menyelesaikan formulir lengkap (penanda marun di desa/kecamatan).
+ * Tampilan awal terfokus ke Kabupaten Aceh Tengah.
  */
 (function () {
     'use strict';
@@ -9,15 +11,19 @@
     const dataNode = document.getElementById('link-map-data');
     if (!container || !dataNode || typeof L === 'undefined') return;
 
-    let points = [];
+    let data = {};
     try {
-        points = JSON.parse(dataNode.textContent) || [];
+        data = JSON.parse(dataNode.textContent) || {};
     } catch (error) {
-        points = [];
+        data = {};
     }
+    const points = Array.isArray(data.visitors) ? data.visitors : [];
+    const registrants = Array.isArray(data.registrants) ? data.registrants : [];
 
-    // Pusat awal: Takengon, Aceh Tengah.
-    const map = L.map(container, { scrollWheelZoom: false }).setView([4.62, 96.85], 7);
+    // Kabupaten Aceh Tengah: Danau Laut Tawar dan Takengon di tengah layar.
+    const homeBounds = L.latLngBounds([4.25, 96.45], [4.95, 97.25]);
+    const map = L.map(container, { scrollWheelZoom: false });
+    map.fitBounds(homeBounds);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -52,6 +58,50 @@
             .addTo(map);
         bounds.push([point.lat, point.lon]);
     });
+
+    const precisionLabel = { titik: 'koordinat Dapodik', desa: 'tingkat desa', kecamatan: 'tingkat kecamatan', kabupaten: 'tingkat kabupaten' };
+    registrants.forEach((point) => {
+        const size = Math.min(30, 16 + 4 * Math.sqrt(point.registrants));
+        const icon = L.divIcon({
+            className: 'link-map-marker is-registrant',
+            html: '<span class="link-map-marker__core">' + (point.registrants > 1 ? point.registrants : '') + '</span>',
+            iconSize: [size, size],
+        });
+        const units = point.units
+            .map((unit) => '<li>' + escapeHtml(unit.name) + ' <strong>' + unit.registrants + '</strong></li>')
+            .join('');
+        L.marker([point.lat, point.lon], { icon, title: point.place + ': ' + point.registrants + ' pendaftar', riseOnHover: true, zIndexOffset: 500 })
+            .bindTooltip(
+                '<strong>' + escapeHtml(point.place) + '</strong><br>' + escapeHtml(point.kabupaten) + '<br>'
+                    + point.registrants + ' pendaftar · ' + (precisionLabel[point.precision] || 'perkiraan')
+                    + '<ul class="link-map-tooltip__units">' + units + '</ul>',
+                { direction: 'top', offset: [0, -size / 2], className: 'link-map-tooltip' }
+            )
+            .addTo(map);
+        bounds.push([point.lat, point.lon]);
+    });
+
+    // Tombol pindah fokus: Kabupaten Aceh Tengah atau seluruh titik.
+    const ViewControl = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd() {
+            const wrapper = L.DomUtil.create('div', 'leaflet-bar link-map-views');
+            const addButton = (label, title, handler) => {
+                const button = L.DomUtil.create('button', '', wrapper);
+                button.type = 'button';
+                button.textContent = label;
+                button.title = title;
+                L.DomEvent.on(button, 'click', handler);
+            };
+            addButton('Aceh Tengah', 'Fokus ke Kabupaten Aceh Tengah', () => map.fitBounds(homeBounds));
+            if (bounds.length) {
+                addButton('Semua titik', 'Tampilkan semua pengunjung dan pendaftar', () => map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 }));
+            }
+            L.DomEvent.disableClickPropagation(wrapper);
+            return wrapper;
+        },
+    });
+    map.addControl(new ViewControl());
 
     // Tombol layar penuh. iPhone tidak mendukung Fullscreen API untuk elemen,
     // jadi peta dibesarkan memenuhi jendela dengan CSS sebagai gantinya.
@@ -105,10 +155,4 @@
             syncButton();
         }
     });
-
-    if (bounds.length > 1) {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 });
-    } else if (bounds.length === 1) {
-        map.setView(bounds[0], 9);
-    }
 })();

@@ -216,6 +216,8 @@ if ($adminUnitCode === '' && $quotaProgress) {
 }
 $linkMapDays = 30;
 $linkMap = ppdb_unit_link_locations($conn, $adminUnitCode, $linkMapDays);
+$registrantMap = ppdb_registrant_locations($conn, $adminUnitCode);
+$locationRows = ppdb_location_summary($linkMap['points'], $registrantMap['points']);
 $geoipProblem = ppdb_geoip_problem();
 $unitVisitorMax = 1;
 $unitStageMax = 1;
@@ -593,35 +595,37 @@ require 'admin_header.php';
 
     <section class="panel">
         <div class="panel-header">
-            <div><h2>Peta pengakses tautan</h2><span class="panel-subtitle">Perkiraan kota orang yang membuka tautan pendaftaran, <?php echo $linkMapDays; ?> hari terakhir</span></div>
+            <div><h2>Peta pengunjung &amp; pendaftar</h2><span class="panel-subtitle">Pengunjung tautan per kabupaten/kota (<?php echo $linkMapDays; ?> hari terakhir) dan lokasi pendaftar yang telah menyelesaikan formulir lengkap</span></div>
             <ul class="link-map-legend" aria-label="Keterangan titik">
-                <li><span class="link-map-dot is-today" aria-hidden="true"></span>Dibuka hari ini</li>
-                <li><span class="link-map-dot" aria-hidden="true"></span>Sebelumnya</li>
+                <li><span class="link-map-dot is-registrant" aria-hidden="true"></span>Pendaftar</li>
+                <li><span class="link-map-dot is-today" aria-hidden="true"></span>Pengunjung hari ini</li>
+                <li><span class="link-map-dot" aria-hidden="true"></span>Pengunjung sebelumnya</li>
             </ul>
         </div>
         <?php if ($geoipProblem !== null) { ?>
             <p class="link-map-alert" role="status">Database lokasi belum dapat dipakai, jadi kunjungan baru belum diberi titik. <?php echo h($geoipProblem); ?> Unggah <code>GeoLite2-City.mmdb</code> ke <code>storage/geoip/</code> di folder situs, atau isi <code>GEOIP_DB_PATH</code> di <code>.env</code> dengan lokasi lengkap berkasnya.</p>
         <?php } ?>
-        <div class="link-map" data-link-map role="img" aria-label="Peta <?php echo count($linkMap['points']); ?> lokasi pengakses tautan pendaftaran"></div>
-        <script type="application/json" id="link-map-data"><?php echo json_encode($linkMap['points'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>
+        <div class="link-map" data-link-map role="img" aria-label="Peta <?php echo count($linkMap['points']); ?> kabupaten pengunjung dan <?php echo count($registrantMap['points']); ?> lokasi pendaftar"></div>
+        <script type="application/json" id="link-map-data"><?php echo json_encode(['visitors' => $linkMap['points'], 'registrants' => $registrantMap['points']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>
         <div class="table-wrap">
             <table class="data-table">
-                <thead><tr><th scope="col">Lokasi</th><th scope="col">Pengunjung</th><th scope="col">Unit yang dibuka</th></tr></thead>
+                <thead><tr><th scope="col">Kabupaten/kota</th><th scope="col">Pengunjung</th><th scope="col">Pendaftar</th><th scope="col">Unit</th></tr></thead>
                 <tbody>
-                <?php if (!$linkMap['points']) { ?>
-                    <tr><td class="empty-state" colspan="3">Belum ada pengakses tautan dengan lokasi yang terbaca.</td></tr>
+                <?php if (!$locationRows) { ?>
+                    <tr><td class="empty-state" colspan="4">Belum ada pengunjung atau pendaftar dengan lokasi yang terbaca.</td></tr>
                 <?php } ?>
-                <?php foreach (array_slice($linkMap['points'], 0, 8) as $point) { ?>
+                <?php foreach (array_slice($locationRows, 0, 10) as $row) { ?>
                     <tr>
-                        <td class="primary-cell" data-label="Lokasi"><?php echo h($point['place']); ?><?php if ($point['today']) { ?> <span class="status-pill tone-red">Hari ini</span><?php } ?></td>
-                        <td data-label="Pengunjung"><?php echo $point['visitors']; ?></td>
-                        <td data-label="Unit"><?php echo h(implode(', ', array_map(static fn (array $unit): string => $unit['name'].' ('.$unit['visitors'].')', $point['units']))); ?></td>
+                        <td class="primary-cell" data-label="Kabupaten/kota"><?php echo h($row['place']); ?><?php if ($row['today']) { ?> <span class="status-pill tone-red">Hari ini</span><?php } ?></td>
+                        <td data-label="Pengunjung"><?php echo $row['visitors'] ?: '&ndash;'; ?></td>
+                        <td data-label="Pendaftar"><?php echo $row['registrants'] ? '<strong>'.$row['registrants'].'</strong>' : '&ndash;'; ?></td>
+                        <td data-label="Unit"><?php echo h(implode(', ', $row['units'])); ?></td>
                     </tr>
                 <?php } ?>
                 </tbody>
             </table>
         </div>
-        <p class="panel-note unit-stage-note">Lokasi ditebak dari alamat IP dan hanya sampai tingkat kota. Pengguna data seluler sering tampil di kota pusat jaringan operator (misalnya Medan atau Jakarta), bukan lokasi sebenarnya.<?php if ($linkMap['unlocated'] > 0) { ?> <?php echo $linkMap['unlocated']; ?> pengunjung tidak terbaca lokasinya.<?php } ?></p>
+        <p class="panel-note unit-stage-note">Pengunjung ditebak dari alamat IP dan hanya sampai tingkat kabupaten/kota; pengguna data seluler sering tercatat di kota pusat jaringan operator (misalnya Medan). Pendaftar dipetakan dari alamat formulir lengkap (desa/kecamatan), atau dari koordinat Dapodik bila sudah dicatat operator.<?php if ($linkMap['unlocated'] > 0) { ?> <?php echo $linkMap['unlocated']; ?> pengunjung tidak terbaca lokasinya.<?php } ?><?php if ($registrantMap['pending'] > 0) { ?> <?php echo $registrantMap['pending']; ?> pendaftar belum berhasil dipetakan; lokasinya dilengkapi otomatis saat dashboard dibuka kembali.<?php } ?></p>
     </section>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">

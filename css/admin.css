@@ -3155,6 +3155,14 @@ select:focus-visible {
     box-shadow: 0 0 0 1px var(--admin-accent);
 }
 
+/* Pendaftar: emas pena logo, berbentuk pin agar beda dari titik pengunjung. */
+.link-map-dot.is-registrant {
+    background: #e0a01b;
+    border-radius: 50% 50% 50% 0;
+    box-shadow: 0 0 0 1px #8a5a00;
+    transform: rotate(-45deg);
+}
+
 .link-map-alert {
     margin: 0 18px 12px;
     padding: 10px 14px;
@@ -3197,6 +3205,31 @@ select:focus-visible {
     animation-duration: 1s;
 }
 
+.link-map-marker.is-registrant .link-map-marker__core {
+    display: grid;
+    place-items: center;
+    color: #3d2700;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    font-size: 11px;
+    font-weight: 800;
+    animation: none;
+    isolation: isolate;
+}
+
+.link-map-marker.is-registrant .link-map-marker__core::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: #e0a01b;
+    border: 2px solid #fff;
+    border-radius: 50% 50% 50% 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    transform: rotate(-45deg);
+}
+
 @keyframes map-pulse {
     from { opacity: 0.55; transform: scale(1); }
     to { opacity: 0; transform: scale(2.6); }
@@ -3222,6 +3255,36 @@ select:focus-visible {
         height: 320px;
         margin: 0 12px 12px;
     }
+}
+
+/* Tombol fokus peta: Aceh Tengah / semua titik */
+.link-map-views {
+    display: flex;
+    overflow: hidden;
+}
+
+.link-map-views button {
+    padding: 6px 10px;
+    color: #1a2420;
+    background: #fff;
+    border: 0;
+    font: inherit;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.link-map-views button + button {
+    border-left: 1px solid #ccc;
+}
+
+.link-map-views button:hover {
+    background: #f4f4f4;
+}
+
+.link-map-views button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
 /* Peta layar penuh */
