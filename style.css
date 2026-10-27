@@ -753,15 +753,6 @@ dd {
     text-transform: uppercase;
 }
 
-.kicker::before {
-    content: '';
-    width: 24px;
-    height: 2px;
-    flex: none;
-    background: var(--pub-gold-500);
-    border-radius: var(--r-pill);
-}
-
 /* Header halaman dalam */
 .page-hero {
     padding: clamp(48px, 7vw, 88px) 0 clamp(40px, 5vw, 64px);
@@ -2591,13 +2582,6 @@ dd {
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-}
-
-.ppdb-summary__eyebrow::before {
-    content: '';
-    width: 24px;
-    height: 2px;
-    background: var(--pub-gold-500);
 }
 
 .ppdb-summary dl {

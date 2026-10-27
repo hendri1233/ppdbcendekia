@@ -4544,13 +4544,6 @@ select:focus-visible {
     text-transform: uppercase;
 }
 
-.eyebrow::before {
-    content: '';
-    width: 20px;
-    height: 2px;
-    flex: none;
-    background: var(--admin-gold);
-}
 
 .page-hero__text h1,
 .page-heading h1 {

@@ -2213,12 +2213,6 @@ body.page-daftar .intro-rail .eyebrow {
     text-transform: uppercase;
 }
 
-body.page-daftar .intro-rail .eyebrow::before {
-    content: "";
-    width: 24px;
-    height: 2px;
-    background: var(--d-gold);
-}
 
 body.page-daftar .intro h1 {
     color: #fff;
@@ -2472,12 +2466,6 @@ body.page-daftar .route-tag {
     text-transform: uppercase;
 }
 
-body.page-daftar .route-tag::before {
-    content: "";
-    width: 20px;
-    height: 2px;
-    background: var(--d-gold);
-}
 
 body.page-daftar .section-number {
     color: var(--d-green-800);

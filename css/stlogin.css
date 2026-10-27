@@ -103,12 +103,6 @@ body {
     text-transform: uppercase;
 }
 
-.eyebrow::before {
-    content: '';
-    width: 24px;
-    height: 2px;
-    background: var(--auth-gold);
-}
 
 .auth-panel h1 {
     margin: 0;
