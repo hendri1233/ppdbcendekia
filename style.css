@@ -4633,3 +4633,14 @@ dd {
 .unit-video{scroll-snap-align:start}
 }
 @media (max-width:480px){.unit-videos__row{grid-auto-columns:72%}}
+
+/* Halaman Tentang: paragraf prakata dan visi misi rata kanan-kiri */
+#prakata .prose,#visi-misi .prose{text-align:justify;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto}
+
+/* Prakata: teks pendek dipusatkan sejajar foto; teks panjang membuat foto ikut menempel saat digulir.
+   Tinggi foto mengikuti tinggi layar agar bagian ini muat dalam satu tampilan. */
+@media (min-width:1061px){
+.welcome{align-items:center}
+.welcome__photo{align-self:start;position:sticky;top:calc(var(--header-h,80px) + 72px)}
+.welcome__photo img{max-height:clamp(320px,calc(100svh - 300px),600px)}
+}
