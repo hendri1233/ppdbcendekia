@@ -4587,3 +4587,17 @@ dd {
         white-space: nowrap;
     }
 }
+
+/* Blok unit beranda: nama sekolah huruf kapital */
+.unit-card--row .unit-card__body h3 {
+    font-size: clamp(1rem, 0.9rem + 0.35vw, 1.1875rem);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+    .unit-card--row .unit-card__body h3 {
+        font-size: 0.875rem;
+        letter-spacing: 0.01em;
+    }
+}
