@@ -4431,3 +4431,40 @@ dd {
         animation: glass-rise 760ms 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 }
+
+/* Menu utama huruf kapital */
+.nav-link {
+    padding-inline: 7px;
+    font-size: 0.78125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.nav-list {
+    gap: 0;
+}
+
+.header-inner {
+    gap: 12px;
+}
+
+.primary-navigation {
+    gap: 8px;
+}
+
+.primary-navigation .nav-apply {
+    padding-inline: 16px;
+}
+
+@media (max-width: 1400px) {
+    .brand-copy small {
+        display: none;
+    }
+}
+
+@media (max-width: 1320px) {
+    .nav-link {
+        font-size: 0.9375rem;
+    }
+}
