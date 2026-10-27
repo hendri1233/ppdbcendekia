@@ -228,7 +228,7 @@ function public_page_end(mysqli $conn): void
 
         <div>
             <h2 class="footer-heading">Unit pendidikan</h2>
-            <ul class="footer-list">
+            <ul class="footer-list footer-list--units">
                 <?php foreach ($units as $unit) { ?>
                     <li><a href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></li>
                 <?php } ?>

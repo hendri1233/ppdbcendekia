@@ -4480,3 +4480,14 @@ dd {
         flex: none;
     }
 }
+
+/* Footer: nama yayasan dan daftar unit huruf kapital */
+.footer-brand span,
+.footer-list--units a {
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.footer-list--units a {
+    font-size: 0.8125rem;
+}
