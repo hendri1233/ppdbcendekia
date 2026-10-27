@@ -56,6 +56,29 @@
         window.addEventListener('resize', () => {
             if (window.innerWidth > 1320) closeMenu();
         });
+
+        // Di ponsel, submenu dibuka-tutup seperti akordeon lewat tombol panah.
+        for (const item of navigation.querySelectorAll('.has-children')) {
+            const link = item.querySelector('.nav-link');
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'subnav-toggle';
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-label', 'Buka submenu ' + (link ? link.textContent.trim() : ''));
+            toggle.addEventListener('click', () => {
+                const expanded = item.classList.toggle('is-expanded');
+                toggle.setAttribute('aria-expanded', String(expanded));
+            });
+            if (link) link.after(toggle);
+        }
+    }
+
+    // --- Bayangan header setelah halaman di-scroll ---
+    const siteHeader = document.querySelector('.site-header');
+    if (siteHeader) {
+        const syncHeader = () => siteHeader.classList.toggle('is-scrolled', window.scrollY > 8);
+        window.addEventListener('scroll', syncHeader, { passive: true });
+        syncHeader();
     }
 
     // --- Slider beranda: crossfade otomatis ---

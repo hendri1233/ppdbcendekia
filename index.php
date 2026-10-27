@@ -49,41 +49,46 @@ public_page_start($conn, [
     ]],
 ]);
 ?>
-<section class="hero-slider" aria-roledescription="carousel" aria-label="Sorotan kegiatan" data-slider data-interval="<?= max(3, min(30, (int) cms_setting($conn, 'slider_interval', '5'))) ?>">
-    <div class="hero-slider__track">
-        <?php foreach ($slides as $index => $slide) { ?>
-            <figure class="hero-slide<?= $index === 0 ? ' is-active' : '' ?>" data-slide data-caption="<?= h(trim(($slide['title'] ? $slide['title'].' — ' : '').($slide['caption'] ?? ''), ' —')) ?>" data-link="<?= h($slide['link_url'] ?? '') ?>" aria-roledescription="slide" aria-label="<?= $index + 1 ?> dari <?= count($slides) ?>"<?= $index === 0 ? '' : ' aria-hidden="true"' ?>>
-                <img src="<?= h($slide['image_path']) ?>" alt="<?= h($slide['caption'] ?: ($slide['title'] ?: 'Kegiatan Yayasan Wakaf Cendekia Takengon')) ?>" width="1600" height="900"<?= $index === 0 ? ' fetchpriority="high"' : ' fetchpriority="low"' ?> decoding="async">
-            </figure>
-        <?php } ?>
-    </div>
+<section class="hero-slider hero-slider--split" aria-roledescription="carousel" aria-label="Sorotan kegiatan" data-slider data-interval="<?= max(3, min(30, (int) cms_setting($conn, 'slider_interval', '5'))) ?>">
+    <div class="shell hero-split">
+        <div class="hero-slider__content">
+            <p class="kicker">Yayasan Wakaf Cendekia Takengon</p>
+            <h1><?= h($headline) ?></h1>
+            <p class="hero-slider__lead"><?= h($lead) ?></p>
+            <div class="hero-slider__actions">
+                <a class="button button--light button--lg" href="tentang.php">Kenali yayasan <?= public_icon('arrow') ?></a>
+                <a class="button button--ghost-light button--lg" href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a>
+            </div>
+            <p class="hero-slider__caption" aria-live="polite">
+                <span data-slide-caption><?= h(trim(($slides[0]['title'] ? $slides[0]['title'].' — ' : '').($slides[0]['caption'] ?? ''), ' —')) ?></span>
+                <a class="hero-slider__more" href="<?= h($slides[0]['link_url'] ?: '#') ?>" data-slide-link<?= empty($slides[0]['link_url']) ? ' hidden' : '' ?>>Selengkapnya <?= public_icon('arrow') ?></a>
+            </p>
 
-    <div class="shell hero-slider__content">
-        <p class="kicker">Yayasan Wakaf Cendekia Takengon</p>
-        <h1><?= h($headline) ?></h1>
-        <p class="hero-slider__lead"><?= h($lead) ?></p>
-        <div class="hero-slider__actions">
-            <a class="button button--light button--lg" href="tentang.php">Kenali yayasan <?= public_icon('arrow') ?></a>
-            <a class="button button--ghost-light button--lg" href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a>
+            <?php if (count($slides) > 1) { ?>
+                <div class="hero-slider__controls">
+                    <div class="slider-dots" role="group" aria-label="Pilih slide">
+                        <?php foreach ($slides as $index => $slide) { ?>
+                            <button type="button" data-slide-dot aria-label="Tampilkan slide <?= $index + 1 ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"></button>
+                        <?php } ?>
+                    </div>
+                </div>
+            <?php } ?>
         </div>
-        <p class="hero-slider__caption" aria-live="polite">
-            <span data-slide-caption><?= h(trim(($slides[0]['title'] ? $slides[0]['title'].' — ' : '').($slides[0]['caption'] ?? ''), ' —')) ?></span>
-            <a class="hero-slider__more" href="<?= h($slides[0]['link_url'] ?: '#') ?>" data-slide-link<?= empty($slides[0]['link_url']) ? ' hidden' : '' ?>>Selengkapnya <?= public_icon('arrow') ?></a>
-        </p>
-    </div>
 
-    <?php if (count($slides) > 1) { ?>
-        <div class="hero-slider__controls">
-            <div class="slider-dots" role="group" aria-label="Pilih slide">
+        <div class="hero-split__media">
+            <div class="hero-slider__track">
                 <?php foreach ($slides as $index => $slide) { ?>
-                    <button type="button" data-slide-dot aria-label="Tampilkan slide <?= $index + 1 ?>" aria-current="<?= $index === 0 ? 'true' : 'false' ?>"></button>
+                    <figure class="hero-slide<?= $index === 0 ? ' is-active' : '' ?>" data-slide data-caption="<?= h(trim(($slide['title'] ? $slide['title'].' — ' : '').($slide['caption'] ?? ''), ' —')) ?>" data-link="<?= h($slide['link_url'] ?? '') ?>" aria-roledescription="slide" aria-label="<?= $index + 1 ?> dari <?= count($slides) ?>"<?= $index === 0 ? '' : ' aria-hidden="true"' ?>>
+                        <img src="<?= h($slide['image_path']) ?>" alt="<?= h($slide['caption'] ?: ($slide['title'] ?: 'Kegiatan Yayasan Wakaf Cendekia Takengon')) ?>" width="1600" height="900"<?= $index === 0 ? ' fetchpriority="high"' : ' fetchpriority="low"' ?> decoding="async">
+                    </figure>
                 <?php } ?>
             </div>
+            <span class="hero-split__badge"><small>PPDB</small><?= h(PUBLIC_PPDB_YEAR) ?></span>
         </div>
-    <?php } ?>
+    </div>
 </section>
 
-<section class="section" aria-labelledby="profil-title">
+<section class="section section--profile" aria-labelledby="profil-title">
     <div class="shell intro">
         <div>
             <p class="kicker">Profil singkat</p>
@@ -97,49 +102,52 @@ public_page_start($conn, [
             </div>
             <a class="text-link" href="tentang.php">Prakata pimpinan, visi, dan misi <?= public_icon('arrow') ?></a>
         </div>
-        <dl class="fact-stack">
-            <div><dt>Satuan pendidikan</dt><dd><?= count($units) ?> unit &middot; KB, TPA, TK, SD, SMP</dd></div>
-            <div><dt>Badan hukum</dt><dd>SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022</dd></div>
-            <div><dt>Nazhir wakaf uang</dt><dd>Terdaftar di Badan Wakaf Indonesia, kode 3.3.00369</dd></div>
-            <div><dt>Lokasi</dt><dd>Bebesen, Aceh Tengah</dd></div>
+        <dl class="fact-stack fact-stack--icons">
+            <div><dt><span class="fact-stack__icon"><?= public_icon('school') ?></span>Satuan pendidikan</dt><dd><?= count($units) ?> unit &middot; KB, TPA, TK, SD, SMP</dd></div>
+            <div><dt><span class="fact-stack__icon"><?= public_icon('scale') ?></span>Badan hukum</dt><dd>SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022</dd></div>
+            <div><dt><span class="fact-stack__icon"><?= public_icon('heart') ?></span>Nazhir wakaf uang</dt><dd>Terdaftar di Badan Wakaf Indonesia, kode 3.3.00369</dd></div>
+            <div><dt><span class="fact-stack__icon"><?= public_icon('pin') ?></span>Lokasi</dt><dd>Bebesen, Aceh Tengah</dd></div>
         </dl>
     </div>
 </section>
 
-<section class="section section--tinted" aria-labelledby="unit-title">
+<section class="section section--units" aria-labelledby="unit-title">
     <div class="shell">
-        <header class="section-head section-head--split">
-            <div>
-                <p class="kicker">Satuan pendidikan</p>
-                <h2 id="unit-title">Unit pendidikan</h2>
-                <p>Lima jenjang di bawah satu yayasan. Pilih unit untuk melihat profil, kontak, dan beritanya.</p>
+        <div class="unit-block">
+            <header class="section-head section-head--split section-head--center">
+                <div>
+                    <p class="kicker">Satuan pendidikan</p>
+                    <h2 id="unit-title">Unit pendidikan</h2>
+                    <p>Lima jenjang di bawah satu yayasan. Pilih unit untuk melihat profil, kontak, dan beritanya.</p>
+                </div>
+                <a class="text-link" href="ppdb.php#unit">Lihat kuota PPDB <?= public_icon('arrow') ?></a>
+            </header>
+            <div class="unit-grid unit-grid--list">
+                <?php foreach ($units as $unit) { ?>
+                    <a class="unit-card unit-card--row" href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>">
+                        <span class="unit-card__media<?= $unit['photo_path'] ? ' has-photo' : '' ?>">
+                            <?php if ($unit['photo_path']) { ?>
+                                <img src="<?= h($unit['photo_path']) ?>" alt="" width="640" height="480" loading="lazy">
+                            <?php } else { ?>
+                                <img class="unit-card__logo" src="img/logo-display.png" alt="" width="120" height="120" loading="lazy">
+                            <?php } ?>
+                            <span class="unit-card__code"><?= h($unit['jenjang']) ?></span>
+                        </span>
+                        <span class="unit-card__body">
+                            <h3><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></h3>
+                            <p><?= h($unit['tagline'] ?: ppdb_jenjang_label($unit['jenjang'])) ?></p>
+                        </span>
+                        <span class="unit-card__chevron" aria-hidden="true">&rsaquo;</span>
+                    </a>
+                <?php } ?>
             </div>
-            <a class="text-link" href="ppdb.php#unit">Lihat kuota PPDB <?= public_icon('arrow') ?></a>
-        </header>
-        <div class="unit-grid">
-            <?php foreach ($units as $unit) { ?>
-                <a class="unit-card" href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>">
-                    <span class="unit-card__media">
-                        <?php if ($unit['photo_path']) { ?>
-                            <img src="<?= h($unit['photo_path']) ?>" alt="" width="640" height="480" loading="lazy">
-                        <?php } else { ?>
-                            <img class="unit-card__logo" src="img/logo-display.png" alt="" width="120" height="120" loading="lazy">
-                        <?php } ?>
-                        <span class="unit-card__code"><?= h($unit['jenjang']) ?></span>
-                    </span>
-                    <span class="unit-card__body">
-                        <h3><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></h3>
-                        <p><?= h($unit['tagline'] ?: ppdb_jenjang_label($unit['jenjang'])) ?></p>
-                    </span>
-                </a>
-            <?php } ?>
         </div>
     </div>
 </section>
 
 <?php if ($youtubeId !== '') { ?>
-    <section class="section" aria-labelledby="video-title">
-        <div class="shell video-block">
+    <section class="section section--video" aria-labelledby="video-title">
+        <div class="shell video-block video-card">
             <div>
                 <p class="kicker">Video</p>
                 <h2 id="video-title"><?= h(cms_setting($conn, 'home_video_title', 'Mengenal Cendekia lebih dekat')) ?></h2>
@@ -152,7 +160,7 @@ public_page_start($conn, [
     </section>
 <?php } ?>
 
-<section class="section<?= $youtubeId !== '' ? ' section--tinted' : '' ?>" aria-labelledby="berita-title">
+<section class="section section--news" aria-labelledby="berita-title">
     <div class="shell">
         <header class="section-head section-head--split">
             <div>
@@ -165,7 +173,7 @@ public_page_start($conn, [
         <?php if (!$latestNews) { ?>
             <div class="empty-note"><strong>Belum ada berita yang diterbitkan.</strong><span>Berita kegiatan akan tampil di sini setelah diterbitkan oleh pengelola.</span></div>
         <?php } else { ?>
-            <div class="news-grid">
+            <div class="news-grid news-grid--home">
                 <?php foreach ($latestNews as $index => $news) { include __DIR__.'/partials/news-card.php'; } ?>
             </div>
         <?php } ?>

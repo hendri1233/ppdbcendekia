@@ -37,6 +37,13 @@ function public_icon(string $name): string
         'next' => '<path d="m8 5 5 5-5 5"/>',
         'check' => '<path d="m5 10.5 3.2 3L15 6.5"/>',
         'calendar' => '<rect x="3" y="4.5" width="14" height="12.5" rx="1.5"/><path d="M3 8.5h14M7 2.5v4M13 2.5v4"/>',
+        'school' => '<path d="M2.5 8 10 4l7.5 4L10 12 2.5 8Z"/><path d="M5.5 9.6v3.6c1.3 1.2 2.8 1.8 4.5 1.8s3.2-.6 4.5-1.8V9.6M17.5 8v4.5"/>',
+        'scale' => '<path d="M10 3v14M6 17h8M4 6h12M4 6l-2 5a2.5 2.5 0 0 0 4 0L4 6Zm12 0-2 5a2.5 2.5 0 0 0 4 0l-2-5Z"/>',
+        'heart' => '<path d="M10 16.5s-6.5-3.8-6.5-8.3A3.5 3.5 0 0 1 10 6.3a3.5 3.5 0 0 1 6.5 1.9c0 4.5-6.5 8.3-6.5 8.3Z"/>',
+        'instagram' => '<rect x="3" y="3" width="14" height="14" rx="4"/><circle cx="10" cy="10" r="3.2"/><path d="M14 6h.01"/>',
+        'facebook' => '<path d="M11.5 17.5v-6.5h2.3l.4-2.7h-2.7V6.7c0-.8.3-1.3 1.4-1.3h1.4V3a18 18 0 0 0-2.1-.1c-2 0-3.4 1.2-3.4 3.5v1.9H6.5V11h2.3v6.5"/>',
+        'youtube' => '<rect x="2.5" y="5" width="15" height="10" rx="3"/><path d="m8.5 8 3.5 2-3.5 2V8Z"/>',
+        'tiktok' => '<path d="M11 3v9.5a2.8 2.8 0 1 1-2.8-2.8M11 3c.4 2 1.9 3.5 4 3.8"/>',
     ];
     return '<svg class="icon icon--'.$name.'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'.($paths[$name] ?? '').'</svg>';
 }
@@ -107,7 +114,8 @@ function public_page_start(mysqli $conn, array $page): void
         // Tema dipasang sebelum halaman digambar agar tidak berkedip.
         (function () {
             var root = document.documentElement, theme = 'light';
-            try { theme = localStorage.getItem('cendekia-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (e) {}
+            // Bawaan terang; mode gelap hanya bila pengunjung pernah memilihnya.
+            try { theme = localStorage.getItem('cendekia-theme') || 'light'; } catch (e) {}
             root.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
             root.classList.add('js');
         })();
@@ -126,7 +134,7 @@ function public_page_start(mysqli $conn, array $page): void
     <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= public_asset('css/tokens.css') ?>">
     <link rel="stylesheet" href="<?= public_asset('style.css') ?>">
     <?php if (!empty($page['schema'])) { foreach ($page['schema'] as $schema) { ?>
@@ -243,13 +251,15 @@ function public_page_end(mysqli $conn): void
         </div>
 
         <div>
-            <h2 class="footer-heading">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
-            <p class="footer-note">Pendaftaran dibuka per unit. Registrasi awal hanya butuh beberapa menit.</p>
-            <a class="button button--light button--sm footer-cta" href="daftar.php">Daftar sekarang</a>
+            <div class="footer-ppdb">
+                <h2 class="footer-heading">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
+                <p class="footer-note">Pendaftaran dibuka per unit. Registrasi awal hanya butuh beberapa menit.</p>
+                <a class="button button--light button--sm footer-cta" href="daftar.php">Daftar sekarang</a>
+            </div>
             <?php if ($socials) { ?>
                 <h2 class="footer-heading footer-heading--spaced">Ikuti kami</h2>
                 <ul class="footer-social">
-                    <?php foreach ($socials as $label => $url) { ?><li><a href="<?= h($url) ?>" rel="noopener" target="_blank"><?= h($label) ?></a></li><?php } ?>
+                    <?php foreach ($socials as $label => $url) { ?><li><a href="<?= h($url) ?>" rel="noopener" target="_blank" title="<?= h($label) ?>"><?= public_icon(strtolower($label)) ?><span class="visually-hidden"><?= h($label) ?></span></a></li><?php } ?>
                 </ul>
             <?php } ?>
         </div>
