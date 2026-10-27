@@ -505,7 +505,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                     </section>
                     <div class="form-footer">
                         <p>Setelah dikirim Anda menerima kode pendaftaran untuk memantau status. Formulir lengkap hanya dibuka setelah bukti pembayaran disetujui.</p>
-                        <button type="submit" name="submit" value="1" class="submit-button" <?php echo !$openOffers ? 'disabled' : ''; ?>>Kirim registrasi awal <span aria-hidden="true">&rarr;</span></button>
+                        <button type="submit" name="submit" value="1" class="submit-button" <?php echo !$openOffers ? 'disabled' : ''; ?>>Kirim registrasi awal</button>
                     </div>
                 </form>
             <?php } elseif ($tokenEntryRequested && !$routeOffer && $routeError === '') { ?>
@@ -526,7 +526,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         </div>
                         <div class="form-footer">
                             <p>Jangan bagikan kode ini kepada orang lain. Kode akan ditandai terpakai setelah registrasi awal berhasil dikirim.</p>
-                            <button class="submit-button" type="submit">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></button>
+                            <button class="submit-button" type="submit">Lanjutkan pendaftaran</button>
                         </div>
                     </form>
                 </section>
@@ -569,7 +569,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
 
                 <div class="form-footer">
                     <p>Setelah dikirim Anda menerima kode pendaftaran untuk memantau status. Formulir lengkap hanya dibuka setelah bukti pembayaran disetujui.</p>
-                    <button type="submit" name="submit" value="1" class="submit-button">Kirim registrasi awal <span aria-hidden="true">&rarr;</span></button>
+                    <button type="submit" name="submit" value="1" class="submit-button">Kirim registrasi awal</button>
                 </div>
             </form>
             <?php } ?>

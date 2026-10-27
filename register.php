@@ -389,7 +389,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 
                 <label for="confirm_password">Ulangi kata sandi</label>
                 <input id="confirm_password" type="password" name="confirm_password" autocomplete="new-password" minlength="12" required>
                 <p class="auth-hint" data-match-hint hidden>Kedua kata sandi harus sama.</p>
-                <button type="submit">Buat akun <span aria-hidden="true">&rarr;</span></button>
+                <button type="submit">Buat akun</button>
             </form>
             <a class="auth-back" href="<?php echo $isBootstrap ? 'login.php' : 'admin.php'; ?>">Kembali</a>
         </section>

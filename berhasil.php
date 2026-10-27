@@ -82,7 +82,7 @@ header('Referrer-Policy: no-referrer');
                 <li><span aria-hidden="true">3</span><div><strong>Isi formulir lengkap</strong><small>Gunakan kode pendaftaran di atas beserta tautan dari WhatsApp.</small></div></li>
             </ol>
 
-            <a class="download-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lihat status pendaftaran <span aria-hidden="true">&rarr;</span></a>
+            <a class="download-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lihat status pendaftaran</a>
             <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>"><span aria-hidden="true">▤</span> Unduh bukti pendaftaran (PDF)</a>
             <p class="result-note">Halaman status memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain.</p>
             <div class="admin-contact">

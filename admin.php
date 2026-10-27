@@ -266,7 +266,7 @@ require 'admin_header.php';
         </div>
         <div class="page-hero__actions">
             <?php if ($actionableTotal > 0) { ?>
-                <a class="button-primary" href="daftar_peserta.php?status=menunggu_kontak">Proses antrean<span aria-hidden="true">&rarr;</span></a>
+                <a class="button-primary" href="daftar_peserta.php?status=menunggu_kontak">Proses antrean</a>
             <?php } else { ?>
                 <a class="button-secondary" href="daftar_peserta.php">Lihat semua peserta</a>
             <?php } ?>
@@ -358,7 +358,7 @@ require 'admin_header.php';
     <?php if ($adminUnitCode === '') { ?><section class="panel">
         <div class="panel-header">
             <div><h2>Kapasitas per unit pendidikan</h2><span class="panel-subtitle">Realisasi penerimaan terhadap kuota yang ditetapkan</span></div>
-            <a class="panel-link" href="pengaturan-ppdb.php">Atur kuota &rarr;</a>
+            <a class="panel-link" href="pengaturan-ppdb.php">Atur kuota</a>
         </div>
         <div class="table-wrap">
             <table class="data-table">
@@ -393,7 +393,7 @@ require 'admin_header.php';
         <section class="panel">
             <div class="panel-header">
                 <div><h2>Pendaftaran terbaru</h2><span class="panel-subtitle">8 pendaftar terakhir</span></div>
-                <a class="panel-link" href="daftar_peserta.php">Semua peserta &rarr;</a>
+                <a class="panel-link" href="daftar_peserta.php">Semua peserta</a>
             </div>
             <div class="table-wrap">
                 <table class="data-table">

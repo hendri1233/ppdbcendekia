@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <svg class="auth-eye auth-eye--hide" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l14 14"/><path d="M8.2 5a8 8 0 0 1 1.8-.2c5 0 8.2 5.2 8.2 5.2a14 14 0 0 1-2.4 2.9M12.1 15.1A7.6 7.6 0 0 1 10 15.5c-5 0-8.2-5.5-8.2-5.5a14.4 14.4 0 0 1 3.5-3.9"/><path d="M8.2 8.3a2.6 2.6 0 0 0 3.5 3.5"/></svg>
                     </button>
                 </span>
-                <button type="submit">Masuk ke dashboard <span aria-hidden="true">&rarr;</span></button>
+                <button type="submit">Masuk ke dashboard</button>
             </form>
             <p class="auth-note"><strong>Lupa kata sandi?</strong> <span class="auth-note__detail">Hubungi super admin untuk mendapatkan kata sandi sementara, lalu ganti lewat menu <em>Ubah kata sandi</em> setelah masuk.</span><span class="auth-note__short">Hubungi super admin untuk kata sandi sementara.</span></p>
             <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>

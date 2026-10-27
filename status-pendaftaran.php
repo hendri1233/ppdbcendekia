@@ -242,7 +242,7 @@ header('Referrer-Policy: no-referrer');
                     <strong>Pembayaran disetujui</strong>
                     <span>Tautan formulir lengkap dikirim melalui WhatsApp. Gunakan kode pendaftaran <strong><?php echo h($registration['id_pendaftaran']); ?></strong> pada halaman formulir untuk melanjutkan.</span>
                 </div>
-                <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Buka formulir lengkap <span aria-hidden="true">&rarr;</span></a>
+                <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Buka formulir lengkap</a>
             <?php } elseif ($panel === 'cek-formulir') { ?>
                 <div class="payment-guidance">
                     <strong>Formulir lengkap diterima</strong>

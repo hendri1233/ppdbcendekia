@@ -337,9 +337,9 @@ require 'admin_header.php';
                 </div>
 
                 <?php if ($currentPage < $totalPages) { ?>
-                    <a class="page-step" href="<?php echo h(with_query(['page' => $currentPage + 1])); ?>" rel="next">Berikutnya &rarr;</a>
+                    <a class="page-step" href="<?php echo h(with_query(['page' => $currentPage + 1])); ?>" rel="next">Berikutnya</a>
                 <?php } else { ?>
-                    <span class="page-step is-disabled">Berikutnya &rarr;</span>
+                    <span class="page-step is-disabled">Berikutnya</span>
                 <?php } ?>
             </nav>
         <?php } ?>

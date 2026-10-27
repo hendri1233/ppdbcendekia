@@ -307,7 +307,7 @@ require 'admin_header.php';
                 <div class="page-numbers">
                     <?php for ($i = 1; $i <= $pages; $i++) { if ($i === 1 || $i === $pages || abs($i - $page) <= 1) { echo '<a class="page-number'.($i === $page ? ' is-current' : '').'" href="'.h($query(['halaman' => $i])).'"'.($i === $page ? ' aria-current="page"' : '').'>'.$i.'</a>'; } elseif (abs($i - $page) === 2) { echo '<span class="page-gap">&hellip;</span>'; } } ?>
                 </div>
-                <?php if ($page < $pages) { ?><a class="page-step" href="<?php echo h($query(['halaman' => $page + 1])); ?>" rel="next">Berikutnya &rarr;</a><?php } else { ?><span class="page-step is-disabled">Berikutnya &rarr;</span><?php } ?>
+                <?php if ($page < $pages) { ?><a class="page-step" href="<?php echo h($query(['halaman' => $page + 1])); ?>" rel="next">Berikutnya</a><?php } else { ?><span class="page-step is-disabled">Berikutnya</span><?php } ?>
             </nav>
         <?php } ?>
     </section>

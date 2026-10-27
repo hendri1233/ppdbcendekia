@@ -493,9 +493,9 @@ require 'admin_header.php';
                         <span class="share-link__role"><?php echo h($link['role']); ?></span>
                         <span class="share-link__phone"><?php echo h($link['display']); ?></span>
                         <span class="share-link__action"><?php
-                            if (!isset($link['sent'])) { echo 'Buka WhatsApp &rarr;'; }
+                            if (!isset($link['sent'])) { echo 'Buka WhatsApp'; }
                             elseif ($link['sent']) { echo '&#10003; Terkirim otomatis'; }
-                            else { echo 'Gagal ('.h($link['send_error']).') &middot; kirim manual &rarr;'; }
+                            else { echo 'Gagal ('.h($link['send_error']).') &middot; kirim manual'; }
                         ?></span>
                     </a>
                 <?php } ?>

@@ -56,12 +56,12 @@ public_page_start($conn, [
             <h1><?= h($headline) ?></h1>
             <p class="hero-slider__lead"><?= h($lead) ?></p>
             <div class="hero-slider__actions">
-                <a class="button button--light button--lg" href="tentang.php">Kenali yayasan <?= public_icon('arrow') ?></a>
+                <a class="button button--light button--lg" href="tentang.php">Kenali yayasan</a>
                 <a class="button button--ghost-light button--lg" href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a>
             </div>
             <p class="hero-slider__caption" aria-live="polite">
                 <span data-slide-caption><?= h(trim(($slides[0]['title'] ? $slides[0]['title'].' — ' : '').($slides[0]['caption'] ?? ''), ' —')) ?></span>
-                <a class="hero-slider__more" href="<?= h($slides[0]['link_url'] ?: '#') ?>" data-slide-link<?= empty($slides[0]['link_url']) ? ' hidden' : '' ?>>Selengkapnya <?= public_icon('arrow') ?></a>
+                <a class="hero-slider__more" href="<?= h($slides[0]['link_url'] ?: '#') ?>" data-slide-link<?= empty($slides[0]['link_url']) ? ' hidden' : '' ?>>Selengkapnya</a>
             </p>
 
             <?php if (count($slides) > 1) { ?>
@@ -100,7 +100,7 @@ public_page_start($conn, [
                     <p>Yayasan Wakaf Cendekia Takengon menaungi Kelompok Bermain, Taman Penitipan Anak, TK, SD, dan SMP Islam terpadu di Kecamatan Bebesen, Kabupaten Aceh Tengah. Ananda dapat menempuh pendidikan sejak usia dini hingga sekolah menengah pertama dalam satu lingkungan yang berkesinambungan.</p>
                 <?php } ?>
             </div>
-            <a class="text-link" href="tentang.php">Prakata pimpinan, visi, dan misi <?= public_icon('arrow') ?></a>
+            <a class="text-link" href="tentang.php">Prakata pimpinan, visi, dan misi</a>
         </div>
         <dl class="fact-stack fact-stack--icons">
             <div><dt><span class="fact-stack__icon"><?= public_icon('school') ?></span>Satuan pendidikan</dt><dd><?= count($units) ?> unit &middot; KB, TPA, TK, SD, SMP</dd></div>
@@ -120,7 +120,7 @@ public_page_start($conn, [
                     <h2 id="unit-title">Unit pendidikan</h2>
                     <p>Lima jenjang di bawah satu yayasan. Pilih unit untuk melihat profil, kontak, dan beritanya.</p>
                 </div>
-                <a class="text-link" href="ppdb.php#unit">Lihat kuota PPDB <?= public_icon('arrow') ?></a>
+                <a class="text-link" href="ppdb.php#unit">Lihat kuota PPDB</a>
             </header>
             <div class="unit-grid unit-grid--list">
                 <?php foreach ($units as $unit) { ?>
@@ -168,7 +168,7 @@ public_page_start($conn, [
                 <h2 id="berita-title">Berita dan kegiatan</h2>
                 <p>Kabar terbaru dari yayasan dan setiap unit.</p>
             </div>
-            <?php if ($latestNews) { ?><a class="text-link" href="berita.php">Semua berita <?= public_icon('arrow') ?></a><?php } ?>
+            <?php if ($latestNews) { ?><a class="text-link" href="berita.php">Semua berita</a><?php } ?>
         </header>
         <?php if (!$latestNews) { ?>
             <div class="empty-note"><strong>Belum ada berita yang diterbitkan.</strong><span>Berita kegiatan akan tampil di sini setelah diterbitkan oleh pengelola.</span></div>

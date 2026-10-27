@@ -570,7 +570,7 @@ require 'admin_header.php';
                         }
                     } ?>
                 </div>
-                <?php if ($tokenPage < $tokenPages) { ?><a class="page-step" href="<?php echo h($tokenQuery(['token_page' => $tokenPage + 1])); ?>" rel="next">Berikutnya &rarr;</a><?php } else { ?><span class="page-step is-disabled">Berikutnya &rarr;</span><?php } ?>
+                <?php if ($tokenPage < $tokenPages) { ?><a class="page-step" href="<?php echo h($tokenQuery(['token_page' => $tokenPage + 1])); ?>" rel="next">Berikutnya</a><?php } else { ?><span class="page-step is-disabled">Berikutnya</span><?php } ?>
             </nav>
         <?php } ?>
     </section>

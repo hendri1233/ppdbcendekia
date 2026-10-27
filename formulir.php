@@ -566,7 +566,7 @@ function formulir_step_actions(int $index, int $total): void
     echo $index > 0 ? '<button type="button" class="step-button step-button--back" data-step-prev>&larr; Sebelumnya</button>' : '<span></span>';
     echo '<span class="draft-status" data-draft-status aria-live="polite"></span>';
     if ($index < $total - 1) {
-        echo '<button type="button" class="submit-button" data-step-next>Simpan &amp; lanjut <span aria-hidden="true">&rarr;</span></button>';
+        echo '<button type="button" class="submit-button" data-step-next>Simpan &amp; lanjut</button>';
     }
     echo '</div>';
 }
@@ -622,7 +622,7 @@ header('Referrer-Policy: no-referrer');
                         <input id="kode" name="kode" value="<?php echo h($code); ?>" placeholder="Contoh: P202600123" maxlength="10" pattern="[Pp][0-9]{9}" required autofocus>
                         <small class="field-hint">Kode terdiri huruf P diikuti 9 digit angka, contoh P202600123.</small>
                     </div>
-                    <button type="submit" class="submit-button">Periksa kode <span aria-hidden="true">&rarr;</span></button>
+                    <button type="submit" class="submit-button">Periksa kode</button>
                 </form>
             </section>
 
@@ -634,7 +634,7 @@ header('Referrer-Policy: no-referrer');
                 <?php if ($sheetSyncFailed) { ?><div class="error-summary" role="alert">Status pendaftaran sudah tersimpan dan terlihat di panel admin, tetapi sinkronisasi ke spreadsheet gagal. Panitia dapat memeriksanya langsung pada data peserta.</div><?php } ?>
                 <?php if ($errors) { ?><div class="error-summary" role="alert"><ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul></div><?php } ?>
                 <p class="intro-copy">Panitia PPDB telah menerima informasi bahwa Anda memilih tidak melanjutkan pengisian formulir untuk <?php echo h($registration['nama_unit'] ?? 'unit pilihan Anda'); ?>. Formulir sementara tidak dapat dibuka. Jika pilihan ini tidak disengaja, silakan hubungi panitia untuk meminta tautan pengisian dikirim kembali.</p>
-                <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran <span aria-hidden="true">&rarr;</span></a>
+                <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
             </section>
 
         <?php } elseif (!$formOpen) { ?>
@@ -646,7 +646,7 @@ header('Referrer-Policy: no-referrer');
                 <?php } else { ?>
                     <p class="intro-copy">Kode <?php echo h($registration['id_pendaftaran']); ?> belum membuka formulir lengkap. Tautan formulir hanya berlaku setelah bukti pembayaran disetujui panitia.</p>
                 <?php } ?>
-                <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran <span aria-hidden="true">&rarr;</span></a>
+                <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
             </section>
 
         <?php } else { ?>
@@ -803,9 +803,9 @@ header('Referrer-Policy: no-referrer');
                             <?php if ($previewMime === 'application/pdf') { ?>
                                 <div class="participant-material__mobile-pdf" data-pdf-viewer data-pdf-url="<?php echo h($previewUrl); ?>">
                                     <div class="participant-material__pdf-toolbar" role="group" aria-label="Kontrol dokumen PDF">
-                                        <button type="button" data-pdf-previous disabled aria-label="Halaman sebelumnya">&larr;</button>
+                                        <button type="button" data-pdf-previous disabled aria-label="Halaman sebelumnya">&lsaquo;</button>
                                         <span data-pdf-page aria-live="polite">Memuat PDF…</span>
-                                        <button type="button" data-pdf-next disabled aria-label="Halaman berikutnya">&rarr;</button>
+                                        <button type="button" data-pdf-next disabled aria-label="Halaman berikutnya">&rsaquo;</button>
                                         <button type="button" data-pdf-zoom-out disabled aria-label="Perkecil tampilan">&minus;</button>
                                         <button type="button" data-pdf-zoom-in disabled aria-label="Perbesar tampilan">+</button>
                                     </div>
@@ -835,7 +835,7 @@ header('Referrer-Policy: no-referrer');
                     <input type="checkbox" data-materials-read>
                     <span>Saya telah membaca brosur, rincian biaya, dan SOP di atas.</span>
                 </label>
-                <button class="submit-button materials-next" type="button" data-materials-next data-materials-ready="<?php echo $allMaterialsPublished ? '1' : '0'; ?>" <?php echo !$allMaterialsPublished ? 'disabled' : ''; ?>>Lanjut ke formulir <span aria-hidden="true">&rarr;</span></button>
+                <button class="submit-button materials-next" type="button" data-materials-next data-materials-ready="<?php echo $allMaterialsPublished ? '1' : '0'; ?>" <?php echo !$allMaterialsPublished ? 'disabled' : ''; ?>>Lanjut ke formulir</button>
             </section>
 
             <div id="formulir-terbuka" <?php echo $showFullForm ? '' : 'hidden'; ?>>
@@ -898,7 +898,7 @@ header('Referrer-Policy: no-referrer');
                                 <span>Saya memastikan seluruh data di atas benar dan dapat dipertanggungjawabkan.</span>
                             </label>
                             <p>NIPD dan tanggal masuk sekolah ditetapkan operator setelah peserta diterima. Data bertanda opsional boleh dikosongkan.</p>
-                            <button type="submit" name="submit" value="1" class="submit-button" data-final-submit>Kirim formulir lengkap <span aria-hidden="true">&rarr;</span></button>
+                            <button type="submit" name="submit" value="1" class="submit-button" data-final-submit>Kirim formulir lengkap</button>
                         </div>
                         <?php formulir_step_actions($stepIndex, count($steps)); ?>
                     </section>

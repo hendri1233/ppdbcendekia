@@ -99,7 +99,7 @@ public_page_start($conn, [
         <div class="shell">
             <header class="section-head section-head--split">
                 <h2 id="unit-news-title">Berita <?= h($unit['jenjang']) ?></h2>
-                <a class="text-link" href="berita.php?unit=<?= rawurlencode($code) ?>">Semua berita unit <?= public_icon('arrow') ?></a>
+                <a class="text-link" href="berita.php?unit=<?= rawurlencode($code) ?>">Semua berita unit</a>
             </header>
             <div class="news-grid">
                 <?php $noLead = true; foreach ($unitNews as $index => $news) { include __DIR__.'/partials/news-card.php'; } ?>

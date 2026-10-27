@@ -105,7 +105,6 @@ $faqSchema = [
         'acceptedAnswer' => ['@type' => 'Answer', 'text' => $item['a']],
     ], $faqItems),
 ];
-$arrow = '<svg class="i-arrow" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 10h11M11 5.5 15.5 10 11 14.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 $check = '<svg class="i-check" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 10.5 3.2 3L15 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 public_page_start($conn, [
@@ -130,7 +129,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
             <h1>Pendaftaran daring, dipandu panitia melalui WhatsApp.</h1>
             <p>Lihat kuota setiap unit, ikuti tiga tahap pendaftaran, dan siapkan dokumen yang diperlukan sebelum mengisi formulir lengkap.</p>
             <div class="hero-slider__actions">
-                <a class="button button--primary button--lg" href="daftar.php">Mulai registrasi awal <?= $arrow ?></a>
+                <a class="button button--primary button--lg" href="daftar.php">Mulai registrasi awal</a>
                 <a class="button button--quiet button--lg" href="#persiapan">Lihat persyaratan</a>
             </div>
         </div>
@@ -402,7 +401,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                 <h2 id="closing-title">Registrasi awal hanya butuh beberapa menit.</h2>
                 <p>Siapkan nomor WhatsApp pendaftar, ayah, dan ibu. Panitia akan memandu langkah berikutnya.</p>
             </div>
-            <a class="button button--light button--lg" href="daftar.php">Mulai registrasi awal <?= $arrow ?></a>
+            <a class="button button--light button--lg" href="daftar.php">Mulai registrasi awal</a>
         </div>
     </section>
 
