@@ -4570,3 +4570,20 @@ dd {
         font-size: 0.6875rem;
     }
 }
+
+/* Semua isi dropdown menu huruf kapital (desktop dan menu ponsel) */
+.subnav a {
+    font-size: 0.8125rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+@media (min-width: 1321px) {
+    .subnav {
+        min-width: 260px;
+    }
+
+    .subnav a {
+        white-space: nowrap;
+    }
+}
