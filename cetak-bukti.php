@@ -65,7 +65,7 @@ $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
         <tr><td>Tanggal pendaftaran</td><td>'.h($dateRegistered).'</td></tr>
     </table>
     <div class="note"><strong>Informasi:</strong> Dokumen ini merupakan ringkasan bukti pendaftaran awal. Simpan kode pendaftaran untuk memantau proses berikutnya. Data identitas kependudukan, alamat lengkap, dan data keluarga tidak dicantumkan demi menjaga privasi.</div>
-    <div class="footer"><strong>Yayasan Wakaf Cendekia Takengon</strong><br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah<br>WhatsApp Admin PPDB: 0851 8483 9694</div>
+    <div class="footer"><strong>Yayasan Wakaf Cendekia Takengon</strong><br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah<br>WhatsApp Admin SPMB: 0851 8483 9694</div>
 </body></html>';
 
 $options = new Options();

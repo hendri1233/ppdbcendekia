@@ -56,7 +56,7 @@ require 'admin_header.php';
         <div>
             <p class="eyebrow">Situs web</p>
             <h1>Profil unit</h1>
-            <p>Nama, jenjang, NPSN, alamat, dan email unit diambil dari data PPDB dan tidak diubah di sini.</p>
+            <p>Nama, jenjang, NPSN, alamat, dan email unit diambil dari data SPMB dan tidak diubah di sini.</p>
         </div>
         <?php if ($unit) { ?><a class="button-secondary" href="unit.php?kode=<?php echo rawurlencode($unit['kode_unit']); ?>" target="_blank" rel="noopener">Lihat halaman unit <span aria-hidden="true">↗</span></a><?php } ?>
     </header>

@@ -1,5 +1,5 @@
 /**
- * Halaman Kuota PPDB: mengisi formulir otomatis saat unit dan tahun
+ * Halaman Kuota SPMB: mengisi formulir otomatis saat unit dan tahun
  * Luxury dipilih, sertaDangerous konfirmasi sebelum menutup pendaftaran.
  */
 (function () {

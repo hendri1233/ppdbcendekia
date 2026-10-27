@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($exception instanceof RuntimeException) {
                     $error = $exception->getMessage();
                 } else {
-                    error_log('PPDB internal token generation failed: '.$exception->getMessage());
+                    error_log('SPMB internal token generation failed: '.$exception->getMessage());
                     $error = 'Token internal belum dapat dibuat.';
                 }
             }
@@ -185,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($exception instanceof RuntimeException) {
                     $error = $exception->getMessage();
                 } else {
-                    error_log('PPDB internal token reuse approval failed: '.$exception->getMessage());
+                    error_log('SPMB internal token reuse approval failed: '.$exception->getMessage());
                     $error = 'Persetujuan penggunaan ulang token belum dapat disimpan.';
                 }
             }
@@ -247,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_bind_param($update, 'ssiiidsssiiiii', $unitCode, $academicYear, $totalQuota, $quotaInternal, $quotaExternal, $feeInput, $bankName, $accountNumber, $accountName, $paymentDays, $isOpen, $internalOpen, $externalOpen, $adminId);
                 if (mysqli_stmt_execute($update)) {
                     mysqli_commit($conn);
-                    $notice = 'Pengaturan PPDB berhasil disimpan.';
+                    $notice = 'Pengaturan SPMB berhasil disimpan.';
                 } else {
                     mysqli_rollback($conn);
                     $error = 'Pengaturan belum dapat disimpan.';
@@ -256,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
-            error_log('PPDB quota update failed: '.$exception->getMessage());
+            error_log('SPMB quota update failed: '.$exception->getMessage());
             $error = 'Pengaturan belum dapat disimpan.';
         }
     }

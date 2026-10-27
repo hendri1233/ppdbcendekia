@@ -92,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="Area pengelola PPDB Yayasan Wakaf Cendekia Takengon.">
-    <title>Masuk Admin · Panel PPDB Cendekia Takengon</title>
+    <meta name="description" content="Area pengelola SPMB Yayasan Wakaf Cendekia Takengon.">
+    <title>Masuk Admin · Panel SPMB Cendekia Takengon</title>
     <link rel="stylesheet" href="css/stlogin.css?v=<?php echo (int) @filemtime(__DIR__.'/css/stlogin.css'); ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit">Masuk ke dashboard</button>
             </form>
             <p class="auth-note"><strong>Lupa kata sandi?</strong> <span class="auth-note__detail">Hubungi super admin untuk mendapatkan kata sandi sementara, lalu ganti lewat menu <em>Ubah kata sandi</em> setelah masuk.</span><span class="auth-note__short">Hubungi super admin untuk kata sandi sementara.</span></p>
-            <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>
+            <a class="auth-back" href="index.php">Kembali ke situs SPMB</a>
         </section>
     </main>
     <footer class="auth-glass__foot">&copy; <?php echo date('Y'); ?> Yayasan Wakaf Cendekia Takengon</footer>

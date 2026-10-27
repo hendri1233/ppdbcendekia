@@ -755,7 +755,7 @@
                 const confirmed = this.dataset.confirmChoice === '1';
                 if (!confirmed) {
                     if (noteField) {
-                        noteField.textContent = 'Silakan hubungi panitia PPDB untuk memperbaiki data registrasi awal. Formulir belum dapat diisi.';
+                        noteField.textContent = 'Silakan hubungi panitia SPMB untuk memperbaiki data registrasi awal. Formulir belum dapat diisi.';
                         noteField.classList.add('is-warning');
                     }
                     this.classList.add('is-picked');
@@ -820,7 +820,7 @@
             const materialsReady = materialNext && materialNext.dataset.materialsReady === '1';
             if (!materialsReady) {
                 if (finalIntroWarning) {
-                    finalIntroWarning.textContent = 'Formulir belum dapat dibuka karena brosur, rincian biaya, dan SOP untuk unit dan tahun ajaran ini belum lengkap. Silakan hubungi panitia PPDB agar dilengkapi.';
+                    finalIntroWarning.textContent = 'Formulir belum dapat dibuka karena brosur, rincian biaya, dan SOP untuk unit dan tahun ajaran ini belum lengkap. Silakan hubungi panitia SPMB agar dilengkapi.';
                     finalIntroWarning.hidden = false;
                     finalIntroWarning.setAttribute('tabindex', '-1');
                     finalIntroWarning.focus();

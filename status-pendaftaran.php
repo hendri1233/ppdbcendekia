@@ -68,7 +68,7 @@ header('Referrer-Policy: no-referrer');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title><?php echo $registration ? 'Status pendaftaran '.$registration['id_pendaftaran'] : 'Pendaftaran tidak ditemukan'; ?> | PPDB Cendekia</title>
+    <title><?php echo $registration ? 'Status pendaftaran '.$registration['id_pendaftaran'] : 'Pendaftaran tidak ditemukan'; ?> | SPMB Cendekia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -86,7 +86,7 @@ header('Referrer-Policy: no-referrer');
 <main class="result-shell">
     <a class="result-brand" href="index.php">
         <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
-        <span><strong>Wakaf Cendekia</strong><small>Takengon · PPDB</small></span>
+        <span><strong>Wakaf Cendekia</strong><small>Takengon · SPMB</small></span>
     </a>
 
     <?php if ($registration) { ?>
@@ -211,12 +211,12 @@ header('Referrer-Policy: no-referrer');
                                     <li>Unggah bukti transfer yang jelas melalui formulir di bawah.</li>
                                 </ol>
                             <?php } else { ?>
-                                <div class="payment-error" role="alert">Informasi rekening belum tersedia. Jangan melakukan transfer terlebih dahulu. Hubungi admin PPDB untuk mendapatkan arahan pembayaran.</div>
+                                <div class="payment-error" role="alert">Informasi rekening belum tersedia. Jangan melakukan transfer terlebih dahulu. Hubungi admin SPMB untuk mendapatkan arahan pembayaran.</div>
                             <?php } ?>
                         <?php } else { ?>
                             <div class="payment-free">
                                 <strong>Tidak ada biaya pendaftaran</strong>
-                                <span>Ayah/Bunda tidak perlu melakukan transfer. Silakan hubungi admin PPDB untuk arahan proses selanjutnya.</span>
+                                <span>Ayah/Bunda tidak perlu melakukan transfer. Silakan hubungi admin SPMB untuk arahan proses selanjutnya.</span>
                             </div>
                         <?php } ?>
                     </div>
@@ -253,8 +253,8 @@ header('Referrer-Policy: no-referrer');
             <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh ringkasan PDF</a>
             <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain.</p>
             <div class="admin-contact">
-                <span>Perlu bantuan? Hubungi admin PPDB.</span>
-                <a class="whatsapp-button" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait pendaftaran '.$registration['id_pendaftaran'].'.')); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi WhatsApp admin PPDB <?php echo h(ppdb_admin_whatsapp_display()); ?>">
+                <span>Perlu bantuan? Hubungi admin SPMB.</span>
+                <a class="whatsapp-button" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait pendaftaran '.$registration['id_pendaftaran'].'.')); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi WhatsApp admin SPMB <?php echo h(ppdb_admin_whatsapp_display()); ?>">
                     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm0 23.54h-.01c-1.93 0-3.83-.52-5.48-1.51l-.39-.23-4.09 1.07 1.09-3.96-.25-.4a10.62 10.62 0 0 1-1.65-5.63c0-5.92 4.85-10.74 10.79-10.74 2.88 0 5.59 1.12 7.62 3.14a10.61 10.61 0 0 1 3.16 7.59c0 5.92-4.85 10.74-10.79 10.74Zm5.92-8.04c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
                     <span><?php echo h(ppdb_admin_whatsapp_display()); ?></span>
                 </a>
@@ -264,7 +264,7 @@ header('Referrer-Policy: no-referrer');
         <section class="result-panel result-error">
             <p class="result-eyebrow">Tautan tidak valid</p>
             <h1>Status pendaftaran<br>tidak ditemukan.</h1>
-            <p class="result-description">Periksa kembali tautan dari pesan WhatsApp, atau hubungi panitia PPDB.</p>
+            <p class="result-description">Periksa kembali tautan dari pesan WhatsApp, atau hubungi panitia SPMB.</p>
             <a class="download-button" href="index.php">Kembali ke beranda</a>
         </section>
     <?php } ?>

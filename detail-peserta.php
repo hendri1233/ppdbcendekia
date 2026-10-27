@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
                 if (!$exception instanceof RuntimeException) {
-                    error_log('PPDB payment link setup failed ('.get_class($exception).').');
+                    error_log('SPMB payment link setup failed ('.get_class($exception).').');
                 }
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Tautan pembayaran gagal disiapkan.';
             }
@@ -307,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     $whatsappDeliveryTone = 'warning';
                                 }
                             } catch (Throwable $exception) {
-                                error_log('PPDB acceptance WhatsApp notification failed: '.$exception->getMessage());
+                                error_log('SPMB acceptance WhatsApp notification failed: '.$exception->getMessage());
                                 $whatsappDeliveryNotice = 'Peserta sudah diterima, tetapi ucapan WhatsApp belum terkirim. Periksa konfigurasi Wablas dan coba hubungi pendaftar secara manual.';
                                 $whatsappDeliveryTone = 'warning';
                             }
@@ -510,7 +510,7 @@ require 'admin_header.php';
     <section class="detail-panel wide workflow-panel">
         <h2>Alur penerimaan</h2>
         <div class="workflow-summary">
-            <div><span>Status PPDB</span><strong class="tone-<?php echo h($statusInfo['tone']); ?>"><?php echo h($statusInfo['label']); ?></strong></div>
+            <div><span>Status SPMB</span><strong class="tone-<?php echo h($statusInfo['tone']); ?>"><?php echo h($statusInfo['label']); ?></strong></div>
             <div><span>Status data</span><strong><?php echo h($dataStatusLabels[$participant['status_data']] ?? $participant['status_data']); ?></strong></div>
             <div><span>Status pembayaran</span><strong><?php echo h($paymentStatusLabels[$participant['status_pembayaran']] ?? $participant['status_pembayaran']); ?></strong></div>
             <div><span>Jalur pendaftaran</span><strong><?php echo $participant['jalur_pendaftaran'] === 'internal' ? 'Internal · SDM yayasan' : 'Eksternal · umum'; ?></strong></div>

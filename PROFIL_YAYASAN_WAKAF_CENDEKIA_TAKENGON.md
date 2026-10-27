@@ -1,6 +1,6 @@
 # Profil Yayasan Wakaf Cendekia Takengon
 
-Dokumen ini disusun untuk kebutuhan repositori dan konfigurasi sistem PPDB. Data yang belum terverifikasi secara resmi ditandai untuk dikonfirmasi oleh pengelola yayasan/sekolah sebelum dipublikasikan.
+Dokumen ini disusun untuk kebutuhan repositori dan konfigurasi sistem SPMB. Data yang belum terverifikasi secara resmi ditandai untuk dikonfirmasi oleh pengelola yayasan/sekolah sebelum dipublikasikan.
 
 ## Identitas Yayasan
 
@@ -106,7 +106,7 @@ Yayasan Wakaf Cendekia Takengon
 └── SMP IT Cendekia Takengon (NPSN: 69990330)
 ```
 
-## Kontak PPDB
+## Kontak SPMB
 
 | Unit | Email | Telepon |
 |---|---|---|
@@ -117,7 +117,7 @@ Yayasan Wakaf Cendekia Takengon
 | KB IT Cendekia | Perlu konfirmasi | Perlu konfirmasi |
 | TPA IT Cendekia | Perlu konfirmasi | Perlu konfirmasi |
 
-## Rekomendasi Konfigurasi PPDB
+## Rekomendasi Konfigurasi SPMB
 
 - Kode internal sekolah: `KB-CEN`, `TPA-CEN`, `TK-CEN`, `SD-CEN`, dan `SMP-CEN`.
 - Konfirmasikan kuota, biaya, jadwal, nomor WhatsApp, rekening pembayaran, kepala sekolah, dan dokumen persyaratan sebelum pendaftaran dibuka.
@@ -133,4 +133,4 @@ Yayasan Wakaf Cendekia Takengon
 
 ## Catatan Pembaruan
 
-Dokumen dibuat untuk kebutuhan awal repositori PPDB. Data identitas lembaga sebaiknya diverifikasi ulang oleh administrator sebelum produksi, khususnya nomor telepon sekolah, akreditasi, SK sekolah, nama kepala sekolah, kapasitas penerimaan, biaya, jadwal, dan ketentuan jalur pendaftaran.
+Dokumen dibuat untuk kebutuhan awal repositori SPMB. Data identitas lembaga sebaiknya diverifikasi ulang oleh administrator sebelum produksi, khususnya nomor telepon sekolah, akreditasi, SK sekolah, nama kepala sekolah, kapasitas penerimaan, biaya, jadwal, dan ketentuan jalur pendaftaran.

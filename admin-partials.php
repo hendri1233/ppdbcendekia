@@ -68,7 +68,7 @@ function ppdb_admin_navigation(string $activePage): array
 }
 
 /**
- * Status PPDB dipetakan ke nada warna, label ringkas, dan ikon agar konsisten
+ * Status SPMB dipetakan ke nada warna, label ringkas, dan ikon agar konsisten
  * di seluruh halaman admin.
  */
 function ppdb_admin_status_meta(?string $status): array

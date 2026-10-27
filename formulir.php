@@ -7,7 +7,7 @@ require_once 'formulir_helpers.php';
 start_app_session();
 
 $materialLabels = [
-    'brosur' => 'Brosur PPDB',
+    'brosur' => 'Brosur SPMB',
     'rincian_biaya' => 'Rincian biaya',
     'sop' => 'SOP pendaftaran',
 ];
@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['aksi'] ?? '') === 'simpan_
         } catch (RuntimeException $exception) {
             $draftErrors[] = $meta['label'].': '.$exception->getMessage();
         } catch (Throwable $exception) {
-            error_log('PPDB draft upload failed: '.$exception->getMessage());
+            error_log('SPMB draft upload failed: '.$exception->getMessage());
             $draftErrors[] = $meta['label'].' belum dapat disimpan.';
         }
     }
@@ -321,7 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
                 || !in_array($lockedStatus['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true)
                 || $lockedStatus['status_pembayaran'] !== 'terverifikasi'
             ) {
-                throw new RuntimeException('Pendaftaran ini tidak dapat dibatalkan pada tahap saat ini. Hubungi panitia PPDB.');
+                throw new RuntimeException('Pendaftaran ini tidak dapat dibatalkan pada tahap saat ini. Hubungi panitia SPMB.');
             }
 
             $decline = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='ditolak',status_data='belum_diperiksa',data_diperiksa_oleh=NULL,data_diperiksa_pada=NULL WHERE id_pendaftaran=?");
@@ -342,13 +342,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             $registration['status_pembayaran'] = $lockedStatus['status_pembayaran'];
             $formOpen = false;
             $isRegistrantWithdrawal = true;
-            $notice = 'Pilihan Anda telah dicatat di sistem dan tersedia pada panel panitia PPDB. Jika Anda salah memilih, panitia dapat mengirimkan tautan formulir kembali.';
+            $notice = 'Pilihan Anda telah dicatat di sistem dan tersedia pada panel panitia SPMB. Jika Anda salah memilih, panitia dapat mengirimkan tautan formulir kembali.';
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
             if ($exception instanceof RuntimeException) {
                 $errors[] = $exception->getMessage();
             } else {
-                error_log('PPDB formulir withdrawal failed: '.$exception->getMessage());
+                error_log('SPMB formulir withdrawal failed: '.$exception->getMessage());
                 $errors[] = 'Pilihan Anda belum dapat disimpan. Silakan coba kembali atau hubungi panitia.';
             }
         }
@@ -367,7 +367,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
         $errors[] = 'Baca brosur, rincian biaya, dan SOP sebelum melanjutkan.';
     }
     if (!$allMaterialsPublished) {
-        $errors[] = 'Materi pendaftaran belum lengkap. Hubungi panitia PPDB sebelum melanjutkan.';
+        $errors[] = 'Materi pendaftaran belum lengkap. Hubungi panitia SPMB sebelum melanjutkan.';
     }
     $errors = array_merge($errors, formulir_validate_fields($_POST, $dataSections, $validatedFields));
     $fieldErrors += $validatedFields;
@@ -448,7 +448,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             $lockedStatus = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
             mysqli_stmt_close($lock);
             if (!$lockedStatus || !formulir_is_editable($lockedStatus['status_ppdb'], !empty($lockedStatus['revisi_dibuka']))) {
-                throw new RuntimeException('Formulir ini sudah tidak dapat diisi. Hubungi panitia PPDB.');
+                throw new RuntimeException('Formulir ini sudah tidak dapat diisi. Hubungi panitia SPMB.');
             }
             // Isian lama dibaca sebelum ditimpa; bila ada, kiriman ini adalah revisi.
             $oldValues = formulir_saved_values($conn, $registration['id_pendaftaran']);
@@ -538,7 +538,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             if ($exception instanceof RuntimeException) {
                 $errors[] = $exception->getMessage();
             } else {
-                error_log('PPDB formulir submission failed: '.$exception->getMessage());
+                error_log('SPMB formulir submission failed: '.$exception->getMessage());
                 $errors[] = 'Formulir belum dapat disimpan. Silakan coba lagi.';
             }
         }
@@ -580,7 +580,7 @@ header('Referrer-Policy: no-referrer');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Formulir Lengkap | PPDB Cendekia Takengon</title>
+    <title>Formulir Lengkap | SPMB Cendekia Takengon</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -600,7 +600,7 @@ header('Referrer-Policy: no-referrer');
     <header class="site-header">
         <a class="brand" href="index.php" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
-            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · PPDB online</small></span>
+            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · SPMB online</small></span>
         </a>
         <?php if ($authorized) { ?><a class="back-link" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a><?php } ?>
     </header>
@@ -633,7 +633,7 @@ header('Referrer-Policy: no-referrer');
                 <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
                 <?php if ($sheetSyncFailed) { ?><div class="error-summary" role="alert">Status pendaftaran sudah tersimpan dan terlihat di panel admin, tetapi sinkronisasi ke spreadsheet gagal. Panitia dapat memeriksanya langsung pada data peserta.</div><?php } ?>
                 <?php if ($errors) { ?><div class="error-summary" role="alert"><ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul></div><?php } ?>
-                <p class="intro-copy">Panitia PPDB telah menerima informasi bahwa Anda memilih tidak melanjutkan pengisian formulir untuk <?php echo h($registration['nama_unit'] ?? 'unit pilihan Anda'); ?>. Formulir sementara tidak dapat dibuka. Jika pilihan ini tidak disengaja, silakan hubungi panitia untuk meminta tautan pengisian dikirim kembali.</p>
+                <p class="intro-copy">Panitia SPMB telah menerima informasi bahwa Anda memilih tidak melanjutkan pengisian formulir untuk <?php echo h($registration['nama_unit'] ?? 'unit pilihan Anda'); ?>. Formulir sementara tidak dapat dibuka. Jika pilihan ini tidak disengaja, silakan hubungi panitia untuk meminta tautan pengisian dikirim kembali.</p>
                 <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
             </section>
 
@@ -761,7 +761,7 @@ header('Referrer-Policy: no-referrer');
                         <p class="intro-dialog__greeting"><?php echo h($spmbGuide['closingGreeting'] ?? ''); ?></p>
                         <p><strong><?php echo h($spmbGuide['signOff']['greeting'] ?? ''); ?></strong><br><?php echo h($spmbGuide['signOff']['from'] ?? ''); ?></p>
                     <?php } else { ?>
-                        <p class="error-summary" role="alert">Petunjuk teknis belum dapat dimuat. Silakan hubungi panitia PPDB sebelum melanjutkan.</p>
+                        <p class="error-summary" role="alert">Petunjuk teknis belum dapat dimuat. Silakan hubungi panitia SPMB sebelum melanjutkan.</p>
                     <?php } ?>
                 </div>
                 <div class="confirm-card__actions">
@@ -820,10 +820,10 @@ header('Referrer-Policy: no-referrer');
                                 <img class="participant-material__image" src="<?php echo h($previewUrl); ?>" alt="Pratinjau <?php echo h($materialLabel); ?>">
                             <?php } ?>
                         <?php } elseif (!$body && (!$material || empty($material['nama_file_asli']))) { ?>
-                            <p class="participant-material__missing">Materi ini belum tersedia. Hubungi panitia PPDB.</p>
+                            <p class="participant-material__missing">Materi ini belum tersedia. Hubungi panitia SPMB.</p>
                         <?php } ?>
                         <?php if ($material && !empty($material['nama_file_asli']) && !ppdb_material_has_preview($material)) { ?>
-                            <p class="participant-material__missing">File materi saat ini tidak tersedia. Hubungi panitia PPDB.</p>
+                            <p class="participant-material__missing">File materi saat ini tidak tersedia. Hubungi panitia SPMB.</p>
                         <?php } ?>
                         <?php if ($material && ppdb_material_has_original($material)) { ?>
                             <a class="participant-material__download" href="<?php echo h($downloadUrl); ?>">Unduh file asli: <?php echo h($material['nama_file_asli']); ?></a>
@@ -910,7 +910,7 @@ header('Referrer-Policy: no-referrer');
     <footer class="site-footer">
         <span>Yayasan Wakaf Cendekia Takengon</span>
         <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a>
-        <a class="admin-wa-link" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait formulir PPDB.')); ?>" target="_blank" rel="noopener noreferrer">
+        <a class="admin-wa-link" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait formulir SPMB.')); ?>" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm0 23.54h-.01c-1.93 0-3.83-.52-5.48-1.51l-.39-.23-4.09 1.07 1.09-3.96-.25-.4a10.62 10.62 0 0 1-1.65-5.63c0-5.92 4.85-10.74 10.79-10.74 2.88 0 5.59 1.12 7.62 3.14a10.61 10.61 0 0 1 3.16 7.59c0 5.92-4.85 10.74-10.79 10.74Zm5.92-8.04c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
             WhatsApp Admin <?php echo h(ppdb_admin_whatsapp_display()); ?>
         </a>

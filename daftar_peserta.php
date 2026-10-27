@@ -126,7 +126,7 @@ $progressStages = ['Registrasi', 'Pembayaran', 'Formulir', 'Verifikasi', 'Hasil'
 
 $activeAdminPage = 'registrations';
 $adminPageTitle = 'Data peserta';
-$adminPageDescription = 'Kelola seluruh data pendaftar PPDB, filter per status, unit, dan tahun ajaran.';
+$adminPageDescription = 'Kelola seluruh data pendaftar SPMB, filter per status, unit, dan tahun ajaran.';
 require 'admin_header.php';
 ?>
 <div class="admin-content">
@@ -279,7 +279,7 @@ require 'admin_header.php';
                             </td>
                             <?php if ($isArchived) { ?>
                                 <td data-label="Proses" class="stage-cell stage-cell--archived" colspan="<?php echo count($progressStages); ?>">
-                                    <span class="stage-state is-upcoming">Arsip lama · tidak menggunakan alur PPDB aktif</span>
+                                    <span class="stage-state is-upcoming">Arsip lama · tidak menggunakan alur SPMB aktif</span>
                                 </td>
                             <?php } else {
                                 foreach ($progressStages as $index => $stage) {

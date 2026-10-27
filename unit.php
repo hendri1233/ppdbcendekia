@@ -25,7 +25,7 @@ if (!$unit) {
     exit;
 }
 
-// Status PPDB jalur umum unit ini untuk tahun ajaran aktif.
+// Status SPMB jalur umum unit ini untuk tahun ajaran aktif.
 $quotaStmt = mysqli_prepare($conn, "SELECT q.kuota_eksternal,q.eksternal_dibuka,
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS terisi
     FROM tb_pengaturan_ppdb q WHERE q.kode_unit=? AND q.th_ajaran=? LIMIT 1");
@@ -81,13 +81,13 @@ public_page_start($conn, [
                 </dl>
             </div>
             <div class="side-card">
-                <h2>PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
+                <h2>SPMB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
                 <?php if ($isOpen) { ?>
                     <span class="badge badge--success">Dibuka &middot; <?= $remaining ?> kursi tersisa</span>
                     <a class="button button--primary" href="daftar.php?unit=<?= rawurlencode($code) ?>&amp;tahun=<?= rawurlencode(PUBLIC_PPDB_YEAR) ?>">Daftar ke <?= h($unit['jenjang']) ?></a>
                 <?php } else { ?>
                     <span class="badge badge--neutral"><?= (int) $quota['eksternal_dibuka'] === 1 ? 'Kuota terpenuhi' : 'Belum dibuka' ?></span>
-                    <a class="button button--secondary" href="ppdb.php">Info PPDB</a>
+                    <a class="button button--secondary" href="ppdb.php">Info SPMB</a>
                 <?php } ?>
             </div>
         </aside>

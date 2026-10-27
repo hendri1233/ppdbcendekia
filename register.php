@@ -30,7 +30,7 @@ while ($unit = mysqli_fetch_assoc($unitResult)) {
 $showAdminLayout = !$isBootstrap && !empty($_SESSION['admin_id']);
 $activeAdminPage = 'accounts';
 $adminPageTitle = 'Administrator';
-$adminPageDescription = 'Kelola akun administrator PPDB Yayasan Wakaf Cendekia Takengon.';
+$adminPageDescription = 'Kelola akun administrator SPMB Yayasan Wakaf Cendekia Takengon.';
 
 // Kata sandi sementara 12 karakter tanpa huruf yang mudah tertukar (0/O, 1/l/I).
 function ppdb_temporary_password(): string
@@ -112,7 +112,7 @@ if (!$isBootstrap && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
         $references = [
             'persetujuan pakai ulang token internal' => 'SELECT COUNT(*) AS total FROM tb_token_internal_reuse_approvals WHERE approved_by = ?',
             'undangan internal yang dibuat' => 'SELECT COUNT(*) AS total FROM tb_undangan_internal WHERE dibuat_oleh = ?',
-            'materi PPDB yang diperbarui' => 'SELECT COUNT(*) AS total FROM tb_ppdb_materials WHERE updated_by = ?',
+            'materi SPMB yang diperbarui' => 'SELECT COUNT(*) AS total FROM tb_ppdb_materials WHERE updated_by = ?',
             'kuisioner yang diperbarui' => 'SELECT COUNT(*) AS total FROM tb_ppdb_questionnaires WHERE updated_by = ?',
         ];
         $linked = [];
@@ -334,8 +334,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="Buat akun pengelola PPDB Yayasan Wakaf Cendekia Takengon.">
-    <title><?php echo $isBootstrap ? 'Penyiapan Awal' : 'Admin Baru'; ?> · Panel PPDB Cendekia Takengon</title>
+    <meta name="description" content="Buat akun pengelola SPMB Yayasan Wakaf Cendekia Takengon.">
+    <title><?php echo $isBootstrap ? 'Penyiapan Awal' : 'Admin Baru'; ?> · Panel SPMB Cendekia Takengon</title>
     <link rel="stylesheet" href="css/stlogin.css?v=<?php echo (int) @filemtime(__DIR__.'/css/stlogin.css'); ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -353,12 +353,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 
     <main class="auth-shell">
         <a class="auth-brand" href="index.php">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
-            <span><strong>Wakaf Cendekia</strong><small>Takengon · PPDB</small></span>
+            <span><strong>Wakaf Cendekia</strong><small>Takengon · SPMB</small></span>
         </a>
         <section class="auth-panel">
             <p class="eyebrow"><?php echo $isBootstrap ? 'PENYIAPAN AWAL' : 'Area pengelola'; ?></p>
             <h1>Buat akun admin.</h1>
-            <p class="auth-copy"><?php echo $isBootstrap ? 'Buat akun pengelola pertama untuk memulai.' : 'Tambahkan akun pengelola PPDB.'; ?></p>
+            <p class="auth-copy"><?php echo $isBootstrap ? 'Buat akun pengelola pertama untuk memulai.' : 'Tambahkan akun pengelola SPMB.'; ?></p>
             <?php if ($error !== '') { ?><div class="auth-alert" role="alert"><?php echo h($error); ?></div><?php } ?>
             <form method="post" class="auth-form">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">

@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (mysqli_stmt_execute($save)) {
                 $notice = 'Tautan grup WhatsApp '.$unit['nama_unit'].' berhasil disimpan.';
             } else {
-                error_log('PPDB unit WhatsApp group link save failed: '.mysqli_stmt_error($save));
+                error_log('SPMB unit WhatsApp group link save failed: '.mysqli_stmt_error($save));
                 $error = 'Tautan grup belum dapat disimpan. Silakan coba kembali.';
             }
             mysqli_stmt_close($save);

@@ -1,4 +1,4 @@
-# Penjelasan Alur Kuota Internal dan Eksternal PPDB
+# Penjelasan Alur Kuota Internal dan Eksternal SPMB
 
 ## Tujuan
 
@@ -27,14 +27,14 @@ Kuota khusus merupakan jalur/alokasi tempat, bukan otomatis pembebasan biaya. Bi
 4. Orang tua/wali mengisi data peserta dan kontak. Bila perlu, panitia meminta data pendukung hubungan peserta dengan pegawai.
 5. Setelah panitia memastikan kelayakan, pendaftaran memakai kuota internal untuk unit dan tahun ajaran yang sudah ditentukan pada undangan.
 6. Jika undangan tidak valid/kedaluwarsa atau pegawai tidak memenuhi syarat, pendaftaran internal tidak dibuat. Panitia dapat memberi tautan pendaftaran eksternal bila keluarga ingin mendaftar sebagai pendaftar umum.
-7. Pendaftar mengikuti tahapan lanjutan PPDB yang berlaku: komunikasi panitia, pembayaran (jika dikenakan), pengisian formulir lengkap, pemeriksaan data, dan keputusan penerimaan.
+7. Pendaftar mengikuti tahapan lanjutan SPMB yang berlaku: komunikasi panitia, pembayaran (jika dikenakan), pengisian formulir lengkap, pemeriksaan data, dan keputusan penerimaan.
 
 ## Alur Pendaftaran Eksternal
 
 1. Situs menampilkan tautan atau tombol **Daftar** tersendiri untuk setiap unit dan tahun ajaran yang sedang dibuka. Setiap tautan sudah terikat ke unit, tahun ajaran, dan kuota eksternal; tidak ada pilihan jalur internal/eksternal di formulir.
 2. Orang tua/wali membuka tautan untuk unit dan tahun ajaran yang diinginkan, lalu mengisi data dasar peserta dan kontak.
 3. Server menetapkan pendaftaran sebagai eksternal berdasarkan rute publik yang dipilih dan memeriksa ketersediaan kuota eksternal saat pendaftaran disimpan.
-4. Pendaftar mengikuti tahapan lanjutan PPDB yang berlaku: komunikasi panitia, pembayaran, pengisian formulir lengkap, pemeriksaan data, dan keputusan penerimaan.
+4. Pendaftar mengikuti tahapan lanjutan SPMB yang berlaku: komunikasi panitia, pembayaran, pengisian formulir lengkap, pemeriksaan data, dan keputusan penerimaan.
 
 ## Pencegahan Salah Jalur dan Penyalahgunaan
 

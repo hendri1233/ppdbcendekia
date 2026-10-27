@@ -5,7 +5,7 @@ require_once 'koneksi.php';
 require_super_admin();
 
 $materialTypes = [
-    'brosur' => 'Brosur PPDB',
+    'brosur' => 'Brosur SPMB',
     'rincian_biaya' => 'Rincian biaya',
     'sop' => 'SOP pendaftaran',
 ];
@@ -104,11 +104,11 @@ function ppdb_material_upload(array $file, string $directory, string $role): arr
     $target = rtrim(str_replace('\\', '/', $root), '/').'/'.$directory;
     if (!is_dir($target) && !@mkdir($target, 0700, true) && !is_dir($target)) {
         $error = error_get_last();
-        error_log('PPDB private material directory creation failed: '.$target.'; '.($error['message'] ?? 'unknown filesystem error'));
+        error_log('SPMB private material directory creation failed: '.$target.'; '.($error['message'] ?? 'unknown filesystem error'));
         throw new RuntimeException('Folder privat materi belum dapat dibuat.');
     }
     if (!is_writable($target)) {
-        error_log('PPDB private material directory is not writable: '.$target);
+        error_log('SPMB private material directory is not writable: '.$target);
         throw new RuntimeException('Folder privat materi belum dapat ditulisi.');
     }
     $realDirectory = realpath($target);
@@ -205,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $notice = 'File '.$materialTypes[$materialType].' untuk '.$units[$selectedUnit].' · '.$selectedYear.' berhasil dihapus. Isi materi dan kuisioner tetap tersimpan.';
             if ($failedCleanup) {
-                error_log('PPDB material file cleanup failed after record deletion: '.implode(', ', $failedCleanup));
+                error_log('SPMB material file cleanup failed after record deletion: '.implode(', ', $failedCleanup));
                 $errors[] = 'Data file sudah dihapus dari sistem, tetapi file fisik berikut belum dapat dibersihkan: '.implode(', ', $failedCleanup).'.';
             }
         } catch (Throwable $exception) {
@@ -215,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($exception instanceof RuntimeException) {
                 $errors[] = $exception->getMessage();
             } else {
-                error_log('PPDB material file deletion failed: '.$exception->getMessage());
+                error_log('SPMB material file deletion failed: '.$exception->getMessage());
                 $errors[] = 'File belum dapat dihapus. Periksa status penyimpanan dan coba kembali.';
             }
         }
@@ -244,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $settingExists = mysqli_fetch_assoc(mysqli_stmt_get_result($settingStatement));
             mysqli_stmt_close($settingStatement);
             if (!$settingExists) {
-                throw new RuntimeException('Konfigurasi PPDB untuk unit/tahun ini belum tersedia.');
+                throw new RuntimeException('Konfigurasi SPMB untuk unit/tahun ini belum tersedia.');
             }
             $adminId = (int) $_SESSION['admin_id'];
             foreach ($materialTypes as $type => $label) {
@@ -346,7 +346,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($exception instanceof RuntimeException) {
                 $errors[] = $exception->getMessage();
             } else {
-                error_log('PPDB material save failed: '.$exception->getMessage());
+                error_log('SPMB material save failed: '.$exception->getMessage());
                 $errors[] = 'Materi belum dapat disimpan. Periksa file dan coba lagi.';
             }
         }

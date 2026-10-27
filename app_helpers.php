@@ -106,14 +106,14 @@ function ppdb_public_base_url(): string
     if ($configuredUrl !== '') {
         $parts = parse_url($configuredUrl);
         if (!is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true) || empty($parts['host']) || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
-            throw new RuntimeException('Alamat situs PPDB belum dikonfigurasi dengan benar.');
+            throw new RuntimeException('Alamat situs SPMB belum dikonfigurasi dengan benar.');
         }
         return rtrim($configuredUrl, '/');
     }
 
     $host = $_SERVER['HTTP_HOST'] ?? '';
     if (!preg_match('/^[A-Za-z0-9.-]+(?::[0-9]{1,5})?$/D', $host)) {
-        throw new RuntimeException('Alamat situs PPDB tidak dapat ditentukan.');
+        throw new RuntimeException('Alamat situs SPMB tidak dapat ditentukan.');
     }
     $hostname = strtolower(preg_replace('/:[0-9]+$/', '', $host) ?? $host);
     $isLocal = $hostname === 'localhost' || preg_match('/^127(?:\.[0-9]{1,3}){3}$/', $hostname);
@@ -342,7 +342,7 @@ function ppdb_status_catalog(): array
             'short' => 'Tindak lanjut',
             'step' => 5,
             'tone' => 'danger',
-            'public' => 'Pendaftaran Anda memerlukan tindak lanjut. Hubungi panitia PPDB.',
+            'public' => 'Pendaftaran Anda memerlukan tindak lanjut. Hubungi panitia SPMB.',
         ],
         'data_lama' => [
             'label' => 'Data arsip lama',
@@ -366,7 +366,7 @@ function ppdb_status_info(?string $status): array
     ];
 }
 
-/** Lokasi bersama untuk bukti pembayaran dan berkas privat PPDB. */
+/** Lokasi bersama untuk bukti pembayaran dan berkas privat SPMB. */
 function ppdb_payment_storage_root(): string
 {
     $configured = trim((string) (getenv('PPDB_PAYMENT_STORAGE') ?: ''));
@@ -437,11 +437,11 @@ function ppdb_store_private_upload(array $file, string $subDirectory, array $all
     $targetDirectory = rtrim(str_replace('\\', '/', $root), '/').'/'.trim($subDirectory, '/');
     if (!is_dir($targetDirectory) && !@mkdir($targetDirectory, 0700, true) && !is_dir($targetDirectory)) {
         $error = error_get_last();
-        error_log('PPDB private upload directory creation failed: '.$targetDirectory.'; '.($error['message'] ?? 'unknown filesystem error'));
+        error_log('SPMB private upload directory creation failed: '.$targetDirectory.'; '.($error['message'] ?? 'unknown filesystem error'));
         throw new RuntimeException('Penyimpanan berkas sedang tidak tersedia. Hubungi panitia.');
     }
     if (!is_writable($targetDirectory)) {
-        error_log('PPDB private upload directory is not writable: '.$targetDirectory);
+        error_log('SPMB private upload directory is not writable: '.$targetDirectory);
         throw new RuntimeException('Penyimpanan berkas sedang tidak tersedia. Hubungi panitia.');
     }
     $realTargetDirectory = realpath($targetDirectory);
@@ -495,7 +495,7 @@ function ppdb_whatsapp_link(string $phone, string $message): string
     return 'https://wa.me/'.$number.'?text='.rawurlencode($message);
 }
 
-/** Kontak resmi admin PPDB untuk ditampilkan dan dicantumkan pada pesan pendaftar. */
+/** Kontak resmi admin SPMB untuk ditampilkan dan dicantumkan pada pesan pendaftar. */
 function ppdb_admin_whatsapp_number(): string
 {
     return '6285184839694';
@@ -514,7 +514,7 @@ function ppdb_admin_whatsapp_url(string $message = ''): string
 
 function ppdb_admin_contact_message(): string
 {
-    return 'Bantuan panitia PPDB: '.ppdb_admin_whatsapp_display().' ('.ppdb_admin_whatsapp_url().')';
+    return 'Bantuan panitia SPMB: '.ppdb_admin_whatsapp_display().' ('.ppdb_admin_whatsapp_url().')';
 }
 
 /** Daftar nomor pendaftar beserta perannya, tanpa duplikat dan tanpa yang kosong. */
@@ -552,12 +552,12 @@ function ppdb_status_reminder_message(array $registration): string
         'menunggu_formulir' => 'Kami mengingatkan bahwa formulir pendaftaran ananda '.$student.' belum dilengkapi. Mohon isi formulir melalui tautan yang telah kami kirimkan sebelumnya.',
         'formulir_terisi' => 'Formulir pendaftaran ananda '.$student.' sudah kami terima dan sedang diverifikasi panitia.',
         'daftar_tunggu' => 'Pendaftaran ananda '.$student.' saat ini berada dalam daftar tunggu kuota. Panitia akan mengabarkan perkembangan selanjutnya.',
-        'ditolak' => 'Pendaftaran ananda '.$student.' memerlukan tindak lanjut. Mohon hubungi panitia PPDB untuk informasi lebih lanjut.',
+        'ditolak' => 'Pendaftaran ananda '.$student.' memerlukan tindak lanjut. Mohon hubungi panitia SPMB untuk informasi lebih lanjut.',
     ];
     $body = $bodies[$registration['status_ppdb'] ?? ''] ?? 'Kami ingin menyampaikan informasi terkait pendaftaran ananda '.$student.'.';
 
     return implode("\n", [
-        'Assalamualaikum Ayah/Bunda pendaftar PPDB Cendekia Takengon.',
+        'Assalamualaikum Ayah/Bunda pendaftar SPMB Cendekia Takengon.',
         $body,
         'Kode pendaftaran: '.$code,
         ppdb_admin_contact_message(),
@@ -601,7 +601,7 @@ function ppdb_prepare_payment_link(mysqli $conn, string $registrationId): array
 
     $lines = [
         'Assalamu’alaikum warahmatullahi wabarakatuh, Ayah/Bunda.',
-        'Terima kasih telah mendaftarkan ananda '.$registration['nm_peserta'].' pada PPDB Yayasan Wakaf Cendekia Takengon.',
+        'Terima kasih telah mendaftarkan ananda '.$registration['nm_peserta'].' pada SPMB Yayasan Wakaf Cendekia Takengon.',
         'Berikut kami sampaikan informasi pembayaran pendaftaran:',
         'Unit pendidikan: '.($registration['nama_unit'] ?? '-'),
         'Tahun ajaran: '.$registration['th_ajaran'],
@@ -688,7 +688,7 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
             'Assalamu’alaikum warahmatullahi wabarakatuh.',
             '',
             'Yth. Ayah/Bunda/Wali dari Ananda '.$registration['nm_peserta'].',',
-            'Panitia PPDB Yayasan Wakaf Cendekia Takengon membuka kembali formulir pendaftaran Ananda untuk diperbaiki.',
+            'Panitia SPMB Yayasan Wakaf Cendekia Takengon membuka kembali formulir pendaftaran Ananda untuk diperbaiki.',
             'Kode pendaftaran: '.$registrationId,
         ];
         if ($revisionNote !== '') {
@@ -723,7 +723,7 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
             '3. Periksa kembali seluruh isian sebelum menekan tombol kirim.',
             '',
             'Formulir hanya dapat dikirim satu kali. Mohon pastikan seluruh data sudah benar sebelum dikirim.',
-            'Apabila Ayah/Bunda memerlukan bantuan, silakan hubungi admin PPDB melalui nomor di bawah.',
+            'Apabila Ayah/Bunda memerlukan bantuan, silakan hubungi admin SPMB melalui nomor di bawah.',
             '',
             'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
             'Wassalamu’alaikum warahmatullahi wabarakatuh.',

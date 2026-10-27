@@ -82,7 +82,7 @@ try {
     if (is_file($stored['path'])) {
         unlink($stored['path']);
     }
-    error_log('PPDB payment proof upload failed: '.get_class($exception));
+    error_log('SPMB payment proof upload failed: '.get_class($exception));
     return_to_applicant_status($registrationId, $receiptToken, 'Bukti belum dapat dikirim. Silakan coba lagi.');
 }
 

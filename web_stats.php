@@ -280,7 +280,7 @@ function ppdb_geo_cached_request(mysqli $conn, string $cacheKey, string $endpoin
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 6,
         CURLOPT_CONNECTTIMEOUT => 3,
-        CURLOPT_USERAGENT => 'PPDB Cendekia Takengon (+https://cendekiatakengon.or.id)',
+        CURLOPT_USERAGENT => 'SPMB Cendekia Takengon (+https://cendekiatakengon.or.id)',
         CURLOPT_HTTPHEADER => ['Accept-Language: id'],
     ]);
     $body = curl_exec($curl);

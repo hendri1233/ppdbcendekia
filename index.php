@@ -19,7 +19,7 @@ $headline = cms_setting($conn, 'home_headline', 'Shaleh, cerdas, dan terampil.')
 $lead = cms_setting($conn, 'home_lead', 'Yayasan Wakaf Cendekia Takengon menaungi '.count($units).' satuan pendidikan Islam terpadu di Bebesen, Aceh Tengah, dari Kelompok Bermain hingga SMP.');
 $introHtml = cms_setting($conn, 'home_intro_html');
 
-// Status PPDB singkat untuk band ajakan di bawah halaman.
+// Status SPMB singkat untuk band ajakan di bawah halaman.
 $openResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tb_pengaturan_ppdb q WHERE q.th_ajaran='".PUBLIC_PPDB_YEAR."' AND q.eksternal_dibuka=1 AND q.kuota_eksternal >
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama'))");
 $openUnitCount = (int) (mysqli_fetch_assoc($openResult)['total'] ?? 0);
@@ -27,7 +27,7 @@ $openUnitCount = (int) (mysqli_fetch_assoc($openResult)['total'] ?? 0);
 $siteUrl = ppdb_public_base_url();
 public_page_start($conn, [
     'title' => PUBLIC_SITE_NAME,
-    'description' => 'Situs resmi Yayasan Wakaf Cendekia Takengon: profil yayasan, unit KB, TPA, TK, SD, dan SMP Islam terpadu, kurikulum, berita, dan PPDB '.PUBLIC_PPDB_YEAR.'.',
+    'description' => 'Situs resmi Yayasan Wakaf Cendekia Takengon: profil yayasan, unit KB, TPA, TK, SD, dan SMP Islam terpadu, kurikulum, berita, dan SPMB '.PUBLIC_PPDB_YEAR.'.',
     'active' => 'beranda',
     'path' => '',
     'image' => $slides[0]['image_path'],
@@ -57,7 +57,7 @@ public_page_start($conn, [
             <p class="hero-slider__lead"><?= h($lead) ?></p>
             <div class="hero-slider__actions">
                 <a class="button button--light button--lg" href="tentang.php">Kenali yayasan</a>
-                <a class="button button--ghost-light button--lg" href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a>
+                <a class="button button--ghost-light button--lg" href="ppdb.php">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></a>
             </div>
             <p class="hero-slider__caption" aria-live="polite">
                 <span data-slide-caption><?= h(trim(($slides[0]['title'] ? $slides[0]['title'].' — ' : '').($slides[0]['caption'] ?? ''), ' —')) ?></span>
@@ -83,7 +83,7 @@ public_page_start($conn, [
                     </figure>
                 <?php } ?>
             </div>
-            <span class="hero-split__badge"><small>PPDB</small><?= h(PUBLIC_PPDB_YEAR) ?></span>
+            <span class="hero-split__badge"><small>SPMB</small><?= h(PUBLIC_PPDB_YEAR) ?></span>
         </div>
     </div>
 </section>
@@ -120,7 +120,7 @@ public_page_start($conn, [
                     <h2 id="unit-title">Unit pendidikan</h2>
                     <p>Lima jenjang di bawah satu yayasan. Pilih unit untuk melihat profil, kontak, dan beritanya.</p>
                 </div>
-                <a class="text-link" href="ppdb.php#unit">Lihat kuota PPDB</a>
+                <a class="text-link" href="ppdb.php#unit">Lihat kuota SPMB</a>
             </header>
             <div class="unit-grid unit-grid--list">
                 <?php foreach ($units as $unit) { ?>
@@ -187,13 +187,13 @@ public_page_start($conn, [
             <div class="ppdb-band__glass">
             <div>
                 <p class="kicker">Penerimaan peserta didik baru</p>
-                <h2 id="ppdb-title">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
+                <h2 id="ppdb-title">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
                 <p><?= $openUnitCount > 0
                     ? h($openUnitCount.' dari '.count($units).' unit sedang menerima pendaftar. Registrasi awal hanya butuh beberapa menit.')
                     : 'Pendaftaran belum dibuka. Lihat informasi kuota, alur, dan persyaratan terlebih dahulu.' ?></p>
             </div>
             <div class="ppdb-band__actions">
-                <a class="button button--light button--lg" href="ppdb.php">Info PPDB</a>
+                <a class="button button--light button--lg" href="ppdb.php">Info SPMB</a>
                 <?php if ($openUnitCount > 0) { ?><a class="button button--ghost-light button--lg" href="daftar.php">Daftar sekarang</a><?php } ?>
             </div>
             </div>

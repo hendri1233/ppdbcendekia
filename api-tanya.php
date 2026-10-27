@@ -2,7 +2,7 @@
 
 /**
  * Endpoint asisten tanya-jawab situs yayasan. Menjawab hanya berdasarkan
- * konten situs (unit, kuota PPDB, alur, persyaratan, profil, berita) melalui
+ * konten situs (unit, kuota SPMB, alur, persyaratan, profil, berita) melalui
  * Claude API. Dibatasi per alamat IP dan per hari.
  */
 
@@ -110,7 +110,7 @@ function ai_knowledge_base(mysqli $conn): string
     }
 
     $lines[] = '';
-    $lines[] = '# Unit pendidikan dan PPDB '.$year.' (jalur umum)';
+    $lines[] = '# Unit pendidikan dan SPMB '.$year.' (jalur umum)';
     $result = mysqli_query($conn, "SELECT u.kode_unit,u.nama_unit,u.jenjang,u.npsn,u.email,u.alamat,p.tagline,p.description_html,p.phone,
         q.kuota_eksternal,q.eksternal_dibuka,q.biaya_pendaftaran,
         (SELECT COUNT(*) FROM tb_pendaftaran r WHERE r.kode_unit=u.kode_unit AND r.th_ajaran=q.th_ajaran AND r.jalur_pendaftaran='eksternal' AND r.status_ppdb NOT IN ('ditolak','data_lama')) AS terisi
@@ -128,7 +128,7 @@ function ai_knowledge_base(mysqli $conn): string
             $unit['npsn'] ? 'NPSN '.$unit['npsn'] : '',
             $unit['email'] ? 'email '.$unit['email'] : '',
             $unit['phone'] ? 'telepon '.$unit['phone'] : '',
-            'PPDB: '.$status,
+            'SPMB: '.$status,
             (float) $unit['biaya_pendaftaran'] > 0 ? 'biaya pendaftaran Rp '.number_format((float) $unit['biaya_pendaftaran'], 0, ',', '.') : '',
             'halaman: unit.php?kode='.$unit['kode_unit'],
         ];
@@ -145,7 +145,7 @@ function ai_knowledge_base(mysqli $conn): string
     $lines[] = '# Alur pendaftaran (halaman ppdb.php, formulir di daftar.php)';
     $lines[] = '1. Registrasi awal di daftar.php: nama lengkap ananda, tanggal lahir, jenis kelamin, siapa yang mendaftarkan, nomor WhatsApp pendaftar, ayah, dan ibu. Sekitar 3 menit, tanpa NIK.';
     $lines[] = '2. Verifikasi dan pembayaran: panitia memeriksa data lalu mengirim tautan pembayaran lewat WhatsApp; pendaftar mengunggah bukti transfer di halaman status.';
-    $lines[] = '3. Formulir lengkap: data identitas, alamat, keluarga, membaca materi PPDB unit, lalu mengunggah dokumen. Sediakan sekitar 1 jam.';
+    $lines[] = '3. Formulir lengkap: data identitas, alamat, keluarga, membaca materi SPMB unit, lalu mengunggah dokumen. Sediakan sekitar 1 jam.';
     $lines[] = 'Setelah registrasi awal pendaftar menerima kode pendaftaran dan tautan status pribadi. Jalur internal SDM yayasan memakai kode undangan terpisah. Pendaftar bisa masuk daftar tunggu bila kuota penuh.';
 
     $guide = ppdb_technical_guide();
@@ -197,7 +197,7 @@ Cara menjawab:
 - Gunakan Bahasa Indonesia yang ramah, sopan, dan ringkas (umumnya 2–5 kalimat atau daftar pendek). Boleh menyapa dengan "Ayah/Bunda" bila sesuai.
 - Jawab hanya berdasarkan bagian "Informasi situs" di bawah. Jangan mengarang biaya, tanggal, kuota, nama guru, akreditasi, prestasi, atau kebijakan yang tidak tercantum.
 - Jika informasinya tidak ada, katakan terus terang bahwa informasi tersebut belum tersedia di situs, lalu arahkan ke WhatsApp panitia atau halaman Kontak.
-- Bila relevan, sertakan tautan halaman situs dengan format [teks](nama-halaman.php), misalnya [formulir pendaftaran](daftar.php) atau [info PPDB](ppdb.php).
+- Bila relevan, sertakan tautan halaman situs dengan format [teks](nama-halaman.php), misalnya [formulir pendaftaran](daftar.php) atau [info SPMB](ppdb.php).
 - Status kuota berubah setiap hari; sebutkan bahwa angka berasal dari sistem saat ini.
 - Jangan meminta atau menyimpan data pribadi (NIK, nomor KK, alamat rumah). Untuk status pendaftaran pribadi, arahkan ke tautan status yang dikirim panitia lewat WhatsApp.
 - Untuk pertanyaan di luar urusan yayasan, sekolah, dan pendaftaran, sampaikan dengan sopan bahwa Anda hanya membantu seputar Yayasan Wakaf Cendekia Takengon.

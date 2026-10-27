@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Definisi isian formulir lengkap PPDB, dipakai bersama oleh formulir.php,
+ * Definisi isian formulir lengkap SPMB, dipakai bersama oleh formulir.php,
  * detail-peserta.php, pengaturan-formulir.php, dan sinkronisasi Google Sheets.
  *
  * Setiap field menyimpan ke salah satu tempat:
@@ -244,7 +244,7 @@ function formulir_data_sections(): array
                 ['name' => 'tinggi_badan_cm', 'label' => 'Tinggi badan (cm)', 'type' => 'text', 'inputmode' => 'decimal', 'pattern' => '[0-9]+([,.][0-9]{1,2})?', 'decimal' => true, 'min' => 30, 'max' => 250, 'numeric' => true, 'hint' => 'Koma atau titik dapat digunakan untuk angka desimal. Jika belum tahu, dapat diukur di sekolah.', 'store' => 'detail'],
                 ['name' => 'berat_badan_kg', 'label' => 'Berat badan (kg)', 'type' => 'text', 'inputmode' => 'decimal', 'pattern' => '[0-9]+([,.][0-9]{1,2})?', 'decimal' => true, 'min' => 1, 'max' => 300, 'numeric' => true, 'hint' => 'Koma atau titik dapat digunakan untuk angka desimal.', 'store' => 'detail'],
                 ['name' => 'lingkar_kepala_cm', 'label' => 'Lingkar kepala (cm)', 'type' => 'text', 'inputmode' => 'decimal', 'pattern' => '[0-9]+([,.][0-9]{1,2})?', 'decimal' => true, 'min' => 20, 'max' => 100, 'numeric' => true, 'hint' => 'Koma atau titik dapat digunakan untuk angka desimal.', 'store' => 'detail'],
-                ['name' => 'sumber_informasi', 'label' => 'Mengetahui PPDB dari', 'type' => 'select', 'wide' => true, 'store' => 'pendaftaran', 'options' => formulir_options(['Keluarga atau alumni', 'Guru atau karyawan', 'Brosur', 'Media sosial', 'Website', 'Lainnya'])],
+                ['name' => 'sumber_informasi', 'label' => 'Mengetahui SPMB dari', 'type' => 'select', 'wide' => true, 'store' => 'pendaftaran', 'options' => formulir_options(['Keluarga atau alumni', 'Guru atau karyawan', 'Brosur', 'Media sosial', 'Website', 'Lainnya'])],
             ],
         ],
         'ayah' => [

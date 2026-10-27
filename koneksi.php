@@ -11,7 +11,7 @@ $db = getenv('DB_NAME') ?: 'ppdb_cendekia';
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 if (!$conn) {
-    error_log('PPDB database connection failed: '.mysqli_connect_error());
+    error_log('SPMB database connection failed: '.mysqli_connect_error());
     http_response_code(500);
     exit('Layanan pendaftaran sedang tidak tersedia. Silakan hubungi panitia.');
 }

@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'valid
             }
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
-            error_log('PPDB internal token validation failed: '.$exception->getMessage());
+            error_log('SPMB internal token validation failed: '.$exception->getMessage());
             $tokenEntryError = 'Kode belum dapat diperiksa. Silakan coba kembali.';
         }
     }
@@ -378,7 +378,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             if ($exception instanceof RuntimeException) {
                 $errors[] = $exception->getMessage();
             } else {
-                error_log('PPDB initial registration transaction failed: '.$exception->getMessage());
+                error_log('SPMB initial registration transaction failed: '.$exception->getMessage());
                 $errors[] = 'Pendaftaran belum dapat disimpan. Periksa kembali data lalu coba lagi.';
             }
         }
@@ -391,8 +391,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="Registrasi awal PPDB Yayasan Wakaf Cendekia Takengon. Isi data dasar, tunggu verifikasi, lalu lengkapi formulir.">
-    <title>Registrasi Awal | PPDB Yayasan Wakaf Cendekia Takengon</title>
+    <meta name="description" content="Registrasi awal SPMB Yayasan Wakaf Cendekia Takengon. Isi data dasar, tunggu verifikasi, lalu lengkapi formulir.">
+    <title>Registrasi Awal | SPMB Yayasan Wakaf Cendekia Takengon</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -412,9 +412,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <header class="site-header">
         <a class="brand" href="index.php" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
-            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · PPDB online</small></span>
+            <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · SPMB online</small></span>
         </a>
-        <span class="daftar-year">PPDB <?php echo h($routeOffer['th_ajaran'] ?? '2027/2028'); ?></span>
+        <span class="daftar-year">SPMB <?php echo h($routeOffer['th_ajaran'] ?? '2027/2028'); ?></span>
         <a class="back-link" href="index.php">Kembali ke beranda</a>
     </header>
 
@@ -457,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             </div>
             <div class="daftar-card daftar-card--help">
                 <h2>Butuh bantuan?</h2>
-                <p>Hubungi nomor WhatsApp resmi PPDB. Panitia tidak pernah meminta transfer lewat nomor lain.</p>
+                <p>Hubungi nomor WhatsApp resmi SPMB. Panitia tidak pernah meminta transfer lewat nomor lain.</p>
                 <a class="daftar-help-link" href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a>
             </div>
         </aside>
@@ -474,7 +474,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                     </div>
                 <?php } ?>
                 <?php if (!$openOffers) { ?>
-                    <div class="error-summary" role="status"><strong>Pendaftaran eksternal belum tersedia</strong><ul><li>Belum ada kuota eksternal yang dibuka untuk tahun ajaran 2027/2028 atau kuota telah terpenuhi. Silakan hubungi panitia PPDB.</li></ul></div>
+                    <div class="error-summary" role="status"><strong>Pendaftaran eksternal belum tersedia</strong><ul><li>Belum ada kuota eksternal yang dibuka untuk tahun ajaran 2027/2028 atau kuota telah terpenuhi. Silakan hubungi panitia SPMB.</li></ul></div>
                 <?php } ?>
                 <form class="registration-form" id="form-utama" action="daftar.php" method="post" autocomplete="on" novalidate>
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
@@ -482,7 +482,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <div class="section-heading">
                             <div><p class="route-tag">Pendaftaran</p><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Pilih unit dan tahun ajaran, lalu isi tujuh data awal. NIK dan dokumen menyusul setelah pembayaran.</p></div>
                         </div>
-                        <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi PPDB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
+                        <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
                         <div class="field-grid">
                             <div class="field field-wide">
                                 <label for="external_route">Unit pendidikan dan tahun ajaran <span class="required-mark" aria-hidden="true">*</span></label>
@@ -540,7 +540,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                             <p><?php echo h($routeOffer['nama_unit']); ?> · Tahun ajaran <?php echo h($routeOffer['th_ajaran']); ?></p>
                         </div>
                     </div>
-                    <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi PPDB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
+                    <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
                 </section>
 
                 <?php if ($errors) { ?>

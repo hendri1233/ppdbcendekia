@@ -5,7 +5,7 @@ require_admin();
 
 $activeAdminPage = 'password';
 $adminPageTitle = 'Ubah kata sandi';
-$adminPageDescription = 'Ganti kata sandi akun pengelola PPDB Anda.';
+$adminPageDescription = 'Ganti kata sandi akun pengelola SPMB Anda.';
 $error = '';
 $success = !empty($_SESSION['password_changed']);
 unset($_SESSION['password_changed']);

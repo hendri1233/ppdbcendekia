@@ -1,5 +1,5 @@
 /**
- * Halaman PPDB: grafik pengunjung harian dengan tooltip dan navigasi keyboard.
+ * Halaman SPMB: grafik pengunjung harian dengan tooltip dan navigasi keyboard.
  * Menu, tema, dan akordeon ditangani js/site.js.
  */
 (function () {

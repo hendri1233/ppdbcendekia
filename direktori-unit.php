@@ -38,7 +38,7 @@ public_page_start($conn, [
             <div class="unit-directory-filter__field"><label for="unit-jenjang">Jenjang</label><select id="unit-jenjang" name="jenjang"><option value="">Semua jenjang</option><?php foreach ($jenjangPilihan as $pilihan) { ?><option value="<?= h($pilihan) ?>"<?= $jenjang === $pilihan ? ' selected' : '' ?>><?= h(ppdb_jenjang_label($pilihan)) ?></option><?php } ?></select></div>
             <div class="unit-directory-filter__actions"><button class="button button--primary" type="submit">Cari unit</button><a class="button button--secondary" href="direktori-unit.php">Reset</a></div>
         </form>
-        <header class="section-head section-head--split unit-directory-heading"><div><h2>Unit Cendekia</h2><p><?= count($filteredUnits) ?> dari <?= count($units) ?> unit</p></div><a class="text-link" href="ppdb.php#unit">Lihat informasi PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a></header>
+        <header class="section-head section-head--split unit-directory-heading"><div><h2>Unit Cendekia</h2><p><?= count($filteredUnits) ?> dari <?= count($units) ?> unit</p></div><a class="text-link" href="ppdb.php#unit">Lihat informasi SPMB <?= h(PUBLIC_PPDB_YEAR) ?></a></header>
         <?php if (!$filteredUnits) { ?><div class="empty-note"><strong>Unit tidak ditemukan.</strong><span>Coba kata kunci atau jenjang yang berbeda.</span></div><?php } else { ?>
             <div class="unit-grid">
                 <?php foreach ($filteredUnits as $unit) { ?>

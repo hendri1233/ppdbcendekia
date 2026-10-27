@@ -84,7 +84,7 @@ function public_navigation(mysqli $conn): array
             ['href' => 'cerita.php#alumni', 'label' => 'Cerita alumni'],
         ]],
         ['key' => 'berita', 'href' => 'berita.php', 'label' => 'Berita'],
-        ['key' => 'ppdb', 'href' => 'ppdb.php', 'label' => 'PPDB'],
+        ['key' => 'ppdb', 'href' => 'ppdb.php', 'label' => 'SPMB'],
         ['key' => 'kontak', 'href' => 'kontak.php', 'label' => 'Kontak'],
     ];
 }
@@ -177,7 +177,7 @@ function public_page_start(mysqli $conn, array $page): void
                     </li>
                 <?php } ?>
             </ul>
-            <a class="button button--primary nav-apply" href="daftar.php">Daftar PPDB</a>
+            <a class="button button--primary nav-apply" href="daftar.php">Daftar SPMB</a>
         </nav>
 
         <div class="header-tools">
@@ -245,14 +245,14 @@ function public_page_end(mysqli $conn): void
                 <li><a href="direktori-unit.php">Direktori unit</a></li>
                 <li><a href="kurikulum.php">Kurikulum</a></li>
                 <li><a href="berita.php">Berita</a></li>
-                <li><a href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a></li>
+                <li><a href="ppdb.php">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></a></li>
                 <li><a href="kontak.php">Kontak</a></li>
             </ul>
         </div>
 
         <div>
             <div class="footer-ppdb">
-                <h2 class="footer-heading">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
+                <h2 class="footer-heading">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
                 <p class="footer-note">Pendaftaran dibuka per unit. Registrasi awal hanya butuh beberapa menit.</p>
                 <a class="button button--light button--sm footer-cta" href="daftar.php">Daftar sekarang</a>
             </div>
@@ -284,11 +284,11 @@ function public_page_end(mysqli $conn): void
                 <button class="assistant__close" type="button" aria-label="Tutup asisten" data-assistant-close><?= public_icon('close') ?></button>
             </header>
             <div class="assistant__log" data-assistant-log aria-live="polite">
-                <div class="assistant__msg assistant__msg--bot"><p>Assalamu’alaikum. Silakan bertanya tentang unit pendidikan, kurikulum, atau pendaftaran PPDB.</p></div>
+                <div class="assistant__msg assistant__msg--bot"><p>Assalamu’alaikum. Silakan bertanya tentang unit pendidikan, kurikulum, atau pendaftaran SPMB.</p></div>
                 <div class="assistant__suggest" data-assistant-suggest>
                     <button type="button">Unit apa saja yang menerima pendaftar?</button>
                     <button type="button">Dokumen apa yang perlu disiapkan?</button>
-                    <button type="button">Bagaimana alur pendaftaran PPDB?</button>
+                    <button type="button">Bagaimana alur pendaftaran SPMB?</button>
                 </div>
             </div>
             <form class="assistant__form" data-assistant-form>

@@ -108,7 +108,7 @@ $faqSchema = [
 $check = '<svg class="i-check" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m5 10.5 3.2 3L15 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 public_page_start($conn, [
-    'title' => 'PPDB '.$activeYear,
+    'title' => 'SPMB '.$activeYear,
     'description' => 'Penerimaan peserta didik baru '.$activeYear.' untuk KB, TPA, TK, SD, dan SMP Islam terpadu Yayasan Wakaf Cendekia Takengon: kuota per unit, alur, persyaratan, dan tanya jawab.',
     'active' => 'ppdb',
     'path' => 'ppdb.php',
@@ -124,7 +124,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
 <section class="page-hero page-hero--ppdb">
     <div class="shell ppdb-hero">
         <div>
-            <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">PPDB</li></ol>
+            <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">SPMB</li></ol>
             <p class="kicker">Penerimaan peserta didik baru &middot; Tahun ajaran <?= h($activeYear) ?></p>
             <h1>Pendaftaran daring, dipandu panitia melalui WhatsApp.</h1>
             <p>Lihat kuota setiap unit, ikuti tiga tahap pendaftaran, dan siapkan dokumen yang diperlukan sebelum mengisi formulir lengkap.</p>
@@ -133,8 +133,8 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                 <a class="button button--quiet button--lg" href="#persiapan">Lihat persyaratan</a>
             </div>
         </div>
-        <aside class="ppdb-summary" aria-label="Ringkasan PPDB <?= h($activeYear) ?>">
-            <p class="ppdb-summary__eyebrow">PPDB <?= h($activeYear) ?></p>
+        <aside class="ppdb-summary" aria-label="Ringkasan SPMB <?= h($activeYear) ?>">
+            <p class="ppdb-summary__eyebrow">SPMB <?= h($activeYear) ?></p>
             <dl>
                 <div><dt>Unit dibuka</dt><dd><?= $summaryOpen ?><small> / <?= count($units) ?></small></dd></div>
                 <div><dt>Total kuota</dt><dd><?= number_format($summaryQuota, 0, ',', '.') ?></dd></div>
@@ -146,7 +146,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
     </div>
 </section>
 
-<nav class="subpage-nav" aria-label="Bagian halaman PPDB" data-spy>
+<nav class="subpage-nav" aria-label="Bagian halaman SPMB" data-spy>
     <ul class="shell">
         <li><a href="#unit">Unit &amp; kuota</a></li>
         <li><a href="#alur">Alur</a></li>
@@ -241,7 +241,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                 <li class="step">
                     <span class="step__number">3</span>
                     <h3>Formulir lengkap</h3>
-                    <p>Isi data identitas, alamat, dan keluarga, baca materi PPDB unit tujuan, lalu unggah dokumen pendukung.</p>
+                    <p>Isi data identitas, alamat, dan keluarga, baca materi SPMB unit tujuan, lalu unggah dokumen pendukung.</p>
                     <p class="step__meta">Sediakan waktu sekitar 1 jam</p>
                 </li>
             </ol>

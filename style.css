@@ -1986,7 +1986,7 @@ dd {
     }
 }
 
-/* ---------------- PPDB band di beranda ---------------- */
+/* ---------------- SPMB band di beranda ---------------- */
 
 .ppdb-band {
     position: relative;
@@ -2425,7 +2425,7 @@ dd {
     overflow-wrap: anywhere;
 }
 
-/* ---------------- PPDB: papan unit ---------------- */
+/* ---------------- SPMB: papan unit ---------------- */
 
 .unit-board {
     display: grid;
@@ -2552,7 +2552,7 @@ dd {
     font-size: var(--fs-sm);
 }
 
-/* ---------------- PPDB: hero dan ringkasan ---------------- */
+/* ---------------- SPMB: hero dan ringkasan ---------------- */
 
 .ppdb-hero {
     display: grid;
@@ -2674,7 +2674,7 @@ dd {
     border-color: var(--pub-green-600);
 }
 
-/* ---------------- PPDB: alur ---------------- */
+/* ---------------- SPMB: alur ---------------- */
 
 .steps {
     position: relative;
@@ -2746,7 +2746,7 @@ dd {
     color: var(--pub-ink);
 }
 
-/* ---------------- PPDB: persiapan ---------------- */
+/* ---------------- SPMB: persiapan ---------------- */
 
 .prep-grid {
     display: grid;
@@ -2885,7 +2885,7 @@ dd {
     padding-top: 0;
 }
 
-/* ---------------- PPDB: angka ---------------- */
+/* ---------------- SPMB: angka ---------------- */
 
 .metrics {
     display: grid;
@@ -3148,7 +3148,7 @@ dd {
     gap: 32px;
 }
 
-/* Penutup halaman PPDB: kartu gradien seperti pita PPDB beranda. */
+/* Penutup halaman SPMB: kartu gradien seperti pita SPMB beranda. */
 .closing--card {
     padding: 0 0 var(--section-y);
     background: transparent;
@@ -3287,7 +3287,7 @@ dd {
     color: #fff;
 }
 
-/* Kartu PPDB di kolom keempat. */
+/* Kartu SPMB di kolom keempat. */
 .footer-ppdb {
     padding: 20px;
     background: var(--pub-green-700);
@@ -4023,7 +4023,7 @@ dd {
 /* ============================================================
    Aksen kaca (glassmorphism) — hanya bagian pembuka beranda.
    Hero: foto slider jadi latar penuh berlapis hijau, teks di kartu
-   kaca. Pita PPDB: foto berlapis hijau dengan kartu kaca di tengah.
+   kaca. Pita SPMB: foto berlapis hijau dengan kartu kaca di tengah.
    Isi halaman tetap terang. Efek blur dipakai pada dua kartu saja.
    ============================================================ */
 
@@ -4166,7 +4166,7 @@ dd {
     background: #f0d79a;
 }
 
-/* Lencana PPDB tetap emas, melayang di sudut kanan bawah hero */
+/* Lencana SPMB tetap emas, melayang di sudut kanan bawah hero */
 .hero-slider--glass .hero-split__badge {
     top: auto;
     right: max(16px, calc((100% - 1200px) / 2));
@@ -4174,7 +4174,7 @@ dd {
     border-color: rgba(255, 255, 255, 0.7);
 }
 
-/* ---------- Pita PPDB beranda: foto + kartu kaca ---------- */
+/* ---------- Pita SPMB beranda: foto + kartu kaca ---------- */
 
 .ppdb-band--glass {
     padding: clamp(36px, 6vw, 72px) clamp(16px, 4vw, 56px);
@@ -4371,7 +4371,7 @@ dd {
     box-shadow: 0 0 0 3px rgba(240, 215, 154, 0.7);
 }
 
-/* Ringkasan PPDB menjadi kartu kaca */
+/* Ringkasan SPMB menjadi kartu kaca */
 .page-hero .ppdb-summary {
     position: relative;
     overflow: hidden;
