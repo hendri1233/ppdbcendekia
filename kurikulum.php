@@ -5,7 +5,7 @@ $sections = cms_sections($conn, 'kurikulum');
 $intro = cms_setting($conn, 'curriculum_intro', 'Kurikulum sekolah Islam terpadu memadukan kurikulum nasional dengan pembinaan karakter dan nilai keislaman. Berikut program dan pendekatan pembelajaran yang dijalankan di unit-unit Yayasan Wakaf Cendekia Takengon.');
 
 public_page_start($conn, [
-    'title' => 'Kurikulum JSIT',
+    'title' => 'Kurikulum',
     'description' => 'Program Penggerak, Kurikulum 2013, Merdeka Belajar, dan pembelajaran mendalam (deep learning) di unit pendidikan Yayasan Wakaf Cendekia Takengon.',
     'active' => 'kurikulum',
     'path' => 'kurikulum.php',
@@ -13,8 +13,8 @@ public_page_start($conn, [
 ?>
 <section class="page-hero">
     <div class="shell">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">Kurikulum JSIT</li></ol>
-        <p class="kicker">Kurikulum JSIT</p>
+        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">Kurikulum</li></ol>
+        <p class="kicker">Kurikulum</p>
         <h1>Kurikulum dan pendekatan pembelajaran</h1>
         <p><?= h($intro) ?></p>
     </div>

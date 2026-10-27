@@ -119,7 +119,7 @@ require 'admin_header.php';
 
     <nav class="cms-tabs" aria-label="Pilih halaman">
         <a href="cms-halaman.php?halaman=tentang">Tentang</a>
-        <a href="cms-halaman.php?halaman=kurikulum">Kurikulum JSIT</a>
+        <a href="cms-halaman.php?halaman=kurikulum">Kurikulum</a>
         <a href="cms-koleksi.php?jenis=manajemen"<?php echo $type === 'manajemen' ? ' aria-current="page"' : ''; ?>>Profil manajemen</a>
         <a href="cms-koleksi.php?jenis=fasilitas"<?php echo $type === 'fasilitas' ? ' aria-current="page"' : ''; ?>>Fasilitas</a>
     </nav>

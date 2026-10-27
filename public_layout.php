@@ -70,7 +70,7 @@ function public_navigation(mysqli $conn): array
             ['href' => 'tentang.php#fasilitas', 'label' => 'Fasilitas'],
         ]],
         ['key' => 'unit', 'href' => 'index.php#unit-title', 'label' => 'Unit Pendidikan', 'children' => $unitChildren],
-        ['key' => 'kurikulum', 'href' => 'kurikulum.php', 'label' => 'Kurikulum JSIT', 'children' => [
+        ['key' => 'kurikulum', 'href' => 'kurikulum.php', 'label' => 'Kurikulum', 'children' => [
             ['href' => 'kurikulum.php#penggerak', 'label' => 'Program Penggerak'],
             ['href' => 'kurikulum.php#k13', 'label' => 'Kurikulum 2013'],
             ['href' => 'kurikulum.php#merdeka', 'label' => 'Merdeka Belajar'],
@@ -243,7 +243,7 @@ function public_page_end(mysqli $conn): void
                 <li><a href="galeri.php">Galeri kegiatan</a></li>
                 <li><a href="cerita.php">Prestasi &amp; cerita</a></li>
                 <li><a href="direktori-unit.php">Direktori unit</a></li>
-                <li><a href="kurikulum.php">Kurikulum JSIT</a></li>
+                <li><a href="kurikulum.php">Kurikulum</a></li>
                 <li><a href="berita.php">Berita</a></li>
                 <li><a href="ppdb.php">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></a></li>
                 <li><a href="kontak.php">Kontak</a></li>

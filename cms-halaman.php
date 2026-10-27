@@ -3,7 +3,7 @@ require_once __DIR__.'/admin_cms.php';
 
 $pages = [
     'tentang' => ['label' => 'Tentang', 'public' => 'tentang.php'],
-    'kurikulum' => ['label' => 'Kurikulum JSIT', 'public' => 'kurikulum.php'],
+    'kurikulum' => ['label' => 'Kurikulum', 'public' => 'kurikulum.php'],
 ];
 $pageKey = isset($pages[$_GET['halaman'] ?? '']) ? $_GET['halaman'] : 'tentang';
 $self = 'cms-halaman.php?halaman='.$pageKey;
@@ -59,7 +59,7 @@ $imageLabels = ['prakata' => 'Foto pimpinan (potret 4:5)'];
 
 $activeAdminPage = 'cms-pages';
 $adminPageTitle = 'Halaman '.$pages[$pageKey]['label'];
-$adminPageDescription = 'Isi halaman Tentang dan Kurikulum JSIT di situs yayasan.';
+$adminPageDescription = 'Isi halaman Tentang dan Kurikulum di situs yayasan.';
 require 'admin_header.php';
 ?>
 <div class="admin-content cms-page">
@@ -84,7 +84,7 @@ require 'admin_header.php';
     </nav>
 
     <section class="panel" id="pengantar">
-        <div class="panel-header"><div><h2><?php echo $pageKey === 'tentang' ? 'Identitas pimpinan' : 'Pengantar kurikulum'; ?></h2><span class="panel-subtitle"><?php echo $pageKey === 'tentang' ? 'Nama dan jabatan yang tampil di bawah foto prakata.' : 'Paragraf pembuka di bagian atas halaman Kurikulum JSIT.'; ?></span></div></div>
+        <div class="panel-header"><div><h2><?php echo $pageKey === 'tentang' ? 'Identitas pimpinan' : 'Pengantar kurikulum'; ?></h2><span class="panel-subtitle"><?php echo $pageKey === 'tentang' ? 'Nama dan jabatan yang tampil di bawah foto prakata.' : 'Paragraf pembuka di bagian atas halaman Kurikulum.'; ?></span></div></div>
         <form class="cms-form" method="post" data-loading-form>
             <?php echo cms_csrf_field(); ?>
             <input type="hidden" name="action" value="save_meta">

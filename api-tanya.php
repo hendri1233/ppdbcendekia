@@ -159,7 +159,7 @@ function ai_knowledge_base(mysqli $conn): string
         $lines[] = 'Program bagi calon wali siswa (diseleksi sesuai syarat yayasan): '.implode('; ', $guide['programs']).'.';
     }
 
-    foreach (['tentang' => 'Tentang yayasan (tentang.php)', 'kurikulum' => 'Kurikulum JSIT (kurikulum.php)'] as $page => $heading) {
+    foreach (['tentang' => 'Tentang yayasan (tentang.php)', 'kurikulum' => 'Kurikulum (kurikulum.php)'] as $page => $heading) {
         $sections = array_filter(cms_sections($conn, $page), static fn ($s) => trim(strip_tags((string) $s['body_html'])) !== '');
         if ($sections) {
             $lines[] = '';
