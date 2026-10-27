@@ -135,7 +135,7 @@ public_page_start($conn, [
                         </span>
                         <span class="unit-card__body">
                             <h3><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></h3>
-                            <p><?= h($unit['tagline'] ?: ppdb_jenjang_label($unit['jenjang'])) ?></p>
+                            <p><?= h(ppdb_jenjang_label($unit['jenjang']).' ('.$unit['jenjang'].')') ?></p>
                         </span>
                         <span class="unit-card__chevron" aria-hidden="true">&rsaquo;</span>
                     </a>
