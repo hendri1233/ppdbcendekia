@@ -2,7 +2,7 @@
 
 ## Tujuan
 
-Kuota dipisahkan agar anak dari SDM Yayasan Wakaf Cendekia memiliki alokasi penerimaan khusus, sementara pendaftar dari masyarakat umum menggunakan alokasi eksternal. Pengaturan dilakukan untuk setiap unit pendidikan dan tahun ajaran.
+Kuota dipisahkan agar anak dari SDM Yayasan Wakaf Cendekia Takengon memiliki alokasi penerimaan khusus, sementara pendaftar dari masyarakat umum menggunakan alokasi eksternal. Pengaturan dilakukan untuk setiap unit pendidikan dan tahun ajaran.
 
 - **Kuota internal**: alokasi yang dikhususkan bagi anak SDM yayasan yang memenuhi kriteria.
 - **Kuota eksternal**: alokasi untuk pendaftar dari masyarakat umum yang tidak menggunakan jalur internal.

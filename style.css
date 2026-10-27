@@ -4452,3 +4452,31 @@ dd {
         font-size: 0.9375rem;
     }
 }
+
+/* Nama yayasan lengkap di ponsel: boleh dua baris agar tombol menu tetap terlihat */
+@media (max-width: 640px) {
+    .brand {
+        flex: 1 1 auto;
+        min-width: 0;
+        gap: 10px;
+    }
+
+    .brand-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .brand-copy {
+        min-width: 0;
+    }
+
+    .brand-copy strong {
+        font-size: 0.875rem;
+        line-height: 1.25;
+        white-space: normal;
+    }
+
+    .header-tools {
+        flex: none;
+    }
+}

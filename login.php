@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main class="auth-glass">
         <a class="auth-glass__brand" href="index.php">
             <img src="img/logo-display.png" alt="" width="64" height="63">
-            <span><strong>Yayasan Wakaf Cendekia</strong><small>Takengon, Aceh Tengah</small></span>
+            <span><strong>Yayasan Wakaf Cendekia Takengon</strong><small>Aceh Tengah</small></span>
         </a>
         <section class="auth-panel auth-panel--glass">
             <p class="eyebrow">Area pengelola</p>

@@ -156,8 +156,8 @@ function public_page_start(mysqli $conn, array $page): void
         <a class="brand" href="index.php">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="44" height="44">
             <span class="brand-copy">
-                <strong>Yayasan Wakaf Cendekia</strong>
-                <small>Takengon, Aceh Tengah</small>
+                <strong>Yayasan Wakaf Cendekia Takengon</strong>
+                <small>Aceh Tengah</small>
             </span>
         </a>
 
