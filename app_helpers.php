@@ -351,22 +351,51 @@ function ppdb_status_info(?string $status): array
 function ppdb_payment_storage_root(): string
 {
     $configured = trim((string) (getenv('PPDB_PAYMENT_STORAGE') ?: ''));
+    $configuredRoot = null;
     if ($configured !== '') {
         if (DIRECTORY_SEPARATOR === '\\' || !preg_match('/^[A-Za-z]:[\\\\\/]/', $configured)) {
-            return rtrim(str_replace('\\', '/', $configured), '/');
+            $configuredRoot = rtrim(str_replace('\\', '/', $configured), '/');
+            if (is_dir($configuredRoot)) {
+                return $configuredRoot;
+            }
+        } else {
+            error_log('PPDB_PAYMENT_STORAGE uses a Windows path on a non-Windows server; using the platform default.');
         }
-        error_log('PPDB_PAYMENT_STORAGE uses a Windows path on a non-Windows server; using the platform default.');
     }
 
     if (DIRECTORY_SEPARATOR === '\\') {
-        return 'C:/xampp/private/ppdb-payment-proofs';
+        return $configuredRoot ?? 'C:/xampp/private/ppdb-payment-proofs';
     }
 
     $documentRoot = realpath((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
     if ($documentRoot !== false) {
+        $ancestor = $documentRoot;
+        for ($depth = 0; $depth < 8; $depth++) {
+            $candidate = rtrim($ancestor, '/\\').'/private/ppdb-payment-proofs';
+            if (is_dir($candidate)) {
+                return $candidate;
+            }
+
+            if (strtolower(basename($ancestor)) === 'domains') {
+                return dirname($ancestor).'/private/ppdb-payment-proofs';
+            }
+
+            $parent = dirname($ancestor);
+            if ($parent === $ancestor) {
+                break;
+            }
+            $ancestor = $parent;
+        }
+
+        if ($configuredRoot !== null) {
+            return $configuredRoot;
+        }
         return dirname($documentRoot).'/private/ppdb-payment-proofs';
     }
 
+    if ($configuredRoot !== null) {
+        return $configuredRoot;
+    }
     return rtrim(sys_get_temp_dir(), '/\\').'/ppdb-payment-proofs-'.substr(hash('sha256', __DIR__), 0, 16);
 }
 
