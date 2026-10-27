@@ -29,17 +29,22 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
             try { if (localStorage.getItem('cendekia-sidebar') === 'collapsed') root.classList.add('sidebar-collapsed'); } catch (e) {}
         })();
     </script>
-    <meta name="theme-color" content="#0d3227">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="<?php echo h($adminPageDescription); ?>">
     <title><?php echo h($adminPageTitle); ?> · Panel Admin PPDB Cendekia Takengon</title>
-    <link rel="icon" href="img/favicon.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/admin.css'); ?>">
     <link rel="stylesheet" href="css/cms-admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/cms-admin.css'); ?>">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/favicons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicons/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="img/favicons/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
 <body>
 <div class="page-loader" role="status" aria-live="polite" data-page-loader>

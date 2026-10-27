@@ -112,8 +112,6 @@ function public_page_start(mysqli $conn, array $page): void
             root.classList.add('js');
         })();
     </script>
-    <meta name="theme-color" content="#14563f" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0f1714" media="(prefers-color-scheme: dark)">
     <title><?= h($title) ?></title>
     <meta name="description" content="<?= h($description) ?>">
     <meta name="robots" content="index, follow, max-image-preview:large">
@@ -126,8 +124,6 @@ function public_page_start(mysqli $conn, array $page): void
     <meta property="og:url" content="<?= h($canonical) ?>">
     <meta property="og:image" content="<?= h($imageUrl) ?>">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="img/favicon.png" type="image/png">
-    <link rel="apple-touch-icon" href="img/logo-512.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..600&display=swap" rel="stylesheet">
@@ -136,6 +132,13 @@ function public_page_start(mysqli $conn, array $page): void
     <?php if (!empty($page['schema'])) { foreach ($page['schema'] as $schema) { ?>
         <script type="application/ld+json"><?= json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
     <?php } } ?>
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/favicons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicons/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="img/favicons/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
 <body class="page-<?= h($active ?: 'umum') ?>">
 <a class="skip-link" href="#konten">Lompat ke konten utama</a>
