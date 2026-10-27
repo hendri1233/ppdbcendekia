@@ -149,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </span>
                 <button type="submit">Masuk ke dashboard <span aria-hidden="true">&rarr;</span></button>
             </form>
-            <p class="auth-note"><strong>Lupa kata sandi?</strong> Hubungi super admin untuk mendapatkan kata sandi sementara, lalu ganti lewat menu <em>Ubah kata sandi</em> setelah masuk.</p>
+            <p class="auth-note"><strong>Lupa kata sandi?</strong> <span class="auth-note__detail">Hubungi super admin untuk mendapatkan kata sandi sementara, lalu ganti lewat menu <em>Ubah kata sandi</em> setelah masuk.</span><span class="auth-note__short">Hubungi super admin untuk kata sandi sementara.</span></p>
             <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>
         </section>
     </main>
