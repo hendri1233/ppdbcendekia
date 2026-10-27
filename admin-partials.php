@@ -25,6 +25,7 @@ function ppdb_admin_icon(string $name): string
         'file' => '<path d="M6 3.5h7.5L18 8v12.5H6Z"/><path d="M13.5 3.5V8H18"/>',
         'chart' => '<path d="M4 20V9.5M9.3 20V4.5M14.7 20v-8M20 20v-5.5"/>',
         'chevron' => '<path d="m9 6 6 6-6 6"/>',
+        'video' => '<rect x="3.5" y="5.5" width="12.5" height="13" rx="1.8"/><path d="m16 10.2 4.5-2.7v9l-4.5-2.7"/>',
         'image' => '<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><circle cx="9" cy="9.5" r="1.8"/><path d="m4 17.5 5-5 4 4 2.5-2.5 4.5 4.5"/>',
         'page' => '<path d="M6 3.5h12v17H6Z"/><path d="M9 8h6M9 11.5h6M9 15h4"/>',
         'news' => '<path d="M4.5 5.5h12v13a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5Z"/><path d="M16.5 9h3v9.5a1.5 1.5 0 0 1-3 0"/><path d="M7.5 9h6M7.5 12.5h6M7.5 16h4"/>',
@@ -55,6 +56,7 @@ function ppdb_admin_navigation(string $activePage): array
         ['key' => 'cms-pages', 'href' => 'cms-halaman.php', 'label' => 'Tentang &amp; kurikulum', 'icon' => 'page', 'group' => 'Situs web'],
         ['key' => 'cms-news', 'href' => 'cms-berita.php', 'label' => 'Berita', 'icon' => 'news', 'group' => 'Situs web'],
         ['key' => 'cms-units', 'href' => 'cms-unit.php', 'label' => 'Profil unit', 'icon' => 'building', 'group' => 'Situs web'],
+        ['key' => 'unit-videos', 'href' => 'video-unit.php', 'label' => 'Video unit', 'icon' => 'video', 'group' => 'Situs web'],
         ['key' => 'cms-showcase', 'href' => 'cms-konten.php', 'label' => 'Program, galeri &amp; cerita', 'icon' => 'page', 'group' => 'Situs web'],
         ['key' => 'cms-settings', 'href' => 'cms-pengaturan.php', 'label' => 'Kontak &amp; pengaturan', 'icon' => 'settings', 'group' => 'Situs web'],
     ];
@@ -63,7 +65,7 @@ function ppdb_admin_navigation(string $activePage): array
         ? $navigation
         : array_values(array_filter(
             $navigation,
-            static fn (array $item): bool => in_array($item['key'], ['dashboard', 'registrations', 'groups'], true)
+            static fn (array $item): bool => in_array($item['key'], ['dashboard', 'registrations', 'groups', 'unit-videos'], true)
         ));
 }
 

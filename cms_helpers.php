@@ -292,3 +292,65 @@ function cms_ai_available(mysqli $conn): bool
     return cms_setting($conn, 'ai_enabled', '0') === '1'
         && (trim((string) getenv('ANTHROPIC_API_KEY')) !== '' || trim((string) getenv('ANTHROPIC_AUTH_TOKEN')) !== '');
 }
+
+/** Video pendek unggulan setiap unit: kunci => [label, ikon]. Disimpan di tb_cms_settings. */
+const CMS_UNIT_SOCIALS = [
+    'facebook' => ['Reels Facebook', 'facebook'],
+    'instagram' => ['Reels Instagram', 'instagram'],
+    'youtube' => ['Shorts YouTube', 'youtube'],
+    'tiktok' => ['Video TikTok', 'tiktok'],
+];
+
+function cms_unit_social_key(string $code, string $network): string
+{
+    return 'unit_social_'.$code.'_'.$network;
+}
+
+/** Video unit yang sudah diisi, berurutan sesuai CMS_UNIT_SOCIALS. */
+function cms_unit_socials(mysqli $conn, string $code): array
+{
+    $links = [];
+    foreach (CMS_UNIT_SOCIALS as $network => [$label, $icon]) {
+        $url = cms_setting($conn, cms_unit_social_key($code, $network));
+        if ($url !== '') {
+            $links[] = ['network' => $network, 'label' => $label, 'icon' => $icon, 'url' => $url, 'embed' => cms_unit_video_embed($network, $url)];
+        }
+    }
+    return $links;
+}
+
+/**
+ * Alamat pemutar sematan untuk tautan video pendek. Pemutar dibuat tanpa suara
+ * agar peramban mengizinkan putar otomatis. Null bila tautan tidak dikenali.
+ */
+function cms_unit_video_embed(string $network, string $url): ?string
+{
+    $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+    $path = (string) parse_url($url, PHP_URL_PATH);
+    switch ($network) {
+        case 'youtube':
+            parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+            $id = '';
+            if (preg_match('#^/(?:shorts|embed|live)/([\w-]{11})#', $path, $m) && str_contains($host, 'youtube.com')) {
+                $id = $m[1];
+            } elseif ($host === 'youtu.be' && preg_match('#^/([\w-]{11})#', $path, $m)) {
+                $id = $m[1];
+            } elseif (str_contains($host, 'youtube.com') && preg_match('#^[\w-]{11}$#', (string) ($query['v'] ?? ''))) {
+                $id = $query['v'];
+            }
+            return $id === '' ? null : 'https://www.youtube.com/embed/'.$id.'?autoplay=1&mute=1&loop=1&playlist='.$id.'&playsinline=1&rel=0';
+        case 'instagram':
+            return str_ends_with($host, 'instagram.com') && preg_match('#^/(?:reels?|p)/([\w-]+)#', $path, $m)
+                ? 'https://www.instagram.com/reel/'.$m[1].'/embed/'
+                : null;
+        case 'facebook':
+            return str_ends_with($host, 'facebook.com') || $host === 'fb.watch'
+                ? 'https://www.facebook.com/plugins/video.php?href='.rawurlencode($url).'&show_text=false&autoplay=true&mute=true&width=320&height=568'
+                : null;
+        case 'tiktok':
+            return str_ends_with($host, 'tiktok.com') && preg_match('#/video/(\d+)#', $path, $m)
+                ? 'https://www.tiktok.com/player/v1/'.$m[1].'?autoplay=1&muted=1&loop=1&description=0&music_info=0&rel=0'
+                : null;
+    }
+    return null;
+}

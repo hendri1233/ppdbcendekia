@@ -94,6 +94,30 @@ public_page_start($conn, [
     </div>
 </section>
 
+<?php if ($unitVideos = cms_unit_socials($conn, $code)) { ?>
+    <section class="section unit-videos" aria-labelledby="unit-videos-title">
+        <div class="shell">
+            <header class="section-head">
+                <h2 id="unit-videos-title">Media Sosial <span class="unit-name"><?= h($name) ?></span></h2>
+            </header>
+            <ul class="unit-videos__row">
+                <?php foreach ($unitVideos as $video) { ?>
+                    <li class="unit-video unit-video--<?= h($video['network']) ?>">
+                        <div class="unit-video__frame">
+                            <?php if ($video['embed']) { ?>
+                                <iframe src="<?= h($video['embed']) ?>" title="<?= h($video['label'].' '.$name) ?>" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen scrolling="no"></iframe>
+                            <?php } else { ?>
+                                <a class="unit-video__fallback" href="<?= h($video['url']) ?>" target="_blank" rel="noopener"><?= public_icon($video['icon']) ?><span>Tonton di <?= h($video['label']) ?></span></a>
+                            <?php } ?>
+                        </div>
+                        <a class="unit-video__label" href="<?= h($video['url']) ?>" target="_blank" rel="noopener"><?= public_icon($video['icon']) ?><span><?= h($video['label']) ?></span></a>
+                    </li>
+                <?php } ?>
+            </ul>
+        </div>
+    </section>
+<?php } ?>
+
 <?php if ($unitNews) { ?>
     <section class="section section--tinted" aria-labelledby="unit-news-title">
         <div class="shell">
