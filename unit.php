@@ -52,7 +52,7 @@ public_page_start($conn, [
     <div class="shell">
         <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page"><?= h($unit['jenjang']) ?></li></ol>
         <p class="kicker"><?= h(ppdb_jenjang_label($unit['jenjang'])) ?></p>
-        <h1><?= h($name) ?></h1>
+        <h1 class="unit-name"><?= h($name) ?></h1>
         <?php if ($unit['tagline']) { ?><p><?= h($unit['tagline']) ?></p><?php } ?>
     </div>
 </section>

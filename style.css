@@ -4601,3 +4601,14 @@ dd {
         letter-spacing: 0.01em;
     }
 }
+
+/* Halaman profil unit: nama sekolah huruf kapital */
+.unit-name {
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.page-hero h1.unit-name {
+    max-width: none;
+    text-wrap: pretty;
+}
