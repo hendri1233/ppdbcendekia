@@ -4035,3 +4035,255 @@ dd {
         transform: none !important;
     }
 }
+
+/* ============================================================
+   Aksen kaca (glassmorphism) — hanya bagian pembuka beranda.
+   Hero: foto slider jadi latar penuh berlapis hijau, teks di kartu
+   kaca. Pita PPDB: foto berlapis hijau dengan kartu kaca di tengah.
+   Isi halaman tetap terang. Efek blur dipakai pada dua kartu saja.
+   ============================================================ */
+
+.hero-slider--glass {
+    padding: clamp(40px, 7vh, 88px) 0 clamp(56px, 9vh, 104px);
+    color: #fff;
+    background: var(--pub-green-950);
+}
+
+.hero-slider--glass::before,
+.hero-slider--glass::after {
+    display: none;
+}
+
+.hero-slider--glass .hero-split {
+    position: static;
+    grid-template-columns: minmax(0, 620px);
+    min-height: clamp(420px, 62vh, 600px);
+}
+
+/* Foto slide memenuhi seluruh section */
+.hero-slider--glass .hero-split__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    order: 0;
+}
+
+.hero-slider--glass .hero-slider__track {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    background: var(--pub-green-950);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.hero-slider--glass .hero-slider__track::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background:
+        linear-gradient(100deg, rgba(7, 26, 20, 0.9) 0%, rgba(11, 42, 33, 0.72) 45%, rgba(11, 42, 33, 0.35) 100%),
+        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1.3px) 0 0 / 26px 26px;
+}
+
+.hero-slider--glass .hero-split__media::after {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    z-index: 4;
+    width: 50vmax;
+    height: 50vmax;
+    background: radial-gradient(circle, rgba(201, 162, 75, 0.32), transparent 65%);
+    border-radius: 50%;
+    filter: blur(40px);
+    pointer-events: none;
+}
+
+/* Kartu kaca berisi teks dan tombol */
+.hero-slider--glass .hero-slider__content {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(24px, 4vw, 44px);
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 24px;
+    box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+}
+
+.hero-slider--glass .hero-slider__content::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(240, 215, 154, 0.9), transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .hero-slider--glass .hero-slider__content {
+        background: rgba(11, 42, 33, 0.86);
+    }
+}
+
+.hero-slider--glass .kicker,
+.hero-slider--glass .hero-slider__content .kicker {
+    color: #f0d79a;
+}
+
+.hero-slider--glass h1 {
+    max-width: 20ch;
+    color: #fff;
+}
+
+.hero-slider--glass .hero-slider__lead {
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.hero-slider--glass .hero-slider__caption {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-slider--glass .hero-slider__more {
+    color: #f0d79a;
+}
+
+/* Tombol di atas kaca: pill putih dan pill garis putih */
+.hero-slider--glass .button--light,
+:root[data-theme="dark"] .hero-slider--glass .button--light {
+    color: var(--pub-green-900);
+    background: #fff;
+}
+
+.hero-slider--glass .button--light:hover {
+    background: #f6ecd2;
+}
+
+.hero-slider--glass .button--ghost-light,
+:root[data-theme="dark"] .hero-slider--glass .button--ghost-light {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-slider--glass .button--ghost-light:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #fff;
+}
+
+.hero-slider--glass .slider-dots button::before {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.hero-slider--glass .slider-dots button[aria-current="true"]::before {
+    background: #f0d79a;
+}
+
+/* Lencana PPDB tetap emas, melayang di sudut kanan bawah hero */
+.hero-slider--glass .hero-split__badge {
+    top: auto;
+    right: max(16px, calc((100% - 1200px) / 2));
+    bottom: clamp(24px, 6vh, 64px);
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* ---------- Pita PPDB beranda: foto + kartu kaca ---------- */
+
+.ppdb-band--glass {
+    padding: clamp(36px, 6vw, 72px) clamp(16px, 4vw, 56px);
+    background: var(--pub-green-950);
+    isolation: isolate;
+}
+
+.ppdb-band--glass::after {
+    display: none;
+}
+
+/* Lapisan hijau di atas foto */
+.ppdb-band--glass::before {
+    display: block;
+    inset: 0;
+    z-index: -1;
+    width: auto;
+    height: auto;
+    background:
+        linear-gradient(120deg, rgba(7, 26, 20, 0.88) 0%, rgba(20, 74, 58, 0.72) 100%),
+        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1.3px) 0 0 / 26px 26px;
+    border-radius: 0;
+}
+
+.ppdb-band__photo {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ppdb-band--glass > .ppdb-band__glass {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    justify-items: center;
+    gap: 24px;
+    width: min(100%, 680px);
+    padding: clamp(24px, 4vw, 40px);
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+}
+
+.ppdb-band--glass .kicker {
+    color: #f0d79a;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .ppdb-band--glass > .ppdb-band__glass {
+        background: rgba(11, 42, 33, 0.86);
+    }
+}
+
+/* ---------- Gerak ringan ---------- */
+
+@keyframes glass-rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-slider--glass .hero-slider__content {
+        animation: glass-rise 760ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .hero-slider--glass .hero-split__badge {
+        animation: glass-rise 760ms 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+}
+
+@media (max-width: 860px) {
+    .hero-slider--glass .hero-split {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 0;
+    }
+
+    .hero-slider--glass .hero-split__media {
+        order: 0;
+    }
+
+    .hero-slider--glass .hero-split__badge {
+        display: none;
+    }
+
+    .hero-slider--glass .hero-slider__track::after {
+        background:
+            linear-gradient(180deg, rgba(7, 26, 20, 0.55) 0%, rgba(11, 42, 33, 0.85) 100%),
+            radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1.3px) 0 0 / 26px 26px;
+    }
+}

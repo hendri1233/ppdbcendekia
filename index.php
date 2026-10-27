@@ -49,7 +49,7 @@ public_page_start($conn, [
     ]],
 ]);
 ?>
-<section class="hero-slider hero-slider--split" aria-roledescription="carousel" aria-label="Sorotan kegiatan" data-slider data-interval="<?= max(3, min(30, (int) cms_setting($conn, 'slider_interval', '5'))) ?>">
+<section class="hero-slider hero-slider--split hero-slider--glass" aria-roledescription="carousel" aria-label="Sorotan kegiatan" data-slider data-interval="<?= max(3, min(30, (int) cms_setting($conn, 'slider_interval', '5'))) ?>">
     <div class="shell hero-split">
         <div class="hero-slider__content">
             <p class="kicker">Yayasan Wakaf Cendekia Takengon</p>
@@ -182,8 +182,9 @@ public_page_start($conn, [
 
 <section class="section section--tight" aria-labelledby="ppdb-title">
     <div class="shell">
-        <div class="ppdb-band">
-            <img class="ppdb-band__mark" src="img/logo-512.png" alt="" width="320" height="320" loading="lazy">
+        <div class="ppdb-band ppdb-band--glass">
+            <img class="ppdb-band__photo" src="<?= public_asset('img/login-bg.webp') ?>" alt="" width="1600" height="900" loading="lazy">
+            <div class="ppdb-band__glass">
             <div>
                 <p class="kicker">Penerimaan peserta didik baru</p>
                 <h2 id="ppdb-title">PPDB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
@@ -194,6 +195,7 @@ public_page_start($conn, [
             <div class="ppdb-band__actions">
                 <a class="button button--light button--lg" href="ppdb.php">Info PPDB</a>
                 <?php if ($openUnitCount > 0) { ?><a class="button button--ghost-light button--lg" href="daftar.php">Daftar sekarang</a><?php } ?>
+            </div>
             </div>
         </div>
     </div>
