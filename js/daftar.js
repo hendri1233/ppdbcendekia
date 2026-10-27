@@ -78,7 +78,7 @@
     );
     if (!yearMatch || !birthMatch) {
       dapodikAgeOutput.textContent =
-        "Pilih unit dan tahun ajaran serta isi tanggal lahir untuk melihat umur pada tanggal acuan Dapodik.";
+        "Pilih unit serta isi tanggal lahir untuk melihat umur pada tanggal acuan Dapodik.";
       return;
     }
 
