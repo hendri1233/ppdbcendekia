@@ -4644,3 +4644,4 @@ dd {
 .welcome__photo{align-self:start;position:sticky;top:calc(var(--header-h,80px) + 72px)}
 .welcome__photo img{max-height:clamp(320px,calc(100svh - 300px),600px)}
 }
+.unit-videos__title span{display:block}

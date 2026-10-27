@@ -98,7 +98,7 @@ public_page_start($conn, [
     <section class="section unit-videos" aria-labelledby="unit-videos-title">
         <div class="shell">
             <header class="section-head">
-                <h2 id="unit-videos-title">Media Sosial <span class="unit-name"><?= h($name) ?></span></h2>
+                <h2 id="unit-videos-title" class="unit-videos__title">Media Sosial <span><?= h($name) ?></span></h2>
             </header>
             <ul class="unit-videos__row">
                 <?php foreach ($unitVideos as $video) { ?>
