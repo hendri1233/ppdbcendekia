@@ -4491,3 +4491,41 @@ dd {
 .footer-list--units a {
     font-size: 0.8125rem;
 }
+
+/* Header: nama yayasan dan submenu unit huruf kapital */
+.brand-copy strong {
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.nav-item--unit .subnav a {
+    font-size: 0.8125rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+@media (min-width: 1321px) and (max-width: 1500px) {
+    .brand-copy strong {
+        font-size: 0.8125rem;
+        letter-spacing: 0;
+    }
+
+    .brand {
+        gap: 10px;
+    }
+
+    .brand-logo {
+        width: 42px;
+        height: 42px;
+    }
+}
+
+@media (min-width: 1321px) {
+    .nav-item--unit .subnav {
+        min-width: 290px;
+    }
+
+    .nav-item--unit .subnav a {
+        white-space: nowrap;
+    }
+}
