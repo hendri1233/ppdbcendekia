@@ -78,6 +78,10 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
         </nav>
 
         <div class="sidebar-bottom">
+            <a class="sidebar-link" href="ubah-sandi.php" title="Ubah kata sandi"<?php echo $activeAdminPage === 'password' ? ' aria-current="page"' : ''; ?>>
+                <?php echo ppdb_admin_icon('key'); ?>
+                <span>Ubah kata sandi</span>
+            </a>
             <a class="sidebar-link" href="index.php" target="_blank" rel="noopener" title="Buka situs PPDB">
                 <?php echo ppdb_admin_icon('external'); ?>
                 <span>Buka situs PPDB<span class="visually-hidden"> (tab baru)</span></span>
@@ -135,6 +139,7 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
                     </a>
                 <?php } ?>
             <?php } ?>
+            <a href="ubah-sandi.php"<?php echo $activeAdminPage === 'password' ? ' aria-current="page"' : ''; ?>><?php echo ppdb_admin_icon('key'); ?><span>Ubah kata sandi</span></a>
             <a href="index.php" target="_blank" rel="noopener"><?php echo ppdb_admin_icon('external'); ?><span>Buka situs PPDB</span></a>
             <form action="keluar.php" method="post">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">

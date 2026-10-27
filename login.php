@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </span>
                 <button type="submit">Masuk ke dashboard <span aria-hidden="true">&rarr;</span></button>
             </form>
-            <p class="auth-note">Admin unit menggunakan email dan kata sandi sementara yang diberikan super admin.</p>
+            <p class="auth-note"><strong>Lupa kata sandi?</strong> Hubungi super admin untuk mendapatkan kata sandi sementara, lalu ganti lewat menu <em>Ubah kata sandi</em> setelah masuk.</p>
             <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>
         </section>
         <footer>Yayasan Wakaf Cendekia Takengon</footer>

@@ -31,7 +31,67 @@ $showAdminLayout = !$isBootstrap && !empty($_SESSION['admin_id']);
 $activeAdminPage = 'accounts';
 $adminPageTitle = 'Administrator';
 $adminPageDescription = 'Kelola akun administrator PPDB Yayasan Wakaf Cendekia Takengon.';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+// Kata sandi sementara 12 karakter tanpa huruf yang mudah tertukar (0/O, 1/l/I).
+function ppdb_temporary_password(): string
+{
+    $sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnpqrstuvwxyz', '23456789'];
+    $all = implode('', $sets);
+    $characters = [];
+    foreach ($sets as $set) {
+        $characters[] = $set[random_int(0, strlen($set) - 1)];
+    }
+    while (count($characters) < 12) {
+        $characters[] = $all[random_int(0, strlen($all) - 1)];
+    }
+    for ($i = count($characters) - 1; $i > 0; $i--) {
+        $j = random_int(0, $i);
+        [$characters[$i], $characters[$j]] = [$characters[$j], $characters[$i]];
+    }
+
+    return implode('', $characters);
+}
+
+// Super admin mereset kata sandi akun lain; hasilnya ditampilkan sekali setelah dialihkan.
+if (!$isBootstrap && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reset_password') {
+    $targetId = (int) ($_POST['admin_id'] ?? 0);
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $error = 'Sesi formulir kedaluwarsa. Muat ulang halaman dan coba kembali.';
+    } elseif ($targetId === (int) $_SESSION['admin_id']) {
+        $error = 'Untuk akun Anda sendiri, gunakan menu Ubah kata sandi.';
+    } else {
+        $target = mysqli_prepare($conn, 'SELECT id,username,email FROM tbadmin WHERE id = ? LIMIT 1');
+        mysqli_stmt_bind_param($target, 'i', $targetId);
+        mysqli_stmt_execute($target);
+        $targetAccount = mysqli_fetch_assoc(mysqli_stmt_get_result($target));
+        mysqli_stmt_close($target);
+
+        if (!$targetAccount) {
+            $error = 'Akun yang dipilih tidak ditemukan.';
+        } else {
+            $temporaryPassword = ppdb_temporary_password();
+            $temporaryHash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
+            $update = mysqli_prepare($conn, 'UPDATE tbadmin SET password = ? WHERE id = ?');
+            mysqli_stmt_bind_param($update, 'si', $temporaryHash, $targetId);
+            if (mysqli_stmt_execute($update)) {
+                $_SESSION['account_reset'] = [
+                    'name' => $targetAccount['username'],
+                    'email' => $targetAccount['email'],
+                    'password' => $temporaryPassword,
+                ];
+                header('Location: register.php#akun');
+                exit;
+            }
+            $error = 'Kata sandi belum dapat direset. Coba kembali.';
+            mysqli_stmt_close($update);
+        }
+    }
+}
+
+$accountReset = $_SESSION['account_reset'] ?? null;
+unset($_SESSION['account_reset']);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 'create') {
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
 
@@ -81,25 +141,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <?php if ($showAdminLayout) {
+    $accountResult = mysqli_query($conn, 'SELECT a.id,a.username,a.email,a.role,u.nama_unit FROM tbadmin a LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=a.kode_unit ORDER BY a.role=\'admin_unit\', u.nama_unit, a.username');
+    $accounts = mysqli_fetch_all($accountResult, MYSQLI_ASSOC);
     require 'admin_header.php';
 ?>
 <div class="admin-content">
     <header class="page-heading">
         <div>
             <p class="eyebrow">Akses pengelola</p>
-            <h1>Buat akun admin</h1>
-            <p>Tambahkan administrator yang dapat mengelola data dan pengaturan PPDB.</p>
+            <h1>Administrator</h1>
+            <p>Buat akun pengelola baru atau reset kata sandi admin yang lupa.</p>
         </div>
     </header>
 
     <?php if ($error !== '') { ?><div class="alert-error" role="alert"><?php echo h($error); ?></div><?php } ?>
 
+    <?php if ($accountReset) { ?>
+        <section class="temp-password" role="status" aria-labelledby="temp-password-title">
+            <h2 id="temp-password-title">Kata sandi sementara untuk <?php echo h($accountReset['name']); ?></h2>
+            <p>Sampaikan kata sandi ini secara pribadi kepada <?php echo h($accountReset['email']); ?>. Kata sandi hanya ditampilkan sekali; minta pemilik akun segera menggantinya lewat menu <strong>Ubah kata sandi</strong>.</p>
+            <div class="temp-password__field">
+                <input id="temp-password-value" type="text" value="<?php echo h($accountReset['password']); ?>" readonly aria-label="Kata sandi sementara">
+                <button class="button-secondary" type="button" data-copy-target="#temp-password-value">Salin</button>
+            </div>
+        </section>
+    <?php } ?>
+
+    <section class="panel account-list" id="akun">
+        <div class="panel-header">
+            <div><h2>Daftar akun</h2><span class="panel-subtitle"><?php echo count($accounts); ?> pengelola terdaftar. Reset menghasilkan kata sandi sementara yang baru.</span></div>
+        </div>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th scope="col">Nama</th><th scope="col">Email</th><th scope="col">Peran</th><th scope="col"><span class="visually-hidden">Aksi</span></th></tr></thead>
+                <tbody>
+                <?php foreach ($accounts as $account) { ?>
+                    <tr>
+                        <td class="primary-cell" data-label="Nama"><?php echo h($account['username']); ?></td>
+                        <td data-label="Email"><?php echo h($account['email']); ?></td>
+                        <td data-label="Peran"><?php echo $account['role'] === 'super_admin' ? 'Super Admin' : 'Admin Unit &middot; '.h($account['nama_unit'] ?? '-'); ?></td>
+                        <td data-label="Aksi">
+                            <?php if ((int) $account['id'] === (int) $_SESSION['admin_id']) { ?>
+                                <a class="account-self" href="ubah-sandi.php">Akun Anda &middot; ubah kata sandi</a>
+                            <?php } else { ?>
+                                <form method="post" onsubmit="return confirm('Reset kata sandi <?php echo h(addslashes($account['username'])); ?>? Kata sandi lama tidak berlaku lagi.');">
+                                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                                    <input type="hidden" name="action" value="reset_password">
+                                    <input type="hidden" name="admin_id" value="<?php echo (int) $account['id']; ?>">
+                                    <button class="table-action" type="submit">Reset kata sandi</button>
+                                </form>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                <?php } ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <section class="panel admin-account-panel">
         <div class="panel-header">
-            <div><h2>Informasi akun</h2><span class="panel-subtitle">Gunakan email unik dan kata sandi minimal 12 karakter.</span></div>
+            <div><h2>Buat akun baru</h2><span class="panel-subtitle">Gunakan email unik dan kata sandi minimal 12 karakter.</span></div>
         </div>
         <form method="post" class="admin-account-form">
             <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+            <input type="hidden" name="action" value="create">
             <div class="admin-account-fields">
                 <div class="filter-field">
                     <label for="role">Peran akun</label>
@@ -152,6 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require 'admin_footer.php';
 ?>
 <script src="js/auth.js"></script>
+<script src="js/admin-share.js"></script>
 <?php } else { ?>
 <!DOCTYPE html>
 <html lang="id">

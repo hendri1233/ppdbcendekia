@@ -4713,3 +4713,106 @@ select:focus-visible {
         padding: 14px 16px;
     }
 }
+
+/* Akun pengelola: tautan aktif di bagian bawah sidebar, pengukur
+   kekuatan kata sandi, dan kartu kata sandi sementara. */
+.sidebar-link[aria-current="page"] {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-mobile-nav a[aria-current="page"] .ico {
+    color: var(--link);
+}
+
+.password-meter {
+    display: grid;
+    gap: 5px;
+    margin-top: 4px;
+}
+
+.password-meter[hidden] {
+    display: none;
+}
+
+.password-meter__track {
+    height: 5px;
+    overflow: hidden;
+    background: var(--admin-line-soft);
+    border-radius: 999px;
+}
+
+.password-meter__bar {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: #c2563c;
+    border-radius: 999px;
+    transition: width 200ms ease, background-color 200ms ease;
+}
+
+.password-meter__bar[data-tone="weak"] { background: #c2563c; }
+.password-meter__bar[data-tone="fair"] { background: #d79a3c; }
+.password-meter__bar[data-tone="good"] { background: #3f9a75; }
+.password-meter__bar[data-tone="strong"] { background: var(--admin-green); }
+
+.password-meter small {
+    color: var(--admin-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+}
+
+.auth-hint {
+    margin: 2px 0 0;
+    color: var(--danger-fg);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+}
+
+.account-list .data-table td:last-child {
+    text-align: right;
+}
+
+.account-self {
+    color: var(--admin-muted);
+    font-size: var(--fs-xs);
+}
+
+.temp-password {
+    margin-bottom: 20px;
+    padding: 18px 20px;
+    background: var(--admin-gold-soft);
+    border: 1px solid color-mix(in srgb, var(--admin-gold) 45%, transparent);
+    border-radius: var(--admin-radius-card);
+}
+
+.temp-password h2 {
+    margin: 0;
+    color: var(--admin-gold-ink);
+    font-size: var(--fs-base);
+}
+
+.temp-password p {
+    margin: 6px 0 12px;
+    color: var(--admin-ink-soft);
+    font-size: var(--fs-sm);
+}
+
+.temp-password__field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.temp-password__field input {
+    flex: 1 1 220px;
+    min-height: 42px;
+    padding: 8px 14px;
+    color: var(--admin-ink);
+    background: var(--admin-white);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
+    letter-spacing: 0.06em;
+}
