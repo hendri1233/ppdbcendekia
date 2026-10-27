@@ -69,7 +69,7 @@ Jika situs berada di balik reverse proxy atau domain publiknya berbeda dari alam
 
 Untuk uji lokal, `PPDB_BASE_URL` dapat diarahkan ke alamat XAMPP agar tautan yang dihasilkan tetap dapat dibuka. Hapus override tersebut sebelum deploy supaya tautan mengarah ke domain publik yang benar.
 
-Bukti transfer disimpan di luar direktori web pada `C:\xampp\private\ppdb-payment-proofs`. Jika lokasi berbeda, atur environment variable `PPDB_PAYMENT_STORAGE` untuk Apache.
+Bukti transfer dan berkas privat PPDB disimpan di luar document root. Atur `PPDB_PAYMENT_STORAGE` pada environment Apache/PHP ke direktori permanen yang dapat ditulisi proses PHP. Jika tidak diatur, XAMPP Windows memakai `C:\xampp\private\ppdb-payment-proofs`, sedangkan Linux memakai `private/ppdb-payment-proofs` di direktori induk document root. Pastikan akun PHP dapat membuat dan menulis folder tersebut.
 
 ## Materi dan Kuisioner PPDB
 

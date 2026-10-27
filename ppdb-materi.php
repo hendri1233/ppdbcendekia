@@ -100,10 +100,16 @@ function ppdb_material_upload(array $file, string $directory, string $role): arr
         };
     }
 
-    $root = getenv('PPDB_PAYMENT_STORAGE') ?: 'C:/xampp/private/ppdb-payment-proofs';
+    $root = ppdb_payment_storage_root();
     $target = rtrim(str_replace('\\', '/', $root), '/').'/'.$directory;
-    if (!is_dir($target) && !mkdir($target, 0700, true) && !is_dir($target)) {
+    if (!is_dir($target) && !@mkdir($target, 0700, true) && !is_dir($target)) {
+        $error = error_get_last();
+        error_log('PPDB private material directory creation failed: '.$target.'; '.($error['message'] ?? 'unknown filesystem error'));
         throw new RuntimeException('Folder privat materi belum dapat dibuat.');
+    }
+    if (!is_writable($target)) {
+        error_log('PPDB private material directory is not writable: '.$target);
+        throw new RuntimeException('Folder privat materi belum dapat ditulisi.');
     }
     $realDirectory = realpath($target);
     $documentRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : false;

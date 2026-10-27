@@ -347,6 +347,29 @@ function ppdb_status_info(?string $status): array
     ];
 }
 
+/** Lokasi bersama untuk bukti pembayaran dan berkas privat PPDB. */
+function ppdb_payment_storage_root(): string
+{
+    $configured = trim((string) (getenv('PPDB_PAYMENT_STORAGE') ?: ''));
+    if ($configured !== '') {
+        if (DIRECTORY_SEPARATOR === '\\' || !preg_match('/^[A-Za-z]:[\\\\\/]/', $configured)) {
+            return rtrim(str_replace('\\', '/', $configured), '/');
+        }
+        error_log('PPDB_PAYMENT_STORAGE uses a Windows path on a non-Windows server; using the platform default.');
+    }
+
+    if (DIRECTORY_SEPARATOR === '\\') {
+        return 'C:/xampp/private/ppdb-payment-proofs';
+    }
+
+    $documentRoot = realpath((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    if ($documentRoot !== false) {
+        return dirname($documentRoot).'/private/ppdb-payment-proofs';
+    }
+
+    return rtrim(sys_get_temp_dir(), '/\\').'/ppdb-payment-proofs-'.substr(hash('sha256', __DIR__), 0, 16);
+}
+
 /** Menyimpan berkas privat di luar document root dan mengembalikan metadata. */
 function ppdb_store_private_upload(array $file, string $subDirectory, array $allowedMimes, int $maxBytes): array
 {
@@ -362,9 +385,15 @@ function ppdb_store_private_upload(array $file, string $subDirectory, array $all
         throw new RuntimeException('Format berkas tidak didukung: '.implode(', ', array_values($allowedMimes)).'.');
     }
 
-    $root = getenv('PPDB_PAYMENT_STORAGE') ?: 'C:/xampp/private/ppdb-payment-proofs';
+    $root = ppdb_payment_storage_root();
     $targetDirectory = rtrim(str_replace('\\', '/', $root), '/').'/'.trim($subDirectory, '/');
-    if (!is_dir($targetDirectory) && !mkdir($targetDirectory, 0700, true) && !is_dir($targetDirectory)) {
+    if (!is_dir($targetDirectory) && !@mkdir($targetDirectory, 0700, true) && !is_dir($targetDirectory)) {
+        $error = error_get_last();
+        error_log('PPDB private upload directory creation failed: '.$targetDirectory.'; '.($error['message'] ?? 'unknown filesystem error'));
+        throw new RuntimeException('Penyimpanan berkas sedang tidak tersedia. Hubungi panitia.');
+    }
+    if (!is_writable($targetDirectory)) {
+        error_log('PPDB private upload directory is not writable: '.$targetDirectory);
         throw new RuntimeException('Penyimpanan berkas sedang tidak tersedia. Hubungi panitia.');
     }
     $realTargetDirectory = realpath($targetDirectory);
@@ -393,7 +422,7 @@ function ppdb_store_private_upload(array $file, string $subDirectory, array $all
 /** Mencegah path traversal saat admin membuka berkas pendaftar. */
 function ppdb_resolve_stored_file(string $subDirectory, string $storedPath): ?string
 {
-    $root = getenv('PPDB_PAYMENT_STORAGE') ?: 'C:/xampp/private/ppdb-payment-proofs';
+    $root = ppdb_payment_storage_root();
     $realBase = realpath(rtrim(str_replace('\\', '/', $root), '/').'/'.trim($subDirectory, '/'));
     $realFile = realpath($storedPath);
     if (!$realBase || !$realFile) {

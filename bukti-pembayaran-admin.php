@@ -25,7 +25,7 @@ if (!$proof) {
     exit('Bukti pembayaran tidak ditemukan.');
 }
 
-$storageDirectory = getenv('PPDB_PAYMENT_STORAGE') ?: 'C:/xampp/private/ppdb-payment-proofs';
+$storageDirectory = ppdb_payment_storage_root();
 $realStorageDirectory = realpath($storageDirectory);
 $realFilePath = realpath($proof['path_file']);
 $allowedMimes = ['image/jpeg', 'image/png', 'application/pdf'];
