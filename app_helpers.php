@@ -34,6 +34,25 @@ function require_admin(): void
         http_response_code(403);
         exit('Akses admin tidak valid. Silakan masuk kembali.');
     }
+
+    // Akun yang sudah dihapus super admin tidak boleh terus memakai sesinya.
+    // Sebagian halaman memanggil fungsi ini sebelum koneksi dimuat.
+    if (!isset($GLOBALS['conn'])) {
+        require_once __DIR__.'/koneksi.php';
+        $GLOBALS['conn'] = $conn;
+    }
+    $check = mysqli_prepare($GLOBALS['conn'], 'SELECT 1 FROM tbadmin WHERE id = ? LIMIT 1');
+    $adminId = (int) $_SESSION['admin_id'];
+    mysqli_stmt_bind_param($check, 'i', $adminId);
+    mysqli_stmt_execute($check);
+    $exists = mysqli_stmt_get_result($check)->num_rows > 0;
+    mysqli_stmt_close($check);
+    if (!$exists) {
+        $_SESSION = [];
+        session_destroy();
+        header('Location: login.php');
+        exit;
+    }
 }
 
 function require_super_admin(): void

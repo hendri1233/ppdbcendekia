@@ -4816,3 +4816,7 @@ select:focus-visible {
     font-size: var(--fs-base);
     letter-spacing: 0.06em;
 }
+
+.account-actions {
+    justify-content: flex-end;
+}

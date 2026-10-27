@@ -88,8 +88,67 @@ if (!$isBootstrap && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
     }
 }
 
+// Super admin menghapus akun lain. Catatan audit (persetujuan token, undangan
+// internal) dan materi/kuisioner yang wajib menyebut pengubahnya tidak boleh
+// kehilangan rujukan, jadi akun yang tercatat di sana tidak dapat dihapus.
+if (!$isBootstrap && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_admin') {
+    $targetId = (int) ($_POST['admin_id'] ?? 0);
+    $target = mysqli_prepare($conn, 'SELECT id,username,role FROM tbadmin WHERE id = ? LIMIT 1');
+    mysqli_stmt_bind_param($target, 'i', $targetId);
+    mysqli_stmt_execute($target);
+    $targetAccount = mysqli_fetch_assoc(mysqli_stmt_get_result($target));
+    mysqli_stmt_close($target);
+    $superAdminCount = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM tbadmin WHERE role='super_admin'"))['total'];
+
+    if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+        $error = 'Sesi formulir kedaluwarsa. Muat ulang halaman dan coba kembali.';
+    } elseif ($targetId === (int) $_SESSION['admin_id']) {
+        $error = 'Akun yang sedang Anda pakai tidak dapat dihapus.';
+    } elseif (!$targetAccount) {
+        $error = 'Akun yang dipilih tidak ditemukan.';
+    } elseif ($targetAccount['role'] === 'super_admin' && $superAdminCount <= 1) {
+        $error = 'Super admin terakhir tidak dapat dihapus.';
+    } else {
+        $references = [
+            'persetujuan pakai ulang token internal' => 'SELECT COUNT(*) AS total FROM tb_token_internal_reuse_approvals WHERE approved_by = ?',
+            'undangan internal yang dibuat' => 'SELECT COUNT(*) AS total FROM tb_undangan_internal WHERE dibuat_oleh = ?',
+            'materi PPDB yang diperbarui' => 'SELECT COUNT(*) AS total FROM tb_ppdb_materials WHERE updated_by = ?',
+            'kuisioner yang diperbarui' => 'SELECT COUNT(*) AS total FROM tb_ppdb_questionnaires WHERE updated_by = ?',
+        ];
+        $linked = [];
+        foreach ($references as $label => $sql) {
+            $count = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($count, 'i', $targetId);
+            mysqli_stmt_execute($count);
+            $total = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($count))['total'];
+            mysqli_stmt_close($count);
+            if ($total > 0) {
+                $linked[] = $total.' '.$label;
+            }
+        }
+
+        if ($linked) {
+            $error = 'Akun '.$targetAccount['username'].' tidak dapat dihapus karena tercatat pada '.implode(', ', $linked).'. Untuk mencabut aksesnya, gunakan Reset kata sandi dan jangan sampaikan kata sandi sementaranya.';
+        } else {
+            try {
+                $delete = mysqli_prepare($conn, 'DELETE FROM tbadmin WHERE id = ?');
+                mysqli_stmt_bind_param($delete, 'i', $targetId);
+                mysqli_stmt_execute($delete);
+                mysqli_stmt_close($delete);
+                $_SESSION['account_notice'] = 'Akun '.$targetAccount['username'].' telah dihapus.';
+                header('Location: register.php#akun');
+                exit;
+            } catch (Throwable $exception) {
+                error_log('Hapus admin gagal: '.$exception->getMessage());
+                $error = 'Akun belum dapat dihapus karena masih dirujuk data lain. Gunakan Reset kata sandi untuk mencabut aksesnya.';
+            }
+        }
+    }
+}
+
 $accountReset = $_SESSION['account_reset'] ?? null;
-unset($_SESSION['account_reset']);
+$accountNotice = $_SESSION['account_notice'] ?? '';
+unset($_SESSION['account_reset'], $_SESSION['account_notice']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 'create') {
     $password = $_POST['password'] ?? '';
@@ -150,11 +209,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 
         <div>
             <p class="eyebrow">Akses pengelola</p>
             <h1>Administrator</h1>
-            <p>Buat akun pengelola baru atau reset kata sandi admin yang lupa.</p>
+            <p>Buat akun pengelola baru, reset kata sandi admin yang lupa, atau hapus akun yang tidak dipakai lagi.</p>
         </div>
     </header>
 
     <?php if ($error !== '') { ?><div class="alert-error" role="alert"><?php echo h($error); ?></div><?php } ?>
+    <?php if ($accountNotice !== '') { ?><div class="alert-success" role="status"><?php echo h($accountNotice); ?></div><?php } ?>
 
     <?php if ($accountReset) { ?>
         <section class="temp-password" role="status" aria-labelledby="temp-password-title">
@@ -184,12 +244,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 
                             <?php if ((int) $account['id'] === (int) $_SESSION['admin_id']) { ?>
                                 <a class="account-self" href="ubah-sandi.php">Akun Anda &middot; ubah kata sandi</a>
                             <?php } else { ?>
-                                <form method="post" onsubmit="return confirm('Reset kata sandi <?php echo h(addslashes($account['username'])); ?>? Kata sandi lama tidak berlaku lagi.');">
-                                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                                    <input type="hidden" name="action" value="reset_password">
-                                    <input type="hidden" name="admin_id" value="<?php echo (int) $account['id']; ?>">
-                                    <button class="table-action" type="submit">Reset kata sandi</button>
-                                </form>
+                                <div class="table-actions account-actions">
+                                    <form method="post" onsubmit="return confirm('Reset kata sandi <?php echo h(addslashes($account['username'])); ?>? Kata sandi lama tidak berlaku lagi.');">
+                                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                                        <input type="hidden" name="action" value="reset_password">
+                                        <input type="hidden" name="admin_id" value="<?php echo (int) $account['id']; ?>">
+                                        <button class="table-action" type="submit">Reset kata sandi</button>
+                                    </form>
+                                    <form method="post" onsubmit="return confirm('Hapus akun <?php echo h(addslashes($account['username'])); ?>? Akun ini tidak dapat masuk lagi dan tindakan ini tidak dapat dibatalkan.');">
+                                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                                        <input type="hidden" name="action" value="delete_admin">
+                                        <input type="hidden" name="admin_id" value="<?php echo (int) $account['id']; ?>">
+                                        <button class="table-action danger" type="submit">Hapus</button>
+                                    </form>
+                                </div>
                             <?php } ?>
                         </td>
                     </tr>
