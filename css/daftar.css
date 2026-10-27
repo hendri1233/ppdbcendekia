@@ -2064,3 +2064,624 @@ a {
 .error-summary a:hover {
     color: #d0342c;
 }
+
+/* ============================================================
+   Registrasi awal (daftar.php) bergaya portal: header putih,
+   pita hero hijau dengan langkah pendaftaran, kolom bantuan di
+   kiri, kartu formulir di kanan. Hanya berlaku pada body.page-daftar
+   sehingga formulir lengkap (formulir.php) tidak terpengaruh.
+   ============================================================ */
+
+body.page-daftar {
+    --d-green-950: #0b2a21;
+    --d-green-900: #0f3a2d;
+    --d-green-800: #144a3a;
+    --d-green-700: #1a5c48;
+    --d-green-600: #1e6e55;
+    --d-green-100: #e3f0e9;
+    --d-green-50: #f2f8f4;
+    --d-gold: #c9a24b;
+    --d-gold-soft: #f4ead2;
+    --d-gold-ink: #6b5214;
+    --d-ink: #26332e;
+    --d-text: #56635d;
+    --d-muted: #66726d;
+    --d-line: #e3e8e4;
+    --d-input-line: #c4cec8;
+    --d-focus: 0 0 0 3px rgba(30, 110, 85, 0.25);
+    color: var(--d-ink);
+    background: #f6f8f6;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+body.page-daftar {
+    --d-gutter: max(16px, calc((100% - 1200px) / 2));
+}
+
+/* Kontainer penuh; header dan hero selebar layar, isi tetap 1200px. */
+body.page-daftar .page-shell {
+    width: 100%;
+}
+
+/* Header putih selebar layar */
+body.page-daftar .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 76px;
+    gap: 16px;
+    padding-inline: var(--d-gutter);
+    background: #fff;
+    border-bottom: 1px solid var(--d-line);
+    box-shadow: 0 4px 16px rgba(15, 58, 45, 0.05);
+}
+
+body.page-daftar .brand {
+    margin-right: auto;
+}
+
+body.page-daftar .brand-copy strong {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+body.page-daftar .brand-copy small {
+    color: var(--d-muted);
+    font-weight: 600;
+}
+
+.daftar-year {
+    display: none;
+}
+
+body.page-daftar .daftar-year {
+    display: inline-flex;
+    padding: 6px 14px;
+    color: var(--d-gold-ink);
+    background: var(--d-gold-soft);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+body.page-daftar .back-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 8px 18px;
+    color: var(--d-green-600);
+    border: 1.5px solid var(--d-green-600);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+body.page-daftar .back-link:hover {
+    color: #fff;
+    background: var(--d-green-600);
+}
+
+/* Tata letak: hero di atas, lalu dua kolom */
+body.page-daftar .initial-layout {
+    display: block;
+    padding-bottom: 48px;
+}
+
+/* Pita hero hijau selebar layar */
+body.page-daftar .intro-rail {
+    position: relative;
+    top: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: center;
+    gap: 40px;
+    max-width: none;
+    overflow: hidden;
+    padding: clamp(36px, 5vw, 56px) var(--d-gutter);
+    color: #fff;
+    background:
+        radial-gradient(520px 260px at 100% 0%, rgba(201, 162, 75, 0.18), transparent 70%),
+        linear-gradient(135deg, var(--d-green-700) 0%, var(--d-green-950) 100%);
+    isolation: isolate;
+}
+
+body.page-daftar .intro-rail::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    right: -120px;
+    bottom: -180px;
+    width: 420px;
+    height: 420px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+}
+
+body.page-daftar .intro-rail .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #f0d79a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.page-daftar .intro-rail .eyebrow::before {
+    content: "";
+    width: 24px;
+    height: 2px;
+    background: var(--d-gold);
+}
+
+body.page-daftar .intro h1 {
+    color: #fff;
+    font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+body.page-daftar .intro h1 span {
+    color: #f0d79a;
+}
+
+body.page-daftar .intro-copy {
+    max-width: 52ch;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.daftar-chips {
+    display: none;
+}
+
+body.page-daftar .daftar-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+body.page-daftar .daftar-chips li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+body.page-daftar .daftar-chips li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: var(--d-gold);
+    border-radius: 50%;
+}
+
+/* Langkah pendaftaran: kartu transparan di sisi kanan hero */
+body.page-daftar .journey-list {
+    margin: 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+}
+
+body.page-daftar .journey-list li::before {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+body.page-daftar .journey-list li > span {
+    color: #fff;
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+body.page-daftar .journey-list li.is-active > span {
+    color: var(--d-green-900);
+    background: #f0d79a;
+    border-color: #f0d79a;
+    box-shadow: 0 0 0 4px rgba(240, 215, 154, 0.25);
+}
+
+body.page-daftar .journey-list li strong,
+body.page-daftar .journey-list li.is-active strong {
+    color: #fff;
+}
+
+body.page-daftar .journey-list li small {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+/* Isi: kolom bantuan + kartu formulir */
+.daftar-body,
+.daftar-aside {
+    display: contents;
+}
+
+body.page-daftar .daftar-body {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+    margin-top: 32px;
+    padding-inline: var(--d-gutter);
+}
+
+body.page-daftar .daftar-aside {
+    position: sticky;
+    top: 100px;
+    display: grid;
+    gap: 16px;
+}
+
+body.page-daftar .initial-main {
+    padding-top: 0;
+}
+
+body.page-daftar .progress-ring {
+    margin: 0;
+    padding: 18px 20px;
+    background: #fff;
+    border: 1px solid var(--d-line);
+    border-radius: 12px;
+    box-shadow: 0 0 4px rgba(15, 58, 45, 0.08);
+}
+
+body.page-daftar .progress-ring__count {
+    color: var(--d-green-600);
+}
+
+body.page-daftar .progress-ring__bar {
+    background: linear-gradient(90deg, var(--d-green-600), #4e9f82);
+}
+
+body.page-daftar .intro-meta {
+    padding: 0 4px;
+    color: var(--d-text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+body.page-daftar .meta-dot {
+    background: var(--d-gold);
+}
+
+.daftar-card {
+    display: none;
+}
+
+body.page-daftar .daftar-card {
+    display: block;
+    padding: 18px 20px;
+    background: #fff;
+    border: 1px solid var(--d-line);
+    border-radius: 12px;
+    box-shadow: 0 0 4px rgba(15, 58, 45, 0.08);
+}
+
+body.page-daftar .daftar-card h2 {
+    margin: 0 0 12px;
+    color: var(--d-ink);
+    font-size: 0.9375rem;
+    font-weight: 700;
+}
+
+body.page-daftar .daftar-checklist {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--d-text);
+    font-size: 0.875rem;
+}
+
+body.page-daftar .daftar-checklist li {
+    display: flex;
+    gap: 10px;
+}
+
+body.page-daftar .daftar-checklist li::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    flex: none;
+    margin-top: 1px;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%231a5c48' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5.5 10.5 3 3 6-7'/%3E%3C/svg%3E") center / 12px no-repeat,
+        var(--d-green-100);
+    border-radius: 50%;
+}
+
+body.page-daftar .daftar-card--help {
+    background: var(--d-gold-soft);
+    border-color: rgba(201, 162, 75, 0.4);
+}
+
+body.page-daftar .daftar-card--help p {
+    margin: 0;
+    color: var(--d-text);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+}
+
+body.page-daftar .daftar-help-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 16px;
+    color: #fff;
+    background: var(--d-green-600);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+}
+
+body.page-daftar .daftar-help-link:hover {
+    background: var(--d-green-800);
+}
+
+/* Kartu formulir */
+body.page-daftar .registration-form,
+body.page-daftar .initial-main > .form-section {
+    background: #fff;
+    border: 1px solid var(--d-line);
+    border-radius: 12px;
+    box-shadow: 0 0 4px rgba(15, 58, 45, 0.08), 0 18px 40px -20px rgba(15, 58, 45, 0.2);
+}
+
+body.page-daftar .form-section {
+    padding: clamp(22px, 3vw, 32px);
+}
+
+body.page-daftar .section-heading h2 {
+    color: var(--d-ink);
+    font-size: clamp(1.25rem, 1rem + 0.8vw, 1.5rem);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+body.page-daftar .section-heading p {
+    color: var(--d-text);
+}
+
+body.page-daftar .route-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #8c2a28;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+body.page-daftar .route-tag::before {
+    content: "";
+    width: 20px;
+    height: 2px;
+    background: var(--d-gold);
+}
+
+body.page-daftar .section-number {
+    color: var(--d-green-800);
+    background: var(--d-gold-soft);
+    border: 0;
+    border-radius: 50%;
+}
+
+body.page-daftar .contact-notice {
+    position: relative;
+    padding: 14px 16px 14px 48px;
+    color: var(--d-gold-ink);
+    background: var(--d-gold-soft);
+    border: 0;
+    border-radius: 10px;
+}
+
+body.page-daftar .contact-notice::before {
+    content: "!";
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: var(--d-gold);
+    border-radius: 50%;
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+body.page-daftar .contact-notice a {
+    color: var(--d-green-700);
+    font-weight: 700;
+}
+
+body.page-daftar .field label {
+    color: var(--d-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+body.page-daftar .required-mark {
+    color: #b3261e;
+}
+
+body.page-daftar .field input,
+body.page-daftar .field select {
+    min-height: 48px;
+    padding: 11px 14px;
+    color: var(--d-ink);
+    background-color: #fff;
+    border: 1px solid var(--d-input-line);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+body.page-daftar .field input:hover,
+body.page-daftar .field select:hover {
+    border-color: #9fb0a7;
+}
+
+body.page-daftar .field input:focus,
+body.page-daftar .field select:focus {
+    border-color: var(--d-green-600);
+    outline: none;
+    box-shadow: var(--d-focus);
+}
+
+body.page-daftar .field-hint {
+    color: var(--d-muted);
+}
+
+body.page-daftar .consent-check {
+    background: var(--d-green-50);
+    border: 1px solid var(--d-green-100);
+    border-radius: 10px;
+}
+
+body.page-daftar .consent-check input {
+    accent-color: var(--d-green-600);
+}
+
+body.page-daftar .form-footer {
+    background: var(--d-green-50);
+    border-top: 1px solid var(--d-line);
+}
+
+body.page-daftar .form-footer p {
+    color: var(--d-text);
+}
+
+body.page-daftar .submit-button {
+    min-height: 48px;
+    padding: 12px 28px;
+    color: #fff;
+    background: var(--d-green-600);
+    border: 0;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    box-shadow: 0 8px 20px -8px rgba(30, 110, 85, 0.6);
+}
+
+body.page-daftar .submit-button:hover:not(:disabled) {
+    background: var(--d-green-800);
+}
+
+body.page-daftar .submit-button:focus-visible,
+body.page-daftar .back-link:focus-visible,
+body.page-daftar .daftar-help-link:focus-visible {
+    outline: none;
+    box-shadow: var(--d-focus);
+}
+
+body.page-daftar .error-summary {
+    border-radius: 10px;
+}
+
+body.page-daftar .site-footer {
+    margin: 0 var(--d-gutter);
+    color: var(--d-muted);
+    border-top: 1px solid var(--d-line);
+}
+
+@media (max-width: 960px) {
+    body.page-daftar .intro-rail {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+    }
+
+    body.page-daftar .daftar-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* Di layar sempit progres tampil di atas formulir, kartu bantuan di bawahnya. */
+    body.page-daftar .daftar-aside {
+        display: contents;
+    }
+
+    body.page-daftar .progress-ring,
+    body.page-daftar .intro-meta {
+        order: -1;
+    }
+
+    body.page-daftar .daftar-body {
+        gap: 16px;
+    }
+
+    body.page-daftar .daftar-card {
+        order: 2;
+    }
+}
+
+@media (max-width: 640px) {
+    body.page-daftar .site-header {
+        min-height: 64px;
+    }
+
+    body.page-daftar .daftar-year {
+        display: none;
+    }
+
+    body.page-daftar .brand-copy small {
+        display: none;
+    }
+
+    body.page-daftar .brand-logo {
+        width: 40px;
+        height: 39px;
+    }
+
+    body.page-daftar .back-link {
+        min-height: 36px;
+        padding: 6px 14px;
+        font-size: 0.6875rem;
+        white-space: nowrap;
+    }
+
+    body.page-daftar .submit-button {
+        width: 100%;
+    }
+}
+
+/* Formulir kode internal berada di dalam kartu bagian: tampil rata, tanpa kartu kedua. */
+body.page-daftar .form-section .registration-form {
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.page-daftar .form-section .registration-form .form-footer {
+    margin: 24px calc(-1 * clamp(22px, 3vw, 32px)) calc(-1 * clamp(22px, 3vw, 32px));
+    border-radius: 0 0 12px 12px;
+}
+
+/* Progres hanya berarti bila formulir data sudah tampil. */
+body.page-daftar .daftar-body:not(:has(#form-utama)) .progress-ring {
+    display: none;
+}

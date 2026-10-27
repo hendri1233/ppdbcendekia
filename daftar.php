@@ -406,7 +406,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <link rel="icon" type="image/png" sizes="192x192" href="img/favicons/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
-<body data-academic-year="<?php echo h($routeOffer['th_ajaran'] ?? ''); ?>">
+<body class="page-daftar" data-academic-year="<?php echo h($routeOffer['th_ajaran'] ?? ''); ?>">
 <a class="skip-link" href="#form-utama">Lompat ke formulir</a>
 <div class="page-shell">
     <header class="site-header">
@@ -414,14 +414,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
             <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · PPDB online</small></span>
         </a>
+        <span class="daftar-year">PPDB <?php echo h($routeOffer['th_ajaran'] ?? '2027/2028'); ?></span>
         <a class="back-link" href="index.php">Kembali ke beranda</a>
     </header>
 
     <main class="initial-layout">
         <section class="intro intro-rail">
-            <p class="eyebrow">Tahap 1 dari 3 · Registrasi awal</p>
-            <h1>Cukup data dasar,<br><span>sisanya kami pandu.</span></h1>
-            <p class="intro-copy">Isi tujuh isian singkat berikut. Panitia menghubungi Anda lewat WhatsApp untuk pembayaran, lalu Anda melengkapi formulir dan mengunggah dokumen.</p>
+            <div class="daftar-hero__copy">
+                <p class="eyebrow">Tahap 1 dari 3 · Registrasi awal</p>
+                <h1>Cukup data dasar,<br><span>sisanya kami pandu.</span></h1>
+                <p class="intro-copy">Isi tujuh isian singkat berikut. Panitia menghubungi Anda lewat WhatsApp untuk pembayaran, lalu Anda melengkapi formulir dan mengunggah dokumen.</p>
+                <ul class="daftar-chips" aria-label="Ringkasan registrasi awal">
+                    <li>Sekitar 3 menit</li>
+                    <li>Tanpa NIK &amp; dokumen</li>
+                    <li>Dipandu lewat WhatsApp</li>
+                </ul>
+            </div>
+            <ol class="journey-list" aria-label="Alur pendaftaran">
+                <li class="is-active"><span aria-hidden="true">1</span><div><strong>Registrasi awal</strong><small>7 isian dasar, tanpa NIK</small></div></li>
+                <li><span aria-hidden="true">2</span><div><strong>Verifikasi &amp; pembayaran</strong><small>Panitia menghubungi lewat WhatsApp</small></div></li>
+                <li><span aria-hidden="true">3</span><div><strong>Formulir lengkap</strong><small>Data detail dan dokumen pendukung</small></div></li>
+            </ol>
+        </section>
+
+        <div class="daftar-body">
+        <aside class="daftar-aside" aria-label="Bantuan pengisian">
             <div class="progress-ring">
                 <div class="progress-ring__top">
                     <span class="progress-ring__label">Kelengkapan isian</span>
@@ -429,13 +446,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 </div>
                 <div class="progress-ring__track"><div class="progress-ring__bar" data-progress-bar></div></div>
             </div>
-            <ol class="journey-list" aria-label="Alur pendaftaran">
-                <li class="is-active"><span aria-hidden="true">1</span><div><strong>Registrasi awal</strong><small>7 isian dasar, tanpa NIK</small></div></li>
-                <li><span aria-hidden="true">2</span><div><strong>Verifikasi &amp; pembayaran</strong><small>Panitia menghubungi lewat WhatsApp</small></div></li>
-                <li><span aria-hidden="true">3</span><div><strong>Formulir lengkap</strong><small>Data detail dan dokumen pendukung</small></div></li>
-            </ol>
             <div class="intro-meta"><span class="meta-dot" aria-hidden="true"></span> <?php echo $openOffers ? 'Pendaftaran mengikuti kuota yang dibuka tiap unit.' : ($fullOffers ? 'Kuota pendaftaran saat ini telah terpenuhi.' : 'Pendaftaran belum dibuka oleh admin.'); ?></div>
-        </section>
+            <div class="daftar-card">
+                <h2>Siapkan sebelum mengisi</h2>
+                <ul class="daftar-checklist">
+                    <li>Nama lengkap ananda sesuai akta kelahiran</li>
+                    <li>Tanggal lahir ananda</li>
+                    <li>Nomor WhatsApp pendaftar, ayah, dan ibu</li>
+                </ul>
+            </div>
+            <div class="daftar-card daftar-card--help">
+                <h2>Butuh bantuan?</h2>
+                <p>Hubungi nomor WhatsApp resmi PPDB. Panitia tidak pernah meminta transfer lewat nomor lain.</p>
+                <a class="daftar-help-link" href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a>
+            </div>
+        </aside>
 
         <div class="initial-main">
             <?php if ($routeType === 'eksternal' && !$tokenEntryRequested && empty($_SESSION[$internalSessionKey])) { ?>
@@ -548,6 +573,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 </div>
             </form>
             <?php } ?>
+        </div>
         </div>
     </main>
 
