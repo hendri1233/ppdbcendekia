@@ -614,5 +614,5 @@ require 'admin_header.php';
     </section>
 </div>
 <script>window.PPDB_QUOTA_SETTINGS = <?php echo json_encode($settingsByKey, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;</script>
-<script src="js/pengaturan.js"></script>
+<script src="js/pengaturan.js?v=<?php echo (int) @filemtime(__DIR__.'/js/pengaturan.js'); ?>"></script>
 <?php require 'admin_footer.php'; ?>

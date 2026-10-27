@@ -98,4 +98,4 @@ require 'admin_header.php';
     </section>
 </div>
 <?php require 'admin_footer.php'; ?>
-<script src="js/auth.js"></script>
+<script src="js/auth.js?v=<?php echo (int) @filemtime(__DIR__.'/js/auth.js'); ?>"></script>
