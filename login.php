@@ -107,30 +107,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="icon" type="image/png" sizes="192x192" href="img/favicons/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
-<body>
-    <main class="auth-shell auth-shell--split">
-        <aside class="auth-aside" aria-label="Tentang panel pengelola">
-            <a class="auth-aside__brand" href="index.php">
-                <img src="img/logo-display.png" alt="" width="56" height="55">
-                <span><strong>Yayasan Wakaf Cendekia</strong><small>Takengon, Aceh Tengah</small></span>
-            </a>
-            <div class="auth-aside__copy">
-                <p class="auth-aside__eyebrow">Panel PPDB</p>
-                <h2>Kelola penerimaan peserta didik <span>dalam satu tempat.</span></h2>
-                <ul class="auth-aside__list">
-                    <li>Pantau pendaftar dan proses setiap tahap</li>
-                    <li>Atur kuota, biaya, dan jalur per unit</li>
-                    <li>Perbarui berita dan konten situs yayasan</li>
-                </ul>
-            </div>
-            <p class="auth-aside__foot">Shaleh, cerdas &amp; terampil.</p>
-        </aside>
-        <div class="auth-main">
-        <a class="auth-brand" href="index.php">
-            <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
-            <span><strong>Wakaf Cendekia</strong><small>Takengon · PPDB</small></span>
+<body class="auth-page--glass">
+    <div class="auth-scene" aria-hidden="true">
+        <img class="auth-scene__photo" src="img/login-bg.webp" alt="" width="1600" height="900" fetchpriority="high">
+        <span class="auth-scene__glow auth-scene__glow--gold"></span>
+        <span class="auth-scene__glow auth-scene__glow--green"></span>
+    </div>
+    <main class="auth-glass">
+        <a class="auth-glass__brand" href="index.php">
+            <img src="img/logo-display.png" alt="" width="64" height="63">
+            <span><strong>Yayasan Wakaf Cendekia</strong><small>Takengon, Aceh Tengah</small></span>
         </a>
-        <section class="auth-panel">
+        <section class="auth-panel auth-panel--glass">
             <p class="eyebrow">Area pengelola</p>
             <h1>Selamat datang kembali.</h1>
             <p class="auth-copy">Pilih akses sesuai peran Anda untuk mengelola pendaftaran peserta didik.</p>
@@ -155,7 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <svg class="auth-field__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="12" height="8.5" rx="2"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>
                     <input id="password" type="password" name="password" autocomplete="current-password" required>
                     <button class="auth-password__toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Tampilkan kata sandi">
-                        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 10S5 4.5 10 4.5 18.2 10 18.2 10 15 15.5 10 15.5 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.6"/></svg>
+                        <svg class="auth-eye auth-eye--show" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 10S5 4.5 10 4.5 18.2 10 18.2 10 15 15.5 10 15.5 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.6"/></svg>
+                        <svg class="auth-eye auth-eye--hide" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l14 14"/><path d="M8.2 5a8 8 0 0 1 1.8-.2c5 0 8.2 5.2 8.2 5.2a14 14 0 0 1-2.4 2.9M12.1 15.1A7.6 7.6 0 0 1 10 15.5c-5 0-8.2-5.5-8.2-5.5a14.4 14.4 0 0 1 3.5-3.9"/><path d="M8.2 8.3a2.6 2.6 0 0 0 3.5 3.5"/></svg>
                     </button>
                 </span>
                 <button type="submit">Masuk ke dashboard <span aria-hidden="true">&rarr;</span></button>
@@ -163,9 +152,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="auth-note"><strong>Lupa kata sandi?</strong> Hubungi super admin untuk mendapatkan kata sandi sementara, lalu ganti lewat menu <em>Ubah kata sandi</em> setelah masuk.</p>
             <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>
         </section>
-        <footer>Yayasan Wakaf Cendekia Takengon</footer>
-        </div>
     </main>
+    <footer class="auth-glass__foot">&copy; <?php echo date('Y'); ?> Yayasan Wakaf Cendekia Takengon</footer>
     <script src="js/auth.js"></script>
 </body>
 </html>

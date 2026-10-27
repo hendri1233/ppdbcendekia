@@ -1,20 +1,21 @@
-/* Halaman masuk dan akun pengelola. Gaya portal hijau yayasan: panel
-   identitas di kiri, kartu formulir di kanan. Font dari css/tokens.css. */
+/* Halaman masuk dan akun pengelola. Font dari css/tokens.css.
+   - Gaya dasar (kartu putih) dipakai register.php saat penyiapan admin pertama.
+   - Halaman masuk (body.auth-page--glass): kartu kaca di atas foto yayasan
+     yang bergerak pelan, dengan cahaya hijau dan emas. */
 :root {
     --auth-ink: #26332e;
     --auth-text: #56635d;
     --auth-muted: #66726d;
     --auth-green-950: #0b2a21;
+    --auth-green-900: #0f3a2d;
     --auth-green-800: #144a3a;
     --auth-green-700: #1a5c48;
     --auth-green-600: #1e6e55;
-    --auth-green-100: #e3f0e9;
     --auth-green-50: #f2f8f4;
     --auth-gold: #c9a24b;
     --auth-gold-soft: #f0d79a;
     --auth-line: #dfe5e1;
     --auth-input-line: #c4cec8;
-    --auth-bg: #f6f8f6;
     --auth-focus: 0 0 0 3px rgba(30, 110, 85, 0.25);
 }
 
@@ -27,14 +28,17 @@ body {
     min-height: 100vh;
     margin: 0;
     color: var(--auth-ink);
-    background: var(--auth-bg);
+    background: #f6f8f6;
     font-family: var(--font-sans);
     font-size: 1rem;
     line-height: 1.5;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Satu kolom (register.php) */
+/* ---------------- Gaya dasar (register.php) ---------------- */
+
 .auth-shell {
     width: min(100% - 32px, 460px);
     min-height: 100vh;
@@ -45,157 +49,6 @@ body {
     padding: 36px 0;
 }
 
-/* Dua kolom (login.php): panel identitas + formulir */
-.auth-shell--split {
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    padding: 0;
-}
-
-.auth-main {
-    width: min(100% - 32px, 440px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin: 0 auto;
-    padding: 40px 0;
-}
-
-.auth-aside {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    min-height: 560px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 40px;
-    overflow: hidden;
-    padding: clamp(32px, 5vw, 56px);
-    color: #fff;
-    background: linear-gradient(160deg, var(--auth-green-700) 0%, var(--auth-green-950) 100%);
-    isolation: isolate;
-}
-
-/* Ornamen lingkaran transparan */
-.auth-aside::before,
-.auth-aside::after {
-    content: '';
-    position: absolute;
-    z-index: -1;
-    border-radius: 50%;
-    pointer-events: none;
-}
-
-.auth-aside::before {
-    width: 420px;
-    height: 420px;
-    right: -160px;
-    bottom: -140px;
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.auth-aside::after {
-    width: 220px;
-    height: 220px;
-    top: -90px;
-    left: -70px;
-    border: 1.5px solid rgba(201, 162, 75, 0.35);
-}
-
-.auth-aside__brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
-    color: #fff;
-    text-decoration: none;
-}
-
-.auth-aside__brand img {
-    width: 56px;
-    height: 55px;
-    object-fit: contain;
-}
-
-.auth-aside__brand span {
-    display: grid;
-    line-height: 1.3;
-}
-
-.auth-aside__brand strong {
-    font-size: 1.0625rem;
-    font-weight: 700;
-}
-
-.auth-aside__brand small {
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 0.8125rem;
-}
-
-.auth-aside__eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 14px;
-    color: var(--auth-gold-soft);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.auth-aside__eyebrow::before {
-    content: '';
-    width: 24px;
-    height: 2px;
-    background: var(--auth-gold);
-}
-
-.auth-aside h2 {
-    max-width: 18ch;
-    margin: 0;
-    font-size: clamp(1.5rem, 1rem + 1.4vw, 2rem);
-    font-weight: 600;
-    line-height: 1.3;
-    text-wrap: balance;
-}
-
-.auth-aside__list {
-    display: grid;
-    gap: 12px;
-    margin: 24px 0 0;
-    padding: 0;
-    list-style: none;
-    color: rgba(255, 255, 255, 0.86);
-    font-size: 0.9375rem;
-}
-
-.auth-aside__list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.auth-aside__list li::before {
-    content: '';
-    width: 20px;
-    height: 20px;
-    flex: none;
-    margin-top: 2px;
-    background:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%230f3a2d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5.5 10.5 3 3 6-7'/%3E%3C/svg%3E") center / 14px no-repeat,
-        var(--auth-gold-soft);
-    border-radius: 50%;
-}
-
-.auth-aside__foot {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.8125rem;
-}
-
-/* Merek di atas kartu: tampil di register dan di login versi ponsel */
 .auth-brand {
     display: inline-flex;
     align-items: center;
@@ -204,10 +57,6 @@ body {
     margin: 0 0 24px;
     color: inherit;
     text-decoration: none;
-}
-
-.auth-shell--split .auth-brand {
-    display: none;
 }
 
 .brand-logo {
@@ -238,8 +87,8 @@ body {
     padding: clamp(28px, 4vw, 40px);
     background: #fff;
     border: 1px solid var(--auth-line);
-    border-radius: 12px;
-    box-shadow: 0 0 4px rgba(15, 58, 45, 0.08), 0 18px 40px -16px rgba(15, 58, 45, 0.18);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(15, 58, 45, 0.04), 0 24px 48px -24px rgba(15, 58, 45, 0.28);
 }
 
 .eyebrow {
@@ -267,6 +116,7 @@ body {
     font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
     font-weight: 600;
     line-height: 1.3;
+    text-wrap: balance;
 }
 
 .auth-copy {
@@ -284,7 +134,7 @@ body {
     color: #8a1d1a;
     background: #fdf0ee;
     border: 1px solid #f1c4bd;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.875rem;
     line-height: 1.5;
 }
@@ -330,17 +180,12 @@ body {
     min-height: 48px;
     padding: 11px 14px;
     color: var(--auth-ink);
-    background: #fff;
+    background-color: #fff;
     border: 1px solid var(--auth-input-line);
-    border-radius: 8px;
+    border-radius: 10px;
     font: inherit;
     font-size: 0.9375rem;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-
-.auth-form input:hover,
-.auth-form select:hover {
-    border-color: #9fb0a7;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
 .auth-form input:focus,
@@ -350,50 +195,8 @@ body {
     box-shadow: var(--auth-focus);
 }
 
-/* Kata sandi dengan tombol mata di dalam field */
-.auth-password {
-    position: relative;
-    display: block;
-}
-
-.auth-password input {
-    padding-right: 52px;
-}
-
-.auth-password__toggle {
-    position: absolute;
-    top: 50%;
-    right: 6px;
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    color: var(--auth-muted);
-    background: transparent;
-    border: 0;
-    border-radius: 50%;
-    cursor: pointer;
-    transform: translateY(-50%);
-}
-
-.auth-password__toggle:hover {
-    color: var(--auth-green-600);
-    background: var(--auth-green-50);
-}
-
-.auth-password__toggle[aria-pressed="true"] {
-    color: var(--auth-green-600);
-}
-
-.auth-password__toggle:focus-visible {
-    outline: none;
-    box-shadow: var(--auth-focus);
-}
-
-/* Tombol kirim: pill hijau penuh */
 .auth-form > button {
-    min-height: 48px;
+    min-height: 50px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -410,7 +213,7 @@ body {
     letter-spacing: 0.02em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background-color 150ms ease, transform 150ms ease;
+    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
 .auth-form > button:hover {
@@ -423,24 +226,18 @@ body {
 
 .auth-form > button span {
     font-size: 1rem;
-    transition: transform 150ms ease;
+    transition: transform 180ms ease;
 }
 
 .auth-form > button:hover span {
-    transform: translateX(3px);
+    transform: translateX(4px);
 }
 
 .auth-form > button:focus-visible,
 .auth-back:focus-visible,
-.auth-brand:focus-visible,
-.auth-aside__brand:focus-visible {
+.auth-brand:focus-visible {
     outline: none;
     box-shadow: var(--auth-focus);
-    border-radius: 8px;
-}
-
-.auth-aside__brand:focus-visible {
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
 }
 
 .auth-back {
@@ -461,23 +258,16 @@ body {
 }
 
 .auth-back:hover {
-    color: var(--auth-green-800);
     text-decoration: underline;
     text-underline-offset: 3px;
 }
 
-.auth-shell footer,
-.auth-main footer {
+.auth-shell footer {
     margin-top: 24px;
     color: var(--auth-muted);
     font-size: 0.8125rem;
     text-align: center;
 }
-
-/* ============================================================
-   Tambahan halaman autentikasi: catatan keamanan, indikator
-   kekuatan kata sandi, dan pencocokan ulang sandi.
-   ============================================================ */
 
 .auth-note {
     margin: 20px 0 0;
@@ -485,7 +275,7 @@ body {
     color: var(--auth-text);
     background: var(--auth-green-50);
     border-left: 3px solid var(--auth-gold);
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 10px 10px 0;
     font-size: 0.8125rem;
     line-height: 1.6;
 }
@@ -534,94 +324,7 @@ body {
     font-weight: 600;
 }
 
-@media (max-width: 900px) {
-    .auth-shell--split {
-        display: block;
-    }
-
-    .auth-aside {
-        display: none;
-    }
-
-    .auth-shell--split .auth-brand {
-        display: inline-flex;
-    }
-
-    .auth-main {
-        min-height: 100vh;
-    }
-}
-
-@media (max-width: 520px) {
-    .auth-shell,
-    .auth-main {
-        width: min(100% - 32px, 460px);
-        justify-content: flex-start;
-        padding: 24px 0;
-    }
-
-    .auth-panel {
-        padding: 24px 20px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    * {
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* ============================================================
-   Penghalusan halaman masuk: latar lembut berpola titik, field
-   berikon, panel identitas dengan aksen emas, animasi masuk ringan.
-   ============================================================ */
-
-body {
-    text-rendering: optimizeLegibility;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Latar sisi formulir: hijau sangat pucat dengan pola titik halus. */
-.auth-shell--split .auth-main {
-    position: relative;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 40px max(16px, calc((100% - 440px) / 2));
-    background:
-        radial-gradient(600px 400px at 85% 10%, rgba(201, 162, 75, 0.1), transparent 70%),
-        radial-gradient(700px 500px at 10% 100%, rgba(30, 110, 85, 0.08), transparent 70%),
-        radial-gradient(rgba(30, 110, 85, 0.09) 1px, transparent 1.2px) 0 0 / 22px 22px,
-        #f7faf8;
-}
-
-.auth-panel {
-    position: relative;
-    overflow: hidden;
-    padding: clamp(28px, 4vw, 44px);
-    border: 1px solid rgba(15, 58, 45, 0.08);
-    border-radius: 16px;
-    box-shadow:
-        0 1px 2px rgba(15, 58, 45, 0.04),
-        0 24px 48px -24px rgba(15, 58, 45, 0.28);
-}
-
-/* Garis aksen tipis di tepi atas kartu. */
-.auth-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 3px;
-    background: linear-gradient(90deg, var(--auth-green-600), var(--auth-gold) 60%, var(--auth-green-600));
-}
-
-.auth-panel h1 {
-    font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
-    letter-spacing: -0.005em;
-    text-wrap: balance;
-}
-
-/* Field dengan ikon di kiri */
+/* Field dengan ikon di kiri dan tombol mata di dalam kotak kata sandi */
 .auth-field {
     position: relative;
     display: block;
@@ -630,159 +333,445 @@ body {
 .auth-field__icon {
     position: absolute;
     top: 50%;
-    left: 14px;
+    left: 15px;
     z-index: 1;
     color: var(--auth-muted);
     pointer-events: none;
     transform: translateY(-50%);
-    transition: color 150ms ease;
+    transition: color 160ms ease;
 }
 
 .auth-field input,
 .auth-field select {
-    padding-left: 44px;
-}
-
-.auth-field:focus-within .auth-field__icon {
-    color: var(--auth-green-600);
+    padding-left: 46px;
 }
 
 .auth-field select {
-    padding-right: 40px;
-    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2366726d' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E") right 14px center / 16px no-repeat;
+    padding-right: 42px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2366726d' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 14px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
     -webkit-appearance: none;
     appearance: none;
     cursor: pointer;
 }
 
-.auth-form input::placeholder {
-    color: #9aa6a0;
+.auth-password input {
+    padding-right: 52px;
 }
 
-.auth-form input,
-.auth-form select {
-    background-color: #fff;
+.auth-password__toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    z-index: 1;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--auth-muted);
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: color 160ms ease, background-color 160ms ease;
 }
 
-.auth-form input:focus,
-.auth-form select:focus {
-    background-color: #fff;
+.auth-password__toggle:focus-visible {
+    outline: none;
+    box-shadow: var(--auth-focus);
 }
 
-.auth-form label {
-    transition: color 150ms ease;
+.auth-eye {
+    grid-area: 1 / 1;
+    transition: opacity 160ms ease, transform 200ms ease;
 }
 
-/* Tombol masuk */
-.auth-form > button {
-    box-shadow: 0 10px 22px -10px rgba(30, 110, 85, 0.7);
+.auth-eye--hide,
+.auth-password__toggle[aria-pressed="true"] .auth-eye--show {
+    opacity: 0;
+    transform: scale(0.7);
 }
 
-.auth-form > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 26px -12px rgba(30, 110, 85, 0.75);
+.auth-password__toggle[aria-pressed="true"] .auth-eye--hide {
+    opacity: 1;
+    transform: none;
 }
 
-.auth-form > button:active {
-    transform: translateY(0);
+/* ---------------- Halaman masuk: kartu kaca di atas foto ---------------- */
+
+.auth-page--glass {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    color: #fff;
+    background: var(--auth-green-950);
 }
 
-/* Panel identitas */
-.auth-aside {
+/* Foto yayasan dengan lapisan hijau dan cahaya yang bergerak pelan. */
+.auth-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.auth-scene__photo {
+    position: absolute;
+    inset: -4%;
+    width: 108%;
+    height: 108%;
+    max-width: none;
+    object-fit: cover;
+    transform-origin: 30% 40%;
+}
+
+.auth-scene::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
     background:
-        radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.2px) 0 0 / 24px 24px,
-        radial-gradient(520px 320px at 100% 0%, rgba(201, 162, 75, 0.2), transparent 70%),
-        linear-gradient(160deg, var(--auth-green-700) 0%, var(--auth-green-950) 100%);
+        linear-gradient(105deg, rgba(7, 26, 20, 0.94) 0%, rgba(11, 42, 33, 0.86) 45%, rgba(11, 42, 33, 0.58) 100%),
+        radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1.3px) 0 0 / 26px 26px;
 }
 
-.auth-aside__brand img {
-    padding: 4px;
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.45);
+.auth-scene__glow {
+    position: absolute;
+    z-index: 2;
+    width: 46vmax;
+    height: 46vmax;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.55;
 }
 
-.auth-aside h2 {
-    font-size: clamp(1.5rem, 1rem + 1.2vw, 1.75rem);
-    line-height: 1.35;
+.auth-scene__glow--gold {
+    top: -18vmax;
+    right: -10vmax;
+    background: radial-gradient(circle, rgba(201, 162, 75, 0.55), transparent 65%);
 }
 
-.auth-aside h2 span {
+.auth-scene__glow--green {
+    bottom: -22vmax;
+    left: -12vmax;
+    background: radial-gradient(circle, rgba(43, 132, 104, 0.6), transparent 65%);
+}
+
+.auth-glass {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    width: min(100% - 32px, 1120px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    align-items: center;
+    gap: clamp(32px, 6vw, 96px);
+    margin: 0 auto;
+    padding: 48px 0 24px;
+}
+
+.auth-glass__brand {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    gap: 16px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.auth-glass__brand img {
+    width: 64px;
+    height: 63px;
+    padding: 6px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 18px;
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.55), 0 0 0 6px rgba(255, 255, 255, 0.08);
+}
+
+.auth-glass__brand span {
+    display: grid;
+    gap: 2px;
+}
+
+.auth-glass__brand strong {
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.625rem);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    line-height: 1.2;
+}
+
+.auth-glass__brand small {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.9375rem;
+}
+
+.auth-glass__brand:focus-visible {
+    outline: none;
+    border-radius: 18px;
+    box-shadow: 0 0 0 3px rgba(240, 215, 154, 0.7);
+}
+
+/* Kartu kaca */
+.auth-panel--glass {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(28px, 4vw, 40px);
+    color: #fff;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.06) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 24px;
+    box-shadow:
+        0 30px 60px -24px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+}
+
+/* Kilau tipis di tepi atas kartu */
+.auth-panel--glass::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(240, 215, 154, 0.9), transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .auth-panel--glass {
+        background: rgba(11, 42, 33, 0.88);
+    }
+}
+
+.auth-panel--glass .eyebrow {
     color: var(--auth-gold-soft);
 }
 
-.auth-aside__list li {
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+.auth-panel--glass h1 {
+    color: #fff;
+    font-size: clamp(1.5rem, 1.2rem + 0.8vw, 1.75rem);
 }
 
-/* Animasi masuk: ringan, hanya opacity dan transform */
+.auth-panel--glass .auth-copy {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.auth-panel--glass .auth-form label {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.auth-panel--glass .auth-form input,
+.auth-panel--glass .auth-form select {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.26);
+}
+
+.auth-panel--glass .auth-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.auth-panel--glass .auth-form input:hover,
+.auth-panel--glass .auth-form select:hover {
+    border-color: rgba(255, 255, 255, 0.42);
+}
+
+.auth-panel--glass .auth-form input:focus,
+.auth-panel--glass .auth-form select:focus {
+    background-color: rgba(255, 255, 255, 0.16);
+    border-color: rgba(240, 215, 154, 0.85);
+    box-shadow: 0 0 0 3px rgba(240, 215, 154, 0.22);
+}
+
+/* Isian otomatis peramban tetap terbaca di atas kaca */
+.auth-panel--glass .auth-form input:-webkit-autofill {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 40px rgba(20, 60, 47, 0.95) inset;
+    caret-color: #fff;
+}
+
+.auth-panel--glass .auth-form select option {
+    color: var(--auth-ink);
+    background: #fff;
+}
+
+.auth-panel--glass .auth-field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+.auth-panel--glass .auth-field__icon,
+.auth-panel--glass .auth-password__toggle {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-panel--glass .auth-field:focus-within .auth-field__icon {
+    color: var(--auth-gold-soft);
+}
+
+.auth-panel--glass .auth-password__toggle:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.auth-panel--glass .auth-form > button {
+    color: var(--auth-green-900);
+    background: #fff;
+    box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.6);
+}
+
+.auth-panel--glass .auth-form > button:hover {
+    background: #f6ecd2;
+    transform: translateY(-1px);
+}
+
+.auth-panel--glass .auth-form > button:focus-visible,
+.auth-panel--glass .auth-back:focus-visible,
+.auth-panel--glass .auth-password__toggle:focus-visible {
+    box-shadow: 0 0 0 3px rgba(240, 215, 154, 0.7);
+}
+
+.auth-panel--glass .auth-alert {
+    color: #fff;
+    background: rgba(179, 38, 30, 0.28);
+    border-color: rgba(255, 170, 160, 0.45);
+}
+
+.auth-panel--glass .auth-note {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.07);
+    border-left-color: var(--auth-gold);
+}
+
+.auth-panel--glass .auth-note strong {
+    color: #fff;
+}
+
+.auth-panel--glass .auth-back {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.auth-panel--glass .auth-back:hover {
+    color: #fff;
+}
+
+.auth-glass__foot {
+    position: relative;
+    z-index: 2;
+    padding: 16px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.8125rem;
+    text-align: center;
+}
+
+/* ---------------- Animasi ringan (opacity dan transform saja) ---------------- */
+
+@keyframes auth-kenburns {
+    from { transform: scale(1) translate3d(0, 0, 0); }
+    to { transform: scale(1.1) translate3d(-1.5%, -1%, 0); }
+}
+
+@keyframes auth-drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(-6vmax, 4vmax, 0) scale(1.12); }
+}
+
 @keyframes auth-rise {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(20px) scale(0.985); }
     to { opacity: 1; transform: none; }
 }
 
-@keyframes auth-fade {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes auth-float {
-    from { transform: translate3d(0, 0, 0); }
-    to { transform: translate3d(-20px, -14px, 0); }
+@keyframes auth-fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-    .auth-panel {
-        animation: auth-rise 640ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    .auth-scene__photo {
+        animation: auth-kenburns 32s ease-in-out infinite alternate;
     }
 
-    .auth-brand,
-    .auth-main footer {
-        animation: auth-fade 600ms 300ms ease both;
+    .auth-scene__glow--gold {
+        animation: auth-drift 18s ease-in-out infinite alternate;
     }
 
-    .auth-aside__brand,
-    .auth-aside__copy > *,
-    .auth-aside__list li,
-    .auth-aside__foot {
-        animation: auth-rise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    .auth-scene__glow--green {
+        animation: auth-drift 22s ease-in-out -6s infinite alternate-reverse;
     }
 
-    .auth-aside__copy > :nth-child(1) { animation-delay: 80ms; }
-    .auth-aside__copy > :nth-child(2) { animation-delay: 150ms; }
-    .auth-aside__list li:nth-child(1) { animation-delay: 260ms; }
-    .auth-aside__list li:nth-child(2) { animation-delay: 330ms; }
-    .auth-aside__list li:nth-child(3) { animation-delay: 400ms; }
-    .auth-aside__foot { animation-delay: 480ms; }
-
-    .auth-aside::before {
-        animation: auth-float 16s ease-in-out infinite alternate;
+    .auth-glass__brand {
+        animation: auth-fade-up 700ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both;
     }
+
+    .auth-panel--glass {
+        animation: auth-rise 760ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .auth-panel--glass > *,
+    .auth-panel--glass .auth-form > * {
+        animation: auth-fade-up 520ms 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .auth-panel--glass .auth-form > :nth-child(n + 4) { animation-delay: 420ms; }
+    .auth-panel--glass .auth-form > :nth-child(n + 6) { animation-delay: 480ms; }
+    .auth-panel--glass .auth-form > :nth-child(n + 8) { animation-delay: 540ms; }
 }
+
+/* ---------------- Responsif ---------------- */
 
 @media (max-width: 900px) {
-    .auth-shell--split .auth-main {
-        padding: 32px 16px;
+    .auth-glass {
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: center;
+        align-content: center;
+        gap: 28px;
+        padding: 32px 0 16px;
     }
 
-    .auth-shell--split .auth-main > * {
+    .auth-glass__brand {
+        flex-direction: column;
+        justify-self: center;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .auth-glass__brand img {
+        width: 56px;
+        height: 55px;
+    }
+
+    .auth-panel--glass {
         width: min(100%, 440px);
-        margin-inline: auto;
     }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 520px) {
+    .auth-shell {
+        justify-content: flex-start;
+        padding: 24px 0;
+    }
+
+    .auth-panel {
+        padding: 24px 20px;
+    }
+
+    .auth-panel--glass {
+        border-radius: 20px;
+    }
+
     .auth-field select {
-        padding-left: 40px;
+        padding-left: 42px;
         padding-right: 34px;
         font-size: 0.875rem;
         background-position: right 10px center;
     }
 
     .auth-field__icon {
-        left: 12px;
+        left: 13px;
     }
 }
