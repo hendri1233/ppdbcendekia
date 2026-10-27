@@ -211,7 +211,7 @@ header('Referrer-Policy: no-referrer');
                         <?php } else { ?>
                             <div class="payment-free">
                                 <strong>Tidak ada biaya pendaftaran</strong>
-                                <span>Bapak/Ibu tidak perlu melakukan transfer. Silakan hubungi admin PPDB untuk arahan proses selanjutnya.</span>
+                                <span>Ayah/Bunda tidak perlu melakukan transfer. Silakan hubungi admin PPDB untuk arahan proses selanjutnya.</span>
                             </div>
                         <?php } ?>
                     </div>

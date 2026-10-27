@@ -480,7 +480,7 @@ function ppdb_status_reminder_message(array $registration): string
     $body = $bodies[$registration['status_ppdb'] ?? ''] ?? 'Kami ingin menyampaikan informasi terkait pendaftaran ananda '.$student.'.';
 
     return implode("\n", [
-        'Assalamualaikum Bapak/Ibu pendaftar PPDB Cendekia Takengon.',
+        'Assalamualaikum Ayah/Bunda pendaftar PPDB Cendekia Takengon.',
         $body,
         'Kode pendaftaran: '.$code,
         ppdb_admin_contact_message(),
@@ -523,7 +523,7 @@ function ppdb_prepare_payment_link(mysqli $conn, string $registrationId): array
     ], '', '&', PHP_QUERY_RFC3986);
 
     $lines = [
-        'Assalamu’alaikum warahmatullahi wabarakatuh, Bapak/Ibu.',
+        'Assalamu’alaikum warahmatullahi wabarakatuh, Ayah/Bunda.',
         'Terima kasih telah mendaftarkan ananda '.$registration['nm_peserta'].' pada PPDB Yayasan Wakaf Cendekia Takengon.',
         'Berikut kami sampaikan informasi pembayaran pendaftaran:',
         'Unit pendidikan: '.($registration['nama_unit'] ?? '-'),
@@ -545,8 +545,8 @@ function ppdb_prepare_payment_link(mysqli $conn, string $registrationId): array
     $lines[] = 'Silakan klik tautan di bawah ini untuk melihat status pendaftaran dan mengunggah bukti pembayaran:';
     $lines[] = $statusUrl;
     $lines[] = '';
-    $lines[] = 'Apabila Bapak/Ibu memerlukan bantuan, silakan membalas pesan ini.';
-    $lines[] = 'Terima kasih atas perhatian dan kepercayaan Bapak/Ibu.';
+    $lines[] = 'Apabila Ayah/Bunda memerlukan bantuan, silakan membalas pesan ini.';
+    $lines[] = 'Terima kasih atas perhatian dan kepercayaan Ayah/Bunda.';
     $lines[] = 'Wassalamu’alaikum warahmatullahi wabarakatuh.';
     $lines[] = '';
     $lines[] = ppdb_admin_contact_message();
