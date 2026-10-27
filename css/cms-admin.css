@@ -737,3 +737,8 @@
     background: var(--paper);
     cursor: default;
 }
+
+/* Video unit: hubungkan akun Instagram */
+.ig-connect{display:grid;gap:8px;margin:20px 0 0;padding:18px 20px;border:1px solid var(--line,#dfe5e2);border-radius:14px;min-width:0}
+.ig-connect legend{padding:0 6px}
+.ig-connect__remove{display:inline-flex;align-items:center;gap:8px;font-size:.875rem}

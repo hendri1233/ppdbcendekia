@@ -40,9 +40,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $links[$network] = $url;
         }
     }
+    $igToken = is_string($_POST['ig_token'] ?? null) ? trim($_POST['ig_token']) : '';
+    $igUser = null;
+    if ($error === '' && $igToken !== '') {
+        if (strlen($igToken) > 1000 || !preg_match('/^[A-Za-z0-9_|.-]+$/', $igToken)) {
+            $error = 'Token Instagram tidak valid. Salin ulang token akses dari dasbor Meta for Developers.';
+        } elseif (($igUser = cms_instagram_username($igToken)) === null) {
+            $error = 'Token Instagram ditolak Instagram. Pastikan token masih berlaku dan akun berjenis Bisnis atau Kreator.';
+        }
+    }
     if ($error === '') {
         foreach ($links as $network => $url) {
             cms_save_setting($conn, cms_unit_social_key($code, $network), $url);
+        }
+        cms_save_setting($conn, 'unit_ig_cache_'.$code, '');
+        if ($igToken !== '') {
+            cms_unit_ig_save_token($conn, $code, $igToken);
+            cms_save_setting($conn, 'unit_ig_user_'.$code, $igUser);
+        } elseif (!empty($_POST['ig_disconnect'])) {
+            cms_unit_ig_save_token($conn, $code, '');
+            cms_save_setting($conn, 'unit_ig_user_'.$code, '');
         }
         $_SESSION['video_unit_flash'] = ['success', 'Video unit disimpan.'];
     } else {
@@ -102,7 +119,23 @@ require 'admin_header.php';
                         <div class="cms-field"><label class="cms-label" for="<?php echo $key; ?>"><?php echo h($label); ?></label><input id="<?php echo $key; ?>" name="<?php echo $key; ?>" type="url" value="<?php echo h(cms_setting($conn, cms_unit_social_key($unit['kode_unit'], $network))); ?>" maxlength="255" placeholder="https://"><span class="cms-hint">Contoh: <?php echo h($examples[$network]); ?></span></div>
                     <?php } ?>
                 </div>
-                <p class="cms-hint">Reels Instagram tidak dapat diputar otomatis oleh Instagram; pengunjung menekan tombol putar.</p>
+                <?php $igUser = cms_setting($conn, 'unit_ig_user_'.$unit['kode_unit']); $igLinked = cms_setting($conn, cms_unit_ig_token_key($unit['kode_unit'])) !== ''; ?>
+                <fieldset class="cms-field cms-field--wide ig-connect">
+                    <legend class="cms-label">Akun Instagram unit (agar Reels diputar otomatis)</legend>
+                    <p class="cms-hint">
+                        <?php if ($igLinked && time() - (int) cms_setting($conn, 'unit_ig_token_at_'.$unit['kode_unit'], '0') > 60 * 86400) { ?>
+                            <strong>Token kedaluwarsa.</strong> Halaman unit tidak dikunjungi cukup lama sehingga token tidak sempat diperbarui. Buat token baru lalu tempel di bawah.
+                        <?php } elseif ($igLinked) { ?>
+                            <strong>Terhubung<?php echo $igUser !== '' ? ' ke @'.h($igUser) : ''; ?>.</strong> Reels sesuai tautan di atas diputar otomatis; bila tautan dikosongkan, reels terbaru akun yang tampil. Token diperbarui otomatis.
+                        <?php } else { ?>
+                            Belum terhubung. Tanpa token, Reels Instagram hanya dapat diputar setelah pengunjung menekan tombol putar.
+                        <?php } ?>
+                    </p>
+                    <label class="cms-label" for="ig_token"><?php echo $igLinked ? 'Ganti token akses' : 'Token akses Instagram'; ?></label>
+                    <input id="ig_token" name="ig_token" type="password" autocomplete="off" maxlength="1000" placeholder="<?php echo $igLinked ? 'Kosongkan bila tidak diganti' : 'IGAA...'; ?>">
+                    <span class="cms-hint">Token dari Meta for Developers &rarr; aplikasi &rarr; Instagram &rarr; <em>API setup with Instagram login</em> &rarr; <em>Generate token</em>. Akun harus berjenis Bisnis atau Kreator.</span>
+                    <?php if ($igLinked) { ?><label class="ig-connect__remove"><input type="checkbox" name="ig_disconnect" value="1"> Putuskan akun Instagram</label><?php } ?>
+                </fieldset>
                 <div class="cms-actions"><button class="button-primary" type="submit">Simpan video</button></div>
             </form>
         </section>

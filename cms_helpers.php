@@ -306,15 +306,32 @@ function cms_unit_social_key(string $code, string $network): string
     return 'unit_social_'.$code.'_'.$network;
 }
 
-/** Video unit yang sudah diisi, berurutan sesuai CMS_UNIT_SOCIALS. */
-function cms_unit_socials(mysqli $conn, string $code): array
+/**
+ * Video unit yang sudah diisi, berurutan sesuai CMS_UNIT_SOCIALS. Instagram juga
+ * tampil tanpa tautan bila akun unit terhubung (reels terbaru). $withMedia memuat
+ * berkas reels dari Instagram API untuk halaman publik.
+ */
+function cms_unit_socials(mysqli $conn, string $code, bool $withMedia = false): array
 {
     $links = [];
     foreach (CMS_UNIT_SOCIALS as $network => [$label, $icon]) {
         $url = cms_setting($conn, cms_unit_social_key($code, $network));
-        if ($url !== '') {
-            $links[] = ['network' => $network, 'label' => $label, 'icon' => $icon, 'url' => $url, 'embed' => cms_unit_video_embed($network, $url)];
+        $igLinked = $network === 'instagram' && cms_setting($conn, cms_unit_ig_token_key($code)) !== '';
+        if ($url === '' && !$igLinked) {
+            continue;
         }
+        $video = $igLinked && $withMedia ? cms_unit_instagram_video($conn, $code, $url) : null;
+        if ($url === '' && !$video && $withMedia) {
+            continue;
+        }
+        $links[] = [
+            'network' => $network,
+            'label' => $label,
+            'icon' => $icon,
+            'url' => $video['permalink'] ?? $url,
+            'embed' => cms_unit_video_embed($network, $url),
+            'video' => $video,
+        ];
     }
     return $links;
 }
@@ -353,4 +370,116 @@ function cms_unit_video_embed(string $network, string $url): ?string
                 : null;
     }
     return null;
+}
+
+/**
+ * Reels Instagram lewat Instagram API (Instagram Login). Instagram tidak mengizinkan
+ * sematan diputar otomatis, jadi berkas videonya diambil dengan token akun unit dan
+ * diputar langsung. Hasil disimpan sementara agar API tidak dipanggil setiap kunjungan.
+ */
+const CMS_IG_CACHE_SECONDS = 3600;
+const CMS_IG_RETRY_SECONDS = 900;
+const CMS_IG_REFRESH_AFTER_SECONDS = 20 * 86400;
+
+function cms_unit_ig_token_key(string $code): string
+{
+    return 'unit_ig_token_'.$code;
+}
+
+/** Permintaan GET ke graph.instagram.com; null bila gagal. */
+function cms_instagram_get(string $path, array $query): ?array
+{
+    if (!function_exists('curl_init')) {
+        return null;
+    }
+    $ch = curl_init('https://graph.instagram.com/'.$path.'?'.http_build_query($query));
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT => 8,
+    ]);
+    $body = curl_exec($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $data = is_string($body) ? json_decode($body, true) : null;
+    if ($httpCode !== 200 || !is_array($data)) {
+        error_log('Instagram API '.$path.' gagal (HTTP '.$httpCode.'): '.substr((string) $body, 0, 300));
+        return null;
+    }
+    return $data;
+}
+
+/** Nama akun pemilik token, sekaligus memeriksa token masih berlaku. */
+function cms_instagram_username(string $token): ?string
+{
+    $data = cms_instagram_get('me', ['fields' => 'username', 'access_token' => $token]);
+    return isset($data['username']) ? (string) $data['username'] : null;
+}
+
+function cms_unit_ig_save_token(mysqli $conn, string $code, string $token): void
+{
+    cms_save_setting($conn, cms_unit_ig_token_key($code), $token);
+    cms_save_setting($conn, 'unit_ig_token_at_'.$code, $token === '' ? '' : (string) time());
+    cms_save_setting($conn, 'unit_ig_cache_'.$code, '');
+}
+
+/** Token berumur 60 hari; diperbarui otomatis setelah 20 hari. */
+function cms_unit_ig_token(mysqli $conn, string $code): string
+{
+    $token = cms_setting($conn, cms_unit_ig_token_key($code));
+    $issuedAt = (int) cms_setting($conn, 'unit_ig_token_at_'.$code, '0');
+    if ($token !== '' && time() - $issuedAt > CMS_IG_REFRESH_AFTER_SECONDS) {
+        $data = cms_instagram_get('refresh_access_token', ['grant_type' => 'ig_refresh_token', 'access_token' => $token]);
+        if (!empty($data['access_token'])) {
+            $token = (string) $data['access_token'];
+            cms_save_setting($conn, cms_unit_ig_token_key($code), $token);
+            cms_save_setting($conn, 'unit_ig_token_at_'.$code, (string) time());
+        }
+    }
+    return $token;
+}
+
+/**
+ * Video reels untuk halaman unit: reels sesuai tautan bila diisi, selain itu reels
+ * terbaru akun. Mengembalikan ['src','poster','permalink'] atau null.
+ */
+function cms_unit_instagram_video(mysqli $conn, string $code, string $reelUrl): ?array
+{
+    $cacheKey = 'unit_ig_cache_'.$code;
+    $cached = json_decode(cms_setting($conn, $cacheKey), true);
+    if (is_array($cached) && ($cached['for'] ?? null) === $reelUrl
+        && time() - (int) ($cached['at'] ?? 0) < (empty($cached['video']) ? CMS_IG_RETRY_SECONDS : CMS_IG_CACHE_SECONDS)) {
+        return $cached['video'] ?: null;
+    }
+
+    $token = cms_unit_ig_token($conn, $code);
+    if ($token === '') {
+        return null;
+    }
+    $shortcode = preg_match('#instagram\.com/(?:reels?|p)/([\w-]+)#i', $reelUrl, $m) ? $m[1] : '';
+    // Batas waktu total agar halaman unit tidak tertahan bila Instagram lambat.
+    $deadline = microtime(true) + 8;
+    $video = null;
+    $query =['fields' => 'media_type,media_url,thumbnail_url,permalink', 'limit' => 50, 'access_token' => $token];
+    for ($page = 0, $after = null; $page < 4 && $video === null && microtime(true) < $deadline; $page++) {
+        $data = cms_instagram_get('me/media', $after ? $query + ['after' => $after] : $query);
+        if (!$data) {
+            break;
+        }
+        foreach ($data['data'] ?? [] as $media) {
+            if (($media['media_type'] ?? '') !== 'VIDEO' || !preg_match('#^https://#', (string) ($media['media_url'] ?? ''))) {
+                continue;
+            }
+            if ($shortcode === '' || preg_match('#/(?:reels?|p)/'.preg_quote($shortcode, '#').'(?:/|$)#', (string) ($media['permalink'] ?? ''))) {
+                $video = ['src' => $media['media_url'], 'poster' => preg_match('#^https://#', (string) ($media['thumbnail_url'] ?? '')) ? $media['thumbnail_url'] : '', 'permalink' => $media['permalink'] ?? $reelUrl];
+                break;
+            }
+        }
+        $after = $data['paging']['cursors']['after'] ?? null;
+        if (!$after || empty($data['paging']['next'])) {
+            break;
+        }
+    }
+    cms_save_setting($conn, $cacheKey, json_encode(['for' => $reelUrl, 'at' => time(), 'video' => $video]));
+    return $video;
 }

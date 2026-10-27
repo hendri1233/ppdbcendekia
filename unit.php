@@ -94,7 +94,7 @@ public_page_start($conn, [
     </div>
 </section>
 
-<?php if ($unitVideos = cms_unit_socials($conn, $code)) { ?>
+<?php if ($unitVideos = cms_unit_socials($conn, $code, true)) { ?>
     <section class="section unit-videos" aria-labelledby="unit-videos-title">
         <div class="shell">
             <header class="section-head">
@@ -104,7 +104,9 @@ public_page_start($conn, [
                 <?php foreach ($unitVideos as $video) { ?>
                     <li class="unit-video unit-video--<?= h($video['network']) ?>">
                         <div class="unit-video__frame">
-                            <?php if ($video['embed']) { ?>
+                            <?php if ($video['video']) { ?>
+                                <video src="<?= h($video['video']['src']) ?>"<?= $video['video']['poster'] ? ' poster="'.h($video['video']['poster']).'"' : '' ?> autoplay muted loop playsinline controls preload="metadata" title="<?= h($video['label'].' '.$name) ?>"></video>
+                            <?php } elseif ($video['embed']) { ?>
                                 <iframe src="<?= h($video['embed']) ?>" title="<?= h($video['label'].' '.$name) ?>" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen scrolling="no"></iframe>
                             <?php } else { ?>
                                 <a class="unit-video__fallback" href="<?= h($video['url']) ?>" target="_blank" rel="noopener"><?= public_icon($video['icon']) ?><span>Tonton di <?= h($video['label']) ?></span></a>
