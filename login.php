@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
             <div class="auth-aside__copy">
                 <p class="auth-aside__eyebrow">Panel PPDB</p>
-                <h2>Kelola penerimaan peserta didik dalam satu tempat.</h2>
+                <h2>Kelola penerimaan peserta didik <span>dalam satu tempat.</span></h2>
                 <ul class="auth-aside__list">
                     <li>Pantau pendaftar dan proses setiap tahap</li>
                     <li>Atur kuota, biaya, dan jalur per unit</li>
@@ -138,14 +138,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="post" class="auth-form">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                 <label for="role">Masuk sebagai</label>
-                <select id="role" name="role">
-                    <option value="super_admin"<?php echo $role === 'super_admin' ? ' selected' : ''; ?>>Super Admin · semua unit</option>
-                    <option value="admin_unit"<?php echo $role === 'admin_unit' ? ' selected' : ''; ?>>Admin Unit · unit pendidikan</option>
-                </select>
+                <span class="auth-field">
+                    <svg class="auth-field__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="6.5" r="3"/><path d="M4 16.5a6 6 0 0 1 12 0"/></svg>
+                    <select id="role" name="role">
+                        <option value="super_admin"<?php echo $role === 'super_admin' ? ' selected' : ''; ?>>Super Admin · semua unit</option>
+                        <option value="admin_unit"<?php echo $role === 'admin_unit' ? ' selected' : ''; ?>>Admin Unit · unit pendidikan</option>
+                    </select>
+                </span>
                 <label for="email">Email</label>
-                <input id="email" type="email" name="email" value="<?php echo h($email); ?>" autocomplete="username" required>
+                <span class="auth-field">
+                    <svg class="auth-field__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="15" height="11" rx="2"/><path d="m3 5.5 7 5.5 7-5.5"/></svg>
+                    <input id="email" type="email" name="email" value="<?php echo h($email); ?>" autocomplete="username" placeholder="nama@cendekia.sch.id" required>
+                </span>
                 <label for="password">Kata sandi</label>
-                <span class="auth-password">
+                <span class="auth-password auth-field">
+                    <svg class="auth-field__icon" viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="12" height="8.5" rx="2"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>
                     <input id="password" type="password" name="password" autocomplete="current-password" required>
                     <button class="auth-password__toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Tampilkan kata sandi">
                         <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 10S5 4.5 10 4.5 18.2 10 18.2 10 15 15.5 10 15.5 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.6"/></svg>
