@@ -61,4 +61,16 @@
             });
         }
     }
+
+    // Tombol mata: tampilkan atau sembunyikan isi kata sandi.
+    for (const toggle of document.querySelectorAll('[data-password-toggle]')) {
+        const input = document.getElementById(toggle.getAttribute('aria-controls'));
+        if (!input) continue;
+        toggle.addEventListener('click', function () {
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            toggle.setAttribute('aria-pressed', String(show));
+            toggle.setAttribute('aria-label', show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+        });
+    }
 })();

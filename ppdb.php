@@ -116,16 +116,34 @@ public_page_start($conn, [
     'schema' => [$faqSchema],
 ]);
 ?>
-<section class="page-hero">
-    <div class="shell">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">PPDB</li></ol>
-        <p class="kicker">Penerimaan peserta didik baru &middot; Tahun ajaran <?= h($activeYear) ?></p>
-        <h1>Pendaftaran daring, dipandu panitia melalui WhatsApp.</h1>
-        <p>Lihat kuota setiap unit, ikuti tiga tahap pendaftaran, dan siapkan dokumen yang diperlukan sebelum mengisi formulir lengkap.</p>
-        <div class="hero-slider__actions">
-            <a class="button button--primary button--lg" href="daftar.php">Mulai registrasi awal <?= $arrow ?></a>
-            <a class="button button--quiet button--lg" href="#persiapan">Lihat persyaratan</a>
+<?php
+// Ringkasan hero: dijumlahkan dari data unit di atas, tanpa query tambahan.
+$summaryQuota = array_sum(array_column($units, 'kuota_total'));
+$summarySeats = array_sum(array_column($units, 'sisa_total'));
+$summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit['dibuka_total'] && $unit['sisa_total'] > 0));
+?>
+<section class="page-hero page-hero--ppdb">
+    <div class="shell ppdb-hero">
+        <div>
+            <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">PPDB</li></ol>
+            <p class="kicker">Penerimaan peserta didik baru &middot; Tahun ajaran <?= h($activeYear) ?></p>
+            <h1>Pendaftaran daring, dipandu panitia melalui WhatsApp.</h1>
+            <p>Lihat kuota setiap unit, ikuti tiga tahap pendaftaran, dan siapkan dokumen yang diperlukan sebelum mengisi formulir lengkap.</p>
+            <div class="hero-slider__actions">
+                <a class="button button--primary button--lg" href="daftar.php">Mulai registrasi awal <?= $arrow ?></a>
+                <a class="button button--quiet button--lg" href="#persiapan">Lihat persyaratan</a>
+            </div>
         </div>
+        <aside class="ppdb-summary" aria-label="Ringkasan PPDB <?= h($activeYear) ?>">
+            <p class="ppdb-summary__eyebrow">PPDB <?= h($activeYear) ?></p>
+            <dl>
+                <div><dt>Unit dibuka</dt><dd><?= $summaryOpen ?><small> / <?= count($units) ?></small></dd></div>
+                <div><dt>Total kuota</dt><dd><?= number_format($summaryQuota, 0, ',', '.') ?></dd></div>
+                <div><dt>Pendaftar</dt><dd><?= number_format($totalRegistrants, 0, ',', '.') ?></dd></div>
+                <div><dt>Sisa kursi</dt><dd><?= number_format($summarySeats, 0, ',', '.') ?></dd></div>
+            </dl>
+            <a class="ppdb-summary__link" href="#unit">Lihat kuota per unit</a>
+        </aside>
     </div>
 </section>
 
@@ -203,6 +221,7 @@ public_page_start($conn, [
     <section class="section section--tinted" id="alur" aria-labelledby="alur-title">
         <div class="shell">
             <header class="section-head">
+                <p class="kicker">Alur pendaftaran</p>
                 <h2 id="alur-title">Tiga tahap pendaftaran</h2>
                 <p>Data dasar lebih dulu. Formulir lengkap dan dokumen baru diminta setelah pembayaran disetujui panitia.</p>
             </header>
@@ -233,6 +252,7 @@ public_page_start($conn, [
     <section class="section" id="persiapan" aria-labelledby="persiapan-title">
         <div class="shell">
             <header class="section-head">
+                <p class="kicker">Persiapan</p>
                 <h2 id="persiapan-title">Yang perlu disiapkan</h2>
                 <p>Ringkasan dari petunjuk teknis panitia. Libatkan pasangan atau pengasuh ananda saat mengisi, karena sebagian data saling terkait.</p>
             </header>
@@ -297,6 +317,7 @@ public_page_start($conn, [
     <section class="section section--tinted" id="angka" aria-labelledby="angka-title">
         <div class="shell">
             <header class="section-head">
+                <p class="kicker">Statistik</p>
                 <h2 id="angka-title">Angka pendaftaran</h2>
                 <p>Jumlah pendaftar tahun ajaran <?= h($activeYear) ?> dan kunjungan ke situs ini selama 30 hari terakhir, diperbarui otomatis.</p>
             </header>
@@ -354,6 +375,7 @@ public_page_start($conn, [
     <section class="section section--tinted" id="faq" aria-labelledby="faq-title">
         <div class="shell faq">
             <header class="section-head">
+                <p class="kicker">Bantuan</p>
                 <h2 id="faq-title">Tanya jawab</h2>
                 <p>Belum menemukan jawabannya? Hubungi panitia melalui WhatsApp <a href="https://wa.me/6282181649543" rel="noopener">0821-8164-9543</a>.</p>
             </header>
@@ -374,7 +396,7 @@ public_page_start($conn, [
         </div>
     </section>
 
-    <section class="closing" aria-labelledby="closing-title">
+    <section class="closing closing--card" aria-labelledby="closing-title">
         <div class="shell closing__inner">
             <div>
                 <h2 id="closing-title">Registrasi awal hanya butuh beberapa menit.</h2>

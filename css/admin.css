@@ -7,6 +7,39 @@
 /* Panel admin padat data: teks kecil sedikit lebih rapat daripada situs publik. */
 html:root {
     --fs-sm: 0.8125rem;
+    --admin-gold: #c9a24b;
+    --admin-gold-soft: #f4ead2;
+    --admin-gold-ink: #6b5214;
+    --admin-radius-card: 12px;
+    --admin-card-shadow: 0 0 4px rgba(15, 58, 45, 0.1), 0 1px 2px rgba(15, 58, 45, 0.04);
+}
+
+/* Mode terang: hijau emerald yang sama dengan situs publik. Mode gelap tetap
+   memakai nilai dari css/tokens.css. */
+html:root:not([data-theme="dark"]) {
+    --brand-950: #0b2a21;
+    --brand-900: #0f3a2d;
+    --brand-800: #144a3a;
+    --brand-700: #1e6e55;
+    --brand-600: #2b8468;
+    --brand-200: #c3ddd0;
+    --brand-100: #e3f0e9;
+    --brand-50: #f2f8f4;
+    --ink: #26332e;
+    --ink-2: #3f4c46;
+    --muted: #5c6863;
+    --line: #e3e8e4;
+    --line-soft: #eef1ee;
+    --paper: #f6f8f6;
+    --link: #1e6e55;
+    --link-hover: #144a3a;
+    --focus-ring: 0 0 0 3px rgba(30, 110, 85, 0.3);
+}
+
+html:root[data-theme="dark"] {
+    --admin-gold-soft: #3a3220;
+    --admin-gold-ink: #f0d79a;
+    --admin-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 :root {
@@ -4454,5 +4487,229 @@ select:focus-visible {
     .chain-carousel:fullscreen .chain-carousel__dots,
     .chain-carousel.is-expanded .chain-carousel__dots {
         margin-top: 4px;
+    }
+}
+
+/* ============================================================
+   Penyelarasan dengan desain portal situs publik: sidebar hijau
+   dengan aksen emas, kartu statistik terpisah, panel radius 12px,
+   tombol pill, dan tabel yang lebih tegas. Hanya gaya; struktur
+   dan hook JS panel tidak berubah.
+   ============================================================ */
+
+.admin-sidebar {
+    background: linear-gradient(180deg, var(--admin-deep) 0%, var(--admin-deep-2) 100%);
+}
+
+.admin-nav__group {
+    color: var(--admin-gold);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.admin-nav a {
+    border-radius: 8px;
+}
+
+.admin-nav a[aria-current="page"] {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-nav a[aria-current="page"]::before {
+    background: var(--admin-gold);
+}
+
+.admin-nav a[aria-current="page"] .ico {
+    color: #f0d79a;
+}
+
+.admin-topbar {
+    box-shadow: 0 1px 0 var(--admin-line), 0 4px 16px rgba(15, 58, 45, 0.04);
+    border-bottom-color: transparent;
+}
+
+.user-initial {
+    color: var(--admin-gold-ink);
+    background: var(--admin-gold-soft);
+}
+
+/* Judul halaman */
+.eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.eyebrow::before {
+    content: '';
+    width: 20px;
+    height: 2px;
+    flex: none;
+    background: var(--admin-gold);
+}
+
+.page-hero__text h1,
+.page-heading h1 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* Kartu statistik terpisah dengan garis aksen */
+.stats-grid {
+    gap: 16px;
+    background: transparent;
+    border: 0;
+}
+
+.stat-card,
+.stat-card + .stat-card,
+.stat-card:nth-child(n) {
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+    background: var(--admin-white);
+    border: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius-card);
+    box-shadow: var(--admin-card-shadow);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--admin-green);
+}
+
+.stat-card.is-alert::before {
+    background: var(--admin-accent);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Panel */
+.panel,
+.detail-panel {
+    border-color: var(--admin-line);
+    border-radius: var(--admin-radius-card);
+    box-shadow: var(--admin-card-shadow);
+}
+
+.panel-header {
+    padding: 14px 20px;
+}
+
+.panel-header h2,
+.detail-panel h2 {
+    font-weight: 700;
+}
+
+.panel-body {
+    padding: 18px 20px;
+}
+
+/* Tombol pill, tetap ringkas untuk area kerja padat */
+.button-primary,
+.button-secondary,
+.button-danger,
+.table-action,
+.page-step,
+.range-toggle,
+.range-toggle button {
+    border-radius: 999px;
+}
+
+.button-primary {
+    padding: 0 18px;
+}
+
+.button-primary:hover:not(:disabled) {
+    box-shadow: 0 6px 16px rgba(30, 110, 85, 0.22);
+}
+
+.button-secondary {
+    padding: 0 16px;
+    border-color: var(--input-border);
+}
+
+.button-secondary:hover {
+    color: var(--admin-green-hover);
+    background: var(--brand-50);
+    border-color: var(--admin-green);
+}
+
+/* Form */
+.filter-field input,
+.filter-field select,
+.operator-form input,
+.operator-form select,
+.group-link-field input,
+.workflow-actions input:not([type="hidden"]),
+.question-editor input[type="text"],
+.question-editor select {
+    border-radius: 8px;
+}
+
+.filter-field input:focus,
+.filter-field select:focus,
+.operator-form input:focus,
+.operator-form select:focus,
+.group-link-field input:focus,
+.search-field input:focus,
+.workflow-actions input:focus {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+/* Tabel */
+.data-table th {
+    color: var(--admin-muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.data-table tbody tr:hover {
+    background: var(--brand-50);
+}
+
+.table-meta {
+    padding: 10px 20px;
+}
+
+.page-number.is-current {
+    border-radius: 999px;
+}
+
+.jenjang-chip,
+.code-chip {
+    border-radius: 6px;
+}
+
+/* Keadaan kosong */
+.empty-state__icon {
+    color: var(--admin-gold-ink);
+    background: var(--admin-gold-soft);
+}
+
+@media (max-width: 620px) {
+    .stats-grid {
+        gap: 10px;
+    }
+
+    .stat-card,
+    .stat-card + .stat-card,
+    .stat-card:nth-child(n) {
+        padding: 14px 16px;
     }
 }

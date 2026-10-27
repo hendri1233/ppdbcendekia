@@ -108,7 +108,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
 <body>
-    <main class="auth-shell">
+    <main class="auth-shell auth-shell--split">
+        <aside class="auth-aside" aria-label="Tentang panel pengelola">
+            <a class="auth-aside__brand" href="index.php">
+                <img src="img/logo-display.png" alt="" width="56" height="55">
+                <span><strong>Yayasan Wakaf Cendekia</strong><small>Takengon, Aceh Tengah</small></span>
+            </a>
+            <div class="auth-aside__copy">
+                <p class="auth-aside__eyebrow">Panel PPDB</p>
+                <h2>Kelola penerimaan peserta didik dalam satu tempat.</h2>
+                <ul class="auth-aside__list">
+                    <li>Pantau pendaftar dan proses setiap tahap</li>
+                    <li>Atur kuota, biaya, dan jalur per unit</li>
+                    <li>Perbarui berita dan konten situs yayasan</li>
+                </ul>
+            </div>
+            <p class="auth-aside__foot">Shaleh, cerdas &amp; terampil.</p>
+        </aside>
+        <div class="auth-main">
         <a class="auth-brand" href="index.php">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
             <span><strong>Wakaf Cendekia</strong><small>Takengon · PPDB</small></span>
@@ -128,13 +145,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="email">Email</label>
                 <input id="email" type="email" name="email" value="<?php echo h($email); ?>" autocomplete="username" required>
                 <label for="password">Kata sandi</label>
-                <input id="password" type="password" name="password" autocomplete="current-password" required>
+                <span class="auth-password">
+                    <input id="password" type="password" name="password" autocomplete="current-password" required>
+                    <button class="auth-password__toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Tampilkan kata sandi">
+                        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 10S5 4.5 10 4.5 18.2 10 18.2 10 15 15.5 10 15.5 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.6"/></svg>
+                    </button>
+                </span>
                 <button type="submit">Masuk ke dashboard <span aria-hidden="true">&rarr;</span></button>
             </form>
             <p class="auth-note">Admin unit menggunakan email dan kata sandi sementara yang diberikan super admin.</p>
             <a class="auth-back" href="index.php">Kembali ke situs PPDB</a>
         </section>
         <footer>Yayasan Wakaf Cendekia Takengon</footer>
+        </div>
     </main>
     <script src="js/auth.js"></script>
 </body>
