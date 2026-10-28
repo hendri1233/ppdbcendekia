@@ -9,7 +9,7 @@ if (isset($_GET['internal'])) {
     header('Cache-Control: private, no-store');
 }
 
-$offerResult = mysqli_query($conn, "SELECT q.kode_unit,q.th_ajaran,q.kuota_internal,q.kuota_eksternal,q.internal_dibuka,q.eksternal_dibuka,q.biaya_pendaftaran,q.nomor_antrian_terakhir,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi FROM tb_pengaturan_ppdb q JOIN tb_unit_pendidikan u ON u.kode_unit=q.kode_unit ORDER BY q.th_ajaran,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
+$offerResult = mysqli_query($conn, "SELECT q.kode_unit,q.th_ajaran,q.kuota_internal,q.kuota_eksternal,q.internal_dibuka,q.eksternal_dibuka,q.biaya_pendaftaran,q.nomor_antrian_terakhir,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi FROM tb_pengaturan_ppdb q JOIN tb_unit_pendidikan u ON u.kode_unit=q.kode_unit ORDER BY q.th_ajaran,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
 $openOffers = [];
 $fullOffers = [];
 $settingsByRoute = [];
@@ -108,7 +108,7 @@ $selectedAcademicYear = '';
 if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
     $internalTokenId = filter_var($_SESSION[$internalSessionKey] ?? null, FILTER_VALIDATE_INT);
     if ($internalTokenId !== false && $internalTokenId !== null && $internalTokenId > 0) {
-        $internalQuery = mysqli_prepare($conn, "SELECT t.id,t.kode_unit,t.th_ajaran,t.used_at,t.revoked_at,q.kuota_internal,q.internal_dibuka,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=t.kode_unit AND p.th_ajaran=t.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.id=? LIMIT 1");
+        $internalQuery = mysqli_prepare($conn, "SELECT t.id,t.kode_unit,t.th_ajaran,t.used_at,t.revoked_at,q.kuota_internal,q.internal_dibuka,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=t.kode_unit AND p.th_ajaran=t.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.id=? LIMIT 1");
         mysqli_stmt_bind_param($internalQuery, 'i', $internalTokenId);
         mysqli_stmt_execute($internalQuery);
         $internalCode = mysqli_fetch_assoc(mysqli_stmt_get_result($internalQuery));
@@ -160,6 +160,20 @@ if ($routeOffer && $routeType === 'internal') {
 }
 
 $pendaftarOptions = ['Ayah', 'Bunda', 'Ayah dan Bunda', 'Wali'];
+$tkLevelOptions = ['TK A', 'TK B'];
+
+/** Pilihan jenjang tujuan khusus unit TK, tampil di samping pilihan unit. */
+function render_tk_level_field(array $options, string $value, bool $visible): void
+{
+    echo '<div class="field" data-tk-level'.($visible ? '' : ' hidden').'>';
+    echo '<label for="tingkat_kelas">Daftar ke jenjang <span class="required-mark" aria-hidden="true">*</span></label>';
+    echo '<select id="tingkat_kelas" name="tingkat_kelas"'.($visible ? ' required' : ' disabled').'>';
+    echo '<option value="">Pilih TK A atau TK B</option>';
+    foreach ($options as $option) {
+        echo '<option value="'.h($option).'"'.($value === $option ? ' selected' : '').'>'.h($option).'</option>';
+    }
+    echo '</select></div>';
+}
 $formValues = $_POST;
 $errors = [];
 
@@ -247,6 +261,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     }
     if (!in_array($registrant, $pendaftarOptions, true)) {
         $errors[] = 'Pilih siapa yang mendaftarkan ananda.';
+    }
+    $tkLevel = null;
+    if ($routeOffer && ($routeOffer['jenjang'] ?? '') === 'TK') {
+        $tkLevel = trim($_POST['tingkat_kelas'] ?? '');
+        if (!in_array($tkLevel, $tkLevelOptions, true)) {
+            $errors[] = 'Pilih jenjang tujuan ananda: TK A atau TK B.';
+        }
     }
     foreach (['no_hp_pendaftar' => 'Nomor WhatsApp pendaftar', 'no_hp_ayah' => 'Nomor WhatsApp ayah', 'no_hp_ibu' => 'Nomor WhatsApp ibu'] as $field => $label) {
         if (!ppdb_is_valid_whatsapp_number(trim($_POST[$field] ?? ''))) {
@@ -350,6 +371,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 throw new RuntimeException('Pendaftaran belum dapat disimpan. Silakan coba lagi.');
             }
             mysqli_stmt_close($mainInsert);
+
+            // Kolom dari migrasi 025; dilewati bila migrasi belum dijalankan agar pendaftaran tetap berjalan.
+            if ($tkLevel !== null && ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas')) {
+                $saveLevel = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET tingkat_kelas=? WHERE id_pendaftaran=?');
+                mysqli_stmt_bind_param($saveLevel, 'ss', $tkLevel, $registrationId);
+                mysqli_stmt_execute($saveLevel);
+                mysqli_stmt_close($saveLevel);
+            }
 
             if ($lockedInternalTokenId !== null) {
                 $markTokenUsed = mysqli_prepare($conn, 'UPDATE tb_token_internal SET used_at=NOW() WHERE id=? AND used_at IS NULL AND revoked_at IS NULL');
@@ -484,7 +513,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         </div>
                         <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
                         <div class="field-grid">
-                            <div class="field field-wide">
+                            <?php $tkSelected = ($routeOffer['jenjang'] ?? '') === 'TK'; ?>
+                            <div class="field<?php echo $tkSelected ? '' : ' field-wide'; ?>" data-unit-field>
                                 <label for="external_route">Unit pendidikan <span class="required-mark" aria-hidden="true">*</span></label>
                                 <select id="external_route" name="external_route" required <?php echo !$openOffers ? 'disabled' : ''; ?>>
                                     <option value="">Pilih unit</option>
@@ -492,10 +522,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                                         $offerValue = $offer['kode_unit'].'|'.$offer['th_ajaran'];
                                         $offerSelected = $selectedUnitCode === $offer['kode_unit'] && $selectedAcademicYear === $offer['th_ajaran'];
                                     ?>
-                                        <option value="<?php echo h($offerValue); ?>"<?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?></option>
+                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>"<?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?></option>
                                     <?php } ?>
                                 </select>
                             </div>
+                            <?php render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), $tkSelected); ?>
                             <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 2); } ?>
                         </div>
                         <label class="consent-check" for="konfirmasi_data">
@@ -559,6 +590,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <div><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Tujuh isian ini memulai proses. NIK dan dokumen menyusul setelah pembayaran.</p></div>
                     </div>
                     <div class="field-grid">
+                        <?php if (($routeOffer['jenjang'] ?? '') === 'TK') { render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), true); } ?>
                         <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 3); } ?>
                     </div>
                     <label class="consent-check" for="konfirmasi_data">

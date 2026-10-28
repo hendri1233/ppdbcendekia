@@ -64,6 +64,21 @@ function require_super_admin(): void
     }
 }
 
+/** Memeriksa kolom hasil migrasi yang mungkin belum dijalankan di server. */
+function ppdb_column_exists(mysqli $conn, string $table, string $column): bool
+{
+    static $cache = [];
+    $key = $table.'.'.$column;
+    if (!isset($cache[$key])) {
+        $stmt = mysqli_prepare($conn, 'SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=? LIMIT 1');
+        mysqli_stmt_bind_param($stmt, 'ss', $table, $column);
+        mysqli_stmt_execute($stmt);
+        $cache[$key] = mysqli_stmt_get_result($stmt)->num_rows > 0;
+        mysqli_stmt_close($stmt);
+    }
+    return $cache[$key];
+}
+
 function ppdb_is_super_admin(): bool
 {
     return ($_SESSION['admin_role'] ?? 'super_admin') === 'super_admin';

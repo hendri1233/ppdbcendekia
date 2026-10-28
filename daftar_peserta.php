@@ -82,7 +82,7 @@ $currentPage = (int) ($_GET['page'] ?? 1);
 $currentPage = min(max(1, $currentPage), $totalPages);
 $offset = ($currentPage - 1) * $perPage;
 
-$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_formulir IS NOT NULL AS link_formulir_terkirim,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
+$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_formulir IS NOT NULL AS link_formulir_terkirim,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
     .' ORDER BY FIELD(p.status_ppdb,\'menunggu_kontak\',\'pembayaran_diperiksa\',\'pembayaran_terverifikasi\',\'formulir_terisi\',\'menunggu_pembayaran\',\'menunggu_formulir\',\'daftar_tunggu\',\'diterima\',\'ditolak\',\'data_lama\'), p.waktu_daftar DESC, p.id_pendaftaran DESC'
     .' LIMIT '.$perPage.' OFFSET '.$offset;
@@ -253,7 +253,7 @@ require 'admin_header.php';
                                 <?php if ($row['NISN'] !== '') { ?><small class="cell-sub">NISN <?php echo h($row['NISN']); ?></small><?php } ?>
                             </td>
                             <td data-label="Daftar oleh"><?php echo h(ppdb_pendaftar_label($row['pendaftar'])); ?></td>
-                            <td data-label="Unit"><?php echo h(ppdb_unit_display_name($row['nama_unit'] ?? 'Data lama')); ?></td>
+                            <td data-label="Unit"><?php echo h(ppdb_unit_display_name($row['nama_unit'] ?? 'Data lama')); ?><?php if (!empty($row['tingkat_kelas'])) { ?> <span class="unit-level">· <?php echo h($row['tingkat_kelas']); ?></span><?php } ?></td>
                             <td data-label="Jalur"><?php echo $row['jalur_pendaftaran'] === 'internal' ? 'Internal · SDM' : 'Eksternal · umum'; ?></td>
                             <td data-label="Tahun"><?php echo h($row['th_ajaran']); ?></td>
                             <td data-label="Status"><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span></td>

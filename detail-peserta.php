@@ -467,7 +467,7 @@ require 'admin_header.php';
         <div>
             <p class="eyebrow">Data peserta didik</p>
             <h1><?php echo h($participant['nm_peserta']); ?></h1>
-            <p><?php echo h($participant['id_pendaftaran']); ?> · <?php echo h(ppdb_unit_display_name($participant['nama_unit'] ?? 'Data lama')); ?> · <?php echo h($participant['th_ajaran']); ?></p>
+            <p><?php echo h($participant['id_pendaftaran']); ?> · <?php echo h(ppdb_unit_display_name($participant['nama_unit'] ?? 'Data lama')); ?><?php echo !empty($participant['tingkat_kelas']) ? ' · '.h($participant['tingkat_kelas']) : ''; ?> · <?php echo h($participant['th_ajaran']); ?></p>
         </div>
         <div class="table-actions">
             <a class="button-secondary" href="cetak-bukti.php?id=<?php echo rawurlencode($registrationId); ?>">Unduh bukti PDF</a>
@@ -693,7 +693,7 @@ require 'admin_header.php';
         </div>
     <?php } ?>
     <div class="detail-grid">
-        <?php render_detail_panel('Registrasi awal', [['Kode pendaftaran', 'id_pendaftaran'], ['Tanggal pendaftaran', 'tgl_daftar'], ['Unit pendidikan', 'nama_unit'], ['Tahun ajaran', 'th_ajaran'], ['Nomor antrean', 'nomor_antrian'], ['Nama ananda', 'nm_peserta'], ['Tanggal lahir', 'tgl_lahir'], ['Umur ananda terdeteksi berdasarkan Dapodik dari tanggal ' . ($dapodikAge['reference_date'] ?? '-') . ' berumur:', 'umur_dapodik'], ['Jenis kelamin', 'jenis_kelamin'], ['Yang mendaftarkan', 'pendaftar'], ['WhatsApp pendaftar', 'no_hp_pendaftar'], ['WhatsApp ayah', 'no_hp_ayah'], ['WhatsApp ibu', 'no_hp_ibu'], ['Draf formulir lengkap', 'draf_formulir']], $participant); ?>
+        <?php render_detail_panel('Registrasi awal', [['Kode pendaftaran', 'id_pendaftaran'], ['Tanggal pendaftaran', 'tgl_daftar'], ['Unit pendidikan', 'nama_unit'], ...(!empty($participant['tingkat_kelas']) ? [['Daftar ke jenjang', 'tingkat_kelas']] : []), ['Tahun ajaran', 'th_ajaran'], ['Nomor antrean', 'nomor_antrian'], ['Nama ananda', 'nm_peserta'], ['Tanggal lahir', 'tgl_lahir'], ['Umur ananda terdeteksi berdasarkan Dapodik dari tanggal ' . ($dapodikAge['reference_date'] ?? '-') . ' berumur:', 'umur_dapodik'], ['Jenis kelamin', 'jenis_kelamin'], ['Yang mendaftarkan', 'pendaftar'], ['WhatsApp pendaftar', 'no_hp_pendaftar'], ['WhatsApp ayah', 'no_hp_ayah'], ['WhatsApp ibu', 'no_hp_ibu'], ['Draf formulir lengkap', 'draf_formulir']], $participant); ?>
         <?php if ($revisions || !empty($participant['revisi_dibuka'])) { ?>
         <section class="detail-panel wide revision-history">
             <h2>Riwayat revisi wali murid</h2>

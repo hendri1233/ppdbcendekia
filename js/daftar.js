@@ -135,8 +135,25 @@
     updateOpenOffers();
   }
 
+  // Unit TK meminta jenjang tujuan (TK A / TK B) di samping pilihan unit.
+  const tkLevelField = document.querySelector("[data-tk-level]");
+  const unitField = document.querySelector("[data-unit-field]");
+  function updateTkLevel() {
+    if (!externalRoute || !tkLevelField) return;
+    const option = externalRoute.selectedOptions[0];
+    const isTk = Boolean(option && option.dataset.jenjang === "TK");
+    const levelSelect = tkLevelField.querySelector("select");
+    tkLevelField.hidden = !isTk;
+    levelSelect.disabled = !isTk;
+    levelSelect.required = isTk;
+    if (!isTk) levelSelect.value = "";
+    if (unitField) unitField.classList.toggle("field-wide", !isTk);
+  }
+
   if (externalRoute) {
     externalRoute.addEventListener("change", updateDapodikAge);
+    externalRoute.addEventListener("change", updateTkLevel);
+    updateTkLevel();
   }
   if (birthDateInput) {
     birthDateInput.addEventListener("input", updateDapodikAge);

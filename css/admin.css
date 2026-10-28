@@ -4813,3 +4813,6 @@ select:focus-visible {
 .account-actions {
     justify-content: flex-end;
 }
+
+/* Jenjang tujuan TK di daftar peserta */
+.unit-level{color:var(--muted,#6b7a74);font-weight:600;white-space:nowrap}

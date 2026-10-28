@@ -2856,3 +2856,6 @@ body.page-daftar .daftar-chips li {
         background: rgba(11, 42, 33, 0.86);
     }
 }
+
+/* Jenjang tujuan TK: disembunyikan untuk unit selain TK. */
+.field[data-tk-level][hidden]{display:none}
