@@ -9,8 +9,8 @@ $adminPageTitle = $adminPageTitle ?? 'Admin SPMB';
 $adminPageDescription = $adminPageDescription ?? 'Panel pengelolaan penerimaan peserta didik baru Yayasan Wakaf Cendekia Takengon.';
 $navigation = ppdb_admin_navigation($activeAdminPage);
 $navigationGroups = [];
-foreach ($navigation as $item) {
-    $navigationGroups[$item['group']][] = $item;
+foreach ($navigation as $navItem) {
+    $navigationGroups[$navItem['group']][] = $navItem;
 }
 $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SESSION['admin_unit_name'] ?? 'Unit');
 ?>
@@ -66,12 +66,12 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
         </a>
 
         <nav class="admin-nav" aria-label="Navigasi utama dashboard">
-            <?php foreach ($navigationGroups as $groupLabel => $items) { ?>
+            <?php foreach ($navigationGroups as $groupLabel => $navGroupItems) { ?>
                 <p class="admin-nav__group"><?php echo h($groupLabel); ?></p>
-                <?php foreach ($items as $item) { ?>
-                    <a href="<?php echo h($item['href']); ?>" title="<?php echo strip_tags($item['label']); ?>"<?php echo $activeAdminPage === $item['key'] ? ' aria-current="page"' : ''; ?>>
-                        <?php echo ppdb_admin_icon($item['icon']); ?>
-                        <span><?php echo $item['label']; ?></span>
+                <?php foreach ($navGroupItems as $navItem) { ?>
+                    <a href="<?php echo h($navItem['href']); ?>" title="<?php echo strip_tags($navItem['label']); ?>"<?php echo $activeAdminPage === $navItem['key'] ? ' aria-current="page"' : ''; ?>>
+                        <?php echo ppdb_admin_icon($navItem['icon']); ?>
+                        <span><?php echo $navItem['label']; ?></span>
                     </a>
                 <?php } ?>
             <?php } ?>
@@ -130,12 +130,12 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
         </header>
 
         <nav class="admin-mobile-nav" id="admin-mobile-nav" aria-label="Navigasi dashboard ponsel" data-mobile-nav>
-            <?php foreach ($navigationGroups as $groupLabel => $items) { ?>
+            <?php foreach ($navigationGroups as $groupLabel => $navGroupItems) { ?>
                 <p class="admin-nav__group"><?php echo h($groupLabel); ?></p>
-                <?php foreach ($items as $item) { ?>
-                    <a href="<?php echo h($item['href']); ?>"<?php echo $activeAdminPage === $item['key'] ? ' aria-current="page"' : ''; ?>>
-                        <?php echo ppdb_admin_icon($item['icon']); ?>
-                        <span><?php echo $item['label']; ?></span>
+                <?php foreach ($navGroupItems as $navItem) { ?>
+                    <a href="<?php echo h($navItem['href']); ?>"<?php echo $activeAdminPage === $navItem['key'] ? ' aria-current="page"' : ''; ?>>
+                        <?php echo ppdb_admin_icon($navItem['icon']); ?>
+                        <span><?php echo $navItem['label']; ?></span>
                     </a>
                 <?php } ?>
             <?php } ?>
