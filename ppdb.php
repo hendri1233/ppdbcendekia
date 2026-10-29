@@ -162,7 +162,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                 <div>
                     <p class="kicker">Daya tampung</p>
                     <h2 id="unit-title">Unit pendidikan dan kuota</h2>
-                    <p>Status pendaftaran tahun ajaran <?= h($activeYear) ?>. Angka kuota dan pendaftar diambil langsung dari sistem pendaftaran.</p>
+                    <p>Status pendaftaran tahun ajaran <?= h($activeYear) ?>. Angka kuota dan sisa kursi diambil langsung dari sistem pendaftaran.</p>
                 </div>
                 <p class="section-head__meta">Diperbarui <?= h(ppdb_format_date_id(ppdb_stats_today()->format('Y-m-d'))) ?></p>
             </header>
@@ -184,10 +184,6 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                                 <div>
                                     <dt>Kuota</dt>
                                     <dd><?= $unit['kuota_total'] > 0 ? $unit['kuota_total'] : '&ndash;' ?></dd>
-                                </div>
-                                <div>
-                                    <dt>Pendaftar</dt>
-                                    <dd><?= $unit['pendaftar_total'] ?></dd>
                                 </div>
                                 <div>
                                     <dt>Sisa kursi</dt>
@@ -213,7 +209,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                     </li>
                 <?php } ?>
             </ol>
-            <p class="unit-board__note">Kuota dan pendaftar mencakup seluruh jalur pendaftaran, tidak termasuk pendaftar yang ditolak.</p>
+            <p class="unit-board__note">Kuota dan sisa kursi mencakup seluruh jalur pendaftaran, tidak termasuk pendaftar yang ditolak.</p>
         </div>
     </section>
 
