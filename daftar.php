@@ -1,6 +1,7 @@
 <?php
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
+require_once 'ppdb_material_helpers.php';
 require_once 'google_sheets_sync.php';
 require_once 'web_stats.php';
 start_app_session();
@@ -27,6 +28,27 @@ while ($offer = mysqli_fetch_assoc($offerResult)) {
     } elseif ((int) $offer['eksternal_dibuka'] && $offer['kuota_eksternal'] > 0) {
         $openOffers[] = $offer;
     }
+}
+
+// Brosur per unit/tahun dari Materi & kuisioner, ditampilkan layar penuh setelah unit dipilih.
+$brochures = [];
+$brochureResult = mysqli_query($conn, "SELECT id,kode_unit,th_ajaran,path_file_pratinjau,mime_file_pratinjau FROM tb_ppdb_materials WHERE jenis_materi='brosur' AND path_file_pratinjau IS NOT NULL");
+while ($brochureResult && $brochure = mysqli_fetch_assoc($brochureResult)) {
+    if (ppdb_material_has_preview($brochure)) {
+        $brochures[$brochure['kode_unit'].'|'.$brochure['th_ajaran']] = [
+            'url' => 'ppdb-materi-file.php?id='.(int) $brochure['id'].'&file=preview',
+            'type' => $brochure['mime_file_pratinjau'] === 'application/pdf' ? 'pdf' : 'image',
+        ];
+    }
+}
+
+/** Atribut data brosur untuk elemen pemicu; kosong bila unit belum punya brosur. */
+function brochure_attributes(array $brochures, string $routeKey, string $unitName): string
+{
+    if (!isset($brochures[$routeKey])) {
+        return '';
+    }
+    return ' data-brochure-url="'.h($brochures[$routeKey]['url']).'" data-brochure-type="'.h($brochures[$routeKey]['type']).'" data-brochure-title="'.h('Brosur '.$unitName).'"';
 }
 
 $internalSessionKey = 'ppdb_internal_token_id';
@@ -522,9 +544,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                                         $offerValue = $offer['kode_unit'].'|'.$offer['th_ajaran'];
                                         $offerSelected = $selectedUnitCode === $offer['kode_unit'] && $selectedAcademicYear === $offer['th_ajaran'];
                                     ?>
-                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>"<?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?></option>
+                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>"<?php echo brochure_attributes($brochures, $offerValue, $offer['nama_unit']); ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?></option>
                                     <?php } ?>
                                 </select>
+                                <button type="button" class="brochure-trigger" data-brochure-open hidden>Lihat brosur unit</button>
                             </div>
                             <?php render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), $tkSelected); ?>
                             <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 2); } ?>
@@ -569,6 +592,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <span class="section-number">01</span>
                         <div><h2 id="route-title">Pendaftaran</h2>
                             <p><?php echo h($routeOffer['nama_unit']); ?></p>
+                            <?php $routeBrochure = brochure_attributes($brochures, $routeOffer['kode_unit'].'|'.$routeOffer['th_ajaran'], $routeOffer['nama_unit']); ?>
+                            <?php if ($routeBrochure !== '') { ?><button type="button" class="brochure-trigger" data-brochure-open data-brochure-auto<?php echo $routeBrochure; ?>>Lihat brosur unit</button><?php } ?>
                         </div>
                     </div>
                     <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
@@ -611,7 +636,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
 
     <footer class="site-footer"><span>Yayasan Wakaf Cendekia Takengon</span><a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
 </div>
+<dialog class="brochure-viewer" data-brochure-viewer aria-labelledby="brochure-title">
+    <div class="brochure-viewer__bar">
+        <h2 id="brochure-title" data-brochure-title>Brosur unit</h2>
+        <div class="brochure-viewer__tools">
+            <span class="brochure-viewer__pages" data-brochure-pages hidden aria-live="polite"></span>
+            <button type="button" data-brochure-zoom-out aria-label="Perkecil">&minus;</button>
+            <button type="button" class="brochure-viewer__zoom" data-brochure-zoom-reset aria-label="Kembalikan ukuran">100%</button>
+            <button type="button" data-brochure-zoom-in aria-label="Perbesar">+</button>
+            <button type="button" class="brochure-viewer__close" data-brochure-close aria-label="Tutup brosur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </div>
+    </div>
+    <div class="brochure-viewer__stage" data-brochure-stage tabindex="0">
+        <p class="brochure-viewer__status" data-brochure-status role="status">Memuat brosur…</p>
+        <div class="brochure-viewer__content" data-brochure-content></div>
+    </div>
+    <div class="brochure-viewer__footer">
+        <a data-brochure-download href="#" target="_blank" rel="noopener">Buka file asli</a>
+        <button type="button" class="brochure-viewer__continue" data-brochure-close>Lanjut mengisi formulir</button>
+    </div>
+</dialog>
 <script src="js/daftar.js?v=<?php echo (int) @filemtime(__DIR__.'/js/daftar.js'); ?>"></script>
 <script src="js/reveal.js?v=<?php echo (int) @filemtime(__DIR__.'/js/reveal.js'); ?>"></script>
+<script type="module" src="js/brosur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/brosur.js'); ?>"></script>
 </body>
 </html>

@@ -5,7 +5,9 @@ require_once 'koneksi.php';
 start_app_session();
 $isAdmin = !empty($_SESSION['admin_id']);
 if ($isAdmin) {
-    require_super_admin();
+    require_admin();
+    // Admin unit diperlakukan seperti pengunjung: hanya brosur atau materi dengan token.
+    $isAdmin = ppdb_is_super_admin();
 }
 
 $materialId = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
@@ -17,7 +19,7 @@ if (!$materialId || !in_array($fileKind, ['preview', 'original'], true)) {
 
 $registrationCode = strtoupper(trim((string) ($_GET['kode'] ?? '')));
 $registrationCode = preg_match('/^P[0-9]{9}$/', $registrationCode) ? $registrationCode : '';
-$stmt = mysqli_prepare($conn, 'SELECT m.kode_unit,m.nama_file_asli,m.path_file_asli,m.mime_file_asli,m.nama_file_pratinjau,m.path_file_pratinjau,m.mime_file_pratinjau,p.token_formulir,p.token_bukti,p.token_whatsapp FROM tb_ppdb_materials m LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=m.kode_unit AND c.th_ajaran=m.th_ajaran LEFT JOIN tb_pendaftaran p ON p.kode_unit=m.kode_unit AND p.th_ajaran=m.th_ajaran AND p.id_pendaftaran=? WHERE m.id=? LIMIT 1');
+$stmt = mysqli_prepare($conn, 'SELECT m.kode_unit,m.jenis_materi,m.nama_file_asli,m.path_file_asli,m.mime_file_asli,m.nama_file_pratinjau,m.path_file_pratinjau,m.mime_file_pratinjau,p.token_formulir,p.token_bukti,p.token_whatsapp FROM tb_ppdb_materials m LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=m.kode_unit AND c.th_ajaran=m.th_ajaran LEFT JOIN tb_pendaftaran p ON p.kode_unit=m.kode_unit AND p.th_ajaran=m.th_ajaran AND p.id_pendaftaran=? WHERE m.id=? LIMIT 1');
 mysqli_stmt_bind_param($stmt, 'si', $registrationCode, $materialId);
 mysqli_stmt_execute($stmt);
 $material = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -27,7 +29,8 @@ if (!$material) {
     exit('File materi tidak ditemukan.');
 }
 
-$authorized = $isAdmin;
+// Brosur adalah materi promosi: pratinjaunya boleh dilihat calon pendaftar sebelum mendaftar.
+$authorized = $isAdmin || ($fileKind === 'preview' && $material['jenis_materi'] === 'brosur');
 if (!$authorized) {
     $token = trim((string) ($_GET['token'] ?? ''));
     if (preg_match('/^[a-f0-9]{64}$/', $token)) {
