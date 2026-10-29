@@ -28,8 +28,49 @@
         masa_pembayaran_hari: form.querySelector('#masa_pembayaran_hari'),
     };
 
+    // Unit TK: kuota diisi per jenjang dan kuota jalur menjadi jumlahnya.
+    const levelBox = form.querySelector('[data-level-quota]');
+    const levelInputs = levelBox ? Array.from(levelBox.querySelectorAll('input[data-level]')) : [];
+
+    function selectedUnitIsTk() {
+        const option = unitSelect.selectedOptions[0];
+        return Boolean(levelBox && option && option.dataset.jenjang === 'TK');
+    }
+
+    function sumLevels() {
+        if (!selectedUnitIsTk()) return;
+        const totals = { internal: 0, eksternal: 0 };
+        levelInputs.forEach((input) => {
+            totals[input.dataset.route] += parseInt(input.value || '0', 10);
+        });
+        quotaInputs[0].value = totals.internal;
+        quotaInputs[1].value = totals.eksternal;
+        validateQuotas();
+    }
+
+    function syncLevelMode(setting) {
+        if (!levelBox) return;
+        const isTk = selectedUnitIsTk();
+        levelBox.hidden = !isTk;
+        levelInputs.forEach((input) => {
+            input.disabled = !isTk;
+            input.required = isTk;
+            const level = setting && setting.levels ? setting.levels[input.dataset.level] : null;
+            const pair = level ? level[input.dataset.route] : null;
+            if (setting !== undefined) input.value = pair ? pair[0] : 0;
+            input.dataset.reserved = pair ? String(pair[1]) : '0';
+        });
+        quotaInputs.forEach((input) => { input.readOnly = isTk; });
+        sumLevels();
+    }
+
     function loadSetting() {
         const setting = settings[unitSelect.value + '|' + yearSelect.value];
+        if (setting) {
+            quotaInputs[0].value = setting.kuota_internal;
+            quotaInputs[1].value = setting.kuota_eksternal;
+        }
+        syncLevelMode(setting || null);
 
         if (setting) {
             Object.entries(fields).forEach(([name, input]) => {
@@ -91,6 +132,13 @@
         });
     }
     quotaInputs.forEach((input) => input.addEventListener('input', validateQuotas));
+    levelInputs.forEach((input) => input.addEventListener('input', () => {
+        const reserved = parseInt(input.dataset.reserved || '0', 10);
+        input.setCustomValidity(parseInt(input.value || '0', 10) < reserved
+            ? 'Kuota jenjang ini tidak boleh lebih kecil dari pendaftar aktifnya (' + reserved + ').'
+            : '');
+        sumLevels();
+    }));
 
     // Konfirmasi eksplisit saat menutup pendaftaran.
     form.addEventListener('submit', (event) => {
@@ -109,5 +157,8 @@
     // Isi otomatis hanya saat halaman dibuka, bukan setelah submit gagal.
     if (!form.dataset.submitted) {
         loadSetting();
+    } else {
+        // Setelah submit gagal: pertahankan isian, cukup atur tampilan jenjang TK.
+        syncLevelMode(undefined);
     }
 })();

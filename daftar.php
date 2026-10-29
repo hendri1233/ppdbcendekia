@@ -182,17 +182,31 @@ if ($routeOffer && $routeType === 'internal') {
 }
 
 $pendaftarOptions = ['Ayah', 'Bunda', 'Ayah dan Bunda', 'Wali'];
-$tkLevelOptions = ['TK A', 'TK B'];
+$tkLevelOptions = PPDB_TK_LEVELS;
+
+// Jenjang TK yang kuotanya habis pada jalur pendaftaran ini tidak dapat dipilih.
+$tkRouteOffer = $routeType === 'internal' ? $routeOffer : null;
+if ($routeType !== 'internal') {
+    foreach ($openOffers as $offer) {
+        if ($offer['jenjang'] === 'TK' && (!$tkRouteOffer || ($routeOffer && $offer['kode_unit'] === $routeOffer['kode_unit'] && $offer['th_ajaran'] === $routeOffer['th_ajaran']))) {
+            $tkRouteOffer = $offer;
+        }
+    }
+}
+$tkFullLevels = $tkRouteOffer && ($tkRouteOffer['jenjang'] ?? '') === 'TK'
+    ? ppdb_full_levels(ppdb_level_quotas($conn, (string) $tkRouteOffer['kode_unit'], (string) $tkRouteOffer['th_ajaran']), $routeType === 'internal' ? 'internal' : 'eksternal')
+    : [];
 
 /** Pilihan jenjang tujuan khusus unit TK, tampil di samping pilihan unit. */
-function render_tk_level_field(array $options, string $value, bool $visible): void
+function render_tk_level_field(array $options, string $value, bool $visible, array $fullLevels = []): void
 {
     echo '<div class="field" data-tk-level'.($visible ? '' : ' hidden').'>';
     echo '<label for="tingkat_kelas">Daftar ke jenjang <span class="required-mark" aria-hidden="true">*</span></label>';
     echo '<select id="tingkat_kelas" name="tingkat_kelas"'.($visible ? ' required' : ' disabled').'>';
     echo '<option value="">Pilih TK A atau TK B</option>';
     foreach ($options as $option) {
-        echo '<option value="'.h($option).'"'.($value === $option ? ' selected' : '').'>'.h($option).'</option>';
+        $full = in_array($option, $fullLevels, true);
+        echo '<option value="'.h($option).'"'.($full ? ' disabled' : ($value === $option ? ' selected' : '')).'>'.h($option.($full ? ' (kuota penuh)' : '')).'</option>';
     }
     echo '</select></div>';
 }
@@ -339,6 +353,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             mysqli_stmt_close($countRegistrations);
             if ($registrationCount >= (int) $lockedOffer[$quotaColumn]) {
                 throw new RuntimeException('Kuota jalur ini untuk unit dan tahun ajaran tersebut sudah terpenuhi.');
+            }
+            // Baris pengaturan unit sudah dikunci di atas, jadi hitungan per jenjang aman dari pendaftar bersamaan.
+            if ($tkLevel !== null && in_array($tkLevel, ppdb_full_levels(ppdb_level_quotas($conn, $unitCode, $academicYear), $routeType), true)) {
+                throw new RuntimeException('Kuota '.$tkLevel.' untuk jalur ini sudah penuh. Silakan pilih jenjang lain atau hubungi panitia.');
             }
 
             $lockedInternalTokenId = null;
@@ -549,7 +567,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                                 </select>
                                 <button type="button" class="brochure-trigger" data-brochure-open hidden>Lihat brosur unit</button>
                             </div>
-                            <?php render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), $tkSelected); ?>
+                            <?php render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), $tkSelected, $tkFullLevels); ?>
                             <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 2); } ?>
                         </div>
                         <label class="consent-check" for="konfirmasi_data">
@@ -615,7 +633,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <div><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Tujuh isian ini memulai proses. NIK dan dokumen menyusul setelah pembayaran.</p></div>
                     </div>
                     <div class="field-grid">
-                        <?php if (($routeOffer['jenjang'] ?? '') === 'TK') { render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), true); } ?>
+                        <?php if (($routeOffer['jenjang'] ?? '') === 'TK') { render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), true, $tkFullLevels); } ?>
                         <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 3); } ?>
                     </div>
                     <label class="consent-check" for="konfirmasi_data">

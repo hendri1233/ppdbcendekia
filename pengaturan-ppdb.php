@@ -204,6 +204,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $externalOpen = isset($_POST['eksternal_dibuka']) ? 1 : 0;
     $isOpen = $internalOpen || $externalOpen ? 1 : 0;
 
+    // Unit TK: kuota diisi per jenjang (TK A / TK B), jumlahnya menjadi kuota per jalur.
+    $levelQuotaInput = null;
+    $usesLevelQuotas = ($units[$unitCode]['jenjang'] ?? '') === 'TK' && ppdb_table_exists($conn, 'tb_kuota_tingkat');
+    if ($usesLevelQuotas) {
+        $levelQuotaInput = [];
+        $quotaInternal = 0;
+        $quotaExternal = 0;
+        foreach (PPDB_TK_LEVELS as $level) {
+            foreach (['internal', 'eksternal'] as $route) {
+                $value = filter_var($_POST['kuota_tingkat'][$level][$route] ?? null, FILTER_VALIDATE_INT);
+                if ($value === false || $value < 0 || $value > 10000) {
+                    $quotaInternal = false;
+                    break 2;
+                }
+                $levelQuotaInput[$level][$route] = $value;
+                $route === 'internal' ? $quotaInternal += $value : $quotaExternal += $value;
+            }
+        }
+    }
+
     if (!isset($units[$unitCode]) || !in_array($academicYear, $academicYears, true)) {
         $error = 'Pilih unit pendidikan dan tahun ajaran yang valid.';
     } elseif ($quotaInternal === false || $quotaExternal === false || $quotaInternal < 0 || $quotaExternal < 0 || $quotaInternal + $quotaExternal > 10000) {
@@ -237,7 +257,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             mysqli_stmt_close($reservedQuery);
 
-            if ($quotaInternal < $reserved['internal'] || $quotaExternal < $reserved['eksternal']) {
+            $levelError = '';
+            if ($levelQuotaInput !== null) {
+                $currentLevels = ppdb_level_quotas($conn, $unitCode, $academicYear);
+                foreach ($levelQuotaInput as $level => $routes) {
+                    foreach ($routes as $route => $value) {
+                        $filled = $currentLevels[$level][$route][1] ?? 0;
+                        if ($value < $filled && $levelError === '') {
+                            $levelError = 'Kuota '.$level.' '.$route.' tidak dapat lebih kecil dari pendaftar aktifnya ('.$filled.').';
+                        }
+                    }
+                }
+            }
+
+            if ($levelError !== '') {
+                mysqli_rollback($conn);
+                $error = $levelError;
+            } elseif ($quotaInternal < $reserved['internal'] || $quotaExternal < $reserved['eksternal']) {
                 mysqli_rollback($conn);
                 $error = 'Kuota tidak dapat lebih kecil dari jumlah pendaftar aktif (internal '.$reserved['internal'].', eksternal '.$reserved['eksternal'].').';
             } else {
@@ -245,7 +281,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $totalQuota = $quotaInternal + $quotaExternal;
                 $update = mysqli_prepare($conn, 'INSERT INTO tb_pengaturan_ppdb (kode_unit,th_ajaran,kuota,kuota_internal,kuota_eksternal,biaya_pendaftaran,bank_nama,nomor_rekening,nama_pemilik_rekening,masa_pembayaran_hari,pendaftaran_dibuka,internal_dibuka,eksternal_dibuka,diperbarui_oleh) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota=VALUES(kuota), kuota_internal=VALUES(kuota_internal), kuota_eksternal=VALUES(kuota_eksternal), biaya_pendaftaran=VALUES(biaya_pendaftaran), bank_nama=VALUES(bank_nama), nomor_rekening=VALUES(nomor_rekening), nama_pemilik_rekening=VALUES(nama_pemilik_rekening), masa_pembayaran_hari=VALUES(masa_pembayaran_hari), pendaftaran_dibuka=VALUES(pendaftaran_dibuka), internal_dibuka=VALUES(internal_dibuka), eksternal_dibuka=VALUES(eksternal_dibuka), diperbarui_oleh=VALUES(diperbarui_oleh)');
                 mysqli_stmt_bind_param($update, 'ssiiidsssiiiii', $unitCode, $academicYear, $totalQuota, $quotaInternal, $quotaExternal, $feeInput, $bankName, $accountNumber, $accountName, $paymentDays, $isOpen, $internalOpen, $externalOpen, $adminId);
-                if (mysqli_stmt_execute($update)) {
+                $saved = mysqli_stmt_execute($update);
+                if ($saved && $levelQuotaInput !== null) {
+                    $levelSave = mysqli_prepare($conn, 'INSERT INTO tb_kuota_tingkat (kode_unit,th_ajaran,tingkat_kelas,kuota_internal,kuota_eksternal) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota_internal=VALUES(kuota_internal),kuota_eksternal=VALUES(kuota_eksternal)');
+                    foreach ($levelQuotaInput as $level => $routes) {
+                        mysqli_stmt_bind_param($levelSave, 'sssii', $unitCode, $academicYear, $level, $routes['internal'], $routes['eksternal']);
+                        $saved = $saved && mysqli_stmt_execute($levelSave);
+                    }
+                    mysqli_stmt_close($levelSave);
+                }
+                if ($saved) {
                     mysqli_commit($conn);
                     $notice = 'Pengaturan SPMB berhasil disimpan.';
                 } else {
@@ -273,6 +318,7 @@ $settings = mysqli_query($conn, "SELECT c.*,u.nama_unit,u.jenjang,
 $settingsRows = [];
 $settingsByKey = [];
 while ($setting = mysqli_fetch_assoc($settings)) {
+    $setting['levels'] = $setting['jenjang'] === 'TK' ? ppdb_level_quotas($conn, $setting['kode_unit'], $setting['th_ajaran']) : [];
     $settingsRows[] = $setting;
     $settingsByKey[$setting['kode_unit'].'|'.$setting['th_ajaran']] = [
         'kuota_internal' => (int) $setting['kuota_internal'],
@@ -286,6 +332,7 @@ while ($setting = mysqli_fetch_assoc($settings)) {
         'eksternal_dibuka' => (int) $setting['eksternal_dibuka'],
         'reserved_internal' => (int) $setting['internal_terisi'],
         'reserved_eksternal' => (int) $setting['eksternal_terisi'],
+        'levels' => (object) $setting['levels'],
     ];
 }
 // Tabel token dipaginasi di server karena satu pool bisa berisi 150 kode per unit.
@@ -370,7 +417,7 @@ require 'admin_header.php';
                 <select id="kode_unit" name="kode_unit" required>
                     <option value="">Pilih unit</option>
                     <?php foreach ($units as $code => $unit) { ?>
-                        <option value="<?php echo h($code); ?>"<?php echo (($_POST['kode_unit'] ?? '') === $code) ? ' selected' : ''; ?>><?php echo h(ppdb_unit_display_name($unit['nama_unit'])); ?></option>
+                        <option value="<?php echo h($code); ?>" data-jenjang="<?php echo h($unit['jenjang']); ?>"<?php echo (($_POST['kode_unit'] ?? '') === $code) ? ' selected' : ''; ?>><?php echo h(ppdb_unit_display_name($unit['nama_unit'])); ?></option>
                     <?php } ?>
                 </select>
             </div>
@@ -393,6 +440,20 @@ require 'admin_header.php';
                 <input id="kuota_eksternal" name="kuota_eksternal" type="number" min="0" max="10000" value="<?php echo h($_POST['kuota_eksternal'] ?? '0'); ?>" required
                     data-reserved="<?php echo h((string) ($settingsByKey[($_POST['kode_unit'] ?? '').'|'.($_POST['th_ajaran'] ?? '')]['reserved_eksternal'] ?? '0')); ?>">
             </div>
+            <?php if (ppdb_table_exists($conn, 'tb_kuota_tingkat')) { $postedUnitIsTk = ($units[$_POST['kode_unit'] ?? '']['jenjang'] ?? '') === 'TK'; ?>
+                <fieldset class="level-quota" data-level-quota<?php echo $postedUnitIsTk ? '' : ' hidden'; ?>>
+                    <legend>Kuota per jenjang TK</legend>
+                    <p class="level-quota__hint">Kuota internal dan eksternal TK di atas otomatis menjadi jumlah dari isian berikut.</p>
+                    <?php foreach (PPDB_TK_LEVELS as $level) { $levelKey = strtolower(str_replace(' ', '-', $level)); ?>
+                        <?php foreach (['internal' => 'internal SDM', 'eksternal' => 'eksternal umum'] as $route => $routeLabel) { ?>
+                            <div class="filter-field">
+                                <label for="kuota-<?php echo $levelKey.'-'.$route; ?>"><?php echo h($level.' '.$routeLabel); ?></label>
+                                <input id="kuota-<?php echo $levelKey.'-'.$route; ?>" name="kuota_tingkat[<?php echo h($level); ?>][<?php echo $route; ?>]" type="number" min="0" max="10000" value="<?php echo h((string) ($_POST['kuota_tingkat'][$level][$route] ?? '0')); ?>" data-level="<?php echo h($level); ?>" data-route="<?php echo $route; ?>"<?php echo $postedUnitIsTk ? ' required' : ' disabled'; ?>>
+                            </div>
+                        <?php } ?>
+                    <?php } ?>
+                </fieldset>
+            <?php } ?>
             <div class="filter-field">
                 <label for="masa_pembayaran_hari">Batas pembayaran (hari)</label>
                 <input id="masa_pembayaran_hari" name="masa_pembayaran_hari" type="number" min="1" max="30" value="<?php echo h($_POST['masa_pembayaran_hari'] ?? '7'); ?>" required>
@@ -600,8 +661,8 @@ require 'admin_header.php';
                     <tr>
                         <td data-label="Unit" class="primary-cell"><?php echo h(ppdb_unit_display_name($row['nama_unit'])); ?></td>
                         <td data-label="Tahun"><?php echo h($row['th_ajaran']); ?></td>
-                        <td data-label="Kuota internal"><span class="quota-cell-text"><?php echo (int) $row['internal_terisi']; ?> / <?php echo (int) $row['kuota_internal']; ?> terisi<small class="cell-sub"><?php echo (int) $row['internal_diterima']; ?> diterima · <?php echo (int) $row['internal_token_belum_digunakan']; ?> token belum digunakan · <?php echo $row['internal_dibuka'] ? 'dibuka' : 'ditutup'; ?></small></span></td>
-                        <td data-label="Kuota eksternal"><span class="quota-cell-text"><?php echo (int) $row['eksternal_terisi']; ?> / <?php echo (int) $row['kuota_eksternal']; ?> terisi<small class="cell-sub"><?php echo (int) $row['eksternal_diterima']; ?> diterima · <?php echo $row['eksternal_dibuka'] ? 'dibuka' : 'ditutup'; ?></small></span></td>
+                        <td data-label="Kuota internal"><span class="quota-cell-text"><?php echo (int) $row['internal_terisi']; ?> / <?php echo (int) $row['kuota_internal']; ?> terisi<small class="cell-sub"><?php echo (int) $row['internal_diterima']; ?> diterima · <?php echo (int) $row['internal_token_belum_digunakan']; ?> token belum digunakan · <?php echo $row['internal_dibuka'] ? 'dibuka' : 'ditutup'; ?></small><?php foreach ($row["levels"] as $levelName => $levelRoutes) { ?><small class="level-breakdown"><?php echo h($levelName); ?>: <?php echo (int) $levelRoutes["internal"][1]; ?> / <?php echo (int) $levelRoutes["internal"][0]; ?></small><?php } ?></span></td>
+                        <td data-label="Kuota eksternal"><span class="quota-cell-text"><?php echo (int) $row['eksternal_terisi']; ?> / <?php echo (int) $row['kuota_eksternal']; ?> terisi<small class="cell-sub"><?php echo (int) $row['eksternal_diterima']; ?> diterima · <?php echo $row['eksternal_dibuka'] ? 'dibuka' : 'ditutup'; ?></small><?php foreach ($row["levels"] as $levelName => $levelRoutes) { ?><small class="level-breakdown"><?php echo h($levelName); ?>: <?php echo (int) $levelRoutes["eksternal"][1]; ?> / <?php echo (int) $levelRoutes["eksternal"][0]; ?></small><?php } ?></span></td>
                         <td data-label="Diterima"><?php echo (int) $row['internal_diterima'] + (int) $row['eksternal_diterima']; ?></td>
                         <td data-label="Biaya"><?php echo (float) $row['biaya_pendaftaran'] > 0 ? 'Rp '.h(number_format((float) $row['biaya_pendaftaran'], 0, ',', '.')) : 'Gratis'; ?></td>
                         <td data-label="Status"><span class="status-pill <?php echo $row['pendaftaran_dibuka'] ? 'is-open' : 'is-closed'; ?>"><?php echo $row['pendaftaran_dibuka'] ? 'Dibuka' : 'Ditutup'; ?></span></td>

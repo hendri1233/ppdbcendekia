@@ -31,6 +31,7 @@ while ($unit = mysqli_fetch_assoc($unitQuery)) {
     $unit['pendaftar_total'] = $unit['terisi'] + $unit['internal_terisi'];
     $unit['sisa_total'] = max(0, $unit['kuota_total'] - $unit['pendaftar_total']);
     $unit['dibuka_total'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1 || (int) ($unit['internal_dibuka'] ?? 0) === 1;
+    $unit['levels'] = $unit['jenjang'] === 'TK' && $unit['th_ajaran'] ? ppdb_level_quotas($conn, $unit['kode_unit'], $unit['th_ajaran']) : [];
     $units[] = $unit;
     if ($unit['terbuka']) {
         $openUnits[] = $unit;
@@ -194,6 +195,18 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                             </dl>
                             <?php if ($unit['kuota_total'] > 0) { ?>
                                 <span class="unit-row__meter" role="img" aria-label="<?= $fillPercent ?> persen kuota terisi"><span style="width: <?= $fillPercent ?>%"></span></span>
+                            <?php } ?>
+                            <?php if ($unit['levels']) { ?>
+                                <ul class="unit-row__levels">
+                                    <?php foreach ($unit['levels'] as $levelName => $levelRoutes) {
+                                        $levelQuota = $levelRoutes['internal'][0] + $levelRoutes['eksternal'][0];
+                                        $levelLeft = max(0, $levelQuota - $levelRoutes['internal'][1] - $levelRoutes['eksternal'][1]);
+                                        // Sama dengan aturan unit: kuota umum jenjang habis berarti penuh bagi publik.
+                                        $levelFull = $levelRoutes['eksternal'][1] >= $levelRoutes['eksternal'][0];
+                                    ?>
+                                        <li><strong><?= h($levelName) ?></strong> <span>Kuota <?= $levelQuota ?></span> <span<?= $levelFull ? ' class="is-full"' : '' ?>><?= $levelFull ? 'Kuota sudah penuh' : 'Sisa '.$levelLeft ?></span></li>
+                                    <?php } ?>
+                                </ul>
                             <?php } ?>
                         </div>
                         <div class="unit-row__status">

@@ -79,6 +79,76 @@ function ppdb_column_exists(mysqli $conn, string $table, string $column): bool
     return $cache[$key];
 }
 
+/** Jenjang di dalam unit TK; setiap jenjang mempunyai kuota sendiri (migrasi 026). */
+const PPDB_TK_LEVELS = ['TK A', 'TK B'];
+
+function ppdb_table_exists(mysqli $conn, string $table): bool
+{
+    static $cache = [];
+    if (!isset($cache[$table])) {
+        $stmt = mysqli_prepare($conn, 'SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? LIMIT 1');
+        mysqli_stmt_bind_param($stmt, 's', $table);
+        mysqli_stmt_execute($stmt);
+        $cache[$table] = mysqli_stmt_get_result($stmt)->num_rows > 0;
+        mysqli_stmt_close($stmt);
+    }
+    return $cache[$table];
+}
+
+/**
+ * Kuota dan pendaftar aktif per jenjang TK untuk satu unit dan tahun:
+ * ['TK A' => ['internal' => [kuota, terisi], 'eksternal' => [kuota, terisi]], ...].
+ * Kosong bila kuota per jenjang belum diatur atau migrasinya belum dijalankan.
+ */
+function ppdb_level_quotas(mysqli $conn, string $unitCode, string $academicYear): array
+{
+    if (!ppdb_table_exists($conn, 'tb_kuota_tingkat') || !ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas')) {
+        return [];
+    }
+    $stmt = mysqli_prepare($conn, 'SELECT tingkat_kelas,kuota_internal,kuota_eksternal FROM tb_kuota_tingkat WHERE kode_unit=? AND th_ajaran=?');
+    mysqli_stmt_bind_param($stmt, 'ss', $unitCode, $academicYear);
+    mysqli_stmt_execute($stmt);
+    $rows = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+    if (!$rows) {
+        return [];
+    }
+    $levels = [];
+    foreach (PPDB_TK_LEVELS as $level) {
+        $levels[$level] = ['internal' => [0, 0], 'eksternal' => [0, 0]];
+    }
+    foreach ($rows as $row) {
+        if (isset($levels[$row['tingkat_kelas']])) {
+            $levels[$row['tingkat_kelas']]['internal'][0] = (int) $row['kuota_internal'];
+            $levels[$row['tingkat_kelas']]['eksternal'][0] = (int) $row['kuota_eksternal'];
+        }
+    }
+    $count = mysqli_prepare($conn, "SELECT tingkat_kelas,jalur_pendaftaran,COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND tingkat_kelas IS NOT NULL AND status_ppdb NOT IN ('ditolak','data_lama') GROUP BY tingkat_kelas,jalur_pendaftaran");
+    mysqli_stmt_bind_param($count, 'ss', $unitCode, $academicYear);
+    mysqli_stmt_execute($count);
+    $result = mysqli_stmt_get_result($count);
+    while ($row = mysqli_fetch_assoc($result)) {
+        if (isset($levels[$row['tingkat_kelas']][$row['jalur_pendaftaran']])) {
+            $levels[$row['tingkat_kelas']][$row['jalur_pendaftaran']][1] = (int) $row['total'];
+        }
+    }
+    mysqli_stmt_close($count);
+    return $levels;
+}
+
+/** Jenjang TK yang kuotanya pada jalur tertentu sudah habis. */
+function ppdb_full_levels(array $levelQuotas, string $route): array
+{
+    $full = [];
+    foreach ($levelQuotas as $level => $routes) {
+        [$quota, $filled] = $routes[$route] ?? [0, 0];
+        if ($filled >= $quota) {
+            $full[] = $level;
+        }
+    }
+    return $full;
+}
+
 function ppdb_is_super_admin(): bool
 {
     return ($_SESSION['admin_role'] ?? 'super_admin') === 'super_admin';

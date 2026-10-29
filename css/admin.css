@@ -4816,3 +4816,12 @@ select:focus-visible {
 
 /* Jenjang tujuan TK di daftar peserta */
 .unit-level{color:var(--muted,#6b7a74);font-weight:600;white-space:nowrap}
+
+/* Kuota per jenjang TK di pengaturan kuota */
+.level-quota{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0;padding:14px 16px 16px;border:1px dashed var(--line,#d6ddd9);border-radius:12px;min-width:0}
+.level-quota[hidden]{display:none}
+.level-quota legend{padding:0 6px;font-weight:700}
+.level-quota__hint{grid-column:1/-1;margin:0;color:var(--muted,#6b7a74);font-size:.8125rem}
+.quota-config-form input[readonly]{background:var(--surface-2,#f1f4f2);cursor:not-allowed}
+.level-breakdown{display:block;margin-top:2px;color:var(--muted,#6b7a74);font-size:.75rem}
+@media (max-width:1100px){.level-quota{grid-template-columns:repeat(2,minmax(0,1fr))}}

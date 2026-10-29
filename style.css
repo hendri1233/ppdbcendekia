@@ -4648,3 +4648,10 @@ dd {
 .unit-video__frame video{object-fit:cover;background:#000}
 .unit-row__numbers dd.is-full{font-size:var(--fs-sm,.875rem);font-weight:700;letter-spacing:0;line-height:1.3;color:#b45309}
 .unit-row__numbers dd.is-full{white-space:nowrap}
+
+/* Kuota per jenjang TK (TK A / TK B) di daftar unit halaman SPMB */
+.unit-row__levels{display:grid;gap:4px;margin:10px 0 0;padding:0;list-style:none;font-size:var(--fs-sm,.875rem)}
+.unit-row__levels li{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.unit-row__levels strong{min-width:42px}
+.unit-row__levels span{color:var(--muted)}
+.unit-row__levels .is-full{color:#b45309;font-weight:700}
