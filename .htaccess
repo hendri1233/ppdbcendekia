@@ -6,6 +6,11 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Sitemap bersifat dinamis agar berita terbit dan profil unit terbaru tercantum.
+    RewriteCond %{THE_REQUEST} \s/+([^?\s]+/)?sitemap\.php(?:[?\s]) [NC]
+    RewriteRule ^sitemap\.php$ sitemap.xml [R=301,L,NE]
+    RewriteRule ^sitemap\.xml$ sitemap.php [END]
+
     # URL publik lama tetap diterima, lalu dialihkan ke bentuk kanonis tanpa .php.
     RewriteCond %{THE_REQUEST} \s/+([^?\s]+/)?index\.php(?:[?\s]) [NC]
     RewriteRule ^index\.php$ ./ [R=301,L]
@@ -43,4 +48,42 @@ Options -Indexes
     Header always set Strict-Transport-Security "max-age=31536000" env=HTTPS
     Header always unset X-Powered-By
     Header unset X-Powered-By
+</IfModule>
+
+# Kompresi teks; gambar sudah memakai format terkompresi.
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/plain text/html text/xml text/css text/javascript application/javascript application/json application/xml application/rss+xml image/svg+xml
+</IfModule>
+<IfModule mod_deflate.c>
+    <IfModule !mod_brotli.c>
+        AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css text/javascript application/javascript application/json application/xml application/rss+xml image/svg+xml
+    </IfModule>
+</IfModule>
+
+# Cache browser untuk aset statis; file CSS/JS publik menggunakan versi filemtime.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType text/javascript "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/gif "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/avif "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/x-icon "access plus 30 days"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+</IfModule>
+<IfModule mod_headers.c>
+    <FilesMatch "\.(?:css|js)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+    <FilesMatch "\.(?:jpe?g|png|gif|webp|avif|svg|ico)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+    <FilesMatch "\.(?:woff2?|ttf|otf)$">
+        Header set Cache-Control "public, max-age=31536000"
+    </FilesMatch>
 </IfModule>

@@ -26,7 +26,8 @@ $openUnitCount = (int) (mysqli_fetch_assoc($openResult)['total'] ?? 0);
 
 $siteUrl = ppdb_public_base_url();
 public_page_start($conn, [
-    'title' => PUBLIC_SITE_NAME,
+    'title' => 'Yayasan Wakaf Cendekia Takengon | Sekolah Islam Aceh Tengah',
+    'title_is_complete' => true,
     'description' => 'Situs resmi Yayasan Wakaf Cendekia Takengon: profil yayasan, unit KB, TPA, TK, SD, dan SMP Islam terpadu, kurikulum, berita, dan SPMB '.PUBLIC_PPDB_YEAR.'.',
     'active' => 'beranda',
     'path' => '',
@@ -37,7 +38,14 @@ public_page_start($conn, [
         'name' => PUBLIC_SITE_NAME,
         'url' => $siteUrl,
         'logo' => $siteUrl.'/img/logo-display.png',
+        'telephone' => '+6285184539694',
         'email' => cms_setting($conn, 'contact_email', 'wakafcendekiatakengon@gmail.com'),
+        'sameAs' => [
+            'https://www.instagram.com/cendekia_tkn?vrfl=MzhqbWgyeHN5bjV2',
+            'https://www.facebook.com/share/1CPiWGAMH6/',
+            'https://youtube.com/@wakafcendekiatakengon',
+            'https://vm.tiktok.com/ZS9yDTdj4jU5a-Jsya9/',
+        ],
         'address' => [
             '@type' => 'PostalAddress',
             'streetAddress' => 'Jalan Pertamina-Kebet, Kampung Lemah Burbana',
@@ -79,7 +87,7 @@ public_page_start($conn, [
             <div class="hero-slider__track">
                 <?php foreach ($slides as $index => $slide) { ?>
                     <figure class="hero-slide<?= $index === 0 ? ' is-active' : '' ?>" data-slide data-caption="<?= h(trim(($slide['title'] ? $slide['title'].' — ' : '').($slide['caption'] ?? ''), ' —')) ?>" data-link="<?= h($slide['link_url'] ?? '') ?>" aria-roledescription="slide" aria-label="<?= $index + 1 ?> dari <?= count($slides) ?>"<?= $index === 0 ? '' : ' aria-hidden="true"' ?>>
-                        <img src="<?= h($slide['image_path']) ?>" alt="<?= h($slide['caption'] ?: ($slide['title'] ?: 'Kegiatan Yayasan Wakaf Cendekia Takengon')) ?>" width="1600" height="900"<?= $index === 0 ? ' fetchpriority="high"' : ' fetchpriority="low"' ?> decoding="async">
+                        <img src="<?= h($slide['image_path']) ?>" alt="<?= h($slide['caption'] ?: ($slide['title'] ?: 'Kegiatan Yayasan Wakaf Cendekia Takengon')) ?>" width="1600" height="900"<?= $index === 0 ? ' fetchpriority="high"' : ' loading="lazy" fetchpriority="low"' ?> decoding="async">
                     </figure>
                 <?php } ?>
             </div>

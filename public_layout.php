@@ -98,7 +98,9 @@ function public_page_start(mysqli $conn, array $page): void
 {
     ppdb_track_visit($conn);
     $siteUrl = ppdb_public_base_url();
-    $title = $page['title'] === PUBLIC_SITE_NAME ? PUBLIC_SITE_NAME : $page['title'].' · '.PUBLIC_SITE_NAME;
+    $title = !empty($page['title_is_complete'])
+        ? $page['title']
+        : ($page['title'] === PUBLIC_SITE_NAME ? PUBLIC_SITE_NAME : $page['title'].' · '.PUBLIC_SITE_NAME);
     $description = $page['description'] ?? 'Yayasan Wakaf Cendekia Takengon menaungi KB, TPA, TK, SD, dan SMP Islam terpadu di Bebesen, Aceh Tengah.';
     $canonical = $siteUrl.'/'.ltrim($page['path'] ?? '', '/');
     $image = $page['image'] ?? 'img/wisuda-1200.jpg';

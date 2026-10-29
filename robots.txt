@@ -1,0 +1,5 @@
+# Halaman publik situs dapat dirayapi mesin pencari.
+User-agent: *
+Allow: /
+
+Sitemap: https://cendekiatakengon.or.id/sitemap.xml

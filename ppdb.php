@@ -109,7 +109,7 @@ $check = '<svg class="i-check" viewBox="0 0 20 20" aria-hidden="true" focusable=
 
 public_page_start($conn, [
     'title' => 'SPMB '.$activeYear,
-    'description' => 'Penerimaan peserta didik baru '.$activeYear.' untuk KB, TPA, TK, SD, dan SMP Islam terpadu Yayasan Wakaf Cendekia Takengon: kuota per unit, alur, persyaratan, dan tanya jawab.',
+    'description' => 'Pendaftaran SPMB '.$activeYear.' untuk KB, TPA, TK, SD, dan SMP Islam terpadu di Takengon. Cek kuota, persyaratan, alur pendaftaran, dan jadwal.',
     'active' => 'ppdb',
     'path' => 'spmb',
     'schema' => [$faqSchema],
