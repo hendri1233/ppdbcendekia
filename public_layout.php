@@ -179,7 +179,7 @@ function public_page_start(mysqli $conn, array $page): void
                     </li>
                 <?php } ?>
             </ul>
-            <a class="button button--primary nav-apply" href="daftar.php">Daftar SPMB</a>
+            <a class="button button--primary nav-apply" href="daftar.php">Informasi SPMB</a>
         </nav>
 
         <div class="header-tools">
