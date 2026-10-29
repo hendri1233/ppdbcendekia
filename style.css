@@ -4646,3 +4646,5 @@ dd {
 }
 .unit-videos__title span{display:block}
 .unit-video__frame video{object-fit:cover;background:#000}
+.unit-row__numbers dd.is-full{font-size:var(--fs-sm,.875rem);font-weight:700;letter-spacing:0;line-height:1.3;color:#b45309}
+.unit-row__numbers dd.is-full{white-space:nowrap}

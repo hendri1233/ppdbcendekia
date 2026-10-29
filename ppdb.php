@@ -170,8 +170,10 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
             <ol class="unit-board">
                 <?php foreach ($units as $unit) {
                     $ageText = $ageSummary((string) $unit['jenjang']);
-                    $fillPercent = $unit['kuota_total'] > 0 ? min(100, (int) round($unit['pendaftar_total'] / $unit['kuota_total'] * 100)) : 0;
-                    $isOpen = $unit['dibuka_total'] && $unit['kuota_total'] > 0 && $unit['sisa_total'] > 0;
+                    // Kuota eksternal (umum) penuh: tampil penuh bagi publik walau kuota internal masih tersisa.
+                    $externalFull = $unit['penuh'];
+                    $fillPercent = $externalFull ? 100 : ($unit['kuota_total'] > 0 ? min(100, (int) round($unit['pendaftar_total'] / $unit['kuota_total'] * 100)) : 0);
+                    $isOpen = !$externalFull && $unit['dibuka_total'] && $unit['kuota_total'] > 0 && $unit['sisa_total'] > 0;
                 ?>
                     <li class="unit-row<?= $isOpen ? ' is-open' : '' ?>">
                         <span class="unit-row__code" aria-hidden="true"><?= h($unit['jenjang']) ?></span>
@@ -187,7 +189,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                                 </div>
                                 <div>
                                     <dt>Sisa kursi</dt>
-                                    <dd><?= $unit['kuota_total'] > 0 ? $unit['sisa_total'] : '&ndash;' ?></dd>
+                                    <dd<?= $externalFull ? ' class="is-full"' : '' ?>><?= $externalFull ? 'Kuota sudah penuh' : ($unit['kuota_total'] > 0 ? $unit['sisa_total'] : '&ndash;') ?></dd>
                                 </div>
                             </dl>
                             <?php if ($unit['kuota_total'] > 0) { ?>
@@ -200,7 +202,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                                 <?php if ($unit['terbuka']) { ?>
                                     <a class="button button--secondary button--sm" href="daftar.php?unit=<?= rawurlencode($unit['kode_unit']) ?>&amp;tahun=<?= rawurlencode($activeYear) ?>">Daftar ke <?= h($unit['jenjang']) ?><span class="visually-hidden"> <?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></span></a>
                                 <?php } ?>
-                            <?php } elseif ($unit['kuota_total'] > 0 && $unit['sisa_total'] === 0) { ?>
+                            <?php } elseif ($externalFull || ($unit['kuota_total'] > 0 && $unit['sisa_total'] === 0)) { ?>
                                 <span class="badge badge--warning">Kuota terpenuhi</span>
                             <?php } else { ?>
                                 <span class="badge badge--neutral">Belum dibuka</span>
