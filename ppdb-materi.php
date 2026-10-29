@@ -556,8 +556,16 @@ require 'admin_header.php';
             </section>
         <?php } ?>
 
-        <section class="panel questionnaire-edit-panel">
-            <div class="panel-header"><div><h2>Kuisioner pendaftar</h2><span class="panel-subtitle">Pertanyaan ini ditampilkan sebelum data lengkap dan jawaban disimpan bersama pendaftaran.</span></div><div class="questionnaire-edit-actions"><button class="button-secondary" type="button" data-require-all-questions aria-pressed="false">Wajibkan semua</button><button class="button-secondary" type="button" data-unrequire-all-questions>Batalkan semua</button><button class="button-secondary" type="button" data-add-question>Tambah pertanyaan</button></div></div>
+        <details class="panel questionnaire-edit-panel" open>
+            <summary class="questionnaire-edit-summary">
+                <span class="questionnaire-edit-summary__copy">
+                    <span class="questionnaire-edit-summary__title" role="heading" aria-level="2">Kuisioner pendaftar</span>
+                    <span class="panel-subtitle">Pertanyaan ini ditampilkan sebelum data lengkap dan jawaban disimpan bersama pendaftaran.</span>
+                </span>
+                <span class="questionnaire-edit-summary__chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="questionnaire-edit-content">
+            <div class="questionnaire-edit-actions"><button class="button-secondary" type="button" data-require-all-questions aria-pressed="false">Wajibkan semua</button><button class="button-secondary" type="button" data-unrequire-all-questions>Batalkan semua</button><button class="button-secondary" type="button" data-add-question>Tambah pertanyaan</button></div>
             <div class="question-editor-list" data-question-list>
                 <?php foreach ($questions as $index => $question) { ?>
                     <fieldset class="question-editor" data-question-row>
@@ -572,7 +580,8 @@ require 'admin_header.php';
                     </fieldset>
                 <?php } ?>
             </div>
-        </section>
+            </div>
+        </details>
         <div class="materials-save-actions"><button class="button-primary" type="submit">Simpan dan terbitkan</button></div>
     </form>
     <template id="question-editor-template">

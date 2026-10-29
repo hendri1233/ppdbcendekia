@@ -2589,8 +2589,7 @@ select:focus-visible {
 }
 
 .material-import-panel .panel-header,
-.material-edit-panel .panel-header,
-.questionnaire-edit-panel .panel-header {
+.material-edit-panel .panel-header {
     padding: 16px 18px;
 }
 
@@ -2796,17 +2795,67 @@ select:focus-visible {
     cursor: pointer;
 }
 
-.questionnaire-edit-panel .panel-header {
+.questionnaire-edit-summary {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 18px;
+    padding: 16px 18px;
+    border-radius: var(--r-lg);
+    list-style: none;
+    cursor: pointer;
+}
+
+.questionnaire-edit-summary::-webkit-details-marker {
+    display: none;
+}
+
+.questionnaire-edit-summary:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: -3px;
+}
+
+.questionnaire-edit-summary__copy {
+    display: grid;
+    gap: 4px;
+}
+
+.questionnaire-edit-summary__title {
+    color: var(--admin-ink);
+    font-size: var(--fs-base);
+    font-weight: 800;
+}
+
+.questionnaire-edit-summary__chevron {
+    flex: 0 0 10px;
+    width: 10px;
+    height: 10px;
+    margin: -5px 4px 0 0;
+    border-right: 2px solid var(--admin-green);
+    border-bottom: 2px solid var(--admin-green);
+    transform: rotate(45deg);
+    transition: transform .16s ease;
+}
+
+.questionnaire-edit-panel[open] > .questionnaire-edit-summary {
+    border-bottom: 1px solid var(--admin-line-soft);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+
+.questionnaire-edit-panel[open] > .questionnaire-edit-summary .questionnaire-edit-summary__chevron {
+    margin-top: 5px;
+    transform: rotate(225deg);
+}
+
+.questionnaire-edit-content {
+    padding-top: 14px;
 }
 
 .questionnaire-edit-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    padding: 0 18px 12px;
 }
 
 .questionnaire-edit-actions [aria-pressed="true"] {
@@ -2911,11 +2960,6 @@ select:focus-visible {
     .material-files,
     .question-editor {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    .questionnaire-edit-panel .panel-header {
-        align-items: flex-start;
-        flex-direction: column;
     }
 
     .questionnaire-edit-actions {
