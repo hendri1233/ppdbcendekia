@@ -201,12 +201,12 @@ function public_page_end(mysqli $conn): void
     $phone = cms_setting($conn, 'contact_phone', '082181649543');
     $email = cms_setting($conn, 'contact_email', 'wakafcendekiatakengon@gmail.com');
     $address = cms_setting($conn, 'contact_address', 'Jalan Pertamina–Kebet, Kampung Lemah Burbana, Bebesen, Aceh Tengah 24552');
-    $socials = array_filter([
-        'Instagram' => cms_setting($conn, 'social_instagram', 'https://www.instagram.com/cendekia_tkn?vrfl=MzhqbWgyeHN5bjV2'),
-        'Facebook' => cms_setting($conn, 'social_facebook', 'https://www.facebook.com/share/1CPiWGAMH6/'),
-        'YouTube' => cms_setting($conn, 'social_youtube', 'https://youtube.com/@wakafcendekiatakengon'),
-        'TikTok' => cms_setting($conn, 'social_tiktok', 'https://vm.tiktok.com/ZS9yDTdj4jU5a-Jsya9/'),
-    ], static fn ($url) => preg_match('#^https://#', $url));
+    $socials = [
+        'Instagram' => 'https://www.instagram.com/cendekia_tkn?vrfl=MzhqbWgyeHN5bjV2',
+        'Facebook' => 'https://www.facebook.com/share/1CPiWGAMH6/',
+        'YouTube' => 'https://youtube.com/@wakafcendekiatakengon',
+        'TikTok' => 'https://vm.tiktok.com/ZS9yDTdj4jU5a-Jsya9/',
+    ];
     $aiReady = cms_ai_available($conn);
     ?>
 </main>
