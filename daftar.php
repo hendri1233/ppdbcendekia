@@ -439,12 +439,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
 <a class="skip-link" href="#form-utama">Lompat ke formulir</a>
 <div class="page-shell">
     <header class="site-header">
-        <a class="brand" href="index.php" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
+        <a class="brand" href="./" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
             <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · SPMB online</small></span>
         </a>
         <span class="daftar-year">SPMB <?php echo h($routeOffer['th_ajaran'] ?? '2027/2028'); ?></span>
-        <a class="back-link" href="index.php">Kembali ke beranda</a>
+        <a class="back-link" href="./">Kembali ke beranda</a>
     </header>
 
     <main class="initial-layout">

@@ -118,28 +118,56 @@ function ppdb_normalize_whatsapp_number(string $phone): string
 function ppdb_public_base_url(): string
 {
     $configuredUrl = trim((string) getenv('PPDB_BASE_URL'));
-    if ($configuredUrl !== '') {
-        $parts = parse_url($configuredUrl);
-        if (!is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true) || empty($parts['host']) || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
-            throw new RuntimeException('Alamat situs SPMB belum dikonfigurasi dengan benar.');
-        }
-        return rtrim($configuredUrl, '/');
-    }
-
     $host = $_SERVER['HTTP_HOST'] ?? '';
     if (!preg_match('/^[A-Za-z0-9.-]+(?::[0-9]{1,5})?$/D', $host)) {
         throw new RuntimeException('Alamat situs SPMB tidak dapat ditentukan.');
     }
     $hostname = strtolower(preg_replace('/:[0-9]+$/', '', $host) ?? $host);
     $isLocal = $hostname === 'localhost' || preg_match('/^127(?:\.[0-9]{1,3}){3}$/', $hostname);
-    $scheme = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
-    $basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
-    $basePath = $basePath === '/' || $basePath === '.' ? '' : rtrim($basePath, '/');
     if ($isLocal) {
-        // Server lokal tetap boleh membuat tautan agar admin bisa menguji alur.
+        if ($configuredUrl !== '') {
+            $parts = parse_url($configuredUrl);
+            if (!is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true) || empty($parts['host']) || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
+                throw new RuntimeException('Alamat situs SPMB belum dikonfigurasi dengan benar.');
+            }
+            $configuredHost = strtolower((string) $parts['host']);
+            if ($configuredHost === 'localhost' || preg_match('/^127(?:\.[0-9]{1,3}){3}$/', $configuredHost)) {
+                return rtrim($configuredUrl, '/');
+            }
+        }
+
+        $scheme = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
+        $basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
+        $basePath = $basePath === '/' || $basePath === '.' ? '' : rtrim($basePath, '/');
         return $scheme.'://'.$host.$basePath;
     }
-    return $scheme.'://'.$host.$basePath;
+
+    return 'https://cendekiatakengon.or.id';
+}
+
+function ppdb_unit_public_slug(array $unit): string
+{
+    $knownSlugs = [
+        'KB-CEN' => 'kb-it-cendekia-takengon',
+        'TPA-CEN' => 'tpa-it-cendekia-takengon',
+        'TK-CEN' => 'tk-islam-terpadu-cendekia-takengon',
+        'SD-CEN' => 'sd-it-cendekia-takengon',
+        'SMP-CEN' => 'smp-it-cendekia-takengon',
+    ];
+    $code = strtoupper(trim((string) ($unit['kode_unit'] ?? '')));
+    if (isset($knownSlugs[$code])) {
+        return $knownSlugs[$code];
+    }
+
+    $name = strtolower(trim((string) ($unit['nama_unit'] ?? '')));
+    $slug = trim(preg_replace('/[^a-z0-9]+/', '-', $name) ?? '', '-');
+    $codeSlug = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($code)) ?? '', '-');
+    return $slug !== '' ? $slug.'-'.($codeSlug ?: 'unit') : 'unit-'.($codeSlug ?: 'umum');
+}
+
+function ppdb_unit_public_path(array $unit): string
+{
+    return 'unit/'.rawurlencode(ppdb_unit_public_slug($unit));
 }
 
 function ppdb_is_valid_whatsapp_number(string $phone): bool

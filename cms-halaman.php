@@ -2,8 +2,8 @@
 require_once __DIR__.'/admin_cms.php';
 
 $pages = [
-    'tentang' => ['label' => 'Tentang', 'public' => 'tentang.php'],
-    'kurikulum' => ['label' => 'Kurikulum', 'public' => 'kurikulum.php'],
+    'tentang' => ['label' => 'Tentang', 'public' => 'tentang'],
+    'kurikulum' => ['label' => 'Kurikulum', 'public' => 'kurikulum'],
 ];
 $pageKey = isset($pages[$_GET['halaman'] ?? '']) ? $_GET['halaman'] : 'tentang';
 $self = 'cms-halaman.php?halaman='.$pageKey;

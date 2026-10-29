@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $link = cms_post_text('link_url', 255);
             if (!cms_valid_url($link, false)) {
-                throw new RuntimeException('Tautan slide harus diawali https:// atau berupa halaman situs, misalnya ppdb.php.');
+                throw new RuntimeException('Tautan slide harus diawali https:// atau berupa halaman situs, misalnya spmb.');
             }
             $path = cms_store_image($upload, 'slider', 2400);
             $title = cms_post_text('title', 160);
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $link = cms_post_text('link_url', 255);
             if (!cms_valid_url($link, false)) {
-                throw new RuntimeException('Tautan slide harus diawali https:// atau berupa halaman situs, misalnya ppdb.php.');
+                throw new RuntimeException('Tautan slide harus diawali https:// atau berupa halaman situs, misalnya spmb.');
             }
             $upload = cms_uploaded_image('slide_image_'.$id);
             $path = $slide['image_path'];
@@ -117,7 +117,7 @@ require 'admin_header.php';
             <h1>Beranda &amp; slider</h1>
             <p>Perubahan langsung tampil di beranda situs. Gambar slide disimpan sebagai WebP dan diperkecil otomatis.</p>
         </div>
-        <a class="button-secondary" href="index.php" target="_blank" rel="noopener">Lihat beranda <span aria-hidden="true">↗</span></a>
+        <a class="button-secondary" href="./" target="_blank" rel="noopener">Lihat beranda <span aria-hidden="true">↗</span></a>
     </header>
 
     <section class="panel" id="slider">
@@ -139,7 +139,7 @@ require 'admin_header.php';
                 <div class="cms-field"><label class="cms-label" for="new-title">Judul (opsional)</label><input id="new-title" name="title" maxlength="160"></div>
                 <div class="cms-field"><label class="cms-label" for="new-order">Urutan</label><input id="new-order" name="sort_order" type="number" value="<?php echo count($slides) + 1; ?>" min="0" max="999"></div>
                 <div class="cms-field cms-field--wide"><label class="cms-label" for="new-caption">Keterangan foto</label><input id="new-caption" name="caption" maxlength="300" placeholder="Contoh: Kegiatan manasik haji siswa TK, Mei 2026"><span class="cms-hint">Juga dipakai sebagai teks alternatif gambar untuk pembaca layar.</span></div>
-                <div class="cms-field cms-field--wide"><label class="cms-label" for="new-link">Tautan (opsional)</label><input id="new-link" name="link_url" maxlength="255" placeholder="https://… atau ppdb.php"></div>
+                <div class="cms-field cms-field--wide"><label class="cms-label" for="new-link">Tautan (opsional)</label><input id="new-link" name="link_url" maxlength="255" placeholder="https://… atau spmb"></div>
             </div>
             <div class="cms-actions"><button class="button-primary" type="submit">Tambah slide</button></div>
         </form>

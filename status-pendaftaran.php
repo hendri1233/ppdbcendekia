@@ -84,7 +84,7 @@ header('Referrer-Policy: no-referrer');
 </head>
 <body>
 <main class="result-shell">
-    <a class="result-brand" href="index.php">
+    <a class="result-brand" href="./">
         <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
         <span><strong>Wakaf Cendekia</strong><small>Takengon · SPMB</small></span>
     </a>
@@ -265,7 +265,7 @@ header('Referrer-Policy: no-referrer');
             <p class="result-eyebrow">Tautan tidak valid</p>
             <h1>Status pendaftaran<br>tidak ditemukan.</h1>
             <p class="result-description">Periksa kembali tautan dari pesan WhatsApp, atau hubungi panitia SPMB.</p>
-            <a class="download-button" href="index.php">Kembali ke beranda</a>
+            <a class="download-button" href="./">Kembali ke beranda</a>
         </section>
     <?php } ?>
 

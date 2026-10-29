@@ -9,7 +9,7 @@ $types = [
         'subtitle' => 'Jabatan',
         'description' => 'Profil singkat',
         'image' => 'Foto (persegi)',
-        'anchor' => 'tentang.php#manajemen',
+        'anchor' => 'tentang#manajemen',
     ],
     'fasilitas' => [
         'label' => 'Fasilitas',
@@ -18,7 +18,7 @@ $types = [
         'subtitle' => 'Unit atau lokasi (opsional)',
         'description' => 'Keterangan',
         'image' => 'Foto fasilitas (16:10)',
-        'anchor' => 'tentang.php#fasilitas',
+        'anchor' => 'tentang#fasilitas',
     ],
 ];
 $type = isset($types[$_GET['jenis'] ?? '']) ? $_GET['jenis'] : 'manajemen';

@@ -2,26 +2,39 @@
 require_once __DIR__ . '/public_layout.php';
 
 $code = is_string($_GET['kode'] ?? null) ? $_GET['kode'] : '';
+$requestedSlug = is_string($_GET['slug'] ?? null) ? strtolower(trim($_GET['slug'])) : '';
 $unit = null;
 foreach (cms_units($conn) as $row) {
-    if ($row['kode_unit'] === $code) {
+    if ($row['kode_unit'] === $code || ($requestedSlug !== '' && ppdb_unit_public_slug($row) === $requestedSlug)) {
         $unit = $row;
+        $code = (string) $row['kode_unit'];
+        break;
     }
 }
 
 if (!$unit) {
     http_response_code(404);
-    public_page_start($conn, ['title' => 'Unit tidak ditemukan', 'active' => 'unit', 'path' => 'unit.php']);
+    public_page_start($conn, ['title' => 'Unit tidak ditemukan', 'active' => 'unit', 'path' => 'unit']);
     ?>
     <section class="page-hero">
         <div class="shell">
             <p class="kicker">404</p>
             <h1>Unit pendidikan tidak ditemukan.</h1>
-            <div class="hero-slider__actions"><a class="button button--primary" href="index.php">Kembali ke beranda</a></div>
+            <div class="hero-slider__actions"><a class="button button--primary" href="./">Kembali ke beranda</a></div>
         </div>
     </section>
     <?php
     public_page_end($conn);
+    exit;
+}
+
+$unitPath = ppdb_unit_public_path($unit);
+$publicBase = rtrim(ppdb_public_base_url(), '/');
+$basePath = (string) (parse_url($publicBase, PHP_URL_PATH) ?: '');
+$canonicalPath = rtrim($basePath, '/').'/'.$unitPath;
+$requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '');
+if (rtrim($requestPath, '/') !== $canonicalPath) {
+    header('Location: '.$publicBase.'/'.$unitPath, true, 301);
     exit;
 }
 
@@ -44,13 +57,13 @@ public_page_start($conn, [
     'title' => $name,
     'active' => 'unit',
     'description' => $unit['tagline'] ?: $name.' — '.ppdb_jenjang_label($unit['jenjang']).' di bawah Yayasan Wakaf Cendekia Takengon.',
-    'path' => 'unit.php?kode='.rawurlencode($code),
+    'path' => $unitPath,
     'image' => $unit['photo_path'] ?: 'img/wisuda-1200.jpg',
 ]);
 ?>
 <section class="page-hero">
     <div class="shell">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page"><?= h($unit['jenjang']) ?></li></ol>
+        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li aria-current="page"><?= h($unit['jenjang']) ?></li></ol>
         <p class="kicker"><?= h(ppdb_jenjang_label($unit['jenjang'])) ?></p>
         <h1 class="unit-name"><?= h($name) ?></h1>
         <?php if ($unit['tagline']) { ?><p><?= h($unit['tagline']) ?></p><?php } ?>
@@ -87,7 +100,7 @@ public_page_start($conn, [
                     <a class="button button--primary" href="daftar.php?unit=<?= rawurlencode($code) ?>&amp;tahun=<?= rawurlencode(PUBLIC_PPDB_YEAR) ?>">Daftar ke <?= h($unit['jenjang']) ?></a>
                 <?php } else { ?>
                     <span class="badge badge--neutral"><?= (int) $quota['eksternal_dibuka'] === 1 ? 'Kuota terpenuhi' : 'Belum dibuka' ?></span>
-                    <a class="button button--secondary" href="ppdb.php">Info SPMB</a>
+                    <a class="button button--secondary" href="spmb">Info SPMB</a>
                 <?php } ?>
             </div>
         </aside>
@@ -125,7 +138,7 @@ public_page_start($conn, [
         <div class="shell">
             <header class="section-head section-head--split">
                 <h2 id="unit-news-title">Berita <?= h($unit['jenjang']) ?></h2>
-                <a class="text-link" href="berita.php?unit=<?= rawurlencode($code) ?>">Semua berita unit</a>
+                <a class="text-link" href="berita?unit=<?= rawurlencode($code) ?>">Semua berita unit</a>
             </header>
             <div class="news-grid">
                 <?php $noLead = true; foreach ($unitNews as $index => $news) { include __DIR__.'/partials/news-card.php'; } ?>

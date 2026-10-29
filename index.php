@@ -56,8 +56,8 @@ public_page_start($conn, [
             <h1><?= h($headline) ?></h1>
             <p class="hero-slider__lead"><?= h($lead) ?></p>
             <div class="hero-slider__actions">
-                <a class="button button--light button--lg" href="tentang.php">Kenali yayasan</a>
-                <a class="button button--ghost-light button--lg" href="ppdb.php">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></a>
+                <a class="button button--light button--lg" href="tentang">Kenali yayasan</a>
+                <a class="button button--ghost-light button--lg" href="spmb">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></a>
             </div>
             <p class="hero-slider__caption" aria-live="polite">
                 <span data-slide-caption><?= h(trim(($slides[0]['title'] ? $slides[0]['title'].' — ' : '').($slides[0]['caption'] ?? ''), ' —')) ?></span>
@@ -100,7 +100,7 @@ public_page_start($conn, [
                     <p>Yayasan Wakaf Cendekia Takengon menaungi Kelompok Bermain, Taman Penitipan Anak, TK, SD, dan SMP Islam terpadu di Kecamatan Bebesen, Kabupaten Aceh Tengah. Ananda dapat menempuh pendidikan sejak usia dini hingga sekolah menengah pertama dalam satu lingkungan yang berkesinambungan.</p>
                 <?php } ?>
             </div>
-            <a class="text-link" href="tentang.php">Prakata pimpinan, visi, dan misi</a>
+            <a class="text-link" href="tentang">Prakata pimpinan, visi, dan misi</a>
         </div>
         <dl class="fact-stack fact-stack--icons">
             <div><dt><span class="fact-stack__icon"><?= public_icon('school') ?></span>Satuan pendidikan</dt><dd><?= count($units) ?> unit &middot; KB, TPA, TK, SD, SMP</dd></div>
@@ -120,11 +120,11 @@ public_page_start($conn, [
                     <h2 id="unit-title">Unit pendidikan</h2>
                     <p>Lima jenjang di bawah satu yayasan. Pilih unit untuk melihat profil, kontak, dan beritanya.</p>
                 </div>
-                <a class="text-link" href="ppdb.php#unit">Lihat kuota SPMB</a>
+                <a class="text-link" href="spmb#unit">Lihat kuota SPMB</a>
             </header>
             <div class="unit-grid unit-grid--list">
                 <?php foreach ($units as $unit) { ?>
-                    <a class="unit-card unit-card--row" href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>">
+                    <a class="unit-card unit-card--row" href="<?= h(ppdb_unit_public_path($unit)) ?>">
                         <span class="unit-card__media<?= $unit['photo_path'] ? ' has-photo' : '' ?>">
                             <?php if ($unit['photo_path']) { ?>
                                 <img src="<?= h($unit['photo_path']) ?>" alt="" width="640" height="480" loading="lazy">
@@ -168,7 +168,7 @@ public_page_start($conn, [
                 <h2 id="berita-title">Berita dan kegiatan</h2>
                 <p>Kabar terbaru dari yayasan dan setiap unit.</p>
             </div>
-            <?php if ($latestNews) { ?><a class="text-link" href="berita.php">Semua berita</a><?php } ?>
+            <?php if ($latestNews) { ?><a class="text-link" href="berita">Semua berita</a><?php } ?>
         </header>
         <?php if (!$latestNews) { ?>
             <div class="empty-note"><strong>Belum ada berita yang diterbitkan.</strong><span>Berita kegiatan akan tampil di sini setelah diterbitkan oleh pengelola.</span></div>
@@ -193,7 +193,7 @@ public_page_start($conn, [
                     : 'Pendaftaran belum dibuka. Lihat informasi kuota, alur, dan persyaratan terlebih dahulu.' ?></p>
             </div>
             <div class="ppdb-band__actions">
-                <a class="button button--light button--lg" href="ppdb.php">Info SPMB</a>
+                <a class="button button--light button--lg" href="spmb">Info SPMB</a>
                 <?php if ($openUnitCount > 0) { ?><a class="button button--ghost-light button--lg" href="daftar.php">Daftar sekarang</a><?php } ?>
             </div>
             </div>

@@ -598,7 +598,7 @@ header('Referrer-Policy: no-referrer');
 <a class="skip-link" href="#form-utama">Lompat ke formulir</a>
 <div class="page-shell">
     <header class="site-header">
-        <a class="brand" href="index.php" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
+        <a class="brand" href="./" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
             <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · SPMB online</small></span>
         </a>

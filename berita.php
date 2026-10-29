@@ -15,14 +15,14 @@ if ($slug !== '') {
 
     if (!$article) {
         http_response_code(404);
-        public_page_start($conn, ['title' => 'Berita tidak ditemukan', 'active' => 'berita', 'path' => 'berita.php']);
+        public_page_start($conn, ['title' => 'Berita tidak ditemukan', 'active' => 'berita', 'path' => 'berita']);
         ?>
         <section class="page-hero">
             <div class="shell">
                 <p class="kicker">404</p>
                 <h1>Berita tidak ditemukan.</h1>
                 <p>Berita mungkin sudah dipindahkan atau belum diterbitkan.</p>
-                <div class="hero-slider__actions"><a class="button button--primary" href="berita.php">Lihat semua berita</a></div>
+                <div class="hero-slider__actions"><a class="button button--primary" href="berita">Lihat semua berita</a></div>
             </div>
         </section>
         <?php
@@ -30,16 +30,26 @@ if ($slug !== '') {
         exit;
     }
 
+    $articlePath = 'berita/'.rawurlencode((string) $article['slug']);
+    $siteBase = rtrim(ppdb_public_base_url(), '/');
+    $basePath = (string) (parse_url($siteBase, PHP_URL_PATH) ?: '');
+    $canonicalPath = rtrim($basePath, '/').'/'.$articlePath;
+    $requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '');
+    if (rtrim($requestPath, '/') !== $canonicalPath) {
+        header('Location: '.$siteBase.'/'.$articlePath, true, 301);
+        exit;
+    }
+
     [$related] = cms_published_news($conn, 4, 0, (string) $article['kode_unit']);
     $related = array_values(array_filter($related, static fn ($row) => (int) $row['id'] !== (int) $article['id']));
     $related = array_slice($related, 0, 3);
-    $articleUrl = ppdb_public_base_url().'/berita.php?baca='.rawurlencode($article['slug']);
+    $articleUrl = $siteBase.'/'.$articlePath;
 
     public_page_start($conn, [
         'title' => $article['title'],
         'description' => cms_news_excerpt($article, 160),
         'active' => 'berita',
-        'path' => 'berita.php?baca='.rawurlencode($article['slug']),
+        'path' => $articlePath,
         'image' => $article['cover_path'] ?: 'img/wisuda-1200.jpg',
         'og_type' => 'article',
         'schema' => [[
@@ -55,11 +65,11 @@ if ($slug !== '') {
     ?>
     <article class="section article">
         <header class="article__head">
-            <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li><a href="berita.php">Berita</a></li><li aria-current="page"><?= h(cms_plain_excerpt($article['title'], 40)) ?></li></ol>
+            <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li><a href="berita">Berita</a></li><li aria-current="page"><?= h(cms_plain_excerpt($article['title'], 40)) ?></li></ol>
             <p class="news-meta">
                 <span class="tag"><?= h($article['jenjang'] ?: $article['category']) ?></span>
                 <time datetime="<?= h(substr((string) $article['published_at'], 0, 10)) ?>"><?= h(cms_format_datetime_id($article['published_at'])) ?></time>
-                <?php if ($article['nama_unit']) { ?><a class="text-link" href="unit.php?kode=<?= rawurlencode($article['kode_unit']) ?>"><?= h(ppdb_unit_display_name($article['nama_unit'])) ?></a><?php } ?>
+                <?php if ($article['nama_unit']) { ?><a class="text-link" href="unit/<?= h(ppdb_unit_public_slug(['kode_unit' => $article['kode_unit'], 'nama_unit' => $article['nama_unit']])) ?>"><?= h(ppdb_unit_display_name($article['nama_unit'])) ?></a><?php } ?>
             </p>
             <h1><?= h($article['title']) ?></h1>
             <?php if (trim((string) $article['excerpt']) !== '') { ?><p class="article__lead"><?= h($article['excerpt']) ?></p><?php } ?>
@@ -95,7 +105,16 @@ $perPage = 9;
 $page = max(1, (int) ($_GET['halaman'] ?? 1));
 [$items, $total] = cms_published_news($conn, $perPage, ($page - 1) * $perPage, $selectedUnit);
 $pages = max(1, (int) ceil($total / $perPage));
-$link = static fn (array $query) => 'berita.php'.(($query = array_filter($query, static fn ($v) => $v !== '' && $v !== 1)) ? '?'.http_build_query($query) : '');
+$siteBase = rtrim(ppdb_public_base_url(), '/');
+$basePath = (string) (parse_url($siteBase, PHP_URL_PATH) ?: '');
+$canonicalListingPath = rtrim($basePath, '/').'/berita';
+$requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '');
+if (rtrim($requestPath, '/') !== $canonicalListingPath) {
+    $query = (string) ($_SERVER['QUERY_STRING'] ?? '');
+    header('Location: '.$siteBase.'/berita'.($query !== '' ? '?'.$query : ''), true, 301);
+    exit;
+}
+$link = static fn (array $query) => 'berita'.(($query = array_filter($query, static fn ($v) => $v !== '' && $v !== 1)) ? '?'.http_build_query($query) : '');
 
 public_page_start($conn, [
     'title' => 'Berita',
@@ -106,7 +125,7 @@ public_page_start($conn, [
 ?>
 <section class="page-hero">
     <div class="shell">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">Berita</li></ol>
+        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li aria-current="page">Berita</li></ol>
         <p class="kicker">Berita dan kegiatan</p>
         <h1>Kabar dari yayasan dan setiap unit</h1>
     </div>
@@ -115,7 +134,7 @@ public_page_start($conn, [
 <section class="section section--tight">
     <div class="shell">
         <nav class="filter-chips" aria-label="Saring berita per unit">
-            <a href="berita.php"<?= $selectedUnit === '' ? ' aria-current="true"' : '' ?>>Semua</a>
+            <a href="berita"<?= $selectedUnit === '' ? ' aria-current="true"' : '' ?>>Semua</a>
             <?php foreach ($units as $unit) { ?>
                 <a href="<?= h($link(['unit' => $unit['kode_unit']])) ?>"<?= $selectedUnit === $unit['kode_unit'] ? ' aria-current="true"' : '' ?>><?= h($unit['jenjang']) ?></a>
             <?php } ?>

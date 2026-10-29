@@ -14,12 +14,12 @@ public_page_start($conn, [
     'title' => 'Kontak',
     'description' => 'Alamat, WhatsApp, email, dan kontak setiap unit Yayasan Wakaf Cendekia Takengon.',
     'active' => 'kontak',
-    'path' => 'kontak.php',
+    'path' => 'kontak',
 ]);
 ?>
 <section class="page-hero">
     <div class="shell">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">Kontak</li></ol>
+        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li aria-current="page">Kontak</li></ol>
         <p class="kicker">Kontak</p>
         <h1>Hubungi yayasan</h1>
         <p>Untuk pertanyaan pendaftaran, layanan, atau kunjungan, hubungi panitia melalui kontak resmi berikut.</p>
@@ -50,7 +50,7 @@ public_page_start($conn, [
                 <tbody>
                     <?php foreach ($units as $unit) { ?>
                         <tr>
-                            <th scope="row"><a href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></th>
+                            <th scope="row"><a href="<?= h(ppdb_unit_public_path($unit)) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></th>
                             <td><?= h($unit['npsn'] ?: '–') ?></td>
                             <td><?= $unit['email'] ? '<a href="mailto:'.h($unit['email']).'">'.h($unit['email']).'</a>' : '<span>Melalui panitia yayasan</span>' ?></td>
                             <td><?= $unit['phone'] ? h($unit['phone']) : '<span>Melalui panitia yayasan</span>' ?></td>

@@ -130,7 +130,7 @@ function ai_knowledge_base(mysqli $conn): string
             $unit['phone'] ? 'telepon '.$unit['phone'] : '',
             'SPMB: '.$status,
             (float) $unit['biaya_pendaftaran'] > 0 ? 'biaya pendaftaran Rp '.number_format((float) $unit['biaya_pendaftaran'], 0, ',', '.') : '',
-            'halaman: unit.php?kode='.$unit['kode_unit'],
+            'halaman: unit/'.ppdb_unit_public_slug($unit),
         ];
         $lines[] = '- '.implode('; ', array_filter($parts));
         if ($unit['tagline']) {
@@ -142,7 +142,7 @@ function ai_knowledge_base(mysqli $conn): string
     }
 
     $lines[] = '';
-    $lines[] = '# Alur pendaftaran (halaman ppdb.php, formulir di daftar.php)';
+    $lines[] = '# Alur pendaftaran (halaman spmb, formulir di daftar.php)';
     $lines[] = '1. Registrasi awal di daftar.php: nama lengkap ananda, tanggal lahir, jenis kelamin, siapa yang mendaftarkan, nomor WhatsApp pendaftar, ayah, dan ibu. Sekitar 3 menit, tanpa NIK.';
     $lines[] = '2. Verifikasi dan pembayaran: panitia memeriksa data lalu mengirim tautan pembayaran lewat WhatsApp; pendaftar mengunggah bukti transfer di halaman status.';
     $lines[] = '3. Formulir lengkap: data identitas, alamat, keluarga, membaca materi SPMB unit, lalu mengunggah dokumen. Sediakan sekitar 1 jam.';
@@ -159,7 +159,7 @@ function ai_knowledge_base(mysqli $conn): string
         $lines[] = 'Program bagi calon wali siswa (diseleksi sesuai syarat yayasan): '.implode('; ', $guide['programs']).'.';
     }
 
-    foreach (['tentang' => 'Tentang yayasan (tentang.php)', 'kurikulum' => 'Kurikulum (kurikulum.php)'] as $page => $heading) {
+    foreach (['tentang' => 'Tentang yayasan (tentang)', 'kurikulum' => 'Kurikulum (kurikulum)'] as $page => $heading) {
         $sections = array_filter(cms_sections($conn, $page), static fn ($s) => trim(strip_tags((string) $s['body_html'])) !== '');
         if ($sections) {
             $lines[] = '';
@@ -182,9 +182,9 @@ function ai_knowledge_base(mysqli $conn): string
     [$news] = cms_published_news($conn, 8);
     if ($news) {
         $lines[] = '';
-        $lines[] = '# Berita terbaru (berita.php)';
+        $lines[] = '# Berita terbaru (berita)';
         foreach ($news as $item) {
-            $lines[] = '- '.substr((string) $item['published_at'], 0, 10).' · '.$item['title'].' — '.cms_news_excerpt($item, 200).' (berita.php?baca='.$item['slug'].')';
+            $lines[] = '- '.substr((string) $item['published_at'], 0, 10).' · '.$item['title'].' — '.cms_news_excerpt($item, 200).' (berita/'.$item['slug'].')';
         }
     }
     return implode("\n", $lines);
@@ -197,7 +197,7 @@ Cara menjawab:
 - Gunakan Bahasa Indonesia yang ramah, sopan, dan ringkas (umumnya 2–5 kalimat atau daftar pendek). Boleh menyapa dengan "Ayah/Bunda" bila sesuai.
 - Jawab hanya berdasarkan bagian "Informasi situs" di bawah. Jangan mengarang biaya, tanggal, kuota, nama guru, akreditasi, prestasi, atau kebijakan yang tidak tercantum.
 - Jika informasinya tidak ada, katakan terus terang bahwa informasi tersebut belum tersedia di situs, lalu arahkan ke WhatsApp panitia atau halaman Kontak.
-- Bila relevan, sertakan tautan halaman situs dengan format [teks](nama-halaman.php), misalnya [formulir pendaftaran](daftar.php) atau [info SPMB](ppdb.php).
+- Bila relevan, sertakan tautan halaman situs dengan format [teks](alamat-halaman), misalnya [formulir pendaftaran](daftar.php) atau [info SPMB](spmb).
 - Status kuota berubah setiap hari; sebutkan bahwa angka berasal dari sistem saat ini.
 - Jangan meminta atau menyimpan data pribadi (NIK, nomor KK, alamat rumah). Untuk status pendaftaran pribadi, arahkan ke tautan status yang dikirim panitia lewat WhatsApp.
 - Untuk pertanyaan di luar urusan yayasan, sekolah, dan pendaftaran, sampaikan dengan sopan bahwa Anda hanya membantu seputar Yayasan Wakaf Cendekia Takengon.
@@ -233,7 +233,7 @@ try {
 }
 
 if ($response->stopReason === 'refusal') {
-    ai_respond(200, ['answer' => 'Maaf, pertanyaan tersebut tidak dapat saya jawab. Untuk informasi lebih lanjut, silakan hubungi panitia melalui [halaman Kontak](kontak.php).']);
+    ai_respond(200, ['answer' => 'Maaf, pertanyaan tersebut tidak dapat saya jawab. Untuk informasi lebih lanjut, silakan hubungi panitia melalui [halaman Kontak](kontak).']);
 }
 
 $answer = '';

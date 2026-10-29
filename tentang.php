@@ -15,12 +15,12 @@ public_page_start($conn, [
     'title' => 'Tentang yayasan',
     'description' => 'Prakata pimpinan, profil manajemen, visi dan misi, serta fasilitas Yayasan Wakaf Cendekia Takengon.',
     'active' => 'tentang',
-    'path' => 'tentang.php',
+    'path' => 'tentang',
 ]);
 ?>
 <section class="page-hero">
     <div class="shell">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">Tentang</li></ol>
+        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li aria-current="page">Tentang</li></ol>
         <p class="kicker">Tentang yayasan</p>
         <h1>Yayasan Wakaf Cendekia Takengon</h1>
         <p>Yayasan berbadan hukum yang menaungi satuan pendidikan Islam terpadu jenjang KB, TPA, TK, SD, dan SMP di Kecamatan Bebesen, Kabupaten Aceh Tengah.</p>
@@ -29,11 +29,11 @@ public_page_start($conn, [
 
 <nav class="subpage-nav" aria-label="Bagian halaman Tentang" data-spy>
     <ul class="shell">
-        <li><a href="#prakata">Prakata pimpinan</a></li>
-        <li><a href="#manajemen">Profil manajemen</a></li>
-        <li><a href="#visi-misi">Visi dan misi</a></li>
-        <li><a href="#fasilitas">Fasilitas</a></li>
-        <li><a href="#legalitas">Legalitas</a></li>
+        <li><a href="tentang#prakata">Prakata pimpinan</a></li>
+        <li><a href="tentang#manajemen">Profil manajemen</a></li>
+        <li><a href="tentang#visi-misi">Visi dan misi</a></li>
+        <li><a href="tentang#fasilitas">Fasilitas</a></li>
+        <li><a href="tentang#legalitas">Legalitas</a></li>
     </ul>
 </nav>
 

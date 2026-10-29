@@ -111,7 +111,7 @@ public_page_start($conn, [
     'title' => 'SPMB '.$activeYear,
     'description' => 'Penerimaan peserta didik baru '.$activeYear.' untuk KB, TPA, TK, SD, dan SMP Islam terpadu Yayasan Wakaf Cendekia Takengon: kuota per unit, alur, persyaratan, dan tanya jawab.',
     'active' => 'ppdb',
-    'path' => 'ppdb.php',
+    'path' => 'spmb',
     'schema' => [$faqSchema],
 ]);
 ?>
@@ -124,13 +124,13 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
 <section class="page-hero page-hero--ppdb">
     <div class="shell ppdb-hero">
         <div>
-            <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">SPMB</li></ol>
+            <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li aria-current="page">SPMB</li></ol>
             <p class="kicker">Penerimaan peserta didik baru &middot; Tahun ajaran <?= h($activeYear) ?></p>
             <h1>Pendaftaran daring, dipandu panitia melalui WhatsApp.</h1>
             <p>Lihat kuota setiap unit, ikuti tiga tahap pendaftaran, dan siapkan dokumen yang diperlukan sebelum mengisi formulir lengkap.</p>
             <div class="hero-slider__actions">
                 <a class="button button--primary button--lg" href="daftar.php">Mulai registrasi awal</a>
-                <a class="button button--quiet button--lg" href="#persiapan">Lihat persyaratan</a>
+                <a class="button button--quiet button--lg" href="spmb#persiapan">Lihat persyaratan</a>
             </div>
         </div>
         <aside class="ppdb-summary" aria-label="Ringkasan SPMB <?= h($activeYear) ?>">
@@ -141,18 +141,18 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                 <div><dt>Pendaftar</dt><dd><?= number_format($totalRegistrants, 0, ',', '.') ?></dd></div>
                 <div><dt>Sisa kursi</dt><dd><?= number_format($summarySeats, 0, ',', '.') ?></dd></div>
             </dl>
-            <a class="ppdb-summary__link" href="#unit">Lihat kuota per unit</a>
+            <a class="ppdb-summary__link" href="spmb#unit">Lihat kuota per unit</a>
         </aside>
     </div>
 </section>
 
 <nav class="subpage-nav" aria-label="Bagian halaman SPMB" data-spy>
     <ul class="shell">
-        <li><a href="#unit">Unit &amp; kuota</a></li>
-        <li><a href="#alur">Alur</a></li>
-        <li><a href="#persiapan">Persiapan</a></li>
-        <li><a href="#angka">Angka pendaftaran</a></li>
-        <li><a href="#faq">Tanya jawab</a></li>
+        <li><a href="spmb#unit">Unit &amp; kuota</a></li>
+        <li><a href="spmb#alur">Alur</a></li>
+        <li><a href="spmb#persiapan">Persiapan</a></li>
+        <li><a href="spmb#angka">Angka pendaftaran</a></li>
+        <li><a href="spmb#faq">Tanya jawab</a></li>
     </ul>
 </nav>
 
@@ -176,7 +176,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                     <li class="unit-row<?= $isOpen ? ' is-open' : '' ?>">
                         <span class="unit-row__code" aria-hidden="true"><?= h($unit['jenjang']) ?></span>
                         <div class="unit-row__identity">
-                            <h3><a href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></h3>
+                            <h3><a href="<?= h(ppdb_unit_public_path($unit)) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></h3>
                             <p><?= h(implode(' · ', array_filter([ppdb_jenjang_label($unit['jenjang']), $unit['npsn'] ? 'NPSN '.$unit['npsn'] : '', $ageText]))) ?></p>
                         </div>
                         <div class="unit-row__capacity">

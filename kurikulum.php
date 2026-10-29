@@ -8,12 +8,12 @@ public_page_start($conn, [
     'title' => 'Kurikulum',
     'description' => 'Program Penggerak, Kurikulum 2013, Merdeka Belajar, dan pembelajaran mendalam (deep learning) di unit pendidikan Yayasan Wakaf Cendekia Takengon.',
     'active' => 'kurikulum',
-    'path' => 'kurikulum.php',
+    'path' => 'kurikulum',
 ]);
 ?>
 <section class="page-hero">
     <div class="shell">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.php">Beranda</a></li><li aria-current="page">Kurikulum</li></ol>
+        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li aria-current="page">Kurikulum</li></ol>
         <p class="kicker">Kurikulum</p>
         <h1>Kurikulum dan pendekatan pembelajaran</h1>
         <p><?= h($intro) ?></p>
@@ -24,7 +24,7 @@ public_page_start($conn, [
     <div class="shell curriculum">
         <nav class="curriculum__toc" aria-label="Daftar isi kurikulum" data-spy>
             <?php foreach ($sections as $key => $section) { ?>
-                <a href="#<?= h($key) ?>"><?= h($section['title']) ?></a>
+                <a href="kurikulum#<?= h($key) ?>"><?= h($section['title']) ?></a>
             <?php } ?>
         </nav>
         <div>

@@ -4,7 +4,7 @@
  * kartu pertama tampil lebar kecuali $noLead bernilai true.
  */
 $isLead = $index === 0 && empty($noLead);
-$newsUrl = 'berita.php?baca='.rawurlencode($news['slug']);
+$newsUrl = 'berita/'.rawurlencode($news['slug']);
 // Blok tanggal (hanya tampil di daftar berita beranda): hari, bulan, tahun.
 $publishedTime = strtotime((string) $news['published_at']) ?: time();
 $monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][(int) date('n', $publishedTime) - 1];

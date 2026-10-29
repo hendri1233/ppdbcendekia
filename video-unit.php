@@ -97,7 +97,7 @@ require 'admin_header.php';
             <h1>Video unit</h1>
             <p>Tempel tautan satu video dari akun unit. Video tampil berderet di halaman unit, di atas berita, dan diputar otomatis tanpa suara.</p>
         </div>
-        <?php if ($unit) { ?><a class="button-secondary" href="unit.php?kode=<?php echo rawurlencode($unit['kode_unit']); ?>" target="_blank" rel="noopener">Lihat halaman unit <span aria-hidden="true">↗</span></a><?php } ?>
+        <?php if ($unit) { ?><a class="button-secondary" href="<?php echo h(ppdb_unit_public_path($unit)); ?>" target="_blank" rel="noopener">Lihat halaman unit <span aria-hidden="true">↗</span></a><?php } ?>
     </header>
 
     <?php if (count($units) > 1) { ?>

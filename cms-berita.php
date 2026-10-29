@@ -117,7 +117,7 @@ if ($mode === 'baru' || ($mode === 'ubah' && $editId)) {
                 <?php if ($news) { ?><p>Status: <strong><?php echo $news['status'] === 'draft' ? 'Draf' : ($isLive ? 'Terbit' : 'Terjadwal'); ?></strong> · diperbarui <?php echo h(ppdb_format_date_id(substr((string) $news['updated_at'], 0, 10))); ?></p><?php } ?>
             </div>
             <div class="table-actions">
-                <?php if ($isLive) { ?><a class="button-secondary" href="berita.php?baca=<?php echo rawurlencode($news['slug']); ?>" target="_blank" rel="noopener">Lihat di situs <span aria-hidden="true">↗</span></a><?php } ?>
+                <?php if ($isLive) { ?><a class="button-secondary" href="berita/<?php echo rawurlencode($news['slug']); ?>" target="_blank" rel="noopener">Lihat di situs <span aria-hidden="true">↗</span></a><?php } ?>
                 <a class="button-secondary" href="<?php echo $self; ?>">Kembali ke daftar</a>
             </div>
         </header>
@@ -131,7 +131,7 @@ if ($mode === 'baru' || ($mode === 'ubah' && $editId)) {
                     <div class="cms-field cms-field--wide"><label class="cms-label" for="news-title">Judul <span aria-hidden="true">*</span></label><input id="news-title" class="cms-input--lg" name="title" value="<?php echo h($news['title'] ?? ''); ?>" maxlength="200" required data-slug-source></div>
                     <div class="cms-field cms-field--wide">
                         <label class="cms-label" for="news-slug">Alamat (slug)</label>
-                        <div class="cms-prefix"><span>berita.php?baca=</span><input id="news-slug" name="slug" value="<?php echo h($news['slug'] ?? ''); ?>" maxlength="150" pattern="[a-z0-9-]*" data-slug-target placeholder="dibuat otomatis dari judul"></div>
+                        <div class="cms-prefix"><span>berita/</span><input id="news-slug" name="slug" value="<?php echo h($news['slug'] ?? ''); ?>" maxlength="150" pattern="[a-z0-9-]*" data-slug-target placeholder="dibuat otomatis dari judul"></div>
                     </div>
                     <div class="cms-field cms-field--wide"><label class="cms-label" for="news-excerpt">Ringkasan</label><textarea id="news-excerpt" name="excerpt" rows="2" maxlength="400" placeholder="1–2 kalimat untuk kartu berita dan pratinjau media sosial."><?php echo h($news['excerpt'] ?? ''); ?></textarea></div>
                     <?php echo cms_rich_editor('body_html', $news['body_html'] ?? '', 'Isi berita'); ?>
@@ -293,7 +293,7 @@ require 'admin_header.php';
                                 <td data-label="Tanggal terbit"><?php echo $row['published_at'] ? h(ppdb_format_date_id(substr($row['published_at'], 0, 10))) : '<span class="muted-dash">&mdash;</span>'; ?></td>
                                 <td data-label="Aksi"><div class="table-actions">
                                     <a class="table-action" href="<?php echo $self; ?>?aksi=ubah&amp;id=<?php echo (int) $row['id']; ?>">Ubah<span class="visually-hidden"> <?php echo h($row['title']); ?></span></a>
-                                    <?php if ($label === 'Terbit') { ?><a class="table-action" href="berita.php?baca=<?php echo rawurlencode($row['slug']); ?>" target="_blank" rel="noopener">Lihat</a><?php } ?>
+                                    <?php if ($label === 'Terbit') { ?><a class="table-action" href="berita/<?php echo rawurlencode($row['slug']); ?>" target="_blank" rel="noopener">Lihat</a><?php } ?>
                                 </div></td>
                             </tr>
                         <?php } ?>

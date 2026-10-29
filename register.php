@@ -351,7 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 'create') === 
 </head>
 <body>
     <main class="auth-shell">
-        <a class="auth-brand" href="index.php">
+        <a class="auth-brand" href="./">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
             <span><strong>Wakaf Cendekia</strong><small>Takengon · SPMB</small></span>
         </a>

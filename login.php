@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <span class="auth-scene__glow auth-scene__glow--green"></span>
     </div>
     <main class="auth-glass">
-        <a class="auth-glass__brand" href="index.php">
+        <a class="auth-glass__brand" href="./">
             <img src="img/logo-display.png" alt="" width="64" height="63">
             <span><strong>Yayasan Wakaf Cendekia Takengon</strong><small>Aceh Tengah</small></span>
         </a>
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit">Masuk ke dashboard</button>
             </form>
             <p class="auth-note"><strong>Lupa kata sandi?</strong> <span class="auth-note__detail">Hubungi super admin untuk mendapatkan kata sandi sementara, lalu ganti lewat menu <em>Ubah kata sandi</em> setelah masuk.</span><span class="auth-note__short">Hubungi super admin untuk kata sandi sementara.</span></p>
-            <a class="auth-back" href="index.php">Kembali ke situs SPMB</a>
+            <a class="auth-back" href="./">Kembali ke situs SPMB</a>
         </section>
     </main>
     <footer class="auth-glass__foot">&copy; <?php echo date('Y'); ?> Yayasan Wakaf Cendekia Takengon</footer>

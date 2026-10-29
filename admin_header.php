@@ -82,7 +82,7 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
                 <?php echo ppdb_admin_icon('key'); ?>
                 <span>Ubah kata sandi</span>
             </a>
-            <a class="sidebar-link" href="index.php" target="_blank" rel="noopener" title="Buka situs SPMB">
+            <a class="sidebar-link" href="./" target="_blank" rel="noopener" title="Buka situs SPMB">
                 <?php echo ppdb_admin_icon('external'); ?>
                 <span>Buka situs SPMB<span class="visually-hidden"> (tab baru)</span></span>
             </a>
@@ -140,7 +140,7 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
                 <?php } ?>
             <?php } ?>
             <a href="ubah-sandi.php"<?php echo $activeAdminPage === 'password' ? ' aria-current="page"' : ''; ?>><?php echo ppdb_admin_icon('key'); ?><span>Ubah kata sandi</span></a>
-            <a href="index.php" target="_blank" rel="noopener"><?php echo ppdb_admin_icon('external'); ?><span>Buka situs SPMB</span></a>
+            <a href="./" target="_blank" rel="noopener"><?php echo ppdb_admin_icon('external'); ?><span>Buka situs SPMB</span></a>
             <form action="keluar.php" method="post">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                 <button type="submit"><?php echo ppdb_admin_icon('logout'); ?><span>Keluar</span></button>

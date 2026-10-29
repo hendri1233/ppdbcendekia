@@ -51,41 +51,41 @@ function public_icon(string $name): string
 function public_navigation(mysqli $conn): array
 {
     $unitChildren = [
-        ['href' => 'index.php#unit-title', 'label' => 'Semua unit pendidikan'],
-        ['href' => 'direktori-unit.php', 'label' => 'Direktori unit'],
+        ['href' => './#unit-title', 'label' => 'Semua unit pendidikan'],
+        ['href' => 'unit', 'label' => 'Direktori unit'],
     ];
     foreach (cms_units($conn) as $unit) {
         $unitChildren[] = [
-            'href' => 'unit.php?kode='.rawurlencode((string) $unit['kode_unit']),
+            'href' => ppdb_unit_public_path($unit),
             'label' => ppdb_unit_display_name((string) $unit['nama_unit']),
         ];
     }
 
     return [
-        ['key' => 'beranda', 'href' => 'index.php', 'label' => 'Beranda'],
-        ['key' => 'tentang', 'href' => 'tentang.php', 'label' => 'Tentang', 'children' => [
-            ['href' => 'tentang.php#prakata', 'label' => 'Prakata pimpinan'],
-            ['href' => 'tentang.php#manajemen', 'label' => 'Profil manajemen'],
-            ['href' => 'tentang.php#visi-misi', 'label' => 'Visi dan misi'],
-            ['href' => 'tentang.php#fasilitas', 'label' => 'Fasilitas'],
+        ['key' => 'beranda', 'href' => './', 'label' => 'Beranda'],
+        ['key' => 'tentang', 'href' => 'tentang', 'label' => 'Tentang', 'children' => [
+            ['href' => 'tentang#prakata', 'label' => 'Prakata pimpinan'],
+            ['href' => 'tentang#manajemen', 'label' => 'Profil manajemen'],
+            ['href' => 'tentang#visi-misi', 'label' => 'Visi dan misi'],
+            ['href' => 'tentang#fasilitas', 'label' => 'Fasilitas'],
         ]],
-        ['key' => 'unit', 'href' => 'index.php#unit-title', 'label' => 'Unit Pendidikan', 'children' => $unitChildren],
-        ['key' => 'kurikulum', 'href' => 'kurikulum.php', 'label' => 'Kurikulum', 'children' => [
-            ['href' => 'kurikulum.php#penggerak', 'label' => 'Program Penggerak'],
-            ['href' => 'kurikulum.php#k13', 'label' => 'Kurikulum 2013'],
-            ['href' => 'kurikulum.php#merdeka', 'label' => 'Merdeka Belajar'],
-            ['href' => 'kurikulum.php#deep_learning', 'label' => 'Deep Learning'],
+        ['key' => 'unit', 'href' => './#unit-title', 'label' => 'Unit Pendidikan', 'children' => $unitChildren],
+        ['key' => 'kurikulum', 'href' => 'kurikulum', 'label' => 'Kurikulum', 'children' => [
+            ['href' => 'kurikulum#penggerak', 'label' => 'Program Penggerak'],
+            ['href' => 'kurikulum#k13', 'label' => 'Kurikulum 2013'],
+            ['href' => 'kurikulum#merdeka', 'label' => 'Merdeka Belajar'],
+            ['href' => 'kurikulum#deep_learning', 'label' => 'Deep Learning'],
         ]],
-        ['key' => 'inspirasi', 'href' => 'program.php', 'label' => 'Program & Inspirasi', 'children' => [
-            ['href' => 'program.php', 'label' => 'Program yayasan'],
-            ['href' => 'galeri.php', 'label' => 'Galeri kegiatan'],
-            ['href' => 'cerita.php#prestasi', 'label' => 'Prestasi'],
-            ['href' => 'cerita.php#testimoni', 'label' => 'Testimoni'],
-            ['href' => 'cerita.php#alumni', 'label' => 'Cerita alumni'],
+        ['key' => 'inspirasi', 'href' => 'program', 'label' => 'Program & Inspirasi', 'children' => [
+            ['href' => 'program', 'label' => 'Program yayasan'],
+            ['href' => 'galeri', 'label' => 'Galeri kegiatan'],
+            ['href' => 'cerita#prestasi', 'label' => 'Prestasi'],
+            ['href' => 'cerita#testimoni', 'label' => 'Testimoni'],
+            ['href' => 'cerita#alumni', 'label' => 'Cerita alumni'],
         ]],
-        ['key' => 'berita', 'href' => 'berita.php', 'label' => 'Berita'],
-        ['key' => 'ppdb', 'href' => 'ppdb.php', 'label' => 'SPMB'],
-        ['key' => 'kontak', 'href' => 'kontak.php', 'label' => 'Kontak'],
+        ['key' => 'berita', 'href' => 'berita', 'label' => 'Berita'],
+        ['key' => 'ppdb', 'href' => 'spmb', 'label' => 'SPMB'],
+        ['key' => 'kontak', 'href' => 'kontak', 'label' => 'Kontak'],
     ];
 }
 
@@ -103,6 +103,7 @@ function public_page_start(mysqli $conn, array $page): void
     $canonical = $siteUrl.'/'.ltrim($page['path'] ?? '', '/');
     $image = $page['image'] ?? 'img/wisuda-1200.jpg';
     $imageUrl = preg_match('#^https?://#', $image) ? $image : $siteUrl.'/'.ltrim($image, '/');
+    $requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: './');
     $active = $page['active'] ?? '';
     ?>
 <!DOCTYPE html>
@@ -110,6 +111,7 @@ function public_page_start(mysqli $conn, array $page): void
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="<?= h(rtrim($siteUrl, '/').'/') ?>">
     <script>
         // Tema dipasang sebelum halaman digambar agar tidak berkedip.
         (function () {
@@ -149,11 +151,11 @@ function public_page_start(mysqli $conn, array $page): void
     <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
 <body class="page-<?= h($active ?: 'umum') ?>">
-<a class="skip-link" href="#konten">Lompat ke konten utama</a>
+<a class="skip-link" href="<?= h($requestPath) ?>#konten">Lompat ke konten utama</a>
 
 <header class="site-header">
     <div class="shell header-inner">
-        <a class="brand" href="index.php">
+        <a class="brand" href="./">
             <img class="brand-logo" src="img/logo-display.png" alt="" width="44" height="44">
             <span class="brand-copy">
                 <strong><span>Yayasan Wakaf</span> <span>Cendekia Takengon</span></strong>
@@ -214,7 +216,7 @@ function public_page_end(mysqli $conn): void
 <footer class="site-footer">
     <div class="shell footer-grid">
         <div class="footer-identity">
-            <a class="footer-brand" href="index.php">
+            <a class="footer-brand" href="./">
                 <img src="img/logo-display.png" alt="" width="44" height="44" loading="lazy">
                 <span>Yayasan Wakaf Cendekia Takengon</span>
             </a>
@@ -230,7 +232,7 @@ function public_page_end(mysqli $conn): void
             <h2 class="footer-heading">Unit pendidikan</h2>
             <ul class="footer-list footer-list--units">
                 <?php foreach ($units as $unit) { ?>
-                    <li><a href="unit.php?kode=<?= rawurlencode($unit['kode_unit']) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></li>
+                    <li><a href="<?= h(ppdb_unit_public_path($unit)) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></li>
                 <?php } ?>
             </ul>
         </div>
@@ -238,15 +240,15 @@ function public_page_end(mysqli $conn): void
         <div>
             <h2 class="footer-heading">Jelajahi</h2>
             <ul class="footer-list">
-                <li><a href="tentang.php">Tentang yayasan</a></li>
-                <li><a href="program.php">Program yayasan</a></li>
-                <li><a href="galeri.php">Galeri kegiatan</a></li>
-                <li><a href="cerita.php">Prestasi &amp; cerita</a></li>
-                <li><a href="direktori-unit.php">Direktori unit</a></li>
-                <li><a href="kurikulum.php">Kurikulum</a></li>
-                <li><a href="berita.php">Berita</a></li>
-                <li><a href="ppdb.php">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></a></li>
-                <li><a href="kontak.php">Kontak</a></li>
+                <li><a href="tentang">Tentang yayasan</a></li>
+                <li><a href="program">Program yayasan</a></li>
+                <li><a href="galeri">Galeri kegiatan</a></li>
+                <li><a href="cerita">Prestasi &amp; cerita</a></li>
+                <li><a href="unit">Direktori unit</a></li>
+                <li><a href="kurikulum">Kurikulum</a></li>
+                <li><a href="berita">Berita</a></li>
+                <li><a href="spmb">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></a></li>
+                <li><a href="kontak">Kontak</a></li>
             </ul>
         </div>
 
