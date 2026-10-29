@@ -562,13 +562,21 @@ require 'admin_header.php';
                 <?php foreach ($questions as $index => $question) { ?>
                     <fieldset class="question-editor" data-question-row>
                         <legend>Pertanyaan <span data-question-number><?php echo $index + 1; ?></span></legend>
-                        <input type="hidden" name="questions[<?php echo (int) $index; ?>][key]" value="<?php echo h($question['key'] ?? 'q'.$index); ?>">
-                        <label>Bagian (opsional)<input type="text" name="questions[<?php echo (int) $index; ?>][section]" value="<?php echo h($question['section'] ?? ''); ?>" maxlength="120" placeholder="Contoh: Pola asuh di rumah"></label>
-                        <label>Pertanyaan<input type="text" name="questions[<?php echo (int) $index; ?>][prompt]" value="<?php echo h($question['prompt'] ?? ''); ?>" maxlength="500"></label>
-                        <label>Jenis jawaban<select name="questions[<?php echo (int) $index; ?>][type]" data-question-type><option value="text"<?php echo ($question['type'] ?? '') === 'text' ? ' selected' : ''; ?>>Teks</option><option value="single"<?php echo ($question['type'] ?? '') === 'single' ? ' selected' : ''; ?>>Pilihan tunggal</option><option value="multiple"<?php echo ($question['type'] ?? '') === 'multiple' ? ' selected' : ''; ?>>Pilihan ganda</option></select></label>
-                        <label class="question-choices">Pilihan (pisahkan dengan titik koma)<input type="text" name="questions[<?php echo (int) $index; ?>][choices]" value="<?php echo h($question['choices'] ?? ''); ?>" placeholder="Ya; Tidak"></label>
-                        <label class="question-required"><input type="checkbox" name="questions[<?php echo (int) $index; ?>][required]" value="1"<?php echo !empty($question['required']) ? ' checked' : ''; ?>> Wajib dijawab</label>
-                        <button class="button-secondary question-remove" type="button" data-remove-question>Hapus</button>
+                        <div class="question-editor__heading">
+                            <button class="question-editor__toggle" type="button" data-toggle-question aria-expanded="true" aria-controls="question-body-<?php echo (int) $index; ?>">
+                                <span class="question-editor__summary" data-question-summary><?php echo h(trim((string) ($question['prompt'] ?? '')) ?: 'Belum ada pernyataan'); ?></span>
+                                <span class="question-editor__chevron" aria-hidden="true"></span>
+                            </button>
+                            <button class="button-secondary question-remove" type="button" data-remove-question>Hapus</button>
+                        </div>
+                        <div class="question-editor__body" id="question-body-<?php echo (int) $index; ?>" data-question-body>
+                            <input type="hidden" data-question-name="key" name="questions[<?php echo (int) $index; ?>][key]" value="<?php echo h($question['key'] ?? 'q'.$index); ?>">
+                            <label>Bagian (opsional)<input type="text" data-question-name="section" name="questions[<?php echo (int) $index; ?>][section]" value="<?php echo h($question['section'] ?? ''); ?>" maxlength="120" placeholder="Contoh: Pola asuh di rumah"></label>
+                            <label>Pertanyaan<input type="text" data-question-name="prompt" name="questions[<?php echo (int) $index; ?>][prompt]" value="<?php echo h($question['prompt'] ?? ''); ?>" maxlength="500"></label>
+                            <label>Jenis jawaban<select data-question-name="type" name="questions[<?php echo (int) $index; ?>][type]" data-question-type><option value="text"<?php echo ($question['type'] ?? '') === 'text' ? ' selected' : ''; ?>>Teks</option><option value="single"<?php echo ($question['type'] ?? '') === 'single' ? ' selected' : ''; ?>>Pilihan tunggal</option><option value="multiple"<?php echo ($question['type'] ?? '') === 'multiple' ? ' selected' : ''; ?>>Pilihan ganda</option></select></label>
+                            <label class="question-choices">Pilihan (pisahkan dengan titik koma)<input type="text" data-question-name="choices" name="questions[<?php echo (int) $index; ?>][choices]" value="<?php echo h($question['choices'] ?? ''); ?>" placeholder="Ya; Tidak"></label>
+                            <label class="question-required"><input type="checkbox" data-question-name="required" name="questions[<?php echo (int) $index; ?>][required]" value="1"<?php echo !empty($question['required']) ? ' checked' : ''; ?>> Wajib dijawab</label>
+                        </div>
                     </fieldset>
                 <?php } ?>
             </div>
@@ -578,13 +586,21 @@ require 'admin_header.php';
     <template id="question-editor-template">
         <fieldset class="question-editor" data-question-row>
             <legend>Pertanyaan <span data-question-number></span></legend>
-            <input type="hidden" data-question-name="key">
-            <label>Bagian (opsional)<input type="text" data-question-name="section" maxlength="120" placeholder="Contoh: Pola asuh di rumah"></label>
-            <label>Pertanyaan<input type="text" data-question-name="prompt" maxlength="500"></label>
-            <label>Jenis jawaban<select data-question-name="type" data-question-type><option value="text">Teks</option><option value="single">Pilihan tunggal</option><option value="multiple">Pilihan ganda</option></select></label>
-            <label class="question-choices">Pilihan (pisahkan dengan titik koma)<input type="text" data-question-name="choices" placeholder="Ya; Tidak"></label>
-            <label class="question-required"><input type="checkbox" data-question-name="required" value="1" checked> Wajib dijawab</label>
-            <button class="button-secondary question-remove" type="button" data-remove-question>Hapus</button>
+            <div class="question-editor__heading">
+                <button class="question-editor__toggle" type="button" data-toggle-question aria-expanded="true">
+                    <span class="question-editor__summary" data-question-summary>Belum ada pernyataan</span>
+                    <span class="question-editor__chevron" aria-hidden="true"></span>
+                </button>
+                <button class="button-secondary question-remove" type="button" data-remove-question>Hapus</button>
+            </div>
+            <div class="question-editor__body" data-question-body>
+                <input type="hidden" data-question-name="key">
+                <label>Bagian (opsional)<input type="text" data-question-name="section" maxlength="120" placeholder="Contoh: Pola asuh di rumah"></label>
+                <label>Pertanyaan<input type="text" data-question-name="prompt" maxlength="500"></label>
+                <label>Jenis jawaban<select data-question-name="type" data-question-type><option value="text">Teks</option><option value="single">Pilihan tunggal</option><option value="multiple">Pilihan ganda</option></select></label>
+                <label class="question-choices">Pilihan (pisahkan dengan titik koma)<input type="text" data-question-name="choices" placeholder="Ya; Tidak"></label>
+                <label class="question-required"><input type="checkbox" data-question-name="required" value="1" checked> Wajib dijawab</label>
+            </div>
         </fieldset>
     </template>
 </div>

@@ -64,11 +64,27 @@
     }
   }
 
+  function setQuestionExpanded(row, expanded) {
+    const toggle = row.querySelector("[data-toggle-question]");
+    const body = row.querySelector("[data-question-body]");
+    if (!toggle || !body) return;
+    toggle.setAttribute("aria-expanded", String(expanded));
+    body.hidden = !expanded;
+    row.classList.toggle("is-expanded", expanded);
+  }
+
   function updateQuestionRows() {
     const rows = Array.from(list.querySelectorAll("[data-question-row]"));
     rows.forEach(function (row, index) {
       const number = row.querySelector("[data-question-number]");
       if (number) number.textContent = String(index + 1);
+      const toggle = row.querySelector("[data-toggle-question]");
+      const body = row.querySelector("[data-question-body]");
+      const prompt = row.querySelector('[data-question-name="prompt"]');
+      const summary = row.querySelector("[data-question-summary]");
+      if (body) body.id = "question-body-" + index;
+      if (toggle && body) toggle.setAttribute("aria-controls", body.id);
+      if (summary) summary.textContent = prompt && prompt.value.trim() ? prompt.value.trim() : "Belum ada pernyataan";
       const type = row.querySelector("[data-question-type]");
       const choices = row.querySelector(".question-choices");
       if (choices) choices.hidden = type && type.value === "text";
@@ -89,6 +105,7 @@
     row.querySelector('[data-question-name="key"]').value = "q" + index;
     row.querySelector("[data-question-number]").textContent = String(index + 1);
     list.appendChild(fragment);
+    setQuestionExpanded(list.lastElementChild, true);
     updateQuestionRows();
   }
 
@@ -116,12 +133,28 @@
       syncRequireAllButton();
     }
   });
+  list.addEventListener("input", function (event) {
+    if (event.target.matches('[data-question-name="prompt"]')) {
+      const row = event.target.closest("[data-question-row]");
+      const summary = row && row.querySelector("[data-question-summary]");
+      if (summary) summary.textContent = event.target.value.trim() || "Belum ada pernyataan";
+    }
+  });
   list.addEventListener("click", function (event) {
+    const toggle = event.target.closest("[data-toggle-question]");
+    if (toggle) {
+      const row = toggle.closest("[data-question-row]");
+      setQuestionExpanded(row, toggle.getAttribute("aria-expanded") !== "true");
+      return;
+    }
     const remove = event.target.closest("[data-remove-question]");
     if (remove) {
       remove.closest("[data-question-row]").remove();
       updateQuestionRows();
     }
+  });
+  list.querySelectorAll("[data-question-row]").forEach(function (row) {
+    setQuestionExpanded(row, false);
   });
   updateQuestionRows();
 })();
