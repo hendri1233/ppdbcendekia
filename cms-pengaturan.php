@@ -48,7 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $aiKeyReady = trim((string) getenv('ANTHROPIC_API_KEY')) !== '' || trim((string) getenv('ANTHROPIC_AUTH_TOKEN')) !== '';
 $aiEnabled = cms_setting($conn, 'ai_enabled', '0') === '1';
-$value = static fn (string $key) => h(cms_setting($conn, $key));
+$socialDefaults = [
+    'social_instagram' => 'https://www.instagram.com/cendekia_tkn?vrfl=MzhqbWgyeHN5bjV2',
+    'social_facebook' => 'https://www.facebook.com/share/1CPiWGAMH6/',
+    'social_youtube' => 'https://youtube.com/@wakafcendekiatakengon',
+    'social_tiktok' => 'https://vm.tiktok.com/ZS9yDTdj4jU5a-Jsya9/',
+];
+$value = static fn (string $key) => h(cms_setting($conn, $key, $socialDefaults[$key] ?? ''));
 
 $activeAdminPage = 'cms-settings';
 $adminPageTitle = 'Kontak & pengaturan';
