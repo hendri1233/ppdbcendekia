@@ -39,16 +39,18 @@ if (rtrim($requestPath, '/') !== $canonicalPath) {
 }
 
 // Status SPMB jalur umum unit ini untuk tahun ajaran aktif.
-$quotaStmt = mysqli_prepare($conn, "SELECT q.kuota_eksternal,q.eksternal_dibuka,
+$quotaStmt = mysqli_prepare($conn, "SELECT q.kuota_eksternal,".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS terisi
     FROM tb_pengaturan_ppdb q WHERE q.kode_unit=? AND q.th_ajaran=? LIMIT 1");
 $year = PUBLIC_PPDB_YEAR;
 mysqli_stmt_bind_param($quotaStmt, 'ss', $code, $year);
 mysqli_stmt_execute($quotaStmt);
-$quota = mysqli_fetch_assoc(mysqli_stmt_get_result($quotaStmt)) ?: ['kuota_eksternal' => 0, 'eksternal_dibuka' => 0, 'terisi' => 0];
+$quota = mysqli_fetch_assoc(mysqli_stmt_get_result($quotaStmt)) ?: ['kuota_eksternal' => 0, 'eksternal_dibuka' => 0, 'jadwal_buka' => null, 'jadwal_tutup' => null, 'terisi' => 0];
 mysqli_stmt_close($quotaStmt);
 $remaining = max(0, (int) $quota['kuota_eksternal'] - (int) $quota['terisi']);
 $isOpen = (int) $quota['eksternal_dibuka'] === 1 && $remaining > 0;
+$schedulePhase = ppdb_schedule_phase($quota['jadwal_buka'], $quota['jadwal_tutup']);
+$scheduleText = ppdb_format_schedule_range($quota['jadwal_buka'], $quota['jadwal_tutup']);
 
 [$unitNews] = cms_published_news($conn, 3, 0, $code);
 $name = ppdb_unit_display_name($unit['nama_unit']);
@@ -95,11 +97,12 @@ public_page_start($conn, [
             </div>
             <div class="side-card">
                 <h2>SPMB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
+                <?php if ($scheduleText !== '') { ?><p class="side-card__note">Jadwal pendaftaran: <?= h($scheduleText) ?></p><?php } ?>
                 <?php if ($isOpen) { ?>
                     <span class="badge badge--success">Dibuka &middot; <?= $remaining ?> kursi tersisa</span>
                     <a class="button button--primary" href="daftar.php?unit=<?= rawurlencode($code) ?>&amp;tahun=<?= rawurlencode(PUBLIC_PPDB_YEAR) ?>">Daftar ke <?= h($unit['jenjang']) ?></a>
                 <?php } else { ?>
-                    <span class="badge badge--neutral"><?= (int) $quota['eksternal_dibuka'] === 1 ? 'Kuota terpenuhi' : 'Belum dibuka' ?></span>
+                    <span class="badge badge--neutral"><?= (int) $quota['eksternal_dibuka'] === 1 ? 'Kuota terpenuhi' : ($schedulePhase === 'selesai' ? 'Pendaftaran ditutup' : ($schedulePhase === 'belum' ? 'Dibuka '.h(ppdb_format_datetime_short($quota['jadwal_buka'])).' WIB' : 'Belum dibuka')) ?></span>
                     <a class="button button--secondary" href="spmb">Info SPMB</a>
                 <?php } ?>
             </div>

@@ -11,6 +11,44 @@
   const externalRoute = document.getElementById("external_route");
   const birthDateInput = document.getElementById("tanggal_lahir");
   const dapodikAgeOutput = document.querySelector("[data-dapodik-age]");
+  const unavailableDialog = document.querySelector("[data-unavailable-dialog]");
+
+  // Unit yang belum dibuka, sudah ditutup, atau penuh tetap tampil di pilihan,
+  // tetapi saat dipilih memunculkan popup dan pilihannya dikosongkan kembali.
+  // Didaftarkan paling awal agar pemicu lain (brosur, jenjang TK) melihat pilihan kosong.
+  function checkUnitAvailability() {
+    if (!externalRoute) return;
+    const option = externalRoute.selectedOptions[0];
+    if (!option || !option.dataset.unavailable) return;
+    const message = option.dataset.unavailableMessage || "Mohon maaf Ayah/Bunda, pendaftaran unit ini belum dibuka.";
+    externalRoute.value = "";
+    if (!unavailableDialog || typeof unavailableDialog.showModal !== "function") {
+      window.alert(message);
+      return;
+    }
+    const titles = { penuh: "Pendaftaran sudah penuh", ditutup: "Pendaftaran sudah ditutup" };
+    unavailableDialog.querySelector("[data-unavailable-title]").textContent =
+      titles[option.dataset.unavailable] || "Pendaftaran belum dibuka";
+    unavailableDialog.querySelector("[data-unavailable-message]").textContent = message;
+    unavailableDialog.dataset.state = option.dataset.unavailable;
+    unavailableDialog.showModal();
+  }
+  if (externalRoute) {
+    externalRoute.addEventListener("change", checkUnitAvailability);
+    checkUnitAvailability();
+  }
+  if (unavailableDialog) {
+    unavailableDialog.querySelector("[data-unavailable-close]").addEventListener("click", function () {
+      unavailableDialog.close();
+    });
+    // Klik di luar kartu (latar) juga menutup popup.
+    unavailableDialog.addEventListener("click", function (event) {
+      if (event.target === unavailableDialog) unavailableDialog.close();
+    });
+    unavailableDialog.addEventListener("close", function () {
+      if (externalRoute) externalRoute.focus();
+    });
+  }
 
   function rupiah(value) {
     return new Intl.NumberFormat("id-ID").format(value);

@@ -10,9 +10,11 @@ if (isset($_GET['internal'])) {
     header('Cache-Control: private, no-store');
 }
 
-$offerResult = mysqli_query($conn, "SELECT q.kode_unit,q.th_ajaran,q.kuota_internal,q.kuota_eksternal,q.internal_dibuka,q.eksternal_dibuka,q.biaya_pendaftaran,q.nomor_antrian_terakhir,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi FROM tb_pengaturan_ppdb q JOIN tb_unit_pendidikan u ON u.kode_unit=q.kode_unit ORDER BY q.th_ajaran,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
+$offerResult = mysqli_query($conn, "SELECT q.kode_unit,q.th_ajaran,q.kuota_internal,q.kuota_eksternal,".ppdb_route_open_sql($conn, 'internal_dibuka').",".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.nomor_antrian_terakhir,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi FROM tb_pengaturan_ppdb q JOIN tb_unit_pendidikan u ON u.kode_unit=q.kode_unit ORDER BY q.th_ajaran,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
 $openOffers = [];
 $fullOffers = [];
+// Semua unit tetap tampil di pilihan; unit yang belum dibuka, sudah ditutup, atau penuh memunculkan popup.
+$allOffers = [];
 $settingsByRoute = [];
 while ($offer = mysqli_fetch_assoc($offerResult)) {
     $offer['kuota_eksternal'] = (int) $offer['kuota_eksternal'];
@@ -22,12 +24,24 @@ while ($offer = mysqli_fetch_assoc($offerResult)) {
     if ((int) substr($offer['th_ajaran'], 0, 4) < 2027) {
         continue;
     }
-    if ((int) $offer['eksternal_dibuka'] && $offer['kuota_eksternal'] > 0
-        && $offer['eksternal_terisi'] >= $offer['kuota_eksternal']) {
+    $unitLabel = ppdb_unit_display_name($offer['nama_unit']);
+    if ($offer['kuota_eksternal'] > 0 && $offer['eksternal_terisi'] >= $offer['kuota_eksternal']) {
+        $offer['availability'] = 'penuh';
+        $offer['availability_message'] = 'Mohon maaf Ayah/Bunda, pendaftaran '.$unitLabel.' sudah penuh.';
         $fullOffers[] = $offer;
     } elseif ((int) $offer['eksternal_dibuka'] && $offer['kuota_eksternal'] > 0) {
+        $offer['availability'] = 'dibuka';
+        $offer['availability_message'] = '';
         $openOffers[] = $offer;
+    } elseif (ppdb_schedule_phase($offer['jadwal_buka'], $offer['jadwal_tutup']) === 'selesai') {
+        $offer['availability'] = 'ditutup';
+        $offer['availability_message'] = 'Mohon maaf Ayah/Bunda, pendaftaran '.$unitLabel.' sudah ditutup pada '.ppdb_format_datetime_id($offer['jadwal_tutup']).'.';
+    } else {
+        $offer['availability'] = 'belum';
+        $offer['availability_message'] = 'Mohon maaf Ayah/Bunda, pendaftaran '.$unitLabel.' belum dibuka.'
+            .(ppdb_schedule_phase($offer['jadwal_buka'], null) === 'belum' ? ' Pendaftaran dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'.' : '');
     }
+    $allOffers[] = $offer;
 }
 
 // Brosur per unit/tahun dari Materi & kuisioner, ditampilkan layar penuh setelah unit dipilih.
@@ -90,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'valid
                 mysqli_commit($conn);
                 $tokenEntryError = 'Terlalu banyak percobaan. Silakan coba kembali setelah 15 menit.';
             } else {
-                $tokenQuery = mysqli_prepare($conn, "SELECT t.id FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran WHERE BINARY t.kode_token=BINARY ? AND t.used_at IS NULL AND t.revoked_at IS NULL AND q.internal_dibuka=1 AND q.kuota_internal>0 LIMIT 1");
+                $tokenQuery = mysqli_prepare($conn, "SELECT t.id FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran WHERE BINARY t.kode_token=BINARY ? AND t.used_at IS NULL AND t.revoked_at IS NULL AND q.internal_dibuka=1 AND ".ppdb_schedule_open_sql($conn)." AND q.kuota_internal>0 LIMIT 1");
                 mysqli_stmt_bind_param($tokenQuery, 's', $tokenInput);
                 mysqli_stmt_execute($tokenQuery);
                 $validToken = mysqli_fetch_assoc(mysqli_stmt_get_result($tokenQuery));
@@ -130,7 +144,7 @@ $selectedAcademicYear = '';
 if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
     $internalTokenId = filter_var($_SESSION[$internalSessionKey] ?? null, FILTER_VALIDATE_INT);
     if ($internalTokenId !== false && $internalTokenId !== null && $internalTokenId > 0) {
-        $internalQuery = mysqli_prepare($conn, "SELECT t.id,t.kode_unit,t.th_ajaran,t.used_at,t.revoked_at,q.kuota_internal,q.internal_dibuka,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=t.kode_unit AND p.th_ajaran=t.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.id=? LIMIT 1");
+        $internalQuery = mysqli_prepare($conn, "SELECT t.id,t.kode_unit,t.th_ajaran,t.used_at,t.revoked_at,q.kuota_internal,".ppdb_route_open_sql($conn, 'internal_dibuka').",".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=t.kode_unit AND p.th_ajaran=t.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.id=? LIMIT 1");
         mysqli_stmt_bind_param($internalQuery, 'i', $internalTokenId);
         mysqli_stmt_execute($internalQuery);
         $internalCode = mysqli_fetch_assoc(mysqli_stmt_get_result($internalQuery));
@@ -139,7 +153,7 @@ if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
             unset($_SESSION[$internalSessionKey]);
             $tokenEntryRequested = true;
         } elseif (!(int) $internalCode['internal_dibuka'] || (int) $internalCode['kuota_internal'] < 1) {
-            $routeError = 'Pendaftaran internal untuk unit dan tahun ajaran ini sedang ditutup.';
+            $routeError = ppdb_schedule_closed_message($internalCode, 'Pendaftaran internal untuk unit dan tahun ajaran ini sedang ditutup.');
         } elseif ((int) $internalCode['internal_terisi'] >= (int) $internalCode['kuota_internal']
             && $_SERVER['REQUEST_METHOD'] !== 'POST') {
             $routeError = 'Kuota internal sudah terpenuhi. Hubungi panitia untuk informasi lebih lanjut.';
@@ -162,7 +176,7 @@ if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
     $candidate = $settingsByRoute[$offerKey] ?? null;
     if ($selectedUnitCode !== '' || $selectedAcademicYear !== '') {
         if (!$candidate || !(int) $candidate['eksternal_dibuka'] || $candidate['kuota_eksternal'] < 1) {
-            $routeError = 'Pendaftaran eksternal untuk unit dan tahun ajaran tersebut sedang ditutup.';
+            $routeError = ppdb_schedule_closed_message($candidate, 'Pendaftaran eksternal untuk unit dan tahun ajaran tersebut sedang ditutup.');
         } elseif ($candidate['eksternal_terisi'] >= $candidate['kuota_eksternal']
             && $_SERVER['REQUEST_METHOD'] !== 'POST') {
             $routeError = 'Kuota eksternal untuk unit dan tahun ajaran tersebut sudah terpenuhi.';
@@ -314,7 +328,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     if (!$errors) {
         try {
             mysqli_begin_transaction($conn);
-            $offerLock = mysqli_prepare($conn, 'SELECT kuota_internal,kuota_eksternal,internal_dibuka,eksternal_dibuka,nomor_antrian_terakhir FROM tb_pengaturan_ppdb WHERE kode_unit = ? AND th_ajaran = ? FOR UPDATE');
+            $offerLock = mysqli_prepare($conn, 'SELECT kuota_internal,kuota_eksternal,'.ppdb_route_open_sql($conn, 'internal_dibuka', '').','.ppdb_route_open_sql($conn, 'eksternal_dibuka', '').',nomor_antrian_terakhir FROM tb_pengaturan_ppdb WHERE kode_unit = ? AND th_ajaran = ? FOR UPDATE');
             mysqli_stmt_bind_param($offerLock, 'ss', $unitCode, $academicYear);
             mysqli_stmt_execute($offerLock);
             $lockedOffer = mysqli_fetch_assoc(mysqli_stmt_get_result($offerLock));
@@ -557,13 +571,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                             <?php $tkSelected = ($routeOffer['jenjang'] ?? '') === 'TK'; ?>
                             <div class="field<?php echo $tkSelected ? '' : ' field-wide'; ?>" data-unit-field>
                                 <label for="external_route">Unit pendidikan <span class="required-mark" aria-hidden="true">*</span></label>
-                                <select id="external_route" name="external_route" required <?php echo !$openOffers ? 'disabled' : ''; ?>>
+                                <select id="external_route" name="external_route" required <?php echo !$allOffers ? 'disabled' : ''; ?>>
                                     <option value="">Pilih unit</option>
-                                    <?php foreach ($openOffers as $offer) {
+                                    <?php foreach ($allOffers as $offer) {
                                         $offerValue = $offer['kode_unit'].'|'.$offer['th_ajaran'];
                                         $offerSelected = $selectedUnitCode === $offer['kode_unit'] && $selectedAcademicYear === $offer['th_ajaran'];
+                                        $offerAvailable = $offer['availability'] === 'dibuka';
+                                        $offerAttributes = $offerAvailable
+                                            ? brochure_attributes($brochures, $offerValue, $offer['nama_unit'])
+                                            : ' data-unavailable="'.h($offer['availability']).'" data-unavailable-message="'.h($offer['availability_message']).'"';
                                     ?>
-                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>"<?php echo brochure_attributes($brochures, $offerValue, $offer['nama_unit']); ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?></option>
+                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>"<?php echo $offerAttributes; ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?><?php echo ['penuh' => ' (penuh)', 'ditutup' => ' (ditutup)', 'belum' => ' (belum dibuka)'][$offer['availability']] ?? ''; ?></option>
                                     <?php } ?>
                                 </select>
                                 <button type="button" class="brochure-trigger" data-brochure-open hidden>Lihat brosur unit</button>
@@ -655,6 +673,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
 
     <footer class="site-footer"><span>Yayasan Wakaf Cendekia Takengon</span><a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
 </div>
+<dialog class="unavailable-dialog" data-unavailable-dialog aria-labelledby="unavailable-title" aria-describedby="unavailable-message">
+    <button type="button" class="unavailable-dialog__close" data-unavailable-close aria-label="Tutup informasi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <span class="unavailable-dialog__icon" aria-hidden="true">
+        <svg class="unavailable-dialog__icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <svg class="unavailable-dialog__icon-full" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14c1.8.9 3 2.9 3 5.5"/></svg>
+    </span>
+    <p class="unavailable-dialog__eyebrow">Informasi pendaftaran</p>
+    <h2 id="unavailable-title" data-unavailable-title>Pendaftaran belum dibuka</h2>
+    <p id="unavailable-message" class="unavailable-dialog__message" data-unavailable-message></p>
+</dialog>
 <dialog class="brochure-viewer" data-brochure-viewer aria-labelledby="brochure-title">
     <div class="brochure-viewer__bar">
         <h2 id="brochure-title" data-brochure-title>Brosur unit</h2>

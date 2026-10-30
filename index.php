@@ -20,7 +20,7 @@ $lead = cms_setting($conn, 'home_lead', 'Yayasan Wakaf Cendekia Takengon menaung
 $introHtml = cms_setting($conn, 'home_intro_html');
 
 // Status SPMB singkat untuk band ajakan di bawah halaman.
-$openResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tb_pengaturan_ppdb q WHERE q.th_ajaran='".PUBLIC_PPDB_YEAR."' AND q.eksternal_dibuka=1 AND q.kuota_eksternal >
+$openResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM tb_pengaturan_ppdb q WHERE q.th_ajaran='".PUBLIC_PPDB_YEAR."' AND q.eksternal_dibuka=1 AND ".ppdb_schedule_open_sql($conn)." AND q.kuota_eksternal >
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama'))");
 $openUnitCount = (int) (mysqli_fetch_assoc($openResult)['total'] ?? 0);
 

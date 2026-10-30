@@ -329,6 +329,100 @@ function ppdb_format_date_id(?string $date): string
     return (int) date('j', $timestamp).' '.$months[(int) date('n', $timestamp)].' '.date('Y', $timestamp);
 }
 
+/** Tanggal dan jam WIB, contoh "30 Oktober 2026 pukul 08.00 WIB". */
+function ppdb_format_datetime_id(?string $dateTime): string
+{
+    $timestamp = $dateTime ? strtotime($dateTime) : false;
+    if ($timestamp === false) {
+        return '-';
+    }
+    return ppdb_format_date_id($dateTime).' pukul '.date('H.i', $timestamp).' WIB';
+}
+
+/** Tanggal dan jam ringkas, contoh "30 Okt 2026 08.00". */
+function ppdb_format_datetime_short(string $dateTime): string
+{
+    $months = [1 => 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    $timestamp = strtotime($dateTime);
+    return $timestamp === false ? '-' : (int) date('j', $timestamp).' '.$months[(int) date('n', $timestamp)].' '.date('Y H.i', $timestamp);
+}
+
+/** Rentang jadwal pendaftaran untuk ditampilkan; kosong bila unit tidak memakai jadwal. */
+function ppdb_format_schedule_range(?string $opensAt, ?string $closesAt): string
+{
+    if ($opensAt && $closesAt) {
+        return ppdb_format_datetime_short($opensAt).' – '.ppdb_format_datetime_short($closesAt).' WIB';
+    }
+    if ($opensAt) {
+        return 'Mulai '.ppdb_format_datetime_short($opensAt).' WIB';
+    }
+    return $closesAt ? 'Sampai '.ppdb_format_datetime_short($closesAt).' WIB' : '';
+}
+
+/** Waktu sekarang dalam WIB; jadwal buka/tutup disimpan sebagai jam WIB. */
+function ppdb_now_wib(): string
+{
+    return (new DateTimeImmutable('now', new DateTimeZone('Asia/Jakarta')))->format('Y-m-d H:i:s');
+}
+
+/**
+ * Syarat SQL bahwa sekarang berada di dalam jadwal buka-tutup unit (migrasi 027).
+ * $alias adalah alias tabel tb_pengaturan_ppdb, kosongkan bila tanpa alias.
+ * Bila kolom jadwal belum ada, syaratnya selalu terpenuhi.
+ */
+function ppdb_schedule_open_sql(mysqli $conn, string $alias = 'q'): string
+{
+    if (!ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'jadwal_buka')) {
+        return '1';
+    }
+    $prefix = $alias === '' ? '' : $alias.'.';
+    $now = "'".ppdb_now_wib()."'";
+    return '(('.$prefix.'jadwal_buka IS NULL OR '.$prefix.'jadwal_buka<='.$now.') AND ('.$prefix.'jadwal_tutup IS NULL OR '.$prefix.'jadwal_tutup>'.$now.'))';
+}
+
+/** Kolom SQL status jalur yang sudah memperhitungkan jadwal, misalnya "(q.eksternal_dibuka=1 AND ...) AS eksternal_dibuka". */
+function ppdb_route_open_sql(mysqli $conn, string $column, string $alias = 'q'): string
+{
+    $prefix = $alias === '' ? '' : $alias.'.';
+    return '('.$prefix.$column.'=1 AND '.ppdb_schedule_open_sql($conn, $alias).') AS '.$column;
+}
+
+/** Kolom jadwal untuk SELECT; bernilai NULL bila migrasi 027 belum dijalankan. */
+function ppdb_schedule_columns_sql(mysqli $conn, string $alias = 'q'): string
+{
+    if (!ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'jadwal_buka')) {
+        return 'NULL AS jadwal_buka,NULL AS jadwal_tutup';
+    }
+    $prefix = $alias === '' ? '' : $alias.'.';
+    return $prefix.'jadwal_buka,'.$prefix.'jadwal_tutup';
+}
+
+/** Pesan penutupan jalur yang menyebut jadwal unit bila pendaftaran belum dimulai atau sudah berakhir. */
+function ppdb_schedule_closed_message(?array $setting, string $default): string
+{
+    $phase = ppdb_schedule_phase($setting['jadwal_buka'] ?? null, $setting['jadwal_tutup'] ?? null);
+    if ($phase === 'belum') {
+        return 'Pendaftaran unit ini baru dibuka '.ppdb_format_datetime_id($setting['jadwal_buka']).'.';
+    }
+    if ($phase === 'selesai') {
+        return 'Pendaftaran unit ini telah ditutup '.ppdb_format_datetime_id($setting['jadwal_tutup']).'.';
+    }
+    return $default;
+}
+
+/** Posisi sekarang terhadap jadwal: 'belum' (sebelum buka), 'selesai' (lewat tutup), atau 'berjalan'. */
+function ppdb_schedule_phase(?string $opensAt, ?string $closesAt): string
+{
+    $now = ppdb_now_wib();
+    if ($opensAt && $now < $opensAt) {
+        return 'belum';
+    }
+    if ($closesAt && $now >= $closesAt) {
+        return 'selesai';
+    }
+    return 'berjalan';
+}
+
 function ppdb_dapodik_age(?string $birthDate, ?string $academicYear): ?array
 {
     if (!$birthDate || !preg_match('/^([0-9]{4})\/[0-9]{4}$/', (string) $academicYear, $matches)) {

@@ -1070,6 +1070,160 @@ a {
     line-height: 1.6;
 }
 
+/* --- Popup unit belum dibuka / ditutup / penuh (aksen kaca) --- */
+.unavailable-dialog {
+    position: fixed;
+    width: min(100% - 32px, 440px);
+    margin: auto;
+    padding: 34px 30px 30px;
+    overflow: hidden;
+    color: var(--ink);
+    text-align: center;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.86) 0%, rgba(242, 248, 244, 0.72) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 22px;
+    box-shadow: 0 40px 80px -30px rgba(11, 42, 33, 0.55), 0 0 0 1px rgba(20, 74, 58, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+}
+
+.unavailable-dialog::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--d-gold, #c9a24b), transparent);
+}
+
+.unavailable-dialog::backdrop {
+    background: radial-gradient(circle at 50% 40%, rgba(20, 74, 58, 0.35), rgba(11, 42, 33, 0.62));
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    animation: backdrop-in 220ms ease;
+}
+
+.unavailable-dialog[open] {
+    animation: dialog-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.unavailable-dialog__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(20, 74, 58, 0.14);
+    border-radius: 50%;
+    box-shadow: 0 6px 16px -8px rgba(11, 42, 33, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.unavailable-dialog__close svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+
+.unavailable-dialog__close:hover {
+    color: #fff;
+    background: var(--green);
+    transform: rotate(90deg);
+}
+
+.unavailable-dialog__close:focus-visible {
+    outline: 3px solid rgba(30, 110, 85, 0.45);
+    outline-offset: 2px;
+}
+
+.unavailable-dialog__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    color: var(--green);
+    background: linear-gradient(150deg, rgba(227, 240, 233, 0.95), rgba(255, 255, 255, 0.6));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 14px 30px -14px rgba(20, 74, 58, 0.55), inset 0 1px 0 #fff;
+}
+
+.unavailable-dialog__icon svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.unavailable-dialog__icon-full,
+.unavailable-dialog[data-state="penuh"] .unavailable-dialog__icon-clock {
+    display: none;
+}
+
+.unavailable-dialog[data-state="penuh"] .unavailable-dialog__icon-full {
+    display: block;
+}
+
+.unavailable-dialog[data-state="penuh"] .unavailable-dialog__icon {
+    color: var(--d-gold-ink, #6b5214);
+    background: linear-gradient(150deg, rgba(244, 234, 210, 0.95), rgba(255, 255, 255, 0.6));
+}
+
+.unavailable-dialog__eyebrow {
+    margin: 0 0 6px;
+    color: var(--green);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.unavailable-dialog h2 {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.unavailable-dialog__message {
+    margin: 12px 0 0;
+    color: var(--d-text, #56635d);
+    font-size: var(--fs-md);
+    line-height: 1.65;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .unavailable-dialog {
+        background: #fff;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .unavailable-dialog[open],
+    .unavailable-dialog::backdrop {
+        animation: none;
+    }
+
+    .unavailable-dialog__close:hover {
+        transform: none;
+    }
+}
+
 .confirm-card__note.is-warning {
     color: #8a3b22;
     font-weight: 600;

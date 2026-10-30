@@ -203,6 +203,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $internalOpen = isset($_POST['internal_dibuka']) ? 1 : 0;
     $externalOpen = isset($_POST['eksternal_dibuka']) ? 1 : 0;
     $isOpen = $internalOpen || $externalOpen ? 1 : 0;
+    // Jadwal buka-tutup unit dalam WIB; kosong berarti tanpa batas waktu.
+    $hasSchedule = ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'jadwal_buka');
+    $scheduleInput = [];
+    $scheduleError = '';
+    foreach (['jadwal_buka', 'jadwal_tutup'] as $scheduleField) {
+        $rawSchedule = is_string($_POST[$scheduleField] ?? null) ? trim($_POST[$scheduleField]) : '';
+        $parsedSchedule = $rawSchedule === '' ? null : DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $rawSchedule);
+        if ($parsedSchedule === false) {
+            $scheduleError = 'Format jadwal buka atau tutup tidak valid.';
+        }
+        $scheduleInput[$scheduleField] = $parsedSchedule ? $parsedSchedule->format('Y-m-d H:i:s') : null;
+    }
+    if ($scheduleError === '' && $scheduleInput['jadwal_buka'] && $scheduleInput['jadwal_tutup'] && $scheduleInput['jadwal_tutup'] <= $scheduleInput['jadwal_buka']) {
+        $scheduleError = 'Jadwal tutup harus setelah jadwal buka.';
+    }
 
     // Unit TK: kuota diisi per jenjang (TK A / TK B), jumlahnya menjadi kuota per jalur.
     $levelQuotaInput = null;
@@ -238,6 +253,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Lengkapi bank, nomor rekening, dan nama pemilik sebelum menetapkan biaya.';
     } elseif (($internalOpen && $quotaInternal < 1) || ($externalOpen && $quotaExternal < 1)) {
         $error = 'Kuota jalur harus lebih dari nol untuk membuka pendaftaran jalur tersebut.';
+    } elseif ($scheduleError !== '') {
+        $error = $scheduleError;
     } else {
         mysqli_begin_transaction($conn);
         try {
@@ -282,6 +299,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update = mysqli_prepare($conn, 'INSERT INTO tb_pengaturan_ppdb (kode_unit,th_ajaran,kuota,kuota_internal,kuota_eksternal,biaya_pendaftaran,bank_nama,nomor_rekening,nama_pemilik_rekening,masa_pembayaran_hari,pendaftaran_dibuka,internal_dibuka,eksternal_dibuka,diperbarui_oleh) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota=VALUES(kuota), kuota_internal=VALUES(kuota_internal), kuota_eksternal=VALUES(kuota_eksternal), biaya_pendaftaran=VALUES(biaya_pendaftaran), bank_nama=VALUES(bank_nama), nomor_rekening=VALUES(nomor_rekening), nama_pemilik_rekening=VALUES(nama_pemilik_rekening), masa_pembayaran_hari=VALUES(masa_pembayaran_hari), pendaftaran_dibuka=VALUES(pendaftaran_dibuka), internal_dibuka=VALUES(internal_dibuka), eksternal_dibuka=VALUES(eksternal_dibuka), diperbarui_oleh=VALUES(diperbarui_oleh)');
                 mysqli_stmt_bind_param($update, 'ssiiidsssiiiii', $unitCode, $academicYear, $totalQuota, $quotaInternal, $quotaExternal, $feeInput, $bankName, $accountNumber, $accountName, $paymentDays, $isOpen, $internalOpen, $externalOpen, $adminId);
                 $saved = mysqli_stmt_execute($update);
+                if ($saved && $hasSchedule) {
+                    $scheduleSave = mysqli_prepare($conn, 'UPDATE tb_pengaturan_ppdb SET jadwal_buka=?,jadwal_tutup=? WHERE kode_unit=? AND th_ajaran=?');
+                    mysqli_stmt_bind_param($scheduleSave, 'ssss', $scheduleInput['jadwal_buka'], $scheduleInput['jadwal_tutup'], $unitCode, $academicYear);
+                    $saved = mysqli_stmt_execute($scheduleSave);
+                    mysqli_stmt_close($scheduleSave);
+                }
                 if ($saved && $levelQuotaInput !== null) {
                     $levelSave = mysqli_prepare($conn, 'INSERT INTO tb_kuota_tingkat (kode_unit,th_ajaran,tingkat_kelas,kuota_internal,kuota_eksternal) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota_internal=VALUES(kuota_internal),kuota_eksternal=VALUES(kuota_eksternal)');
                     foreach ($levelQuotaInput as $level => $routes) {
@@ -330,6 +353,8 @@ while ($setting = mysqli_fetch_assoc($settings)) {
         'masa_pembayaran_hari' => (int) $setting['masa_pembayaran_hari'],
         'internal_dibuka' => (int) $setting['internal_dibuka'],
         'eksternal_dibuka' => (int) $setting['eksternal_dibuka'],
+        'jadwal_buka' => isset($setting['jadwal_buka']) ? substr(str_replace(' ', 'T', $setting['jadwal_buka']), 0, 16) : '',
+        'jadwal_tutup' => isset($setting['jadwal_tutup']) ? substr(str_replace(' ', 'T', $setting['jadwal_tutup']), 0, 16) : '',
         'reserved_internal' => (int) $setting['internal_terisi'],
         'reserved_eksternal' => (int) $setting['eksternal_terisi'],
         'levels' => (object) $setting['levels'],
@@ -474,6 +499,17 @@ require 'admin_header.php';
                 <label for="nama_pemilik_rekening">Nama pemilik rekening</label>
                 <input id="nama_pemilik_rekening" name="nama_pemilik_rekening" maxlength="120" value="<?php echo h($_POST['nama_pemilik_rekening'] ?? ''); ?>">
             </div>
+            <?php if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'jadwal_buka')) { ?>
+                <div class="filter-field">
+                    <label for="jadwal_buka">Jadwal buka (WIB)</label>
+                    <input id="jadwal_buka" name="jadwal_buka" type="datetime-local" value="<?php echo h(is_string($_POST['jadwal_buka'] ?? null) ? $_POST['jadwal_buka'] : ''); ?>">
+                </div>
+                <div class="filter-field">
+                    <label for="jadwal_tutup">Jadwal tutup (WIB)</label>
+                    <input id="jadwal_tutup" name="jadwal_tutup" type="datetime-local" value="<?php echo h(is_string($_POST['jadwal_tutup'] ?? null) ? $_POST['jadwal_tutup'] : ''); ?>">
+                </div>
+                <p class="field-span-2 level-quota__hint">Pendaftaran unit hanya dapat diakses di antara jadwal buka dan tutup, selama jalurnya dicentang buka. Kosongkan bila tanpa batas waktu. Kuota tidak berubah.</p>
+            <?php } ?>
             <label class="quota-toggle">
                 <input type="checkbox" name="internal_dibuka" value="1" <?php echo isset($_POST['internal_dibuka']) ? 'checked' : ''; ?>>
                 <span>Buka pendaftaran internal</span>
@@ -665,7 +701,13 @@ require 'admin_header.php';
                         <td data-label="Kuota eksternal"><span class="quota-cell-text"><?php echo (int) $row['eksternal_terisi']; ?> / <?php echo (int) $row['kuota_eksternal']; ?> terisi<small class="cell-sub"><?php echo (int) $row['eksternal_diterima']; ?> diterima · <?php echo $row['eksternal_dibuka'] ? 'dibuka' : 'ditutup'; ?></small><?php foreach ($row["levels"] as $levelName => $levelRoutes) { ?><small class="level-breakdown"><?php echo h($levelName); ?>: <?php echo (int) $levelRoutes["eksternal"][1]; ?> / <?php echo (int) $levelRoutes["eksternal"][0]; ?></small><?php } ?></span></td>
                         <td data-label="Diterima"><?php echo (int) $row['internal_diterima'] + (int) $row['eksternal_diterima']; ?></td>
                         <td data-label="Biaya"><?php echo (float) $row['biaya_pendaftaran'] > 0 ? 'Rp '.h(number_format((float) $row['biaya_pendaftaran'], 0, ',', '.')) : 'Gratis'; ?></td>
-                        <td data-label="Status"><span class="status-pill <?php echo $row['pendaftaran_dibuka'] ? 'is-open' : 'is-closed'; ?>"><?php echo $row['pendaftaran_dibuka'] ? 'Dibuka' : 'Ditutup'; ?></span></td>
+                        <?php
+                        $rowPhase = ppdb_schedule_phase($row['jadwal_buka'] ?? null, $row['jadwal_tutup'] ?? null);
+                        $rowSchedule = ppdb_format_schedule_range($row['jadwal_buka'] ?? null, $row['jadwal_tutup'] ?? null);
+                        $rowOpen = $row['pendaftaran_dibuka'] && $rowPhase === 'berjalan';
+                        $rowStatus = !$row['pendaftaran_dibuka'] ? 'Ditutup' : ($rowPhase === 'belum' ? 'Terjadwal' : ($rowPhase === 'selesai' ? 'Jadwal berakhir' : 'Dibuka'));
+                        ?>
+                        <td data-label="Status"><span class="quota-cell-text"><span class="status-pill <?php echo $rowOpen ? 'is-open' : 'is-closed'; ?>"><?php echo $rowStatus; ?></span><?php if ($rowSchedule !== '') { ?><small class="cell-sub"><?php echo h($rowSchedule); ?></small><?php } ?></span></td>
                         <td data-label="Aksi"><button class="button-secondary quota-edit-button" type="button" data-unit="<?php echo h($row['kode_unit']); ?>" data-year="<?php echo h($row['th_ajaran']); ?>">Ubah</button></td>
                     </tr>
                 <?php } ?>

@@ -73,6 +73,8 @@ CREATE TABLE `tb_pengaturan_ppdb` (
   `pendaftaran_dibuka` tinyint(1) NOT NULL DEFAULT 0,
   `internal_dibuka` tinyint(1) NOT NULL DEFAULT 0,
   `eksternal_dibuka` tinyint(1) NOT NULL DEFAULT 0,
+  `jadwal_buka` datetime DEFAULT NULL,
+  `jadwal_tutup` datetime DEFAULT NULL,
   `nomor_antrian_terakhir` int unsigned NOT NULL DEFAULT 0,
   `diperbarui_oleh` int DEFAULT NULL,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),

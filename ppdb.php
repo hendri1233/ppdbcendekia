@@ -6,7 +6,7 @@ $activeYear = '2027/2028';
 // Data unit diambil dari database agar halaman beranda selalu sesuai
 // dengan konfigurasi resmi, termasuk status buka dan kuotanya.
 $unitQuery = mysqli_query($conn, "SELECT u.kode_unit,u.nama_unit,u.jenjang,u.npsn,u.email,u.alamat,
-    q.th_ajaran,q.kuota_internal,q.kuota_eksternal,q.biaya_pendaftaran,q.internal_dibuka,q.eksternal_dibuka,
+    q.th_ajaran,q.kuota_internal,q.kuota_eksternal,q.biaya_pendaftaran,".ppdb_route_open_sql($conn, 'internal_dibuka').",".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=u.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS terisi
     ,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=u.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi
     FROM tb_unit_pendidikan u
@@ -175,12 +175,15 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                     $externalFull = $unit['penuh'];
                     $fillPercent = $externalFull ? 100 : ($unit['kuota_total'] > 0 ? min(100, (int) round($unit['pendaftar_total'] / $unit['kuota_total'] * 100)) : 0);
                     $isOpen = !$externalFull && $unit['dibuka_total'] && $unit['kuota_total'] > 0 && $unit['sisa_total'] > 0;
+                    $schedulePhase = ppdb_schedule_phase($unit['jadwal_buka'] ?? null, $unit['jadwal_tutup'] ?? null);
+                    $scheduleText = ppdb_format_schedule_range($unit['jadwal_buka'] ?? null, $unit['jadwal_tutup'] ?? null);
                 ?>
                     <li class="unit-row<?= $isOpen ? ' is-open' : '' ?>">
                         <span class="unit-row__code" aria-hidden="true"><?= h($unit['jenjang']) ?></span>
                         <div class="unit-row__identity">
                             <h3><a href="<?= h(ppdb_unit_public_path($unit)) ?>"><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></a></h3>
                             <p><?= h(implode(' · ', array_filter([ppdb_jenjang_label($unit['jenjang']), $unit['npsn'] ? 'NPSN '.$unit['npsn'] : '', $ageText]))) ?></p>
+                            <?php if ($scheduleText !== '') { ?><p class="unit-row__schedule">Jadwal pendaftaran: <?= h($scheduleText) ?></p><?php } ?>
                         </div>
                         <div class="unit-row__capacity">
                             <dl class="unit-row__numbers">
@@ -217,6 +220,10 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                                 <?php } ?>
                             <?php } elseif ($externalFull || ($unit['kuota_total'] > 0 && $unit['sisa_total'] === 0)) { ?>
                                 <span class="badge badge--warning">Kuota terpenuhi</span>
+                            <?php } elseif ($schedulePhase === 'selesai') { ?>
+                                <span class="badge badge--neutral">Pendaftaran ditutup</span>
+                            <?php } elseif ($schedulePhase === 'belum') { ?>
+                                <span class="badge badge--neutral">Dibuka <?= h(ppdb_format_datetime_short($unit['jadwal_buka'])) ?> WIB</span>
                             <?php } else { ?>
                                 <span class="badge badge--neutral">Belum dibuka</span>
                             <?php } ?>

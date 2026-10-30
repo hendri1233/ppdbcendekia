@@ -112,7 +112,7 @@ function ai_knowledge_base(mysqli $conn): string
     $lines[] = '';
     $lines[] = '# Unit pendidikan dan SPMB '.$year.' (jalur umum)';
     $result = mysqli_query($conn, "SELECT u.kode_unit,u.nama_unit,u.jenjang,u.npsn,u.email,u.alamat,p.tagline,p.description_html,p.phone,
-        q.kuota_eksternal,q.eksternal_dibuka,q.biaya_pendaftaran,
+        q.kuota_eksternal,".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,
         (SELECT COUNT(*) FROM tb_pendaftaran r WHERE r.kode_unit=u.kode_unit AND r.th_ajaran=q.th_ajaran AND r.jalur_pendaftaran='eksternal' AND r.status_ppdb NOT IN ('ditolak','data_lama')) AS terisi
         FROM tb_unit_pendidikan u
         LEFT JOIN tb_cms_unit_profiles p ON p.kode_unit=u.kode_unit
@@ -123,6 +123,10 @@ function ai_knowledge_base(mysqli $conn): string
         $status = (int) $unit['eksternal_dibuka'] === 1 && (int) $unit['kuota_eksternal'] > 0
             ? ($remaining > 0 ? 'DIBUKA, sisa '.$remaining.' kursi dari kuota '.(int) $unit['kuota_eksternal'] : 'kuota terpenuhi')
             : 'belum dibuka';
+        $schedule = ppdb_format_schedule_range($unit['jadwal_buka'], $unit['jadwal_tutup']);
+        if ($schedule !== '') {
+            $status .= ' (jadwal pendaftaran unit ini: '.$schedule.')';
+        }
         $parts = [
             ppdb_unit_display_name($unit['nama_unit']).' ('.ppdb_jenjang_label($unit['jenjang']).')',
             $unit['npsn'] ? 'NPSN '.$unit['npsn'] : '',
