@@ -271,7 +271,7 @@ function public_page_end(mysqli $conn): void
     </div>
     <div class="shell footer-legal">
         <p>&copy; <?= date('Y') ?> <?= h(PUBLIC_SITE_NAME) ?>. Seluruh hak dilindungi.</p>
-        <p>Takengon, Aceh Tengah</p>
+        <p><a href="kebijakan-privasi">Kebijakan Privasi</a> &middot; Takengon, Aceh Tengah</p>
     </div>
 </footer>
 

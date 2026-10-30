@@ -3358,6 +3358,16 @@ dd {
     outline-offset: 2px;
 }
 
+.footer-legal a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.footer-legal a:hover {
+    color: #fff;
+}
+
 .footer-legal {
     display: flex;
     flex-wrap: wrap;

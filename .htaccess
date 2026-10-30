@@ -18,13 +18,13 @@ Options -Indexes
     RewriteRule ^ppdb\.php$ spmb [R=301,L,NE]
     RewriteCond %{THE_REQUEST} \s/+([^?\s]+/)?direktori-unit\.php(?:[?\s]) [NC]
     RewriteRule ^direktori-unit\.php$ unit [R=301,L,NE]
-    RewriteCond %{THE_REQUEST} \s/+([^?\s]+/)?(tentang|kontak|kurikulum|cerita|program|galeri)\.php(?:[?\s]) [NC]
-    RewriteRule ^(tentang|kontak|kurikulum|cerita|program|galeri)\.php$ $1 [R=301,L,NE]
+    RewriteCond %{THE_REQUEST} \s/+([^?\s]+/)?(tentang|kontak|kurikulum|cerita|program|galeri|kebijakan-privasi)\.php(?:[?\s]) [NC]
+    RewriteRule ^(tentang|kontak|kurikulum|cerita|program|galeri|kebijakan-privasi)\.php$ $1 [R=301,L,NE]
 
     # Rute publik bersih diteruskan ke file PHP yang sudah ada.
     RewriteRule ^berita/([a-z0-9-]+)/?$ berita.php?baca=$1 [QSA,NC,END]
     RewriteRule ^unit/([a-z0-9-]+)/?$ unit.php?slug=$1 [QSA,NC,END]
-    RewriteRule ^(tentang|kontak|kurikulum|cerita|program|galeri)/?$ $1.php [NC,END]
+    RewriteRule ^(tentang|kontak|kurikulum|cerita|program|galeri|kebijakan-privasi)/?$ $1.php [NC,END]
     RewriteRule ^spmb/?$ ppdb.php [NC,END]
     RewriteRule ^berita/?$ berita.php [NC,END]
     RewriteRule ^unit/?$ direktori-unit.php [NC,END]

@@ -14,6 +14,7 @@ $paths = [
     'program',
     'galeri',
     'unit',
+    'kebijakan-privasi',
 ];
 
 $unitsResult = @mysqli_query($conn, 'SELECT kode_unit,nama_unit FROM tb_unit_pendidikan ORDER BY FIELD(jenjang,\'KB\',\'TPA\',\'TK\',\'SD\',\'SMP\')');
