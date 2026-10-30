@@ -461,7 +461,8 @@ function google_sheets_rebuild_unit(mysqli $conn, string $unitCode, string $acad
                 'fields' => 'userEnteredFormat(backgroundColor,horizontalAlignment,verticalAlignment,wrapStrategy,textFormat)',
             ]],
             ['repeatCell' => [
-                'range' => ['sheetId' => $sheetId, 'startRowIndex' => 2, 'endRowIndex' => $rowCount + 2, 'startColumnIndex' => 0, 'endColumnIndex' => $columnCount],
+                // Minimal satu baris agar rentang tidak kosong saat unit belum/tidak lagi punya peserta.
+                'range' => ['sheetId' => $sheetId, 'startRowIndex' => 2, 'endRowIndex' => max($rowCount, 1) + 2, 'startColumnIndex' => 0, 'endColumnIndex' => $columnCount],
                 'cell' => ['userEnteredFormat' => ['verticalAlignment' => 'TOP', 'wrapStrategy' => 'CLIP', 'numberFormat' => ['type' => 'TEXT']]],
                 'fields' => 'userEnteredFormat(verticalAlignment,wrapStrategy,numberFormat)',
             ]],
@@ -538,7 +539,8 @@ function google_sheets_error_message(Throwable $exception): string
         if ($exception->getCode() === 403) {
             return 'Service account belum memiliki akses Editor ke spreadsheet unit.';
         }
-        return 'Google Sheets API menolak permintaan (HTTP '.$exception->getCode().'). Periksa API dan izin service account.';
+        $detail = (string) ($exception->getErrors()[0]['message'] ?? '');
+        return mb_substr('Google Sheets API menolak permintaan (HTTP '.$exception->getCode().')'.($detail !== '' ? ': '.$detail : '. Periksa API dan izin service account.'), 0, 255);
     }
     if ($exception instanceof RuntimeException) {
         return mb_substr($exception->getMessage(), 0, 255);

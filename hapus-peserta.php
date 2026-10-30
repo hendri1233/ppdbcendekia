@@ -31,8 +31,10 @@ if (preg_match('/^P[0-9]{9}$/', $registrationId)) {
     if ($deleted && $deletedUnit) {
         try {
             google_sheets_rebuild_unit($conn, $deletedUnit['kode_unit'], $deletedUnit['th_ajaran']);
+            $_SESSION['wa_notice'] = ['ok' => true, 'text' => 'Pendaftaran '.$registrationId.' dihapus dan spreadsheet unit sudah diperbarui.'];
         } catch (Throwable $exception) {
-            error_log('SPMB Google Sheets sync after delete failed: '.$exception->getMessage());
+            error_log('SPMB Google Sheets sync after delete failed ('.get_class($exception).'): '.$exception->getMessage());
+            $_SESSION['wa_notice'] = ['ok' => false, 'text' => 'Pendaftaran '.$registrationId.' dihapus, tetapi spreadsheet unit belum diperbarui: '.google_sheets_error_message($exception).' Tekan "Tulis ulang semua unit" di dasbor.'];
         }
     }
 }
