@@ -953,6 +953,19 @@ img {
     font-variant-numeric: tabular-nums;
 }
 
+.sheet-links {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 14px;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-sm);
+}
+
+.sheet-links small {
+    color: var(--admin-faint);
+}
+
 .sheet-actions {
     display: flex;
     flex-wrap: wrap;

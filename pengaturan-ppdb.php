@@ -1,6 +1,7 @@
 <?php
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
+require_once 'google_sheets_sync.php';
 require_super_admin();
 
 $error = '';
@@ -189,6 +190,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Persetujuan penggunaan ulang token belum dapat disimpan.';
                 }
             }
+        }
+    } elseif ($action === 'save_spreadsheets') {
+        $sheetInput = is_array($_POST['spreadsheet'] ?? null) ? $_POST['spreadsheet'] : [];
+        $parsedSheets = [];
+        foreach ($sheetInput as $settingKey => $value) {
+            [$sheetUnit, $sheetYear] = array_pad(explode('|', (string) $settingKey, 2), 2, '');
+            $sheetId = google_sheets_parse_spreadsheet_id(is_string($value) ? $value : '');
+            if (!isset($units[$sheetUnit]) || !in_array($sheetYear, $academicYears, true)) {
+                continue;
+            }
+            if ($sheetId === null) {
+                $error = 'ID spreadsheet '.ppdb_unit_display_name($units[$sheetUnit]['nama_unit']).' '.$sheetYear.' tidak valid. Tempel ID atau tautan spreadsheet Google.';
+                break;
+            }
+            $parsedSheets[] = [$sheetId, $sheetUnit, $sheetYear];
+        }
+        if ($error === '' && !ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'google_spreadsheet_id')) {
+            $error = 'Jalankan migrasi 027_spreadsheet_per_unit.sql sebelum menyimpan spreadsheet unit.';
+        }
+        if ($error === '') {
+            $saveSheet = mysqli_prepare($conn, 'UPDATE tb_pengaturan_ppdb SET google_spreadsheet_id=? WHERE kode_unit=? AND th_ajaran=?');
+            foreach ($parsedSheets as [$sheetId, $sheetUnit, $sheetYear]) {
+                mysqli_stmt_bind_param($saveSheet, 'sss', $sheetId, $sheetUnit, $sheetYear);
+                mysqli_stmt_execute($saveSheet);
+            }
+            mysqli_stmt_close($saveSheet);
+            $notice = 'Spreadsheet unit berhasil disimpan. Tekan "Tulis ulang semua unit" di dasbor untuk mengisi datanya.';
         }
     } else {
     $unitCode = $_POST['kode_unit'] ?? '';
@@ -524,6 +552,31 @@ require 'admin_header.php';
             </div>
         </form>
     </section>
+
+    <?php if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'google_spreadsheet_id') && $settingsRows) { $sheetsServiceAccount = google_sheets_service_account_email(); ?>
+    <section class="panel quota-current-panel" id="spreadsheet-unit">
+        <div class="panel-header">
+            <div>
+                <h2>Spreadsheet Google per unit</h2>
+                <span class="panel-subtitle">Tempel ID atau tautan spreadsheet tiap unit. Data peserta ditulis ke tab <?php echo h(GOOGLE_SHEETS_TAB); ?><?php if ($sheetsServiceAccount !== '') { ?>; bagikan spreadsheet sebagai Editor ke <code><?php echo h($sheetsServiceAccount); ?></code><?php } ?>.</span>
+            </div>
+        </div>
+        <form class="quota-config-form" method="post">
+            <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+            <input type="hidden" name="action" value="save_spreadsheets">
+            <?php foreach ($settingsRows as $row) { $sheetKey = $row['kode_unit'].'|'.$row['th_ajaran']; $sheetFieldId = 'sheet-'.preg_replace('/[^a-z0-9]+/i', '-', $sheetKey); ?>
+                <div class="filter-field field-span-2">
+                    <label for="<?php echo h($sheetFieldId); ?>"><?php echo h(ppdb_unit_display_name($row['nama_unit']).' · '.$row['th_ajaran']); ?></label>
+                    <input id="<?php echo h($sheetFieldId); ?>" name="spreadsheet[<?php echo h($sheetKey); ?>]" maxlength="300" autocomplete="off" spellcheck="false" placeholder="ID atau tautan Google Spreadsheet" value="<?php echo h($row['google_spreadsheet_id']); ?>">
+                </div>
+            <?php } ?>
+            <div class="quota-form-footer">
+                <span>Kosongkan bila unit tersebut belum memakai spreadsheet.</span>
+                <button class="button-primary" type="submit">Simpan spreadsheet</button>
+            </div>
+        </form>
+    </section>
+    <?php } ?>
 
     <section class="panel quota-current-panel" id="token-internal">
         <div class="panel-header">

@@ -236,8 +236,13 @@ if ($adminUnitCode === '') {
         $syncCounts[$syncStatus['status']] = (int) $syncStatus['total'];
     }
     $lastSyncFailure = mysqli_fetch_assoc(mysqli_query($conn, "SELECT last_error FROM tb_google_sync_outbox WHERE status='failed' AND last_error IS NOT NULL ORDER BY last_attempt_at DESC LIMIT 1"))['last_error'] ?? '';
-    $credentialsPath = getenv('GOOGLE_APPLICATION_CREDENTIALS');
-    $sheetsCredentialsReady = $credentialsPath && is_file($credentialsPath);
+    $credentialsPath = google_sheets_credentials_path();
+    $sheetsCredentialsReady = $credentialsPath !== '' && is_file($credentialsPath);
+    $sheetsServiceAccount = google_sheets_service_account_email();
+    $unitSheets = [];
+    if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'google_spreadsheet_id')) {
+        $unitSheets = mysqli_fetch_all(mysqli_query($conn, "SELECT c.th_ajaran,c.google_spreadsheet_id,u.nama_unit FROM tb_pengaturan_ppdb c JOIN tb_unit_pendidikan u ON u.kode_unit=c.kode_unit WHERE c.google_spreadsheet_id<>'' ORDER BY c.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')"), MYSQLI_ASSOC);
+    }
     $syncFlash = $_SESSION['google_sheets_sync_result'] ?? null;
     unset($_SESSION['google_sheets_sync_result']);
 }
@@ -254,7 +259,7 @@ require 'admin_header.php';
 ?>
 <div class="admin-content">
     <?php if (isset($_GET['admin_created'])) { ?><div class="alert-success" role="status">Akun admin baru berhasil dibuat.</div><?php } ?>
-    <?php if ($syncFlash) { ?><div class="<?php echo $syncFlash['failed'] > 0 ? 'alert-error' : 'alert-success'; ?>" role="status">Sinkronisasi selesai: <?php echo (int) $syncFlash['synced']; ?> baris berhasil, <?php echo (int) $syncFlash['failed']; ?> baris perlu dicoba ulang.</div><?php } ?>
+    <?php if ($syncFlash) { ?><div class="<?php echo $syncFlash['failed'] > 0 ? 'alert-error' : 'alert-success'; ?>" role="status">Sinkronisasi selesai: <?php echo (int) $syncFlash['synced']; ?> spreadsheet unit berhasil, <?php echo (int) $syncFlash['failed']; ?> perlu dicoba ulang.</div><?php } ?>
 
     <header class="page-hero">
         <div class="page-hero__text">
@@ -418,11 +423,19 @@ require 'admin_header.php';
 
         <?php if ($adminUnitCode === '') { ?><section class="panel spreadsheet-panel">
             <div class="panel-header">
-                <div><h2>Sinkronisasi Google Sheets</h2><span class="panel-subtitle">Data Dapodik ke spreadsheet</span></div>
+                <div><h2>Sinkronisasi Google Sheets</h2><span class="panel-subtitle">Satu spreadsheet per unit</span></div>
                 <span class="status-pill <?php echo $sheetsCredentialsReady ? 'is-open' : 'is-closed'; ?>"><?php echo $sheetsCredentialsReady ? 'Aktif' : 'Nonaktif'; ?></span>
             </div>
             <div class="panel-body sheet-panel-body">
-                <p>Seluruh data formulir dikirim ke tab <strong>Data Peserta Didik</strong>.</p>
+                <p>Seluruh data peserta dikirim ke tab <strong><?php echo h(GOOGLE_SHEETS_TAB); ?></strong> pada spreadsheet unitnya. ID spreadsheet diatur di <a href="pengaturan-ppdb.php#spreadsheet-unit">Kuota &amp; pembayaran</a>.</p>
+                <?php if ($sheetsServiceAccount !== '') { ?><p>Bagikan spreadsheet sebagai Editor ke <code><?php echo h($sheetsServiceAccount); ?></code>.</p><?php } ?>
+                <?php if ($unitSheets) { ?>
+                    <ul class="sheet-links">
+                        <?php foreach ($unitSheets as $unitSheet) { ?>
+                            <li><a href="<?php echo h(google_sheets_spreadsheet_url($unitSheet['google_spreadsheet_id'])); ?>" target="_blank" rel="noopener noreferrer"><?php echo h(ppdb_unit_display_name($unitSheet['nama_unit'])); ?></a> <small><?php echo h($unitSheet['th_ajaran']); ?></small></li>
+                        <?php } ?>
+                    </ul>
+                <?php } ?>
                 <?php if ($lastSyncFailure !== '') { ?><p class="sheet-sync-error" role="status">Status: <?php echo h($lastSyncFailure); ?></p><?php } ?>
                 <dl class="sync-stats">
                     <div><dt>Tersinkron</dt><dd><?php echo $syncCounts['synced']; ?></dd></div>
@@ -430,10 +443,14 @@ require 'admin_header.php';
                     <div><dt>Gagal</dt><dd><?php echo $syncCounts['failed']; ?></dd></div>
                 </dl>
                 <div class="sheet-actions">
-                    <a class="button-secondary" href="<?php echo h(google_sheets_spreadsheet_url()); ?>" target="_blank" rel="noopener noreferrer">Buka Sheets <span aria-hidden="true">↗</span></a>
                     <form action="sinkronisasi-spreadsheet.php" method="post">
                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                         <button class="button-primary" type="submit">Sinkronkan antrean</button>
+                    </form>
+                    <form action="sinkronisasi-spreadsheet.php" method="post">
+                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                        <input type="hidden" name="mode" value="all">
+                        <button class="button-secondary" type="submit">Tulis ulang semua unit</button>
                     </form>
                 </div>
             </div>

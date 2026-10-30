@@ -69,6 +69,7 @@ CREATE TABLE `tb_pengaturan_ppdb` (
   `bank_nama` varchar(80) NOT NULL DEFAULT '',
   `nomor_rekening` varchar(50) NOT NULL DEFAULT '',
   `nama_pemilik_rekening` varchar(120) NOT NULL DEFAULT '',
+  `google_spreadsheet_id` varchar(100) NOT NULL DEFAULT '',
   `masa_pembayaran_hari` tinyint unsigned NOT NULL DEFAULT 7,
   `pendaftaran_dibuka` tinyint(1) NOT NULL DEFAULT 0,
   `internal_dibuka` tinyint(1) NOT NULL DEFAULT 0,
