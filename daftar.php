@@ -581,7 +581,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                                             ? brochure_attributes($brochures, $offerValue, $offer['nama_unit'])
                                             : ' data-unavailable="'.h($offer['availability']).'" data-unavailable-message="'.h($offer['availability_message']).'"';
                                     ?>
-                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>"<?php echo $offerAttributes; ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?><?php echo ['penuh' => ' (penuh)', 'ditutup' => ' (ditutup)', 'belum' => ' (belum dibuka)'][$offer['availability']] ?? ''; ?></option>
+                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>" data-name="<?php echo h($offer['nama_unit']); ?>"<?php echo $offerAttributes; ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?><?php echo ['penuh' => ' (penuh)', 'ditutup' => ' (ditutup)', 'belum' => ' (belum dibuka)'][$offer['availability']] ?? ''; ?></option>
                                     <?php } ?>
                                 </select>
                                 <button type="button" class="brochure-trigger" data-brochure-open hidden>Lihat brosur unit</button>
@@ -704,6 +704,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     </div>
 </dialog>
 <script src="js/daftar.js?v=<?php echo (int) @filemtime(__DIR__.'/js/daftar.js'); ?>"></script>
+<script src="js/unit-picker.js?v=<?php echo (int) @filemtime(__DIR__.'/js/unit-picker.js'); ?>"></script>
 <script src="js/reveal.js?v=<?php echo (int) @filemtime(__DIR__.'/js/reveal.js'); ?>"></script>
 <script type="module" src="js/brosur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/brosur.js'); ?>"></script>
 </body>

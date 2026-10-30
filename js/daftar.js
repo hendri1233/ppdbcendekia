@@ -46,7 +46,9 @@
       if (event.target === unavailableDialog) unavailableDialog.close();
     });
     unavailableDialog.addEventListener("close", function () {
-      if (externalRoute) externalRoute.focus();
+      const picker = document.querySelector('[data-picker-for="external_route"]');
+      if (picker) picker.focus();
+      else if (externalRoute) externalRoute.focus();
     });
   }
 
@@ -256,8 +258,10 @@
       if (!firstInvalid) return;
       const wrapper = firstInvalid.closest(".field");
       if (wrapper) wrapper.classList.add("is-invalid");
-      firstInvalid.focus({ preventScroll: true });
-      firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Pilihan unit tampil sebagai daftar khusus (js/unit-picker.js); fokuskan tombolnya.
+      const focusTarget = document.querySelector('[data-picker-for="' + firstInvalid.id + '"]') || firstInvalid;
+      focusTarget.focus({ preventScroll: true });
+      focusTarget.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   }
 })();
