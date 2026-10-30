@@ -51,9 +51,30 @@ function google_sheets_parse_spreadsheet_id(string $input): ?string
     return preg_match('/^[A-Za-z0-9_-]{20,100}$/', $input) ? $input : null;
 }
 
+/**
+ * Path kredensial dari .env. Bila berkas tidak ada di sana, cari google/<nama berkas> pada
+ * folder-folder induk situs, karena root File Manager hosting tidak selalu sama dengan path server.
+ */
 function google_sheets_credentials_path(): string
 {
-    return (string) (getenv('GOOGLE_APPLICATION_CREDENTIALS') ?: '');
+    $configured = (string) (getenv('GOOGLE_APPLICATION_CREDENTIALS') ?: '');
+    if ($configured === '' || is_file($configured)) {
+        return $configured;
+    }
+    $fileName = basename($configured);
+    $ancestor = dirname(__DIR__);
+    for ($depth = 0; $depth < 6; $depth++) {
+        $candidate = $ancestor.DIRECTORY_SEPARATOR.'google'.DIRECTORY_SEPARATOR.$fileName;
+        if (is_file($candidate)) {
+            return $candidate;
+        }
+        $parent = dirname($ancestor);
+        if ($parent === $ancestor) {
+            break;
+        }
+        $ancestor = $parent;
+    }
+    return $configured;
 }
 
 /** Alasan kredensial belum dapat dipakai, untuk ditampilkan ke super admin; '' bila siap. */
@@ -65,7 +86,7 @@ function google_sheets_credentials_problem(): string
     }
     if (!is_file($path)) {
         $basedir = (string) ini_get('open_basedir');
-        return 'Berkas kredensial tidak ditemukan di '.$path.'.'.($basedir !== '' ? ' PHP hanya boleh membaca: '.$basedir.'.' : '');
+        return 'Berkas kredensial tidak ditemukan di '.$path.' maupun di folder google/ pada folder induk situs. Folder situs di server: '.__DIR__.'.'.($basedir !== '' ? ' PHP hanya boleh membaca: '.$basedir.'.' : '');
     }
     if (!is_readable($path)) {
         return 'Berkas kredensial di '.$path.' tidak dapat dibaca PHP. Periksa izin berkas (644).';
