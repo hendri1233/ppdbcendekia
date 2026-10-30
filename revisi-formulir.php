@@ -7,6 +7,7 @@
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'wablas.php';
+require_once 'google_sheets_sync.php';
 require_admin();
 
 // Permintaan dari tombol Revisi (fetch) dijawab JSON; tanpa JavaScript kembali ke daftar.
@@ -77,6 +78,8 @@ try {
 
     $shareLinks = ppdb_prepare_formulir_link($conn, $registrationId, $note, true);
     mysqli_commit($conn);
+    enqueue_google_sheets_registration($conn, $registrationId);
+    sync_google_sheets_registration($conn, $registrationId);
 } catch (Throwable $exception) {
     mysqli_rollback($conn);
     if (!$exception instanceof RuntimeException) {
