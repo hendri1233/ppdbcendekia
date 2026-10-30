@@ -236,8 +236,12 @@ if ($adminUnitCode === '') {
         $syncCounts[$syncStatus['status']] = (int) $syncStatus['total'];
     }
     $lastSyncFailure = mysqli_fetch_assoc(mysqli_query($conn, "SELECT last_error FROM tb_google_sync_outbox WHERE status='failed' AND last_error IS NOT NULL ORDER BY last_attempt_at DESC LIMIT 1"))['last_error'] ?? '';
-    $credentialsPath = google_sheets_credentials_path();
-    $sheetsCredentialsReady = $credentialsPath !== '' && is_file($credentialsPath);
+    // Masalah kredensial diperiksa langsung agar admin tidak membaca galat lama dari antrean.
+    $sheetsCredentialsProblem = google_sheets_credentials_problem();
+    $sheetsCredentialsReady = $sheetsCredentialsProblem === '';
+    if (!$sheetsCredentialsReady) {
+        $lastSyncFailure = $sheetsCredentialsProblem;
+    }
     $sheetsServiceAccount = google_sheets_service_account_email();
     $unitSheets = [];
     if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'google_spreadsheet_id')) {

@@ -56,6 +56,26 @@ function google_sheets_credentials_path(): string
     return (string) (getenv('GOOGLE_APPLICATION_CREDENTIALS') ?: '');
 }
 
+/** Alasan kredensial belum dapat dipakai, untuk ditampilkan ke super admin; '' bila siap. */
+function google_sheets_credentials_problem(): string
+{
+    $path = google_sheets_credentials_path();
+    if ($path === '') {
+        return 'GOOGLE_APPLICATION_CREDENTIALS tidak terbaca. Pastikan baris tersebut berada di baris tersendiri pada berkas .env di folder yang sama dengan koneksi.php.';
+    }
+    if (!is_file($path)) {
+        $basedir = (string) ini_get('open_basedir');
+        return 'Berkas kredensial tidak ditemukan di '.$path.'.'.($basedir !== '' ? ' PHP hanya boleh membaca: '.$basedir.'.' : '');
+    }
+    if (!is_readable($path)) {
+        return 'Berkas kredensial di '.$path.' tidak dapat dibaca PHP. Periksa izin berkas (644).';
+    }
+    if (google_sheets_service_account_email() === '') {
+        return 'Berkas kredensial di '.$path.' bukan JSON service account yang valid. Unduh ulang key JSON dari Google Cloud.';
+    }
+    return '';
+}
+
 /** Email service account dari berkas kredensial, untuk ditampilkan ke admin. */
 function google_sheets_service_account_email(): string
 {
@@ -71,8 +91,9 @@ function google_sheets_client(): \Google\Client
 {
     require_once __DIR__.'/vendor/autoload.php';
     $credentialsPath = google_sheets_credentials_path();
-    if ($credentialsPath === '' || !is_file($credentialsPath)) {
-        throw new RuntimeException('Service account Google belum dikonfigurasi.');
+    $problem = google_sheets_credentials_problem();
+    if ($problem !== '') {
+        throw new RuntimeException($problem);
     }
 
     $realCredentialsPath = realpath($credentialsPath);
