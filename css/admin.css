@@ -966,6 +966,31 @@ img {
     color: var(--admin-faint);
 }
 
+.drive-connect {
+    margin: 0 0 14px;
+    padding: 12px 13px;
+    background: var(--admin-paper);
+    border-radius: var(--r-sm);
+}
+
+.drive-connect h3 {
+    margin: 0 0 6px;
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    font-weight: 800;
+}
+
+.drive-connect p {
+    overflow-wrap: anywhere;
+}
+
+.drive-connect .drive-connect__ok {
+    padding: 9px 11px;
+    color: var(--success-fg, #1a5c48);
+    background: var(--success-bg, #e3f0e9);
+    border-radius: 5px;
+}
+
 .sheet-actions {
     display: flex;
     flex-wrap: wrap;

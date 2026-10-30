@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/app_helpers.php';
 require_once __DIR__.'/formulir_helpers.php';
+require_once __DIR__.'/google_drive_sync.php';
 
 /*
  * Sinkronisasi data peserta ke Google Sheets: satu file spreadsheet per unit dan
@@ -173,9 +174,24 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
     foreach (google_sheets_child_rows($conn, 'SELECT x.* FROM tb_orang_tua_peserta x'.$filter, $unitCode, $academicYear) as $row) {
         $parents[$row['id_pendaftaran']][$row['peran']] = $row;
     }
+    // Salinan Google Drive (migrasi 029): berkas yang sudah diunggah ditautkan dari sel spreadsheet.
+    $hasDrive = ppdb_column_exists($conn, 'tb_dokumen_peserta', 'drive_file_id');
+    $driveColumns = $hasDrive ? ',x.drive_file_id,x.drive_source_path,x.path_file' : '';
     $documents = [];
-    foreach (google_sheets_child_rows($conn, 'SELECT x.id_pendaftaran,x.jenis_dokumen,x.diunggah_pada FROM tb_dokumen_peserta x'.$filter, $unitCode, $academicYear) as $row) {
+    $documentFiles = [];
+    foreach (google_sheets_child_rows($conn, 'SELECT x.id_pendaftaran,x.jenis_dokumen,x.diunggah_pada'.$driveColumns.' FROM tb_dokumen_peserta x'.$filter, $unitCode, $academicYear) as $row) {
         $documents[$row['id_pendaftaran']][$row['jenis_dokumen']] = $row['diunggah_pada'];
+        if ($hasDrive && $row['drive_file_id'] && $row['drive_source_path'] === $row['path_file']) {
+            $documentFiles[$row['id_pendaftaran']][$row['jenis_dokumen']] = $row['drive_file_id'];
+        }
+    }
+    $participantFolders = [];
+    if ($hasDrive && ppdb_table_exists($conn, 'tb_google_drive_folders')) {
+        // Dicocokkan di PHP: collation tabel folder bisa berbeda dengan tb_pendaftaran.
+        $folderResult = mysqli_query($conn, "SELECT folder_key,folder_id FROM tb_google_drive_folders WHERE folder_key LIKE 'peserta:%'");
+        while ($folderResult && $folder = mysqli_fetch_assoc($folderResult)) {
+            $participantFolders[substr($folder['folder_key'], 8)] = $folder['folder_id'];
+        }
     }
     $payments = [];
     foreach (google_sheets_child_rows($conn, 'SELECT x.* FROM tb_bukti_pembayaran x'.$filter.' ORDER BY x.id', $unitCode, $academicYear) as $row) {
@@ -258,6 +274,9 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
         ['Administrasi sekolah', 'NIPD', 'nipd', 110],
         ['Administrasi sekolah', 'Tanggal masuk sekolah', '_tanggal_masuk', 120]
     );
+    if ($hasDrive) {
+        $columns[] = ['Dokumen', 'Folder dokumen (Google Drive)', '_doc_folder', 150];
+    }
     foreach (GOOGLE_SHEETS_DOCUMENT_LABELS as $type => $label) {
         $columns[] = ['Dokumen', $label, '_doc_'.$type, 150];
     }
@@ -266,6 +285,7 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
         ['Pembayaran', 'Nomor referensi bukti', '_pay_ref', 150],
         ['Pembayaran', 'Status bukti pembayaran', '_pay_status', 150],
         ['Pembayaran', 'Bukti diunggah', '_pay_uploaded', 130],
+        ['Pembayaran', 'File bukti transfer', '_pay_file', 130],
         ['Pembayaran', 'Bukti diperiksa', '_pay_checked', 130],
         ['Pembayaran', 'Catatan admin', '_pay_note', 220]
     );
@@ -285,6 +305,7 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
     $proofLabels = ['menunggu_verifikasi' => 'Menunggu verifikasi', 'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak'];
 
     $rows = [];
+    $links = [];
     foreach ($registrations as $index => $registration) {
         $id = $registration['id_pendaftaran'];
         // Kolom di tb_pendaftaran diutamakan; sisanya dari detail Dapodik dan profil orang tua.
@@ -309,9 +330,25 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
         $record['_tgl_lahir'] = google_sheets_date($registration['tgl_lahir']);
         $record['_pendaftar'] = ppdb_pendaftar_label($registration['pendaftar']);
         $record['_tanggal_masuk'] = google_sheets_date($record['tanggal_masuk_sekolah'] ?? null);
+        $rowLinks = [];
         foreach (array_keys(GOOGLE_SHEETS_DOCUMENT_LABELS) as $type) {
             $uploaded = $documents[$id][$type] ?? null;
             $record['_doc_'.$type] = $uploaded ? 'Ada · '.google_sheets_date($uploaded) : 'Belum';
+            if (isset($documentFiles[$id][$type])) {
+                $record['_doc_'.$type] = 'Lihat · '.google_sheets_date($uploaded);
+                $rowLinks['_doc_'.$type] = google_drive_file_url($documentFiles[$id][$type]);
+            }
+        }
+        if (isset($participantFolders[$id])) {
+            $record['_doc_folder'] = 'Buka folder';
+            $rowLinks['_doc_folder'] = google_drive_folder_url($participantFolders[$id]);
+        } else {
+            $record['_doc_folder'] = '';
+        }
+        $record['_pay_file'] = $payment ? 'Belum di Drive' : '';
+        if ($hasDrive && $payment && $payment['drive_file_id'] && $payment['drive_source_path'] === $payment['path_file']) {
+            $record['_pay_file'] = 'Lihat bukti';
+            $rowLinks['_pay_file'] = google_drive_file_url($payment['drive_file_id']);
         }
         $record['_biaya'] = $registration['biaya_pendaftaran'] === null ? '' : number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.');
         $record['_pay_ref'] =$payment['nomor_referensi'] ?? '';
@@ -332,9 +369,10 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
             $values[] = (string) ($record[$key] ?? '');
         }
         $rows[] = $values;
+        $links[] = $rowLinks;
     }
 
-    return ['columns' => $columns, 'rows' => $rows];
+    return ['columns' => $columns, 'rows' => $rows, 'links' => $links];
 }
 
 function google_sheets_color(string $hex): array
@@ -515,6 +553,24 @@ function google_sheets_rebuild_unit(mysqli $conn, string $unitCode, string $acad
                 $groupStart = $index + 1;
             }
         }
+        // Tautan Google Drive pada sel dokumen dan bukti transfer.
+        $columnIndexes = array_flip(array_column($columns, 2));
+        foreach ($table['links'] as $rowIndex => $rowLinks) {
+            foreach ($rowLinks as $key => $uri) {
+                if (!isset($columnIndexes[$key])) {
+                    continue;
+                }
+                $format[] = ['updateCells' => [
+                    'start' => ['sheetId' => $sheetId, 'rowIndex' => $rowIndex + 2, 'columnIndex' => $columnIndexes[$key]],
+                    'rows' => [['values' => [['userEnteredFormat' => ['textFormat' => [
+                        'link' => ['uri' => $uri],
+                        'underline' => true,
+                        'foregroundColor' => google_sheets_color('#1a5fb4'),
+                    ]]]]]],
+                    'fields' => 'userEnteredFormat.textFormat',
+                ]];
+            }
+        }
         $service->spreadsheets->batchUpdate($spreadsheetId, new \Google\Service\Sheets\BatchUpdateSpreadsheetRequest(['requests' => $format]));
         return $rowCount;
     } finally {
@@ -580,6 +636,8 @@ function sync_google_sheets_registration(mysqli $conn, string $registrationId): 
     if (!$registration) {
         return false;
     }
+    // Salin berkas peserta ke Drive lebih dulu (maks. 20 detik) agar tautannya ikut tertulis.
+    google_drive_sync_safely($conn, static fn () => google_drive_sync_registration($conn, $registrationId, microtime(true) + 20));
     try {
         google_sheets_rebuild_unit($conn, $registration['kode_unit'], $registration['th_ajaran']);
         google_sheets_mark_unit($conn, $registration['kode_unit'], $registration['th_ajaran'], null);
@@ -606,7 +664,10 @@ function google_sheets_sync_units(mysqli $conn, bool $all = false): array
         $sql = "SELECT DISTINCT p.kode_unit,p.th_ajaran FROM tb_google_sync_outbox o JOIN tb_pendaftaran p ON p.id_pendaftaran=o.id_pendaftaran WHERE o.status IN ('pending','failed')";
     }
     $result = ['synced' => 0, 'failed' => 0];
+    // Unggahan Drive dibatasi 90 detik per permintaan; sisanya dilanjutkan pada sinkronisasi berikutnya.
+    $driveDeadline = microtime(true) + 90;
     foreach (mysqli_fetch_all(mysqli_query($conn, $sql), MYSQLI_ASSOC) as $unit) {
+        google_drive_sync_safely($conn, static fn () => google_drive_sync_unit($conn, $unit['kode_unit'], $unit['th_ajaran'], $driveDeadline));
         try {
             google_sheets_rebuild_unit($conn, $unit['kode_unit'], $unit['th_ajaran']);
             google_sheets_mark_unit($conn, $unit['kode_unit'], $unit['th_ajaran'], null);
@@ -618,6 +679,20 @@ function google_sheets_sync_units(mysqli $conn, bool $all = false): array
         }
     }
     return $result;
+}
+
+/** Jalankan unggahan Drive tanpa menggagalkan sinkronisasi spreadsheet; galat dicatat untuk dasbor. */
+function google_drive_sync_safely(mysqli $conn, callable $upload): void
+{
+    try {
+        $upload();
+        if (google_drive_account($conn)) {
+            google_drive_record_error($conn, null);
+        }
+    } catch (Throwable $exception) {
+        error_log('SPMB Google Drive upload failed ('.get_class($exception).'): '.$exception->getMessage());
+        google_drive_record_error($conn, google_drive_error_message($exception));
+    }
 }
 
 function enqueue_google_sheets_registration(mysqli $conn, string $registrationId): void

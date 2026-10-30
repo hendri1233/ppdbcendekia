@@ -252,6 +252,13 @@ if ($adminUnitCode === '') {
     }
     $syncFlash = $_SESSION['google_sheets_sync_result'] ?? null;
     unset($_SESSION['google_sheets_sync_result']);
+    // Salinan dokumen peserta di Google Drive yayasan (migrasi 029 + OAuth).
+    $driveMigrated = ppdb_table_exists($conn, 'tb_google_drive_akun');
+    $driveConfigured = google_drive_configured($conn);
+    $driveAccount = $driveConfigured ? google_drive_account($conn) : null;
+    $driveRootFolder = $driveAccount ? google_drive_cached_folder($conn, 'root') : '';
+    $driveFlash = $_SESSION['google_drive_flash'] ?? null;
+    unset($_SESSION['google_drive_flash']);
 }
 
 $latestSql = 'SELECT p.id_pendaftaran,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.status_ppdb,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'.($adminUnitCode === '' ? '' : " WHERE p.kode_unit='".$escapedUnitCode."'").' ORDER BY p.tgl_daftar DESC,p.id_pendaftaran DESC LIMIT 8';
@@ -533,6 +540,26 @@ require 'admin_header.php';
                     </ul>
                 <?php } ?>
                 <?php if ($lastSyncFailure !== '') { ?><p class="sheet-sync-error" role="status">Status: <?php echo h($lastSyncFailure); ?></p><?php } ?>
+                <div class="drive-connect" id="google-drive">
+                    <h3>Dokumen di Google Drive</h3>
+                    <?php if ($driveFlash) { ?><p class="<?php echo $driveFlash['ok'] ? 'drive-connect__ok' : 'sheet-sync-error'; ?>" role="status"><?php echo h($driveFlash['text']); ?></p><?php } ?>
+                    <?php if (!$driveMigrated) { ?>
+                        <p>Jalankan migrasi <code>029_google_drive_dokumen.sql</code> untuk menyalin foto, KK, KTP, akta, NISN, dan bukti transfer ke Google Drive.</p>
+                    <?php } elseif (!$driveConfigured) { ?>
+                        <p>Isi <code>GOOGLE_OAUTH_CLIENT_ID</code> dan <code>GOOGLE_OAUTH_CLIENT_SECRET</code> di <code>.env</code>. Alamat callback OAuth: <code><?php echo h(google_drive_redirect_uri()); ?></code></p>
+                    <?php } elseif (!$driveAccount) { ?>
+                        <p>Hubungkan akun Google yayasan agar dokumen peserta disalin ke folder Drive per unit dan ditautkan di spreadsheet.</p>
+                        <a class="button-primary" href="google-drive-auth.php">Hubungkan Google Drive</a>
+                    <?php } else { ?>
+                        <p>Terhubung sebagai <strong><?php echo h($driveAccount['email']); ?></strong>.<?php if ($driveRootFolder !== '') { ?> <a href="<?php echo h(google_drive_folder_url($driveRootFolder)); ?>" target="_blank" rel="noopener noreferrer">Buka folder <?php echo h(GOOGLE_DRIVE_ROOT_FOLDER); ?></a><?php } ?></p>
+                        <?php if (!empty($driveAccount['galat_terakhir'])) { ?><p class="sheet-sync-error" role="status">Drive: <?php echo h($driveAccount['galat_terakhir']); ?></p><?php } ?>
+                        <form action="google-drive-auth.php" method="post" onsubmit="return confirm('Putuskan Google Drive? Dokumen baru tidak lagi disalin ke Drive.');">
+                            <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                            <input type="hidden" name="action" value="disconnect">
+                            <button class="button-secondary" type="submit">Putuskan Google Drive</button>
+                        </form>
+                    <?php } ?>
+                </div>
                 <dl class="sync-stats">
                     <div><dt>Tersinkron</dt><dd><?php echo $syncCounts['synced']; ?></dd></div>
                     <div><dt>Antre</dt><dd><?php echo $syncCounts['pending']; ?></dd></div>
