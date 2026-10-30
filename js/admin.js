@@ -104,6 +104,15 @@
         });
         mobileNav.addEventListener('click', (event) => {
             if (event.target.closest('a')) closeMenu();
+            if (event.target.closest('[data-nav-close]')) {
+                closeMenu();
+                menuToggle.focus();
+            }
+        });
+        document.querySelector('[data-nav-backdrop]')?.addEventListener('click', closeMenu);
+        document.querySelector('[data-tabbar-menu]')?.addEventListener('click', () => {
+            menuToggle.click();
+            mobileNav.querySelector('[data-nav-search]')?.focus({ preventScroll: true });
         });
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && mobileNav.classList.contains('is-open')) {
@@ -112,6 +121,55 @@
             }
         });
     }
+
+    // --- Pencarian menu di sidebar dan laci ponsel ---
+    for (const search of document.querySelectorAll('[data-nav-search]')) {
+        const root = search.closest('.admin-sidebar, .admin-mobile-nav');
+        const empty = root?.querySelector('[data-nav-empty]');
+        search.addEventListener('input', () => {
+            const term = search.value.trim().toLowerCase();
+            let visible = 0;
+            let group = null;
+            let groupHasMatch = false;
+            const finishGroup = () => { if (group) group.hidden = term !== '' && !groupHasMatch; };
+            for (const node of root.querySelectorAll('.admin-nav__group, nav > a, .admin-nav > a, .sidebar-bottom > a, nav > form, .sidebar-bottom > form')) {
+                if (node.classList.contains('admin-nav__group')) {
+                    finishGroup();
+                    group = node;
+                    groupHasMatch = false;
+                    continue;
+                }
+                const match = term === '' || node.textContent.toLowerCase().includes(term);
+                node.hidden = !match;
+                if (match) {
+                    visible++;
+                    groupHasMatch = true;
+                }
+            }
+            finishGroup();
+            if (empty) empty.hidden = visible > 0;
+        });
+        search.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                const first = [...root.querySelectorAll('a[href]')].find((link) => !link.hidden && !link.closest('[hidden]') && !link.closest('.mobile-nav-head') && !link.classList.contains('admin-brand'));
+                if (first) {
+                    event.preventDefault();
+                    first.click();
+                }
+            }
+        });
+    }
+    // Tombol "/" membuka pencarian menu di sidebar desktop.
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
+        const target = event.target;
+        if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        const sidebarSearch = document.querySelector('.admin-sidebar [data-nav-search]');
+        if (sidebarSearch && sidebarSearch.offsetParent !== null) {
+            event.preventDefault();
+            sidebarSearch.focus();
+        }
+    });
 
     // --- Konfirmasi sebelum menghapus data yang tidak dapat dikembalikan ---
     for (const form of document.querySelectorAll('form[data-confirm]')) {

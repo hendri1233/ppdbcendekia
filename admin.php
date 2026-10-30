@@ -4,6 +4,7 @@ require_admin();
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
 require_once 'web_stats.php';
+require_once __DIR__.'/admin-partials.php';
 
 $adminUnitCode = ppdb_is_super_admin() ? '' : (string) $_SESSION['admin_unit_code'];
 $escapedUnitCode = mysqli_real_escape_string($conn, $adminUnitCode);
@@ -229,6 +230,8 @@ foreach ($unitStageRows as $row) {
 $syncCounts = ['pending' => 0, 'failed' => 0, 'synced' => 0];
 $lastSyncFailure = '';
 $sheetsCredentialsReady = false;
+$sheetsServiceAccount = '';
+$unitSheets = [];
 $syncFlash = null;
 if ($adminUnitCode === '') {
     $syncStatusResult = mysqli_query($conn, 'SELECT status,COUNT(*) AS total FROM tb_google_sync_outbox GROUP BY status');
@@ -256,6 +259,33 @@ $latestRegistrations = mysqli_query($conn, $latestSql);
 $attentionSql = "SELECT p.id_pendaftaran,p.nm_peserta,p.status_ppdb,p.tgl_daftar,p.waktu_daftar,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.status_ppdb IN ('menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi')".$registrationScope." ORDER BY FIELD(p.status_ppdb,'menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi'),p.waktu_daftar ASC LIMIT 8";
 $attentionQuery = mysqli_query($conn, $attentionSql);
 
+// Data tampilan dasbor (hanya membaca angka yang sudah dihitung di atas).
+$todayProgress = end($dailyProgress) ?: ['day' => '', 'full' => '', 'visits' => 0, 'registrants' => 0];
+$recentRegistrants = array_column(array_slice($dailyProgress, -7), 'registrants');
+$previousRegistrants = array_column(array_slice($dailyProgress, -14, 7), 'registrants');
+$weekRegistrants = array_sum($recentRegistrants);
+$weekDelta = $weekRegistrants - array_sum($previousRegistrants);
+$activeRegistrations = $totalRegistrations - (int) ($funnelCounts['data_lama'] ?? 0);
+$acceptanceRate = $activeRegistrations > 0 ? (int) round($acceptedCount / $activeRegistrations * 100) : 0;
+$actionableBreakdown = [];
+foreach (['menunggu_kontak', 'pembayaran_diperiksa', 'pembayaran_terverifikasi', 'formulir_terisi'] as $key) {
+    $actionableBreakdown[] = ['key' => $key, 'label' => ppdb_admin_status_meta($key)['label'], 'count' => $funnelCounts[$key] ?? 0];
+}
+$statusMix = [];
+foreach (array_merge(array_column($funnelStages, 'key'), ['diterima', 'daftar_tunggu', 'ditolak']) as $key) {
+    $count = $funnelCounts[$key] ?? 0;
+    if ($count > 0) {
+        $meta = ppdb_admin_status_meta($key);
+        $statusMix[] = ['key' => $key, 'label' => $meta['label'], 'tone' => $meta['tone'], 'count' => $count];
+    }
+}
+$dashboardData = [
+    'days' => array_map(static fn (array $day): array => [
+        'label' => $day['label'], 'full' => $day['day'].', '.$day['full'], 'visits' => $day['visits'], 'registrants' => $day['registrants'],
+    ], $dailyProgress),
+    'mix' => $statusMix,
+];
+
 $activeAdminPage = 'dashboard';
 $adminPageTitle = 'Dashboard';
 $adminPageDescription = 'Ringkasan antrean, kapasitas unit, dan performa penerimaan peserta didik baru.';
@@ -265,45 +295,107 @@ require 'admin_header.php';
     <?php if (isset($_GET['admin_created'])) { ?><div class="alert-success" role="status">Akun admin baru berhasil dibuat.</div><?php } ?>
     <?php if ($syncFlash) { ?><div class="<?php echo $syncFlash['failed'] > 0 ? 'alert-error' : 'alert-success'; ?>" role="status">Sinkronisasi selesai: <?php echo (int) $syncFlash['synced']; ?> spreadsheet unit berhasil, <?php echo (int) $syncFlash['failed']; ?> perlu dicoba ulang.</div><?php } ?>
 
-    <header class="page-hero">
+    <header class="page-hero dash-hero">
         <div class="page-hero__text">
             <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'Penerimaan peserta didik baru' : 'Penerimaan · '.h(ppdb_unit_display_name($_SESSION['admin_unit_name'] ?? 'Unit')); ?></p>
             <h1>Selamat datang kembali, <?php echo h(explode(' ', (string) ($_SESSION['admin_name'] ?? 'Administrator'))[0]); ?>.</h1>
             <p><?php echo $actionableTotal > 0
                 ? $actionableTotal.' peserta menunggu tindakan Anda. Mulai dari data yang paling lama menunggu.'
                 : 'Tidak ada peserta yang menunggu tindakan saat ini. Semua alur berjalan lancar.'; ?></p>
+            <ul class="dash-hero__today" aria-label="Ringkasan hari ini">
+                <li><?php echo ppdb_admin_icon('clock'); ?><span><?php echo h(trim($todayProgress['day'].', '.$todayProgress['full'], ', ')); ?></span></li>
+                <li><?php echo ppdb_admin_icon('users'); ?><span><b><?php echo (int) $todayProgress['registrants']; ?></b> pendaftar baru hari ini</span></li>
+                <li><?php echo ppdb_admin_icon('external'); ?><span><b><?php echo (int) $todayProgress['visits']; ?></b> akses tautan hari ini</span></li>
+            </ul>
         </div>
         <div class="page-hero__actions">
             <?php if ($actionableTotal > 0) { ?>
                 <a class="button-primary" href="daftar_peserta.php?status=menunggu_kontak">Proses antrean</a>
             <?php } else { ?>
-                <a class="button-secondary" href="daftar_peserta.php">Lihat semua peserta</a>
+                <a class="button-primary" href="daftar_peserta.php">Lihat semua peserta</a>
             <?php } ?>
+            <a class="button-secondary" href="daftar_peserta.php"><?php echo ppdb_admin_icon('registrations'); ?><span>Data peserta</span></a>
+            <?php if ($adminUnitCode === '') { ?><a class="button-secondary" href="pengaturan-ppdb.php"><?php echo ppdb_admin_icon('quota'); ?><span>Kuota</span></a><?php } ?>
         </div>
     </header>
 
     <section class="stats-grid" aria-label="Statistik utama">
         <article class="stat-card is-primary">
+            <span class="stat-icon" aria-hidden="true"><?php echo ppdb_admin_icon('users'); ?></span>
             <span class="stat-label">Total pendaftar</span>
-            <strong class="stat-value"><?php echo $totalRegistrations; ?></strong>
-            <span class="stat-note">Seluruh tahun ajaran</span>
+            <strong class="stat-value" data-count="<?php echo $totalRegistrations; ?>"><?php echo $totalRegistrations; ?></strong>
+            <span class="stat-note"><?php echo $weekRegistrants; ?> dalam 7 hari terakhir <span class="stat-trend <?php echo $weekDelta > 0 ? 'is-up' : ($weekDelta < 0 ? 'is-down' : 'is-flat'); ?>" title="Dibanding 7 hari sebelumnya"><?php echo ($weekDelta > 0 ? '+' : '').$weekDelta; ?> vs pekan lalu</span></span>
+            <svg class="stat-spark" data-spark="<?php echo h(implode(',', array_column(array_slice($dailyProgress, -14), 'registrants'))); ?>" viewBox="0 0 120 36" preserveAspectRatio="none" aria-hidden="true"></svg>
         </article>
         <article class="stat-card<?php echo $actionableTotal > 0 ? ' is-alert' : ''; ?>">
+            <span class="stat-icon" aria-hidden="true"><?php echo ppdb_admin_icon('inbox'); ?></span>
             <span class="stat-label">Menunggu tindakan</span>
-            <strong class="stat-value"><?php echo $actionableTotal; ?></strong>
+            <strong class="stat-value" data-count="<?php echo $actionableTotal; ?>"><?php echo $actionableTotal; ?></strong>
             <span class="stat-note">Perlu diproses admin</span>
+            <span class="stat-segments" role="img" aria-label="<?php echo h(implode(', ', array_map(static fn ($item) => $item['label'].' '.$item['count'], $actionableBreakdown))); ?>">
+                <?php foreach ($actionableBreakdown as $item) { ?><span class="st-<?php echo h($item['key']); ?>" style="flex-grow: <?php echo max(0, $item['count']); ?>" title="<?php echo h($item['label'].': '.$item['count']); ?>"></span><?php } ?>
+            </span>
         </article>
         <article class="stat-card is-success">
+            <span class="stat-icon" aria-hidden="true"><?php echo ppdb_admin_icon('check'); ?></span>
             <span class="stat-label">Diterima</span>
-            <strong class="stat-value"><?php echo $acceptedCount; ?></strong>
+            <strong class="stat-value" data-count="<?php echo $acceptedCount; ?>"><?php echo $acceptedCount; ?></strong>
             <span class="stat-note">Peserta lolos penerimaan</span>
+            <span class="stat-ring" style="--p: <?php echo $acceptanceRate; ?>" role="img" aria-label="<?php echo $acceptanceRate; ?>% pendaftar aktif diterima"><b><?php echo $acceptanceRate; ?>%</b></span>
         </article>
-        <article class="stat-card">
+        <article class="stat-card is-waitlist">
+            <span class="stat-icon" aria-hidden="true"><?php echo ppdb_admin_icon('clock'); ?></span>
             <span class="stat-label">Daftar tunggu</span>
-            <strong class="stat-value"><?php echo $waitlistCount; ?></strong>
+            <strong class="stat-value" data-count="<?php echo $waitlistCount; ?>"><?php echo $waitlistCount; ?></strong>
             <span class="stat-note">Menunggu kursi kosong</span>
         </article>
     </section>
+
+    <div class="dashboard-grid dash-analytics">
+        <section class="panel trend-panel" data-trend>
+            <div class="panel-header">
+                <div><h2>Tren pendaftaran</h2><span class="panel-subtitle">Pendaftar baru dan akses tautan pendaftaran per hari</span></div>
+                <div class="range-toggle" role="group" aria-label="Rentang tren">
+                    <button type="button" data-trend-range="7">7 hari</button>
+                    <button type="button" data-trend-range="14" aria-pressed="true">14 hari</button>
+                    <button type="button" data-trend-range="30">30 hari</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <dl class="trend-summary">
+                    <div><dt><span class="trend-key is-registrants" aria-hidden="true"></span>Pendaftar baru</dt><dd data-trend-total="registrants">0</dd></div>
+                    <div><dt><span class="trend-key is-visits" aria-hidden="true"></span>Akses tautan</dt><dd data-trend-total="visits">0</dd></div>
+                    <div><dt>Konversi</dt><dd data-trend-total="conversion">&ndash;</dd></div>
+                </dl>
+                <div class="trend-chart" data-trend-chart role="img" aria-label="Grafik tren pendaftar baru dan akses tautan per hari"></div>
+            </div>
+        </section>
+
+        <section class="panel mix-panel">
+            <div class="panel-header">
+                <div><h2>Komposisi status</h2><span class="panel-subtitle">Posisi seluruh pendaftar aktif saat ini</span></div>
+            </div>
+            <div class="panel-body">
+                <?php if (!$statusMix) { ?>
+                    <p class="panel-note">Belum ada data untuk ditampilkan.</p>
+                <?php } else { ?>
+                    <div class="mix-chart">
+                        <div class="mix-donut" data-mix-donut role="img" aria-label="Diagram komposisi status pendaftar"></div>
+                        <ul class="mix-legend">
+                            <?php foreach ($statusMix as $index => $item) { ?>
+                                <li data-mix-item="<?php echo $index; ?>" tabindex="0">
+                                    <span class="mix-swatch st-<?php echo h($item['key']); ?>" aria-hidden="true"></span>
+                                    <span class="mix-label"><?php echo h($item['label']); ?></span>
+                                    <b><?php echo $item['count']; ?></b>
+                                </li>
+                            <?php } ?>
+                        </ul>
+                    </div>
+                <?php } ?>
+            </div>
+        </section>
+    </div>
+    <script type="application/json" id="dashboard-data"><?php echo json_encode($dashboardData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>
 
     <div class="dashboard-grid">
         <section class="panel">
@@ -653,4 +745,5 @@ require 'admin_header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="js/admin-progress.js?v=<?php echo (int) @filemtime(__DIR__.'/js/admin-progress.js'); ?>" defer></script>
 <script src="js/admin-map.js?v=<?php echo (int) @filemtime(__DIR__.'/js/admin-map.js'); ?>" defer></script>
+<script src="js/admin-dashboard.js?v=<?php echo (int) @filemtime(__DIR__.'/js/admin-dashboard.js'); ?>" defer></script>
 <?php require 'admin_footer.php'; ?>

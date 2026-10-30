@@ -34,11 +34,12 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
     <title><?php echo h($adminPageTitle); ?> · Panel Admin SPMB Cendekia Takengon</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/admin.css'); ?>">
     <link rel="stylesheet" href="css/cms-admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/cms-admin.css'); ?>">
-    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="css/admin-theme.css?v=<?php echo (int) filemtime(__DIR__.'/css/admin-theme.css'); ?>">
+    <meta name="theme-color" content="#0b1d45">
     <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="icon" type="image/png" sizes="48x48" href="img/favicons/favicon-48x48.png">
     <link rel="icon" type="image/png" sizes="16x16" href="img/favicons/favicon-16x16.png">
@@ -66,6 +67,13 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
             </span>
         </a>
 
+        <label class="nav-search">
+            <?php echo ppdb_admin_icon('search'); ?>
+            <span class="visually-hidden">Cari menu</span>
+            <input type="search" placeholder="Cari menu…" autocomplete="off" data-nav-search>
+            <kbd aria-hidden="true">/</kbd>
+        </label>
+
         <nav class="admin-nav" aria-label="Navigasi utama dashboard">
             <?php foreach ($navigationGroups as $groupLabel => $navGroupItems) { ?>
                 <p class="admin-nav__group"><?php echo h($groupLabel); ?></p>
@@ -76,6 +84,7 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
                     </a>
                 <?php } ?>
             <?php } ?>
+            <p class="nav-search-empty" data-nav-empty hidden>Menu tidak ditemukan.</p>
         </nav>
 
         <div class="sidebar-bottom">
@@ -130,7 +139,26 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
             </div>
         </header>
 
+        <div class="admin-nav-backdrop" data-nav-backdrop aria-hidden="true"></div>
         <nav class="admin-mobile-nav" id="admin-mobile-nav" aria-label="Navigasi dashboard ponsel" data-mobile-nav>
+            <div class="mobile-nav-head">
+                <a class="admin-brand" href="admin.php">
+                    <span class="admin-brand-logo"><img src="img/logo-display.png" alt="" width="36" height="36"></span>
+                    <span class="admin-brand-copy"><strong>Wakaf Cendekia</strong><small>Panel SPMB</small></span>
+                </a>
+                <button class="mobile-nav-close" type="button" aria-label="Tutup navigasi" data-nav-close>
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                </button>
+            </div>
+            <div class="mobile-nav-user">
+                <span class="user-initial" aria-hidden="true"><?php echo h(strtoupper(substr($adminName, 0, 1))); ?></span>
+                <span><strong><?php echo h($adminName); ?></strong><small><?php echo h($adminRoleLabel); ?></small></span>
+            </div>
+            <label class="nav-search">
+                <?php echo ppdb_admin_icon('search'); ?>
+                <span class="visually-hidden">Cari menu</span>
+                <input type="search" placeholder="Cari menu…" autocomplete="off" data-nav-search>
+            </label>
             <?php foreach ($navigationGroups as $groupLabel => $navGroupItems) { ?>
                 <p class="admin-nav__group"><?php echo h($groupLabel); ?></p>
                 <?php foreach ($navGroupItems as $navItem) { ?>
@@ -146,6 +174,20 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                 <button type="submit"><?php echo ppdb_admin_icon('logout'); ?><span>Keluar</span></button>
             </form>
+            <p class="nav-search-empty" data-nav-empty hidden>Menu tidak ditemukan.</p>
+        </nav>
+
+        <nav class="admin-tabbar" aria-label="Pintasan navigasi">
+            <?php foreach (array_slice($navigation, 0, 3) as $navItem) { ?>
+                <a href="<?php echo h($navItem['href']); ?>"<?php echo $activeAdminPage === $navItem['key'] ? ' aria-current="page"' : ''; ?>>
+                    <?php echo ppdb_admin_icon($navItem['icon']); ?>
+                    <span><?php echo explode(' &amp; ', $navItem['label'])[0]; ?></span>
+                </a>
+            <?php } ?>
+            <button type="button" data-tabbar-menu aria-controls="admin-mobile-nav">
+                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                <span>Menu</span>
+            </button>
         </nav>
 
         <main class="admin-main" id="admin-utama">
