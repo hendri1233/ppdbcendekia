@@ -207,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $parsedSheets[] = [$sheetId, $sheetUnit, $sheetYear];
         }
         if ($error === '' && !ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'google_spreadsheet_id')) {
-            $error = 'Jalankan migrasi 027_spreadsheet_per_unit.sql sebelum menyimpan spreadsheet unit.';
+            $error = 'Jalankan migrasi 028_spreadsheet_per_unit.sql sebelum menyimpan spreadsheet unit.';
         }
         if ($error === '') {
             $saveSheet = mysqli_prepare($conn, 'UPDATE tb_pengaturan_ppdb SET google_spreadsheet_id=? WHERE kode_unit=? AND th_ajaran=?');
