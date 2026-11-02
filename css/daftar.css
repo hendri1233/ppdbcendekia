@@ -3339,3 +3339,30 @@ html.brochure-open{overflow:hidden}
     gap: 6px;
     margin-top: 12px;
 }
+
+/* Radio tidak mewarisi ukuran dan lingkar fokus kolom isian; pilihan cukup ditandai bingkai kartunya. */
+body.page-daftar .field .radio-option input[type="radio"],
+body.page-daftar .field .radio-option input[type="radio"]:hover,
+body.page-daftar .field .radio-option input[type="radio"]:focus {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    min-height: 16px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    outline: none;
+    box-shadow: none;
+    transition: none;
+}
+
+body.page-daftar .radio-option {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Tetap terlihat untuk pengguna keyboard. */
+body.page-daftar .radio-option:has(input:focus-visible) {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+}
