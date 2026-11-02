@@ -227,6 +227,48 @@
     if (input.value !== "") sync.call(input);
   }
 
+  // Unit SMP: pilih jalur dulu sebelum isian data awal; jalur prestasi membuka isian tambahan.
+  const jalurField = document.querySelector("[data-jalur-field]");
+  const prestasiSection = document.querySelector("[data-prestasi-section]");
+  const initialFields = document.querySelector("[data-initial-fields]");
+  function updatePrestasiConditions() {
+    if (!prestasiSection) return;
+    const active = !prestasiSection.hidden;
+    const blocks = prestasiSection.querySelectorAll("[data-prestasi-when]");
+    for (const block of blocks) {
+      const checked = prestasiSection.querySelector('input[name="' + block.dataset.prestasiWhen + '"]:checked');
+      block.hidden = !checked || checked.value !== block.dataset.prestasiIs;
+    }
+    for (const control of prestasiSection.querySelectorAll("input, textarea")) {
+      const shown = active && !control.closest("[data-prestasi-when][hidden]");
+      control.disabled = !shown;
+      control.required = shown && control.hasAttribute("data-prestasi-required");
+    }
+  }
+  function updateJalur() {
+    if (!externalRoute || !jalurField) return;
+    const option = externalRoute.selectedOptions[0];
+    const isSmp = Boolean(option && option.dataset.jenjang === "SMP");
+    const radios = jalurField.querySelectorAll('input[name="jalur_seleksi"]');
+    jalurField.hidden = !isSmp;
+    let selected = "";
+    for (const radio of radios) {
+      radio.disabled = !isSmp;
+      radio.required = isSmp;
+      if (!isSmp) radio.checked = false;
+      if (radio.checked) selected = radio.value;
+    }
+    if (initialFields) initialFields.hidden = isSmp && selected === "";
+    if (prestasiSection) prestasiSection.hidden = !(isSmp && selected === "prestasi");
+    updatePrestasiConditions();
+  }
+  if (jalurField) {
+    jalurField.addEventListener("change", updateJalur);
+    if (externalRoute) externalRoute.addEventListener("change", updateJalur);
+    if (prestasiSection) prestasiSection.addEventListener("change", updatePrestasiConditions);
+    updateJalur();
+  }
+
   // Tandai isian yang sudah terisi agar progres terlihat saat menggulir.
   for (const field of document.querySelectorAll(".field[data-field]")) {
     const control = field.querySelector("input, select");

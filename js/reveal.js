@@ -44,7 +44,7 @@
   const form = document.getElementById("form-utama");
   if (form) {
     const required = Array.from(form.querySelectorAll("[required]")).filter(
-      (element) => element.type !== "hidden" && element.type !== "checkbox",
+      (element) => !["hidden", "checkbox", "radio", "file"].includes(element.type),
     );
     const counter = document.querySelector("[data-progress-count]");
     if (counter && required.length) {

@@ -21,6 +21,7 @@ const GOOGLE_DRIVE_DOCUMENT_NAMES = [
     'akta_lahir' => 'Akta Kelahiran',
     'ktp_ayah' => 'KTP Ayah',
     'ktp_ibu' => 'KTP Ibu',
+    'surat_prestasi' => 'Surat Pengantar Prestasi',
 ];
 
 /** Fitur Drive siap dipakai: migrasi 029 sudah dijalankan dan OAuth client sudah diisi di .env. */

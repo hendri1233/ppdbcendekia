@@ -4,6 +4,7 @@ require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
 require_once 'wablas.php';
 require_once 'formulir_helpers.php';
+require_once 'prestasi_helpers.php';
 require_admin();
 require_once __DIR__ . '/admin-partials.php';
 
@@ -386,6 +387,10 @@ $documentLabels = [
     'ktp_ayah' => 'Scan KTP Ayah',
     'ktp_ibu' => 'Scan KTP Ibu',
 ];
+$selectionData = prestasi_load($conn, $registrationId);
+if (($selectionData['jalur_seleksi'] ?? '') === 'prestasi') {
+    $documentLabels['surat_prestasi'] = 'Surat pengantar prestasi';
+}
 $documents = [];
 $documentQuery = mysqli_prepare($conn, 'SELECT id,jenis_dokumen,nama_file_asli,mime_type,ukuran_byte,diunggah_pada FROM tb_dokumen_peserta WHERE id_pendaftaran=?');
 mysqli_stmt_bind_param($documentQuery, 's', $registrationId);
@@ -693,6 +698,14 @@ require 'admin_header.php';
         </div>
     <?php } ?>
     <div class="detail-grid">
+        <?php if ($selectionData) {
+            $selectionData['jalur_seleksi_label'] = prestasi_jalur_label($selectionData['jalur_seleksi']);
+            $selectionFields = [['Jalur seleksi', 'jalur_seleksi_label']];
+            if ($selectionData['jalur_seleksi'] === 'prestasi') {
+                array_push($selectionFields, ['Prestasi peringkat di kelas', 'jenis_prestasi'], ['Kelas 5 semester 1', 'peringkat_k5_s1'], ['Kelas 5 semester 2', 'peringkat_k5_s2'], ['Kelas 6 semester 1', 'peringkat_k6_s1'], ['Kategori prestasi', 'kategori_hafalan'], ['Jumlah hafalan', 'jumlah_hafalan'], ['Riwayat lomba', 'riwayat_lomba'], ['Lomba yang dimenangkan', 'daftar_lomba']);
+            }
+            render_detail_panel('Jalur pendaftaran SMP', $selectionFields, $selectionData);
+        } ?>
         <?php render_detail_panel('Registrasi awal', [['Kode pendaftaran', 'id_pendaftaran'], ['Tanggal pendaftaran', 'tgl_daftar'], ['Unit pendidikan', 'nama_unit'], ...(!empty($participant['tingkat_kelas']) ? [['Daftar ke jenjang', 'tingkat_kelas']] : []), ['Tahun ajaran', 'th_ajaran'], ['Nomor antrean', 'nomor_antrian'], ['Nama ananda', 'nm_peserta'], ['Tanggal lahir', 'tgl_lahir'], ['Umur ananda terdeteksi berdasarkan Dapodik dari tanggal ' . ($dapodikAge['reference_date'] ?? '-') . ' berumur:', 'umur_dapodik'], ['Jenis kelamin', 'jenis_kelamin'], ['Yang mendaftarkan', 'pendaftar'], ['WhatsApp pendaftar', 'no_hp_pendaftar'], ['WhatsApp ayah', 'no_hp_ayah'], ['WhatsApp ibu', 'no_hp_ibu'], ['Draf formulir lengkap', 'draf_formulir']], $participant); ?>
         <?php if ($revisions || !empty($participant['revisi_dibuka'])) { ?>
         <section class="detail-panel wide revision-history">

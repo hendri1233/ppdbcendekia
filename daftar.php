@@ -4,6 +4,7 @@ require_once 'koneksi.php';
 require_once 'ppdb_material_helpers.php';
 require_once 'google_sheets_sync.php';
 require_once 'web_stats.php';
+require_once 'prestasi_helpers.php';
 start_app_session();
 if (isset($_GET['internal'])) {
     header('Referrer-Policy: no-referrer');
@@ -319,6 +320,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             $errors[] = 'Pilih jenjang tujuan ananda: TK A atau TK B.';
         }
     }
+    // Unit SMP jalur eksternal memilih jalur seleksi; jalur prestasi mengisi data tambahan.
+    $selectionRoute = null;
+    $achievementData = null;
+    if ($routeType === 'eksternal' && $routeOffer && ($routeOffer['jenjang'] ?? '') === 'SMP' && prestasi_is_ready($conn)) {
+        $selectionRoute = trim((string) ($_POST['jalur_seleksi'] ?? ''));
+        if (!in_array($selectionRoute, ['prestasi', 'umum'], true)) {
+            $errors[] = 'Pilih jalur pendaftaran SMP: prestasi atau umum.';
+        } elseif ($selectionRoute === 'prestasi') {
+            [$achievementData, $achievementErrors] = prestasi_validate($_POST, $_FILES);
+            array_push($errors, ...$achievementErrors);
+        }
+    }
     foreach (['no_hp_pendaftar' => 'Nomor WhatsApp pendaftar', 'no_hp_ayah' => 'Nomor WhatsApp ayah', 'no_hp_ibu' => 'Nomor WhatsApp ibu'] as $field => $label) {
         if (!ppdb_is_valid_whatsapp_number(trim($_POST[$field] ?? ''))) {
             $errors[] = $label.' harus berupa nomor Indonesia yang aktif, contoh 081234567890.';
@@ -326,6 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     }
 
     if (!$errors) {
+        $storedLetterPath = null;
         try {
             mysqli_begin_transaction($conn);
             $offerLock = mysqli_prepare($conn, 'SELECT kuota_internal,kuota_eksternal,'.ppdb_route_open_sql($conn, 'internal_dibuka', '').','.ppdb_route_open_sql($conn, 'eksternal_dibuka', '').',nomor_antrian_terakhir FROM tb_pengaturan_ppdb WHERE kode_unit = ? AND th_ajaran = ? FOR UPDATE');
@@ -449,6 +463,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             mysqli_stmt_execute($detailInsert);
             mysqli_stmt_close($detailInsert);
 
+            if ($selectionRoute !== null) {
+                $saveSelection = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET jalur_seleksi=? WHERE id_pendaftaran=?');
+                mysqli_stmt_bind_param($saveSelection, 'ss', $selectionRoute, $registrationId);
+                mysqli_stmt_execute($saveSelection);
+                mysqli_stmt_close($saveSelection);
+            }
+            if ($achievementData !== null) {
+                prestasi_save($conn, $registrationId, $achievementData);
+                $storedLetterPath = prestasi_store_letter($conn, $registrationId, $_FILES['surat_prestasi']);
+            }
+
             enqueue_google_sheets_registration($conn, $registrationId);
             mysqli_commit($conn);
             unset($_SESSION[$internalSessionKey]);
@@ -458,6 +483,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             exit;
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
+            if ($storedLetterPath && is_file($storedLetterPath)) {
+                unlink($storedLetterPath);
+            }
             if ($exception instanceof RuntimeException) {
                 $errors[] = $exception->getMessage();
             } else {
@@ -560,7 +588,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 <?php if (!$openOffers) { ?>
                     <div class="error-summary" role="status"><strong>Pendaftaran eksternal belum tersedia</strong><ul><li>Belum ada kuota eksternal yang dibuka untuk tahun ajaran 2027/2028 atau kuota telah terpenuhi. Silakan hubungi panitia SPMB.</li></ul></div>
                 <?php } ?>
-                <form class="registration-form" id="form-utama" action="daftar.php" method="post" autocomplete="on" novalidate>
+                <form class="registration-form" id="form-utama" action="daftar.php" method="post" enctype="multipart/form-data" autocomplete="on" novalidate>
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <section class="form-section" aria-labelledby="data-title">
                         <div class="section-heading">
@@ -587,8 +615,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                                 <button type="button" class="brochure-trigger" data-brochure-open hidden>Lihat brosur unit</button>
                             </div>
                             <?php render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), $tkSelected, $tkFullLevels); ?>
-                            <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 2); } ?>
+                            <?php
+                            $smpSelected = ($routeOffer['jenjang'] ?? '') === 'SMP';
+                            $selectedJalur = is_string($formValues['jalur_seleksi'] ?? null) ? $formValues['jalur_seleksi'] : '';
+                            if (prestasi_is_ready($conn)) { prestasi_render_jalur_field($selectedJalur, $smpSelected); }
+                            ?>
+                            <div class="initial-fields" data-initial-fields>
+                                <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 2); } ?>
+                            </div>
                         </div>
+                        <?php if (prestasi_is_ready($conn)) { prestasi_render_section($formValues, $smpSelected && $selectedJalur === 'prestasi'); } ?>
                         <label class="consent-check" for="konfirmasi_data">
                             <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
                             <span>Saya memastikan data di atas sudah benar dan dapat dihubungi panitia melalui WhatsApp.</span>

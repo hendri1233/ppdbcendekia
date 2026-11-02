@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/app_helpers.php';
 require_once __DIR__.'/formulir_helpers.php';
+require_once __DIR__.'/prestasi_helpers.php';
 require_once __DIR__.'/google_drive_sync.php';
 
 /*
@@ -257,6 +258,27 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
         ['Registrasi awal', 'WhatsApp ibu', 'no_hp_ibu', 140],
         ['Registrasi awal', 'Alamat saat registrasi', 'alamat', 260]
     );
+    // Unit SMP: jalur seleksi dan isian jalur prestasi (migrasi 030).
+    $achievements = [];
+    $documentLabels = GOOGLE_SHEETS_DOCUMENT_LABELS;
+    $showsSelectionRoute = $jenjang === 'SMP' && prestasi_is_ready($conn);
+    if ($showsSelectionRoute) {
+        foreach (google_sheets_child_rows($conn, 'SELECT x.* FROM tb_prestasi_peserta x'.$filter, $unitCode, $academicYear) as $row) {
+            $achievements[$row['id_pendaftaran']] = $row;
+        }
+        $documentLabels['surat_prestasi'] = 'Surat pengantar prestasi';
+        array_push($columns,
+            ['Jalur SMP', 'Jalur seleksi', '_jalur_seleksi', 110],
+            ['Jalur SMP', 'Prestasi peringkat di kelas', '_pr_jenis_prestasi', 240],
+            ['Jalur SMP', 'Kelas 5 semester 1', '_pr_peringkat_k5_s1', 130],
+            ['Jalur SMP', 'Kelas 5 semester 2', '_pr_peringkat_k5_s2', 130],
+            ['Jalur SMP', 'Kelas 6 semester 1', '_pr_peringkat_k6_s1', 130],
+            ['Jalur SMP', 'Kategori prestasi', '_pr_kategori_hafalan', 220],
+            ['Jalur SMP', 'Jumlah hafalan', '_pr_jumlah_hafalan', 130],
+            ['Jalur SMP', 'Riwayat lomba', '_pr_riwayat_lomba', 240],
+            ['Jalur SMP', 'Lomba yang dimenangkan', '_pr_daftar_lomba', 280]
+        );
+    }
     foreach (formulir_sections_for(null, $jenjang) as $sectionKey => $section) {
         foreach ($section['fields'] as $field) {
             if (($field['type'] ?? 'text') === 'heading' || $field['name'] === 'kelompok_tk') {
@@ -277,7 +299,7 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
     if ($hasDrive) {
         $columns[] = ['Dokumen', 'Folder dokumen (Google Drive)', '_doc_folder', 150];
     }
-    foreach (GOOGLE_SHEETS_DOCUMENT_LABELS as $type => $label) {
+    foreach ($documentLabels as $type => $label) {
         $columns[] = ['Dokumen', $label, '_doc_'.$type, 150];
     }
     array_push($columns,
@@ -331,13 +353,23 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
         $record['_pendaftar'] = ppdb_pendaftar_label($registration['pendaftar']);
         $record['_tanggal_masuk'] = google_sheets_date($record['tanggal_masuk_sekolah'] ?? null);
         $rowLinks = [];
-        foreach (array_keys(GOOGLE_SHEETS_DOCUMENT_LABELS) as $type) {
+        if ($showsSelectionRoute) {
+            $record['_jalur_seleksi'] = prestasi_jalur_label($registration['jalur_seleksi'] ?? null);
+            foreach ($achievements[$id] ?? [] as $key => $value) {
+                $record['_pr_'.$key] = (string) $value;
+            }
+        }
+        foreach (array_keys($documentLabels) as $type) {
             $uploaded = $documents[$id][$type] ?? null;
             $record['_doc_'.$type] = $uploaded ? 'Ada · '.google_sheets_date($uploaded) : 'Belum';
             if (isset($documentFiles[$id][$type])) {
                 $record['_doc_'.$type] = 'Lihat · '.google_sheets_date($uploaded);
                 $rowLinks['_doc_'.$type] = google_drive_file_url($documentFiles[$id][$type]);
             }
+        }
+        // Surat pengantar hanya berlaku untuk jalur prestasi.
+        if (($record['_jalur_seleksi'] ?? '') !== 'Prestasi') {
+            $record['_doc_surat_prestasi'] = '';
         }
         if (isset($participantFolders[$id])) {
             $record['_doc_folder'] = 'Buka folder';

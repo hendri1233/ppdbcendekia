@@ -159,6 +159,7 @@ CREATE TABLE `tb_pendaftaran` (
   `th_ajaran` varchar(20) DEFAULT 'Menunggu',
   `kode_unit` varchar(10) DEFAULT NULL,
   `jalur_pendaftaran` enum('internal','eksternal') NOT NULL DEFAULT 'eksternal',
+  `jalur_seleksi` varchar(10) DEFAULT NULL,
   `undangan_internal_id` bigint unsigned DEFAULT NULL,
   `token_internal_id` bigint unsigned DEFAULT NULL,
   `nomor_antrian` int unsigned DEFAULT NULL,
@@ -315,7 +316,7 @@ CREATE TABLE `tb_bukti_pembayaran` (
 CREATE TABLE `tb_dokumen_peserta` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `id_pendaftaran` char(10) NOT NULL,
-  `jenis_dokumen` enum('foto','nisn','kk','akta_lahir','ktp_ayah','ktp_ibu') NOT NULL,
+  `jenis_dokumen` enum('foto','nisn','kk','akta_lahir','ktp_ayah','ktp_ibu','surat_prestasi') NOT NULL,
   `nama_file_asli` varchar(255) NOT NULL,
   `path_file` varchar(500) NOT NULL,
   `mime_type` varchar(80) NOT NULL,
