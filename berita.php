@@ -40,9 +40,16 @@ if ($slug !== '') {
         exit;
     }
 
-    [$related] = cms_published_news($conn, 4, 0, (string) $article['kode_unit']);
-    $related = array_values(array_filter($related, static fn ($row) => (int) $row['id'] !== (int) $article['id']));
-    $related = array_slice($related, 0, 3);
+    // Kolom kanan: berita unit yang sama lebih dulu, lalu dilengkapi berita terbaru lainnya.
+    [$sameUnit] = $article['kode_unit'] ? cms_published_news($conn, 6, 0, (string) $article['kode_unit']) : [[]];
+    [$latest] = cms_published_news($conn, 6);
+    $related = [];
+    foreach (array_merge($sameUnit, $latest) as $row) {
+        if ((int) $row['id'] !== (int) $article['id']) {
+            $related[(int) $row['id']] = $row;
+        }
+    }
+    $related = array_slice($related, 0, 5);
     $articleUrl = $siteBase.'/'.$articlePath;
 
     public_page_start($conn, [
@@ -63,7 +70,9 @@ if ($slug !== '') {
         ]],
     ]);
     ?>
-    <article class="section article">
+    <div class="section">
+    <div class="shell article-layout<?= $related ? '' : ' article-layout--single' ?>">
+    <article class="article">
         <header class="article__head">
             <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li><a href="berita">Berita</a></li><li aria-current="page"><?= h(cms_plain_excerpt($article['title'], 40)) ?></li></ol>
             <p class="news-meta">
@@ -87,15 +96,28 @@ if ($slug !== '') {
         </div>
     </article>
     <?php if ($related) { ?>
-        <section class="section section--tinted" aria-labelledby="related-title">
-            <div class="shell">
-                <header class="section-head"><h2 id="related-title">Berita lainnya</h2></header>
-                <div class="news-grid">
-                    <?php $noLead = true; foreach ($related as $index => $news) { include __DIR__.'/partials/news-card.php'; } ?>
-                </div>
-            </div>
-        </section>
+        <aside class="article-aside" aria-labelledby="related-title">
+            <h2 id="related-title">Berita lainnya</h2>
+            <ul class="side-news">
+                <?php foreach ($related as $news) { $newsUrl = 'berita/'.rawurlencode($news['slug']); ?>
+                    <li>
+                        <a class="side-news__item" href="<?= h($newsUrl) ?>">
+                            <span class="side-news__thumb">
+                                <?php if ($news['cover_path']) { ?><img src="<?= h($news['cover_path']) ?>" alt="" width="96" height="96" loading="lazy"><?php } else { ?><img class="side-news__logo" src="img/logo-display.png" alt="" width="48" height="48" loading="lazy"><?php } ?>
+                            </span>
+                            <span class="side-news__text">
+                                <strong><?= h($news['title']) ?></strong>
+                                <small><?= h($news['jenjang'] ?: $news['category']) ?> · <?= h(cms_format_datetime_id($news['published_at'])) ?></small>
+                            </span>
+                        </a>
+                    </li>
+                <?php } ?>
+            </ul>
+            <a class="text-link article-aside__all" href="berita">Semua berita</a>
+        </aside>
     <?php } ?>
+    </div>
+    </div>
     <?php
     public_page_end($conn);
     exit;
