@@ -50,7 +50,7 @@ if ($slug !== '') {
         'description' => cms_news_excerpt($article, 160),
         'active' => 'berita',
         'path' => $articlePath,
-        'image' => $article['cover_path'] ?: 'img/wisuda-1200.jpg',
+        'image' => $article['cover_path'] ?: 'img/og-cendekia.jpg',
         'og_type' => 'article',
         'schema' => [[
             '@context' => 'https://schema.org',

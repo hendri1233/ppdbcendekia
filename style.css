@@ -4754,7 +4754,7 @@ dd {
 
 .article__body .prose {
     color: var(--ink);
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--font-sans);
     font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
     line-height: 1.8;
     overflow-wrap: break-word;
@@ -4803,7 +4803,6 @@ dd {
     margin: 1.9em 0;
     padding: 2px 0 2px 22px;
     border-left: 4px solid var(--brand-700);
-    font-family: Georgia, 'Times New Roman', serif;
     font-size: 1.15em;
     font-style: italic;
     line-height: 1.6;
@@ -4819,4 +4818,15 @@ dd {
 
 .article__head .news-meta {
     margin-bottom: 12px;
+}
+
+/* Isi berita rata kiri-kanan; pemenggalan kata mengurangi celah lebar antarkata. */
+.article__lead,
+.article__body .prose p,
+.article__body .prose li,
+.article__body .prose blockquote {
+    text-align: justify;
+    text-justify: inter-word;
+    -webkit-hyphens: auto;
+    hyphens: auto;
 }

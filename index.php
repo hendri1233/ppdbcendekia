@@ -31,13 +31,14 @@ public_page_start($conn, [
     'description' => 'Situs resmi Yayasan Wakaf Cendekia Takengon: profil yayasan, unit KB, TPA, TK, SD, dan SMP Islam terpadu, kurikulum, berita, dan SPMB '.PUBLIC_PPDB_YEAR.'.',
     'active' => 'beranda',
     'path' => '',
-    'image' => $slides[0]['image_path'],
+    'image' => 'img/og-cendekia.jpg',
     'schema' => [[
         '@context' => 'https://schema.org',
         '@type' => 'EducationalOrganization',
         'name' => PUBLIC_SITE_NAME,
         'url' => $siteUrl,
         'logo' => $siteUrl.'/img/logo-display.png',
+        'image' => $siteUrl.'/img/og-cendekia.jpg',
         'telephone' => '+6285184539694',
         'email' => cms_setting($conn, 'contact_email', 'wakafcendekiatakengon@gmail.com'),
         'sameAs' => [

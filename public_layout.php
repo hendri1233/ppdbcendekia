@@ -103,7 +103,7 @@ function public_page_start(mysqli $conn, array $page): void
         : ($page['title'] === PUBLIC_SITE_NAME ? PUBLIC_SITE_NAME : $page['title'].' · '.PUBLIC_SITE_NAME);
     $description = $page['description'] ?? 'Yayasan Wakaf Cendekia Takengon menaungi KB, TPA, TK, SD, dan SMP Islam terpadu di Bebesen, Aceh Tengah.';
     $canonical = $siteUrl.'/'.ltrim($page['path'] ?? '', '/');
-    $image = $page['image'] ?? 'img/wisuda-1200.jpg';
+    $image = $page['image'] ?? 'img/og-cendekia.jpg';
     $imageUrl = preg_match('#^https?://#', $image) ? $image : $siteUrl.'/'.ltrim($image, '/');
     $requestPath = (string) (parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: './');
     $active = $page['active'] ?? '';
@@ -135,6 +135,11 @@ function public_page_start(mysqli $conn, array $page): void
     <meta property="og:description" content="<?= h($description) ?>">
     <meta property="og:url" content="<?= h($canonical) ?>">
     <meta property="og:image" content="<?= h($imageUrl) ?>">
+    <?php if ($image === 'img/og-cendekia.jpg') { ?>
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <?php } ?>
+    <meta property="og:image:alt" content="<?= h(PUBLIC_SITE_NAME) ?>">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

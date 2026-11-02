@@ -60,7 +60,7 @@ public_page_start($conn, [
     'active' => 'unit',
     'description' => $unit['tagline'] ?: $name.' — '.ppdb_jenjang_label($unit['jenjang']).' di bawah Yayasan Wakaf Cendekia Takengon.',
     'path' => $unitPath,
-    'image' => $unit['photo_path'] ?: 'img/wisuda-1200.jpg',
+    'image' => $unit['photo_path'] ?: 'img/og-cendekia.jpg',
 ]);
 ?>
 <section class="page-hero">
