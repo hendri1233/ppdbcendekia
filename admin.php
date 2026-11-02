@@ -642,7 +642,7 @@ require 'admin_header.php';
 
     <section class="panel progress-panel" data-progress-chart>
         <div class="panel-header">
-            <div><h2>Capaian harian</h2><span class="panel-subtitle">Kursi terisi per hari di setiap jalur yang dibuka; puncak grafik sama dengan kuota</span></div>
+            <div><h2>Capaian harian</h2><span class="panel-subtitle">Garis menunjukkan total kursi terisi, batang menunjukkan pendaftar baru per hari</span></div>
             <div class="progress-tools">
                 <div class="range-toggle" role="group" aria-label="Rentang hari">
                     <button type="button" data-range="7">7 hari</button>
@@ -661,6 +661,7 @@ require 'admin_header.php';
         <ul class="progress-legend" aria-label="Keterangan grafik">
             <li><span class="progress-key is-eksternal" aria-hidden="true"></span>Jalur eksternal</li>
             <li><span class="progress-key is-internal" aria-hidden="true"></span>Jalur internal</li>
+            <li><span class="progress-key is-bar" aria-hidden="true"></span>Batang: pendaftar baru per hari</li>
             <li><span class="progress-key is-quota" aria-hidden="true"></span>Batas kuota</li>
         </ul>
         <?php if (!$quotaProgress) { ?>

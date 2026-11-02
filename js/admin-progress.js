@@ -1,7 +1,7 @@
 /**
  * Panel capaian harian di dashboard: angka ringkasan akses dan pendaftar, serta
- * grafik rantai per unit dan jalur. Setiap grafik menunjukkan kursi terisi
- * kumulatif per hari; puncak sumbunya sama dengan kuota jalur yang dibuka.
+ * grafik per unit dan jalur. Garis menunjukkan kursi terisi kumulatif,
+ * batang menunjukkan pendaftar baru per hari, dengan batas kuota bila masuk skala.
  * Digambar sebagai SVG tanpa pustaka grafik.
  */
 (function () {
@@ -26,8 +26,9 @@
     const charts = panel.querySelectorAll('[data-chain-canvas]');
     const combinedCharts = panel.querySelectorAll('[data-combined-canvas]');
     const NS = 'http://www.w3.org/2000/svg';
-    const PAD = { top: 14, right: 14, bottom: 40, left: 30 };
+    const PAD = { top: 24, right: 18, bottom: 42, left: 34 };
     const DAY_NAMES = { Min: 'Minggu', Sen: 'Senin', Sel: 'Selasa', Rab: 'Rabu', Kam: 'Kamis', Jum: 'Jumat', Sab: 'Sabtu' };
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let range = 14;
 
     const el = (name, attrs, parent) => {
@@ -39,9 +40,24 @@
 
     // Langkah garis bantu bulat (1, 2, 5, 10, ...) dengan paling banyak 5 garis.
     const niceStep = (value) => {
-        const magnitude = Math.pow(10, Math.floor(Math.log10(Math.max(value, 1))));
+        const magnitude = Math.pow(10, Math.floor(Math.log10(Math.max(value / 5, 1))));
         return [1, 2, 5, 10].map((m) => m * magnitude).find((s) => value / s <= 5);
     };
+
+    // Batas atas sumbu yang bulat, sama dengan grafik Tren pendaftaran.
+    const niceMax = (value) => {
+        if (value <= 4) return 4;
+        const power = Math.pow(10, Math.floor(Math.log10(value)));
+        return [1, 2, 2.5, 5, 10].map((m) => m * power).find((m) => m >= value);
+    };
+
+    // Garis halus melalui titik-titik.
+    const smoothPath = (points) => points.reduce((path, point, index) => {
+        if (index === 0) return `M${point[0]},${point[1]}`;
+        const previous = points[index - 1];
+        const middle = (previous[0] + point[0]) / 2;
+        return `${path} C${middle},${previous[1]} ${middle},${point[1]} ${point[0]},${point[1]}`;
+    }, '');
 
     const formatNumber = (value) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value);
 
@@ -74,10 +90,11 @@
     const hideTooltip = () => {
         tooltip.hidden = true;
         panel.querySelectorAll('.chain-hover.is-active').forEach((node) => node.classList.remove('is-active'));
+        panel.querySelectorAll('.chain-guide.is-visible, .chain-hover-dot.is-visible').forEach((node) => node.classList.remove('is-visible'));
     };
 
     const showTooltip = (container, band, centerX, day, point, route) => {
-        panel.querySelectorAll('.chain-hover.is-active').forEach((node) => node.classList.remove('is-active'));
+        hideTooltip();
         band.classList.add('is-active');
         tooltip.innerHTML = '';
         const title = document.createElement('strong');
@@ -113,11 +130,13 @@
         const visibleDays = days.slice(-range);
         const points = route.points.slice(-range);
         const width = Math.max(container.clientWidth, 240);
-        const height = carouselExpanded() ? fullChartHeight(window.innerHeight < 520 ? 140 : 220, 420, 330) : (isExpanded() ? 240 : 180);
+        const height = carouselExpanded() ? fullChartHeight(window.innerHeight < 520 ? 140 : 220, 420, 330) : (isExpanded() ? 300 : 240);
         const plotWidth = width - PAD.left - PAD.right;
         const plotHeight = height - PAD.top - PAD.bottom;
-        // Puncak sumbu = kuota; bila terisi melebihi kuota, sumbu ikut naik agar titik tidak terpotong.
-        const top = Math.max(route.quota, ...points.map((point) => point.filled), 1);
+        // Skala mengikuti data seperti grafik Tren pendaftaran; kuota yang sudah dekat ikut masuk skala.
+        const dataTop = niceMax(Math.max(...points.map((point) => point.filled), ...points.map((point) => point.added), 1));
+        const top = route.quota <= dataTop * 1.5 ? Math.max(dataTop, route.quota) : dataTop;
+        const quotaVisible = route.quota <= top;
         const y = (value) => PAD.top + plotHeight - (value / top) * plotHeight;
         const slot = plotWidth / points.length;
         const x = (index) => PAD.left + slot * index + slot / 2;
@@ -126,15 +145,20 @@
         const svg = el('svg', { width, height, viewBox: `0 0 ${width} ${height}`, 'aria-hidden': 'true' }, container);
 
         const step = niceStep(top);
-        for (let value = 0; value < top; value += step) {
+        for (let value = 0; value <= top + step / 1000; value += step) {
+            // Garis bantu yang terlalu dekat batas kuota dilewati agar angkanya tidak bertumpuk.
+            if (quotaVisible && value > 0 && Math.abs(y(value) - y(route.quota)) < 16) continue;
             el('line', { x1: PAD.left, x2: width - PAD.right, y1: y(value), y2: y(value), class: value === 0 ? 'progress-axis' : 'progress-grid' }, svg);
-            el('text', { x: PAD.left - 7, y: y(value) + 4, 'text-anchor': 'end', class: 'progress-tick' }, svg).textContent = formatNumber(value);
+            el('text', { x: PAD.left - 8, y: y(value) + 4, 'text-anchor': 'end', class: 'progress-tick' }, svg).textContent = formatNumber(value);
         }
 
-        // Garis batas kuota di puncak grafik.
-        el('line', { x1: PAD.left, x2: width - PAD.right, y1: y(route.quota), y2: y(route.quota), class: 'chain-quota' }, svg);
-        el('text', { x: PAD.left - 7, y: y(route.quota) + 4, 'text-anchor': 'end', class: 'progress-tick chain-quota-tick' }, svg).textContent = formatNumber(route.quota);
-        el('text', { x: PAD.left + 4, y: y(route.quota) - 5, 'text-anchor': 'start', class: 'chain-quota-label' }, svg).textContent = `Kuota ${route.quota}`;
+        if (quotaVisible) {
+            el('line', { x1: PAD.left, x2: width - PAD.right, y1: y(route.quota), y2: y(route.quota), class: 'chain-quota' }, svg);
+            el('text', { x: PAD.left - 8, y: y(route.quota) + 4, 'text-anchor': 'end', class: 'progress-tick chain-quota-tick' }, svg).textContent = formatNumber(route.quota);
+            el('text', { x: PAD.left + 4, y: y(route.quota) - 6, 'text-anchor': 'start', class: 'chain-quota-label' }, svg).textContent = `Kuota ${route.quota}`;
+        } else {
+            el('text', { x: width - PAD.right, y: PAD.top - 10, 'text-anchor': 'end', class: 'chain-quota-label' }, svg).textContent = `Kuota ${route.quota} (di atas skala)`;
+        }
 
         const bandLayer = el('g', {}, svg);
         const lineLayer = el('g', { class: `chain-series is-${route.key}` }, svg);
@@ -142,24 +166,66 @@
 
         const coords = points.map((point, index) => [x(index), y(point.filled)]);
         const baseline = y(0);
-        el('path', { d: `M${coords[0][0]},${baseline}L${coords.map((c) => c.join(',')).join('L')}L${coords[coords.length - 1][0]},${baseline}Z`, class: 'chain-area' }, lineLayer);
-        el('path', { d: `M${coords.map((c) => c.join(',')).join('L')}`, class: 'chain-line' }, lineLayer);
 
-        const smallDot = slot >= 14 ? 3 : 2;
+        // Batang: pendaftar baru per hari, pada skala yang sama dengan garis.
+        const barWidth = Math.max(3, Math.min(24, slot * 0.56));
+        const barLayer = el('g', { class: `chain-bars is-${route.key}` }, bandLayer);
+        points.forEach((point, index) => {
+            if (point.added <= 0) return;
+            const left = coords[index][0] - barWidth / 2;
+            const topY = y(point.added);
+            const radius = Math.min(4, barWidth / 2, baseline - topY);
+            el('path', {
+                d: `M${left},${baseline}V${topY + radius}Q${left},${topY} ${left + radius},${topY}H${left + barWidth - radius}Q${left + barWidth},${topY} ${left + barWidth},${topY + radius}V${baseline}Z`,
+                class: 'chain-bar',
+            }, barLayer);
+        });
+
+        // Garis halus dengan gradasi, sama dengan grafik Tren pendaftaran.
+        const curve = smoothPath(coords);
+        const gradientId = `chain-fill-${container.dataset.unit}-${route.key}`;
+        const defs = el('defs', {}, lineLayer);
+        const gradient = el('linearGradient', { id: gradientId, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+        el('stop', { offset: '0%', class: 'chain-stop-top' }, gradient);
+        el('stop', { offset: '100%', class: 'chain-stop-bottom' }, gradient);
+        el('path', { d: `${curve} L${coords[coords.length - 1][0]},${baseline} L${coords[0][0]},${baseline} Z`, class: 'chain-area' }, lineLayer).style.fill = `url(#${gradientId})`;
+        const line = el('path', { d: curve, class: 'chain-line' }, lineLayer);
+        if (!reduceMotion && line.getTotalLength) {
+            const length = line.getTotalLength();
+            line.style.strokeDasharray = length;
+            line.style.strokeDashoffset = length;
+            requestAnimationFrame(() => { line.style.strokeDashoffset = 0; });
+        }
+
+        // Garis bantu dan titik saat kursor di atas grafik.
+        const guide = el('line', { y1: PAD.top, y2: PAD.top + plotHeight, class: 'chain-guide' }, lineLayer);
+        const hoverDot = el('circle', { r: 5, class: 'chain-hover-dot' }, lineLayer);
+
         points.forEach((point, index) => {
             const day = visibleDays[index];
             const band = el('rect', { x: PAD.left + slot * index, y: PAD.top, width: slot, height: plotHeight, class: 'chain-hover' }, bandLayer);
-            // Mata rantai: titik di setiap hari, lebih besar pada hari ada pendaftar baru.
-            el('circle', { cx: coords[index][0], cy: coords[index][1], r: point.added > 0 ? 5 : smallDot, class: point.added > 0 ? 'chain-dot is-new' : 'chain-dot' }, lineLayer);
-
+            // Titik tetap hanya di hari ini; hari lain muncul saat kursor mengarah ke sana.
             const isToday = index === points.length - 1;
+            if (isToday) {
+                el('circle', { cx: coords[index][0], cy: coords[index][1], r: 4.5, class: 'chain-dot' }, lineLayer);
+                el('text', { x: coords[index][0] + 2, y: coords[index][1] - 11, 'text-anchor': 'end', class: 'chain-end-value' }, lineLayer).textContent = formatNumber(point.filled);
+            }
+
             if (isToday || (index % labelEvery === 0 && points.length - 1 - index >= labelEvery)) {
                 el('text', { x: x(index), y: height - PAD.bottom + 17, 'text-anchor': 'middle', class: `progress-day${isToday ? ' is-today' : ''}${day.day === 'Min' ? ' is-sunday' : ''}` }, svg).textContent = day.day;
                 el('text', { x: x(index), y: height - PAD.bottom + 31, 'text-anchor': 'middle', class: `progress-date${isToday ? ' is-today' : ''}` }, svg).textContent = isToday ? 'Hari ini' : day.label;
             }
 
             const hit = el('rect', { x: PAD.left + slot * index, y: 0, width: slot, height, class: 'progress-hit', tabindex: 0, 'aria-label': `${day.full}: ${point.filled} dari ${route.quota} kursi, ${point.added} pendaftar baru` }, hitLayer);
-            const show = () => showTooltip(container, band, x(index), day, point, route);
+            const show = () => {
+                showTooltip(container, band, x(index), day, point, route);
+                guide.setAttribute('x1', coords[index][0]);
+                guide.setAttribute('x2', coords[index][0]);
+                guide.classList.add('is-visible');
+                hoverDot.setAttribute('cx', coords[index][0]);
+                hoverDot.setAttribute('cy', coords[index][1]);
+                hoverDot.classList.add('is-visible');
+            };
             hit.addEventListener('mouseenter', show);
             hit.addEventListener('focus', show);
             hit.addEventListener('click', show);
@@ -207,7 +273,7 @@
 
         const pad = { top: 26, right: 14, bottom: 44, left: 40 };
         const width = Math.max(container.clientWidth, 280);
-        const height = carouselExpanded() ? fullChartHeight(window.innerHeight < 520 ? 160 : 260, 2000, 300) : (isExpanded() ? 320 : 260);
+        const height = carouselExpanded() ? fullChartHeight(window.innerHeight < 520 ? 160 : 260, 2000, 300) : (isExpanded() ? 360 : 300);
         const plotWidth = width - pad.left - pad.right;
         const plotHeight = height - pad.top - pad.bottom;
         const top = Math.max(1, ...bars.map((bar) => Math.max(bar.quota, bar.filled)));
@@ -215,7 +281,7 @@
         const max = Math.ceil(top / step) * step;
         const y = (value) => pad.top + plotHeight - (value / max) * plotHeight;
         const slot = plotWidth / bars.length;
-        const barWidth = Math.max(8, Math.min(30, (slot - 24) / 2));
+        const barWidth = Math.max(8, Math.min(36, (slot - 28) / 2));
 
         const svg = el('svg', { width, height, viewBox: `0 0 ${width} ${height}`, 'aria-hidden': 'true' }, container);
         for (let value = 0; value <= max; value += step) {
@@ -261,9 +327,9 @@
         });
 
         // Rantai: garis dan mata rantai dari KB sampai SMP.
-        el('path', { d: `M${chainPoints.map((point) => point.join(',')).join('L')}`, class: 'combined-chain__line' }, chainLayer);
+        el('path', { d: smoothPath(chainPoints), class: 'combined-chain__line' }, chainLayer);
         chainPoints.forEach(([cx, cy], index) => {
-            el('circle', { cx, cy, r: 6, class: 'combined-chain__link' }, chainLayer);
+            el('circle', { cx, cy, r: 4.5, class: 'combined-chain__link' }, chainLayer);
             el('text', { x: cx, y: cy - 11, 'text-anchor': 'middle', class: 'combined-chain__value' }, chainLayer).textContent = String(bars[index].filled);
         });
     };
