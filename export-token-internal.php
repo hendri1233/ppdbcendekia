@@ -39,42 +39,74 @@ if (!$tokens) {
     exit('Tidak ada token aktif yang belum digunakan untuk unit dan tahun ajaran tersebut.');
 }
 
+// Logo disematkan langsung; PNG transparan butuh GD, jadi dilewati bila GD tidak tersedia.
+$logoFile = __DIR__.'/img/logo-display.png';
+$logoTag = extension_loaded('gd') && is_file($logoFile)
+    ? '<img class="logo" src="data:image/png;base64,'.base64_encode((string) file_get_contents($logoFile)).'" alt="">'
+    : '';
+$unitName = ppdb_unit_display_name($unit['nama_unit']);
+$internalUrl = ppdb_public_base_url().'/daftar.php?internal=1';
+
 $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
-    @page { margin: 34px 42px; }
-    body { color: #182a24; font-family: "DejaVu Sans", sans-serif; font-size: 10px; }
-    .brand { color: #155b46; font-size: 9px; font-weight: bold; letter-spacing: 1px; }
-    h1 { margin: 10px 0 5px; font-size: 20px; }
-    .subtitle { margin: 0 0 18px; color: #63716b; font-size: 10px; }
-    .unit { margin: 18px 0; padding: 12px 14px; background: #eef4ef; border-left: 4px solid #155b46; }
-    .unit strong { display: block; margin-bottom: 5px; color: #155b46; font-size: 13px; }
+    @page { margin: 40px 44px 54px; }
+    body { color: #0f172a; font-family: Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.45; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #dce5de; text-align: left; }
-    th { color: #63716b; font-size: 8px; text-transform: uppercase; }
-    td.number { width: 12%; color: #63716b; }
-    td.token { font-family: "DejaVu Sans Mono", monospace; font-size: 12px; font-weight: bold; letter-spacing: 1px; }
-    .note { margin-top: 20px; padding: 11px 13px; color: #63716b; background: #f7f8f5; font-size: 9px; line-height: 1.5; }
-    .footer { margin-top: 24px; color: #63716b; font-size: 8px; }
+    .head td { vertical-align: middle; }
+    .head .logo-cell { width: 56px; }
+    .logo { width: 46px; height: 46px; }
+    .org { color: #1d4ed8; font-size: 10px; font-weight: bold; letter-spacing: 0.6px; }
+    h1 { margin: 2px 0 0; color: #0c1f4a; font-size: 21px; line-height: 1.2; }
+    .rule { height: 3px; margin: 12px 0 14px; background: #1d4ed8; }
+    .facts { margin-bottom: 12px; }
+    .facts td { width: 25%; padding: 9px 12px; background: #eff6ff; border-right: 3px solid #fff; vertical-align: top; }
+    .facts td.last { border-right: 0; }
+    .facts span { display: block; color: #475569; font-size: 9px; }
+    .facts strong { display: block; margin-top: 2px; color: #0c1f4a; font-size: 12px; }
+    .unit-name { margin: 0 0 10px; color: #0c1f4a; font-size: 14px; font-weight: bold; }
+    .note { margin-bottom: 14px; padding: 9px 12px; color: #334155; background: #f8fafc; border-left: 3px solid #1d4ed8; font-size: 10px; }
+    .tokens thead { display: table-header-group; }
+    .tokens tr { page-break-inside: avoid; }
+    .tokens th { padding: 8px 10px; color: #fff; background: #0c1f4a; font-size: 10px; font-weight: bold; text-align: left; border: 1px solid #0c1f4a; }
+    .tokens td { height: 24px; padding: 3px 10px; border: 1px solid #cbd5e1; vertical-align: middle; }
+    .tokens tbody tr.alt td { background: #f8fafc; }
+    .tokens .col-no { width: 34px; text-align: center; }
+    .tokens td.col-no { color: #475569; }
+    .tokens .col-token { width: 150px; }
+    .tokens td.col-token { color: #0c1f4a; font-family: "DejaVu Sans Mono", monospace; font-size: 13px; font-weight: bold; letter-spacing: 0.5px; }
 </style></head><body>
-    <div class="brand">YAYASAN WAKAF CENDEKIA TAKENGON</div>
-    <h1>Token Pendaftaran Internal</h1>
-    <p class="subtitle">Daftar token aktif untuk dibagikan kepada SDM yang telah diverifikasi.</p>
-    <div class="unit"><strong>'.h($unit['nama_unit']).'</strong>Jenjang '.h($unit['jenjang']).' · NPSN '.h($unit['npsn']).' · Tahun ajaran '.h($academicYear).'</div>
-    <table><thead><tr><th>No.</th><th>Kode token</th></tr></thead><tbody>';
+    <table class="head"><tr>
+        '.($logoTag !== '' ? '<td class="logo-cell">'.$logoTag.'</td>' : '').'
+        <td><div class="org">YAYASAN WAKAF CENDEKIA TAKENGON</div><h1>Token Pendaftaran Internal SDM</h1></td>
+    </tr></table>
+    <div class="rule"></div>
+    <p class="unit-name">'.h($unitName).'</p>
+    <table class="facts"><tr>
+        <td><span>Jenjang</span><strong>'.h($unit['jenjang']).'</strong></td>
+        <td><span>NPSN</span><strong>'.h($unit['npsn']).'</strong></td>
+        <td><span>Tahun ajaran</span><strong>'.h($academicYear).'</strong></td>
+        <td class="last"><span>Token aktif</span><strong>'.count($tokens).' kode</strong></td>
+    </tr></table>
+    <div class="note"><strong>Dokumen rahasia.</strong> Satu kode hanya untuk satu pendaftar dan hanya dapat digunakan sekali. Tulis nama penerima di samping kode, lalu bagikan kode secara pribadi. Kode diketik persis seperti tertulis, termasuk huruf besar dan kecilnya, di '.h($internalUrl).'</div>
+    <table class="tokens"><thead><tr><th class="col-no">No.</th><th class="col-token">Kode token</th><th>Nama penerima</th></tr></thead><tbody>';
 foreach ($tokens as $index => $token) {
-    $html .= '<tr><td class="number">'.($index + 1).'</td><td class="token">'.h($token).'</td></tr>';
+    $html .= '<tr'.($index % 2 === 1 ? ' class="alt"' : '').'><td class="col-no">'.($index + 1).'</td><td class="col-token">'.h($token).'</td><td></td></tr>';
 }
-$html .= '</tbody></table>
-    <div class="note">Setiap kode hanya untuk satu pendaftar dan hanya dapat digunakan sekali. Bagikan satu kode secara pribadi kepada setiap SDM yang telah diverifikasi. Jangan membagikan seluruh dokumen kepada publik.</div>
-    <div class="footer">Dokumen dibuat pada '.h(date('d-m-Y H:i')).' · Tautan pendaftaran internal: daftar.php?internal=1</div>
-</body></html>';
+$html .= '</tbody></table></body></html>';
 
 $options = new Dompdf\Options();
 $options->set('isRemoteEnabled', false);
-$options->set('defaultFont', 'DejaVu Sans');
+$options->set('defaultFont', 'Helvetica');
 $dompdf = new Dompdf\Dompdf($options);
 $dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
+// Nomor halaman dan tanggal cetak di setiap halaman.
+$canvas = $dompdf->getCanvas();
+$footerFont = $dompdf->getFontMetrics()->getFont('Helvetica');
+$footerColor = [0.28, 0.33, 0.41];
+$footerY = $canvas->get_height() - 34;
+$canvas->page_text(44, $footerY, 'Dicetak '.date('d-m-Y H:i').' - '.$unitName, $footerFont, 8, $footerColor);
+$canvas->page_text($canvas->get_width() - 124, $footerY, 'Halaman {PAGE_NUM} dari {PAGE_COUNT}', $footerFont, 8, $footerColor);
 $safeUnitCode = preg_replace('/[^A-Za-z0-9-]/', '', $unitCode);
 $safeYear = str_replace('/', '-', $academicYear);
 $dompdf->stream('token-internal-'.$safeUnitCode.'-'.$safeYear.'.pdf', ['Attachment' => true]);

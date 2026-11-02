@@ -438,8 +438,9 @@ $tokenQuery = static function (array $overrides) use ($tokenFilterUnit, $tokenFi
     ], $overrides);
     return '?'.http_build_query(array_filter($query, static fn ($value) => $value !== '' && $value !== null && $value !== 1)).'#token-internal';
 };
-$internalTokensCondition = $adminUnitCode === '' ? '' : " AND t.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
-$internalTokenPools = mysqli_query($conn, "SELECT t.kode_unit,t.th_ajaran,u.nama_unit,COUNT(*) AS total_token FROM tb_token_internal t JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.used_at IS NULL AND t.revoked_at IS NULL".$internalTokensCondition." GROUP BY t.kode_unit,t.th_ajaran,u.nama_unit ORDER BY t.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
+// Semua unit yang sudah dikonfigurasi selalu tampil, termasuk yang belum punya token aktif.
+$internalTokensCondition = $adminUnitCode === '' ? '' : " WHERE c.kode_unit='".mysqli_real_escape_string($conn, $adminUnitCode)."'";
+$internalTokenPools = mysqli_query($conn, "SELECT c.kode_unit,c.th_ajaran,u.nama_unit,COUNT(t.id) AS total_dibuat,COALESCE(SUM(t.id IS NOT NULL AND t.used_at IS NULL AND t.revoked_at IS NULL),0) AS total_token FROM tb_pengaturan_ppdb c JOIN tb_unit_pendidikan u ON u.kode_unit=c.kode_unit LEFT JOIN tb_token_internal t ON t.kode_unit=c.kode_unit AND t.th_ajaran=c.th_ajaran".$internalTokensCondition." GROUP BY c.kode_unit,c.th_ajaran,u.nama_unit,u.jenjang ORDER BY c.th_ajaran DESC,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
 $activeAdminPage = 'quota';
 $adminPageTitle = 'Kuota & pembayaran';
 $adminPageDescription = 'Atur kuota, biaya, rekening, dan status buka pendaftaran per unit serta tahun ajaran.';
@@ -608,13 +609,27 @@ require 'admin_header.php';
             <table class="data-table">
                 <thead><tr><th scope="col">Unit</th><th scope="col">Tahun ajaran</th><th scope="col">Token aktif</th><th scope="col">PDF</th></tr></thead>
                 <tbody>
-                <?php if (mysqli_num_rows($internalTokenPools) === 0) { ?><tr><td colspan="4" class="empty-state">Belum ada token aktif yang dapat diekspor.</td></tr><?php } ?>
+                <?php if (mysqli_num_rows($internalTokenPools) === 0) { ?><tr><td colspan="4" class="empty-state">Belum ada unit yang dikonfigurasi.</td></tr><?php } ?>
                 <?php while ($pool = mysqli_fetch_assoc($internalTokenPools)) { ?>
                     <tr>
                         <td data-label="Unit" class="primary-cell"><?php echo h(ppdb_unit_display_name($pool['nama_unit'])); ?></td>
                         <td data-label="Tahun ajaran"><?php echo h($pool['th_ajaran']); ?></td>
                         <td data-label="Token aktif"><?php echo (int) $pool['total_token']; ?></td>
-                        <td data-label="PDF"><a class="button-secondary" href="export-token-internal.php?unit=<?php echo rawurlencode($pool['kode_unit']); ?>&amp;tahun=<?php echo rawurlencode($pool['th_ajaran']); ?>">Unduh PDF token unit</a></td>
+                        <td data-label="PDF">
+                            <?php if ((int) $pool['total_token'] > 0) { ?>
+                                <a class="button-secondary" href="export-token-internal.php?unit=<?php echo rawurlencode($pool['kode_unit']); ?>&amp;tahun=<?php echo rawurlencode($pool['th_ajaran']); ?>">Unduh PDF token unit</a>
+                            <?php } elseif ((int) $pool['total_dibuat'] < 150) { ?>
+                                <form method="post">
+                                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                                    <input type="hidden" name="action" value="generate_internal_tokens">
+                                    <input type="hidden" name="token_unit" value="<?php echo h($pool['kode_unit']); ?>">
+                                    <input type="hidden" name="token_year" value="<?php echo h($pool['th_ajaran']); ?>">
+                                    <button class="button-primary" type="submit">Buat token</button>
+                                </form>
+                            <?php } else { ?>
+                                <span class="cell-sub">Semua token sudah terpakai atau dicabut</span>
+                            <?php } ?>
+                        </td>
                     </tr>
                 <?php } ?>
                 </tbody>
