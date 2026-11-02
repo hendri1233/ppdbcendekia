@@ -294,6 +294,12 @@ require 'admin_header.php';
                                 <td data-label="Aksi"><div class="table-actions">
                                     <a class="table-action" href="<?php echo $self; ?>?aksi=ubah&amp;id=<?php echo (int) $row['id']; ?>">Ubah<span class="visually-hidden"> <?php echo h($row['title']); ?></span></a>
                                     <?php if ($label === 'Terbit') { ?><a class="table-action" href="berita/<?php echo rawurlencode($row['slug']); ?>" target="_blank" rel="noopener">Lihat</a><?php } ?>
+                                    <form method="post" data-confirm="<?php echo h('Hapus berita "'.$row['title'].'" secara permanen? Gambar sampulnya juga akan terhapus.'); ?>">
+                                        <?php echo cms_csrf_field(); ?>
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id" value="<?php echo (int) $row['id']; ?>">
+                                        <button class="button-danger button-sm" type="submit">Hapus<span class="visually-hidden"> <?php echo h($row['title']); ?></span></button>
+                                    </form>
                                 </div></td>
                             </tr>
                         <?php } ?>
