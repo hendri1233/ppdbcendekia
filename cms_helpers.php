@@ -270,11 +270,19 @@ function cms_published_news(mysqli $conn, int $limit, int $offset = 0, string $u
     return [$rows, $total];
 }
 
+/** Ringkasan manual yang hanya mengulang judul tidak menambah informasi. */
+function cms_news_excerpt_is_redundant(array $news): bool
+{
+    $excerpt = trim((string) ($news['excerpt'] ?? ''));
+    return $excerpt !== '' && mb_stripos((string) ($news['title'] ?? ''), $excerpt) !== false;
+}
+
 function cms_news_excerpt(array $news, int $length = 160): string
 {
     // Ringkasan manual yang terlalu panjang dipotong rapi di akhir kata, sama seperti ringkasan otomatis.
     $excerpt = trim((string) ($news['excerpt'] ?? ''));
-    return cms_plain_excerpt($excerpt !== '' ? $excerpt : ($news['body_html'] ?? ''), $length);
+    $useExcerpt = $excerpt !== '' && !cms_news_excerpt_is_redundant($news);
+    return cms_plain_excerpt($useExcerpt ? $excerpt : ($news['body_html'] ?? ''), $length);
 }
 
 /** Lapisan buram dari gambar yang sama untuk mengisi sisi kosong gambar yang ditampilkan utuh. */

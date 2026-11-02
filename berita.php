@@ -82,7 +82,7 @@ if ($slug !== '') {
                 <?php if ($article['nama_unit']) { ?><a class="text-link" href="unit/<?= h(ppdb_unit_public_slug(['kode_unit' => $article['kode_unit'], 'nama_unit' => $article['nama_unit']])) ?>"><?= h(ppdb_unit_display_name($article['nama_unit'])) ?></a><?php } ?>
             </p>
             <h1><?= h($article['title']) ?></h1>
-            <?php if (trim((string) $article['excerpt']) !== '') { ?><p class="article__lead"><?= h($article['excerpt']) ?></p><?php } ?>
+            <?php if (trim((string) $article['excerpt']) !== '' && !cms_news_excerpt_is_redundant($article)) { ?><p class="article__lead"><?= h($article['excerpt']) ?></p><?php } ?>
         </header>
         <?php if ($article['cover_path']) { ?>
             <figure class="article__cover"><?= cms_image_backdrop($article['cover_path']) ?><img src="<?= h($article['cover_path']) ?>" alt="<?= h($article['title']) ?>"<?= cms_image_size_attrs($article['cover_path']) ?>></figure>

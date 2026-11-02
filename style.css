@@ -4979,3 +4979,19 @@ dd {
         overflow: visible;
     }
 }
+
+/* Ponsel: ringkasan dan kutipan rata kiri agar tidak muncul celah lebar antarkata. */
+@media (max-width: 620px) {
+    .article__lead,
+    .article__body .prose blockquote {
+        text-align: left;
+    }
+
+    .article__body .prose blockquote {
+        margin: 1.5em 0;
+        padding: 2px 0 2px 14px;
+        border-left-width: 3px;
+        font-size: 1.0625rem;
+        line-height: 1.6;
+    }
+}
