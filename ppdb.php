@@ -315,18 +315,6 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                         <p class="prep-block__note">Mengikuti ketentuan Dinas Pendidikan. Umur ananda dihitung otomatis saat tanggal lahir diisi pada registrasi awal.</p>
                     </article>
                 <?php } ?>
-
-                <?php if (!empty($guide['programs'])) { ?>
-                    <article class="prep-block prep-block--accent">
-                        <h3>Program bagi calon wali siswa</h3>
-                        <ul class="program-list">
-                            <?php foreach ($guide['programs'] as $program) { ?>
-                                <li><?= h($program) ?></li>
-                            <?php } ?>
-                        </ul>
-                        <p class="prep-block__note">Diseleksi berdasarkan syarat dan ketentuan yayasan. Tanyakan kepada panitia untuk keterangan lebih lanjut.</p>
-                    </article>
-                <?php } ?>
             </div>
         </div>
     </section>
