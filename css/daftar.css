@@ -3366,3 +3366,26 @@ body.page-daftar .radio-option:has(input:focus-visible) {
     outline: 2px solid var(--green);
     outline-offset: 2px;
 }
+
+.prestasi-template {
+    margin: 8px 0 0;
+    color: var(--ink);
+    font-size: var(--fs-sm);
+}
+
+.prestasi-template a {
+    display: inline-block;
+    margin: 6px 8px 0 0;
+    padding: 6px 12px;
+    color: var(--green);
+    border: 1px solid var(--green);
+    border-radius: var(--r-xs);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.prestasi-template a:hover {
+    color: #fff;
+    background: var(--green);
+}

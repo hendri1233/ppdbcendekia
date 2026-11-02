@@ -10,3 +10,4 @@
 /storage/geoip/*
 !/storage/geoip/.htaccess
 /deploy/
+!/assets/template/*.pdf

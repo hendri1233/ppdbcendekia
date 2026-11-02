@@ -53,6 +53,7 @@ function prestasi_render_section(array $values, bool $visible): void
 
     echo '<div class="field field-wide"><label for="surat_prestasi">Surat pengantar prestasi <span class="required-mark" aria-hidden="true">*</span></label>';
     echo '<input id="surat_prestasi" type="file" name="surat_prestasi" accept="image/jpeg,image/png" data-prestasi-required>';
+    echo '<p class="prestasi-template">Belum punya suratnya? Unduh template, isi di sekolah, lalu minta tanda tangan dan stempel kepala sekolah: <a href="assets/template/surat-keterangan-prestasi.docx" download>Unduh Word</a> <a href="assets/template/surat-keterangan-prestasi.pdf" download>Unduh PDF</a></p>';
     echo '<small class="field-hint">Foto surat pengantar prestasi yang ditandatangani kepala sekolah, posisi berdiri dan dapat dibaca. Format JPG atau PNG, maksimal 5 MB. Bila ada isian yang keliru saat dikirim, pilih ulang fotonya.</small></div>';
 
     echo '<fieldset class="field field-wide"><legend>Prestasi peringkat di kelas <span class="required-mark" aria-hidden="true">*</span></legend>';
