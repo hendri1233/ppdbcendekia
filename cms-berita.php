@@ -162,7 +162,7 @@ if ($mode === 'baru' || ($mode === 'ubah' && $editId)) {
                     </div>
                 </section>
                 <section class="panel">
-                    <div class="cms-form"><?php echo cms_image_field('cover', $news['cover_path'] ?? null, 'Gambar sampul', 'Rasio 16:9 disarankan. JPG, PNG, atau WebP, maks. 6 MB.'); ?></div>
+                    <div class="cms-form"><?php echo cms_image_field('cover', $news['cover_path'] ?? null, 'Gambar sampul', 'Boleh potret atau lanskap; gambar tampil utuh tanpa terpotong. JPG, PNG, atau WebP, maks. 6 MB.'); ?></div>
                 </section>
             </aside>
         </form>

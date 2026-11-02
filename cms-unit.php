@@ -79,7 +79,7 @@ require 'admin_header.php';
                         <div class="cms-field"><label class="cms-label" for="unit-phone">Telepon unit</label><input id="unit-phone" name="phone" value="<?php echo h($unit['phone']); ?>" maxlength="30" inputmode="tel"></div>
                         <?php echo cms_rich_editor('description_html', $unit['description_html'], 'Uraian profil unit', 'Program unggulan, kegiatan, dan informasi yang diverifikasi sekolah.'); ?>
                     </div>
-                    <?php echo cms_image_field('photo', $unit['photo_path'], 'Foto unit (16:9)'); ?>
+                    <?php echo cms_image_field('photo', $unit['photo_path'], 'Foto unit', 'Boleh potret atau lanskap; gambar tampil utuh tanpa terpotong. JPG, PNG, atau WebP, maks. 6 MB.'); ?>
                 </div>
                 <div class="cms-actions"><button class="button-primary" type="submit">Simpan profil</button></div>
             </form>

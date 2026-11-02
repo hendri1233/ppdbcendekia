@@ -69,19 +69,21 @@ if ($slug !== '') {
             <p class="news-meta">
                 <span class="tag"><?= h($article['jenjang'] ?: $article['category']) ?></span>
                 <time datetime="<?= h(substr((string) $article['published_at'], 0, 10)) ?>"><?= h(cms_format_datetime_id($article['published_at'])) ?></time>
+                <span><?= cms_reading_minutes((string) $article['body_html']) ?> menit baca</span>
                 <?php if ($article['nama_unit']) { ?><a class="text-link" href="unit/<?= h(ppdb_unit_public_slug(['kode_unit' => $article['kode_unit'], 'nama_unit' => $article['nama_unit']])) ?>"><?= h(ppdb_unit_display_name($article['nama_unit'])) ?></a><?php } ?>
             </p>
             <h1><?= h($article['title']) ?></h1>
             <?php if (trim((string) $article['excerpt']) !== '') { ?><p class="article__lead"><?= h($article['excerpt']) ?></p><?php } ?>
         </header>
         <?php if ($article['cover_path']) { ?>
-            <figure class="article__cover"><img src="<?= h($article['cover_path']) ?>" alt="" width="1600" height="900"></figure>
+            <figure class="article__cover"><?= cms_image_backdrop($article['cover_path']) ?><img src="<?= h($article['cover_path']) ?>" alt="<?= h($article['title']) ?>"<?= cms_image_size_attrs($article['cover_path']) ?>></figure>
         <?php } ?>
-        <div class="article__body"><div class="prose"><?= $article['body_html'] ?></div></div>
+        <div class="article__body"><div class="prose"><?= cms_format_news_html((string) $article['body_html']) ?></div></div>
         <div class="article__share">
             <span>Bagikan:</span>
             <a class="button button--quiet button--sm" href="https://wa.me/?text=<?= rawurlencode($article['title'].' '.$articleUrl) ?>" target="_blank" rel="noopener">WhatsApp</a>
             <a class="button button--quiet button--sm" href="https://www.facebook.com/sharer/sharer.php?u=<?= rawurlencode($articleUrl) ?>" target="_blank" rel="noopener">Facebook</a>
+            <button class="button button--quiet button--sm" type="button" data-copy-link="<?= h($articleUrl) ?>" aria-live="polite">Salin link</button>
         </div>
     </article>
     <?php if ($related) { ?>

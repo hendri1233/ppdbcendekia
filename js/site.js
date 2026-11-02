@@ -26,6 +26,37 @@
     }
     syncThemeLabel();
 
+    // --- Salin link berita ---
+    for (const button of document.querySelectorAll('[data-copy-link]')) {
+        const label = button.textContent;
+        let resetTimer;
+        const copyFallback = (text) => {
+            const field = document.createElement('textarea');
+            field.value = text;
+            field.setAttribute('readonly', '');
+            field.style.position = 'fixed';
+            field.style.opacity = '0';
+            document.body.appendChild(field);
+            field.select();
+            const copied = document.execCommand('copy');
+            field.remove();
+            return copied;
+        };
+        button.addEventListener('click', async () => {
+            const url = button.dataset.copyLink;
+            let copied = false;
+            try {
+                await navigator.clipboard.writeText(url);
+                copied = true;
+            } catch (e) {
+                copied = copyFallback(url);
+            }
+            button.textContent = copied ? 'Link disalin' : 'Gagal menyalin';
+            clearTimeout(resetTimer);
+            resetTimer = setTimeout(() => { button.textContent = label; }, 2200);
+        });
+    }
+
     // --- Menu ponsel ---
     const menuToggle = document.querySelector('[data-menu-toggle]');
     const navigation = document.querySelector('[data-navigation]');

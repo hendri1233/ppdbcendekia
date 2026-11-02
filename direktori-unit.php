@@ -43,7 +43,7 @@ public_page_start($conn, [
             <div class="unit-grid">
                 <?php foreach ($filteredUnits as $unit) { ?>
                     <a class="unit-card" href="<?= h(ppdb_unit_public_path($unit)) ?>">
-                        <span class="unit-card__media"><?php if ($unit['photo_path']) { ?><img src="<?= h($unit['photo_path']) ?>" alt="" width="640" height="480" loading="lazy"><?php } else { ?><img class="unit-card__logo" src="img/logo-display.png" alt="" width="120" height="120" loading="lazy"><?php } ?><span class="unit-card__code"><?= h($unit['jenjang']) ?></span></span>
+                        <span class="unit-card__media"><?php if ($unit['photo_path']) { ?><?= cms_image_backdrop($unit['photo_path']) ?><img src="<?= h($unit['photo_path']) ?>" alt="" width="640" height="480" loading="lazy"><?php } else { ?><img class="unit-card__logo" src="img/logo-display.png" alt="" width="120" height="120" loading="lazy"><?php } ?><span class="unit-card__code"><?= h($unit['jenjang']) ?></span></span>
                         <span class="unit-card__body"><h3><?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></h3><p><?= h($unit['tagline'] ?: ppdb_jenjang_label($unit['jenjang'])) ?></p></span>
                     </a>
                 <?php } ?>

@@ -6,6 +6,8 @@
     'use strict';
 
     // --- Editor teks kaya ---
+    // Enter menghasilkan paragraf, bukan <div>.
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) { /* browser lama */ }
     for (const field of document.querySelectorAll('[data-rich-field]')) {
         const editor = field.querySelector('[data-rich-editor]');
         const source = field.querySelector('[data-rich-source]');

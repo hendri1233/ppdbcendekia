@@ -4677,3 +4677,146 @@ dd {
 .unit-row__levels strong{min-width:42px}
 .unit-row__levels span{color:var(--muted)}
 .unit-row__levels .is-full{color:#b45309;font-weight:700}
+
+/* ---------------- Gambar utuh, potret maupun lanskap ---------------- */
+
+/* Gambar tidak dipotong; sisi kosong diisi versi buram dari gambar yang sama. */
+.media-backdrop {
+    position: absolute;
+    inset: -24px;
+    background-position: center;
+    background-size: cover;
+    filter: blur(20px) saturate(1.1);
+    opacity: 0.75;
+}
+
+.news-card__media,
+.unit-card__media {
+    position: relative;
+    overflow: hidden;
+}
+
+.news-card__media > img,
+.unit-card__media > img:not(.unit-card__logo) {
+    position: relative;
+    object-fit: contain;
+}
+
+.unit-card__media .unit-card__code {
+    z-index: 1;
+}
+
+.unit-card--row .media-backdrop {
+    display: none;
+}
+
+.article__cover,
+.unit-profile__photo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--paper);
+    border-radius: var(--r-lg);
+}
+
+.article__cover img,
+.unit-profile__photo img {
+    position: relative;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: min(85vh, 900px);
+    aspect-ratio: auto;
+    object-fit: contain;
+    border-radius: 0;
+}
+
+/* ---------------- Tata baca berita ---------------- */
+
+.article__head h1 {
+    letter-spacing: var(--tracking-tight);
+    line-height: 1.18;
+    text-wrap: balance;
+}
+
+.article__lead {
+    margin-top: 18px;
+    color: var(--ink-2);
+    font-size: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+    font-weight: 500;
+    line-height: 1.55;
+}
+
+.article__body {
+    margin-top: 36px;
+}
+
+.article__body .prose {
+    color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+    line-height: 1.8;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+}
+
+.article__body .prose > * + * {
+    margin-top: 1.35em;
+}
+
+.article__body .prose h2,
+.article__body .prose h3 {
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: var(--tracking-snug);
+    line-height: 1.3;
+    text-wrap: balance;
+}
+
+.article__body .prose h2 {
+    margin-top: 2em;
+    font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+}
+
+.article__body .prose h3 {
+    margin-top: 1.7em;
+    font-size: clamp(1.1875rem, 1.1rem + 0.3vw, 1.3125rem);
+}
+
+.article__body .prose h2 + *,
+.article__body .prose h3 + * {
+    margin-top: 0.7em;
+}
+
+.article__body .prose li + li {
+    margin-top: 0.55em;
+}
+
+.article__body .prose a {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+}
+
+.article__body .prose blockquote {
+    margin: 1.9em 0;
+    padding: 2px 0 2px 22px;
+    border-left: 4px solid var(--brand-700);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.15em;
+    font-style: italic;
+    line-height: 1.6;
+}
+
+.article__share .button {
+    cursor: pointer;
+}
+
+.article {
+    padding-inline: clamp(16px, 4vw, 40px);
+}
+
+.article__head .news-meta {
+    margin-bottom: 12px;
+}

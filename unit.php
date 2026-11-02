@@ -76,7 +76,7 @@ public_page_start($conn, [
     <div class="shell unit-profile">
         <div>
             <?php if ($unit['photo_path']) { ?>
-                <figure class="unit-profile__photo"><img src="<?= h($unit['photo_path']) ?>" alt="<?= h($name) ?>" width="1200" height="675"></figure>
+                <figure class="unit-profile__photo"><?= cms_image_backdrop($unit['photo_path']) ?><img src="<?= h($unit['photo_path']) ?>" alt="<?= h($name) ?>"<?= cms_image_size_attrs($unit['photo_path']) ?>></figure>
             <?php } ?>
             <?php if (trim((string) $unit['description_html']) !== '') { ?>
                 <div class="prose"><?= $unit['description_html'] ?></div>

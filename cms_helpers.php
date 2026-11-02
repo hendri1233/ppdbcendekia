@@ -277,6 +277,153 @@ function cms_news_excerpt(array $news, int $length = 160): string
     return cms_plain_excerpt($excerpt !== '' ? $excerpt : ($news['body_html'] ?? ''), $length);
 }
 
+/** Lapisan buram dari gambar yang sama untuk mengisi sisi kosong gambar yang ditampilkan utuh. */
+function cms_image_backdrop(string $path): string
+{
+    return '<span class="media-backdrop" style="background-image:url(&quot;'.h($path).'&quot;)" aria-hidden="true"></span>';
+}
+
+/** Atribut width dan height asli gambar agar tata letak tidak melompat saat dimuat. */
+function cms_image_size_attrs(string $path): string
+{
+    $size = @getimagesize(__DIR__.'/'.ltrim($path, '/'));
+    return $size ? ' width="'.(int) $size[0].'" height="'.(int) $size[1].'"' : '';
+}
+
+/** Perkiraan waktu baca berita dalam menit, minimal satu menit. */
+function cms_reading_minutes(string $html): int
+{
+    return max(1, (int) ceil(count(preg_split('/\s+/u', trim(strip_tags($html)), -1, PREG_SPLIT_NO_EMPTY)) / 200));
+}
+
+/**
+ * Merapikan isi berita saat ditampilkan, tanpa mengubah data tersimpan: teks lepas dan
+ * baris kosong menjadi paragraf, paragraf kosong dibuang, spasi dan tanda kutip dibakukan,
+ * dan baris pendek yang seluruhnya tebal menjadi subjudul.
+ */
+function cms_format_news_html(string $html): string
+{
+    $document = new DOMDocument('1.0', 'UTF-8');
+    $previousSetting = libxml_use_internal_errors(true);
+    $document->loadHTML('<?xml encoding="UTF-8"><div id="news-root">'.$html.'</div>', LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED);
+    libxml_clear_errors();
+    libxml_use_internal_errors($previousSetting);
+    $root = $document->getElementById('news-root');
+    if (!$root) {
+        return $html;
+    }
+
+    $isBlank = static fn (DOMNode $node): bool => $node instanceof DOMText && trim(str_replace("\u{A0}", ' ', $node->nodeValue)) === '';
+    $isBreak = static fn (DOMNode $node): bool => $node instanceof DOMElement && strtolower($node->tagName) === 'br';
+
+    // Teks lepas di akar dibungkus paragraf.
+    $paragraph = null;
+    foreach (iterator_to_array($root->childNodes) as $node) {
+        $isBlock = $node instanceof DOMElement && in_array(strtolower($node->tagName), ['p', 'h2', 'h3', 'ul', 'ol', 'blockquote'], true);
+        if ($isBlock) {
+            $paragraph = null;
+            continue;
+        }
+        if ($paragraph === null) {
+            if ($isBlank($node)) {
+                $root->removeChild($node);
+                continue;
+            }
+            $paragraph = $document->createElement('p');
+            $root->insertBefore($paragraph, $node);
+        }
+        $paragraph->appendChild($node);
+    }
+
+    // Dua baris baru berurutan berarti paragraf baru.
+    foreach (iterator_to_array($root->childNodes) as $block) {
+        if (!$block instanceof DOMElement || strtolower($block->tagName) !== 'p') {
+            continue;
+        }
+        $current = $document->createElement('p');
+        $root->insertBefore($current, $block);
+        $children = iterator_to_array($block->childNodes);
+        foreach ($children as $index => $child) {
+            if ($isBreak($child)) {
+                $next = $index + 1;
+                while (isset($children[$next]) && $isBlank($children[$next])) {
+                    $next++;
+                }
+                $previousIsBreak = false;
+                for ($back = $index - 1; $back >= 0 && !$previousIsBreak; $back--) {
+                    if ($isBreak($children[$back])) {
+                        $previousIsBreak = true;
+                    } elseif (!$isBlank($children[$back])) {
+                        break;
+                    }
+                }
+                if ($previousIsBreak) {
+                    continue;
+                }
+                if (isset($children[$next]) && $isBreak($children[$next])) {
+                    $paragraphBreak = $document->createElement('p');
+                    $root->insertBefore($paragraphBreak, $block);
+                    $current = $paragraphBreak;
+                    continue;
+                }
+            }
+            $current->appendChild($child);
+        }
+        $root->removeChild($block);
+    }
+
+    // Bakukan teks: spasi ganda, spasi sebelum tanda baca, dan tanda kutip lurus.
+    $xpath = new DOMXPath($document);
+    foreach (iterator_to_array($xpath->query('.//text()', $root)) as $text) {
+        $value = str_replace("\u{A0}", ' ', $text->nodeValue);
+        $value = preg_replace('/\s+/u', ' ', $value);
+        $value = preg_replace('/ +([,.;!?])/u', '$1', $value);
+        $value = preg_replace('/\( +/u', '(', $value);
+        $value = preg_replace('/ +\)/u', ')', $value);
+        $value = preg_replace('/(^|[\s(\[])"/u', '$1“', $value);
+        $text->nodeValue = str_replace('"', '”', $value);
+    }
+
+    foreach (iterator_to_array($root->childNodes) as $block) {
+        if (!$block instanceof DOMElement) {
+            continue;
+        }
+        $tag = strtolower($block->tagName);
+        if (in_array($tag, ['p', 'li', 'h2', 'h3'], true)) {
+            // Baris baru dan spasi di tepi blok tidak berarti apa-apa.
+            while ($block->firstChild && ($isBlank($block->firstChild) || $isBreak($block->firstChild))) {
+                $block->removeChild($block->firstChild);
+            }
+            while ($block->lastChild && ($isBlank($block->lastChild) || $isBreak($block->lastChild))) {
+                $block->removeChild($block->lastChild);
+            }
+            if ($block->firstChild instanceof DOMText) {
+                $block->firstChild->nodeValue = ltrim($block->firstChild->nodeValue);
+            }
+            if ($block->lastChild instanceof DOMText) {
+                $block->lastChild->nodeValue = rtrim($block->lastChild->nodeValue);
+            }
+        }
+        if (trim($block->textContent) === '') {
+            $root->removeChild($block);
+            continue;
+        }
+        if ($tag === 'p' && $block->childNodes->length === 1 && $block->firstChild instanceof DOMElement
+            && in_array(strtolower($block->firstChild->tagName), ['strong', 'b'], true)
+            && mb_strlen(trim($block->textContent)) <= 100 && !preg_match('/[.,;:!?]$/u', trim($block->textContent))) {
+            $heading = $document->createElement('h2');
+            $heading->appendChild($document->createTextNode(trim($block->textContent)));
+            $root->replaceChild($heading, $block);
+        }
+    }
+
+    $clean = '';
+    foreach ($root->childNodes as $child) {
+        $clean .= $document->saveHTML($child);
+    }
+    return trim($clean);
+}
+
 /** Tanggal & jam Indonesia ringkas untuk metadata berita. */
 function cms_format_datetime_id(?string $datetime): string
 {

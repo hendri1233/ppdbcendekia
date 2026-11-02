@@ -51,6 +51,16 @@ function ppdb_sanitize_rich_text(string $html): string
     $sanitizeNode = static function (DOMNode $node) use (&$sanitizeNode, $allowedTags): void {
         if ($node instanceof DOMElement) {
             $tag = strtolower($node->tagName);
+            // Editor browser memisahkan baris dengan <div>; jadikan paragraf agar pemisahnya tidak hilang.
+            if ($tag === 'div' && $node->parentNode && !(new DOMXPath($node->ownerDocument))->query('.//p|.//div|.//ul|.//ol|.//h2|.//h3|.//blockquote', $node)->length) {
+                $paragraph = $node->ownerDocument->createElement('p');
+                while ($node->firstChild) {
+                    $paragraph->appendChild($node->firstChild);
+                }
+                $node->parentNode->replaceChild($paragraph, $node);
+                $sanitizeNode($paragraph);
+                return;
+            }
             if (!in_array($tag, $allowedTags, true)) {
                 if (in_array($tag, ['script', 'style', 'iframe', 'object', 'embed', 'svg', 'math'], true)) {
                     $node->parentNode?->removeChild($node);

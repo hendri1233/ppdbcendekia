@@ -13,6 +13,7 @@ $monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'O
     <span class="news-card__date" aria-hidden="true"><b><?= date('j', $publishedTime) ?></b><span><?= $monthShort ?></span><span><?= date('Y', $publishedTime) ?></span></span>
     <a class="news-card__media" href="<?= h($newsUrl) ?>" tabindex="-1" aria-hidden="true">
         <?php if ($news['cover_path']) { ?>
+            <?= cms_image_backdrop($news['cover_path']) ?>
             <img src="<?= h($news['cover_path']) ?>" alt="" width="800" height="500" loading="lazy" onerror="this.hidden=true">
         <?php } else { ?>
             <span class="news-card__placeholder"><img src="img/logo-display.png" alt="" width="96" height="96" loading="lazy"></span>
