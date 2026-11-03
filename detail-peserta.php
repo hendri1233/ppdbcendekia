@@ -702,7 +702,7 @@ require 'admin_header.php';
             $selectionData['jalur_seleksi_label'] = prestasi_jalur_label($selectionData['jalur_seleksi']);
             $selectionFields = [['Jalur seleksi', 'jalur_seleksi_label']];
             if ($selectionData['jalur_seleksi'] === 'prestasi') {
-                array_push($selectionFields, ['Prestasi peringkat di kelas', 'jenis_prestasi'], ['Kelas 5 semester 1', 'peringkat_k5_s1'], ['Kelas 5 semester 2', 'peringkat_k5_s2'], ['Kelas 6 semester 1', 'peringkat_k6_s1'], ['Kategori prestasi', 'kategori_hafalan'], ['Jumlah hafalan', 'jumlah_hafalan'], ['Riwayat lomba', 'riwayat_lomba'], ['Lomba yang dimenangkan', 'daftar_lomba']);
+                foreach ([['Prestasi akademik', 'jenis_prestasi'], ['Kelas 5 semester 1', 'peringkat_k5_s1'], ['Kelas 5 semester 2', 'peringkat_k5_s2'], ['Kelas 6 semester 1', 'peringkat_k6_s1'], ['Kategori prestasi', 'kategori_hafalan'], ['Jumlah hafalan', 'jumlah_hafalan'], ['Riwayat lomba', 'riwayat_lomba'], ['Lomba yang dimenangkan', 'daftar_lomba']] as $selectionField) { if (trim((string) ($selectionData[$selectionField[1]] ?? '')) !== '') { $selectionFields[] = $selectionField; } }
             }
             render_detail_panel('Jalur pendaftaran SMP', $selectionFields, $selectionData);
         } ?>
