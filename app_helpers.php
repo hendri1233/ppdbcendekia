@@ -561,6 +561,21 @@ function ppdb_status_catalog(): array
     ];
 }
 
+/**
+ * Jumlah tahap yang benar-benar dilalui pendaftaran yang ditolak, agar tahap yang
+ * belum dikerjakan tidak ikut tampil selesai. Kolom alamat baru terisi saat formulir dikirim.
+ */
+function ppdb_rejected_completed_steps(array $registration): int
+{
+    if (!in_array($registration['status_pembayaran'] ?? '', ['terverifikasi', 'menunggu_verifikasi'], true)) {
+        return 1;
+    }
+    if (trim((string) ($registration['alamat'] ?? '')) === '') {
+        return 2;
+    }
+    return !empty($registration['data_diperiksa_pada']) && ($registration['status_data'] ?? '') === 'perlu_perbaikan' ? 4 : 3;
+}
+
 function ppdb_status_info(?string $status): array
 {
     $catalog = ppdb_status_catalog();

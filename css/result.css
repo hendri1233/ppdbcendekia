@@ -969,3 +969,17 @@ body {
   color: inherit;
   font-weight: 600;
 }
+
+.journey-step.is-stopped::before {
+    background: #eccfca;
+}
+
+.journey-step.is-stopped .journey-dot {
+    color: #fff;
+    background: #b42318;
+    border-color: #b42318;
+}
+
+.journey-step.is-stopped strong {
+    color: #b42318;
+}

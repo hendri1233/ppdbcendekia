@@ -82,7 +82,7 @@ $currentPage = (int) ($_GET['page'] ?? 1);
 $currentPage = min(max(1, $currentPage), $totalPages);
 $offset = ($currentPage - 1) * $perPage;
 
-$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
+$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.alamat,p.data_diperiksa_pada,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
     .' ORDER BY FIELD(p.status_ppdb,\'menunggu_kontak\',\'pembayaran_diperiksa\',\'pembayaran_terverifikasi\',\'formulir_terisi\',\'menunggu_pembayaran\',\'menunggu_formulir\',\'daftar_tunggu\',\'diterima\',\'ditolak\',\'data_lama\'), p.waktu_daftar DESC, p.id_pendaftaran DESC'
     .' LIMIT '.$perPage.' OFFSET '.$offset;
@@ -239,7 +239,8 @@ require 'admin_header.php';
                     <?php while ($row = mysqli_fetch_assoc($registrations)) {
                         $meta = ppdb_admin_status_meta($row['status_ppdb']);
                         $statusInfo = ppdb_status_info($row['status_ppdb']);
-                        $progressStep = (int) $statusInfo['step'];
+                        $isRejected = $row['status_ppdb'] === 'ditolak';
+                        $progressStep = $isRejected ? ppdb_rejected_completed_steps($row) + 1 : (int) $statusInfo['step'];
                         $isArchived = $progressStep === 0;
                         $isAccepted = $row['status_ppdb'] === 'diterima';
                         $waNumber = (string) array_key_first(ppdb_registrant_recipients($row));
@@ -306,7 +307,7 @@ require 'admin_header.php';
                                             <?php } ?>
                                         </div>
                                     <?php } else { ?>
-                                        <span class="stage-state is-upcoming">Belum</span>
+                                        <span class="stage-state <?php echo $isRejected ? 'is-stopped' : 'is-upcoming'; ?>"><?php echo $isRejected ? 'Terhenti' : 'Belum'; ?></span>
                                     <?php } ?>
                                 </td>
                             <?php }

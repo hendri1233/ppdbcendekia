@@ -1901,3 +1901,11 @@ html:root[data-theme="dark"] .combined-quota {
   opacity: .5;
   cursor: not-allowed;
 }
+
+.stage-state.is-stopped {
+  color: #b42318;
+}
+
+[data-theme="dark"] .stage-state.is-stopped {
+  color: #fda29b;
+}

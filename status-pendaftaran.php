@@ -9,7 +9,7 @@ $registration = null;
 $tokenIsValid = preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
 if ($tokenIsValid) {
     $tokenHash = hash('sha256', $receiptToken);
-    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
+    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,p.alamat,p.data_diperiksa_pada,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
     mysqli_stmt_bind_param($stmt, 'ssss', $registrationId, $tokenHash, $tokenHash, $tokenHash);
     mysqli_stmt_execute($stmt);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -30,6 +30,7 @@ $currentStep = $statusInfo['step'] ?? 0;
 if ($registration && $registration['status_ppdb'] === 'pembayaran_diperiksa') {
     $currentStep = 3;
 }
+$rejectedCompletedSteps = $registration && $registration['status_ppdb'] === 'ditolak' ? ppdb_rejected_completed_steps($registration) : null;
 $paymentDeadlinePassed = $registration && $registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d');
 $hasPaymentAccount = $registration
     && !empty($registration['bank_nama'])
@@ -125,10 +126,14 @@ header('Referrer-Policy: no-referrer');
             <ol class="journey-track" aria-label="Progres pendaftaran">
                 <?php foreach ($journeySteps as $index => $step) {
                     $stepNumber = $index + 1;
-                    $state = $stepNumber < $currentStep ? 'done' : ($stepNumber === $currentStep ? 'current' : 'todo');
+                    if ($rejectedCompletedSteps !== null) {
+                        $state = $stepNumber <= $rejectedCompletedSteps ? 'done' : 'stopped';
+                    } else {
+                        $state = $stepNumber < $currentStep ? 'done' : ($stepNumber === $currentStep ? 'current' : 'todo');
+                    }
                 ?>
                     <li class="journey-step is-<?php echo $state; ?>">
-                        <span class="journey-dot" aria-hidden="true"><?php echo $state === 'done' ? '&check;' : $stepNumber; ?></span>
+                        <span class="journey-dot" aria-hidden="true"><?php echo $state === 'done' ? '&check;' : ($state === 'stopped' ? '&times;' : $stepNumber); ?></span>
                         <div>
                             <strong><?php echo h($step['title']); ?></strong>
                             <small><?php echo h($step['description']); ?></small>
@@ -159,6 +164,8 @@ header('Referrer-Policy: no-referrer');
                 $panel = 'cek-formulir';
             } elseif ($registration['status_ppdb'] === 'diterima') {
                 $panel = 'diterima';
+            } elseif ($rejectedCompletedSteps !== null) {
+                $panel = 'ditolak';
             }
             ?>
 
@@ -249,6 +256,11 @@ header('Referrer-Policy: no-referrer');
                     <span><?php echo $documentCount; ?> dokumen pendukung telah diunggah. Data sedang diperiksa panitia.</span>
                     <?php if ($registration['status_pembayaran'] === 'menunggu_verifikasi') { ?><span>Bukti transfer juga sedang diperiksa panitia.</span><?php } ?>
                     <span>Hasil pendaftaran akan tampil di halaman ini. Untuk kembali, buka menu Lanjutkan pendaftaran di situs SPMB.</span>
+                </div>
+            <?php } elseif ($panel === 'ditolak') { ?>
+                <div class="payment-error" role="status">
+                    <strong>Perlu tindak lanjut panitia.</strong>
+                    Pendaftaran terhenti pada tahap <?php echo h($journeySteps[$rejectedCompletedSteps]['title']); ?>. Silakan hubungi panitia SPMB untuk informasi lebih lanjut.
                 </div>
             <?php } elseif ($panel === 'diterima') { ?>
                 <div class="payment-success" role="status">

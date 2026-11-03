@@ -166,21 +166,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'reopen_registration') {
             try {
                 mysqli_begin_transaction($conn);
-                $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='menunggu_formulir' WHERE id_pendaftaran=? AND status_ppdb='ditolak' AND status_data='belum_diperiksa' AND status_pembayaran IN ('terverifikasi','menunggu_verifikasi')");
-                mysqli_stmt_bind_param($update, 's', $registrationId);
-                mysqli_stmt_execute($update);
-                if (mysqli_stmt_affected_rows($update) !== 1) {
-                    mysqli_stmt_close($update);
-                    throw new RuntimeException('Pendaftaran ini tidak dapat dibuka kembali.');
+                $lock = mysqli_prepare($conn, "SELECT p.status_ppdb,p.status_pembayaran,p.alamat,p.tanggal_batas_bayar,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.masa_pembayaran_hari FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE");
+                mysqli_stmt_bind_param($lock, 's', $registrationId);
+                mysqli_stmt_execute($lock);
+                $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
+                mysqli_stmt_close($lock);
+                if (!$locked || $locked['status_ppdb'] !== 'ditolak') {
+                    throw new RuntimeException('Hanya pendaftaran yang ditolak yang dapat dilanjutkan kembali.');
                 }
+
+                // Pendaftaran yang ditolak tidak memakai slot, jadi membukanya perlu slot kosong.
+                $slotQuery = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND status_ppdb NOT IN ('ditolak','data_lama')");
+                mysqli_stmt_bind_param($slotQuery, 'sss', $locked['kode_unit'], $locked['th_ajaran'], $locked['jalur_pendaftaran']);
+                mysqli_stmt_execute($slotQuery);
+                $slotsUsed = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($slotQuery))['total'];
+                mysqli_stmt_close($slotQuery);
+                $slotQuota = (int) ($locked['jalur_pendaftaran'] === 'internal' ? $locked['kuota_internal'] : $locked['kuota_eksternal']);
+                if ($slotsUsed >= $slotQuota) {
+                    throw new RuntimeException('Kuota jalur ini sudah penuh. Tambah kuota di menu Kuota & pembayaran sebelum melanjutkan pendaftaran ini.');
+                }
+
+                // Pendaftar kembali ke tahap terakhirnya; isian yang pernah dikirim tetap dimuat.
+                $formSubmitted = trim((string) $locked['alamat']) !== '';
+                $newPaymentStatus = $locked['status_pembayaran'];
+                $newDeadline = $locked['tanggal_batas_bayar'];
+                if (in_array($newPaymentStatus, ['terverifikasi', 'menunggu_verifikasi'], true)) {
+                    $newStatus = $newPaymentStatus === 'menunggu_verifikasi' && !$formSubmitted ? 'pembayaran_diperiksa' : 'menunggu_formulir';
+                } elseif ((float) $locked['biaya_pendaftaran'] > 0) {
+                    $newStatus = 'menunggu_pembayaran';
+                    if (!$newDeadline || $newDeadline < date('Y-m-d')) {
+                        $newDeadline = date('Y-m-d', strtotime('+' . max(1, (int) $locked['masa_pembayaran_hari']) . ' days'));
+                    }
+                } else {
+                    $newStatus = 'menunggu_formulir';
+                    $newPaymentStatus = 'terverifikasi';
+                }
+                $newDataStatus = $formSubmitted ? 'perlu_perbaikan' : 'belum_diperiksa';
+                $update = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET status_ppdb=?,status_pembayaran=?,tanggal_batas_bayar=?,status_data=?,data_diperiksa_oleh=?,data_diperiksa_pada=NOW() WHERE id_pendaftaran=?');
+                mysqli_stmt_bind_param($update, 'ssssis', $newStatus, $newPaymentStatus, $newDeadline, $newDataStatus, $adminId, $registrationId);
+                mysqli_stmt_execute($update);
                 mysqli_stmt_close($update);
                 mysqli_commit($conn);
                 enqueue_google_sheets_registration($conn, $registrationId);
                 sync_google_sheets_registration($conn, $registrationId);
-                $notice = 'Pendaftaran dibuka kembali. Pendaftar dapat melanjutkan lewat halaman Lanjutkan pendaftaran.';
+                $notice = 'Pendaftaran dilanjutkan kembali. Pendaftar dapat meneruskan dari tahap terakhirnya.';
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
-                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Pendaftaran belum dapat dibuka kembali.';
+                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Pendaftaran belum dapat dilanjutkan kembali.';
             }
         } elseif (in_array($action, ['accept_final', 'waitlist_final', 'reject_formulir'], true)) {
             try {
@@ -555,18 +587,18 @@ require 'admin_header.php';
                     <button class="button-danger" type="submit">Tolak dari daftar tunggu</button>
                 </form>
             </div>
-        <?php } elseif ($participant['status_ppdb'] === 'ditolak' && $participant['status_data'] === 'belum_diperiksa' && in_array($participant['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true)) { ?>
-            <p class="workflow-hint">Pendaftar memilih tidak melanjutkan pengisian formulir. Pilihan ini sudah tercatat untuk panitia. Jika pembatalan terjadi karena salah klik, Anda dapat membuka kembali pendaftarannya.</p>
+        <?php } elseif ($participant['status_ppdb'] === 'ditolak') { ?>
+            <p class="workflow-hint"><?php echo $participant['status_data'] === 'belum_diperiksa' && in_array($participant['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true)
+                ? 'Pendaftar memilih tidak melanjutkan pengisian formulir.'
+                : 'Pendaftaran ditolak dan pendaftar diminta menghubungi panitia.'; ?> Tekan Lanjutkan pendaftaran untuk membuka kembali aksesnya; pendaftar meneruskan dari tahap terakhirnya.</p>
             <div class="workflow-actions">
-                <form method="post">
+                <form method="post" data-confirm="Buka kembali akses pendaftaran peserta ini?">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
                     <input type="hidden" name="workflow_action" value="reopen_registration">
-                    <button class="button-primary" type="submit">Buka kembali pendaftaran</button>
+                    <button class="button-primary" type="submit">Lanjutkan pendaftaran</button>
                 </form>
             </div>
-        <?php } elseif ($participant['status_ppdb'] === 'ditolak') { ?>
-            <p class="workflow-hint">Pendaftaran ditolak. Peserta perlu menghubungi panitia untuk tindak lanjut.</p>
         <?php } ?>
     </section>
 
