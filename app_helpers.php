@@ -489,39 +489,39 @@ function ppdb_status_catalog(): array
 {
     return [
         'menunggu_kontak' => [
-            'label' => 'Menunggu menghubungi pendaftar',
-            'short' => 'Menunggu kontak',
+            'label' => 'Belum melanjutkan pendaftaran',
+            'short' => 'Belum lanjut',
             'step' => 1,
             'tone' => 'neutral',
-            'public' => 'Data awal diterima. Panitia akan menghubungi nomor WhatsApp Anda untuk proses pembayaran.',
+            'public' => 'Data awal diterima. Silakan lanjutkan ke tahap berikutnya.',
         ],
         'menunggu_pembayaran' => [
             'label' => 'Menunggu bukti pembayaran',
             'short' => 'Menunggu bayar',
             'step' => 2,
             'tone' => 'warn',
-            'public' => 'Silakan unggah bukti pembayaran pada halaman status pendaftaran.',
+            'public' => 'Silakan lakukan pembayaran dan unggah bukti transfer pada halaman ini.',
         ],
         'pembayaran_diperiksa' => [
             'label' => 'Bukti pembayaran sedang diperiksa',
             'short' => 'Cek bayar',
             'step' => 2,
             'tone' => 'warn',
-            'public' => 'Bukti pembayaran Anda sudah diterima dan sedang diperiksa panitia.',
+            'public' => 'Bukti pembayaran sudah diterima. Silakan lanjutkan mengisi formulir sambil panitia memeriksanya.',
         ],
         'pembayaran_terverifikasi' => [
             'label' => 'Pembayaran disetujui, formulir menunggu',
             'short' => 'Menunggu formulir',
             'step' => 3,
             'tone' => 'info',
-            'public' => 'Pembayaran Anda disetujui. Gunakan kode pendaftaran untuk mengisi formulir lengkap.',
+            'public' => 'Pembayaran Anda disetujui. Silakan lanjutkan mengisi formulir lengkap.',
         ],
         'menunggu_formulir' => [
             'label' => 'Menunggu formulir lengkap',
             'short' => 'Menunggu formulir',
             'step' => 3,
             'tone' => 'info',
-            'public' => 'Pembayaran disetujui. Tautan formulir lengkap sudah dikirim melalui WhatsApp.',
+            'public' => 'Silakan lanjutkan mengisi formulir lengkap.',
         ],
         'formulir_terisi' => [
             'label' => 'Formulir lengkap sedang diperiksa',
@@ -752,11 +752,11 @@ function ppdb_status_reminder_message(array $registration): string
     $student = (string) ($registration['nm_peserta'] ?? '');
     $code = (string) ($registration['id_pendaftaran'] ?? '');
     $bodies = [
-        'menunggu_kontak' => 'Registrasi awal ananda '.$student.' sudah kami terima. Panitia akan segera mengirimkan informasi pembayaran pendaftaran.',
-        'menunggu_pembayaran' => 'Kami mengingatkan bahwa pembayaran pendaftaran ananda '.$student.' belum kami terima. Mohon unggah bukti pembayaran melalui tautan yang telah kami kirimkan sebelumnya.',
-        'pembayaran_diperiksa' => 'Bukti pembayaran ananda '.$student.' sudah kami terima dan sedang diperiksa panitia.',
+        'menunggu_kontak' => 'Registrasi awal ananda '.$student.' sudah kami terima. Mohon lanjutkan pendaftaran melalui halaman Lanjutkan pendaftaran di situs SPMB.',
+        'menunggu_pembayaran' => 'Kami mengingatkan bahwa pembayaran pendaftaran ananda '.$student.' belum kami terima. Mohon unggah bukti pembayaran melalui halaman Lanjutkan pendaftaran di situs SPMB.',
+        'pembayaran_diperiksa' => 'Bukti pembayaran ananda '.$student.' sudah kami terima. Mohon lanjutkan pengisian formulir melalui halaman Lanjutkan pendaftaran di situs SPMB.',
         'pembayaran_terverifikasi' => 'Pembayaran pendaftaran ananda '.$student.' sudah kami verifikasi. Langkah berikutnya adalah melengkapi formulir pendaftaran.',
-        'menunggu_formulir' => 'Kami mengingatkan bahwa formulir pendaftaran ananda '.$student.' belum dilengkapi. Mohon isi formulir melalui tautan yang telah kami kirimkan sebelumnya.',
+        'menunggu_formulir' => 'Kami mengingatkan bahwa formulir pendaftaran ananda '.$student.' belum dilengkapi. Mohon isi formulir melalui halaman Lanjutkan pendaftaran di situs SPMB.',
         'formulir_terisi' => 'Formulir pendaftaran ananda '.$student.' sudah kami terima dan sedang diverifikasi panitia.',
         'daftar_tunggu' => 'Pendaftaran ananda '.$student.' saat ini berada dalam daftar tunggu kuota. Panitia akan mengabarkan perkembangan selanjutnya.',
         'ditolak' => 'Pendaftaran ananda '.$student.' memerlukan tindak lanjut. Mohon hubungi panitia SPMB untuk informasi lebih lanjut.',
@@ -773,97 +773,30 @@ function ppdb_status_reminder_message(array $registration): string
 }
 
 /**
- * Tautan pembayaran dibuat secara lokal di server: token baru dibuat, status
- * diubah menjadi menunggu pembayaran, lalu teks WhatsApp disiapkan untuk
- * dibuka admin lewat wa.me ke nomor pendaftar.
+ * Pendaftar langsung melanjutkan sendiri setelah registrasi awal: masuk ke pembayaran
+ * dengan batas waktunya, atau langsung ke formulir bila unit tidak memungut biaya.
  */
-function ppdb_prepare_payment_link(mysqli $conn, string $registrationId): array
+function ppdb_activate_registration(mysqli $conn, string $registrationId): bool
 {
-    $lookup = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.tanggal_batas_bayar,p.kode_unit,p.th_ajaran,u.nama_unit,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? LIMIT 1');
-    mysqli_stmt_bind_param($lookup, 's', $registrationId);
-    mysqli_stmt_execute($lookup);
-    $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($lookup));
-    mysqli_stmt_close($lookup);
-    if (!$registration) {
-        throw new RuntimeException('Data pendaftaran tidak ditemukan.');
-    }
-    if ($registration['status_ppdb'] !== 'menunggu_kontak' && $registration['status_ppdb'] !== 'menunggu_pembayaran') {
-        throw new RuntimeException('Tautan pembayaran hanya dapat disiapkan saat peserta menunggu dihubungi.');
-    }
-
-    $receiptToken = bin2hex(random_bytes(32));
-    $tokenHash = hash('sha256', $receiptToken);
-    $tokenUpdate = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET token_whatsapp=? WHERE id_pendaftaran=?');
-    mysqli_stmt_bind_param($tokenUpdate, 'ss', $tokenHash, $registrationId);
-    if (!mysqli_stmt_execute($tokenUpdate)) {
-        mysqli_stmt_close($tokenUpdate);
-        throw new RuntimeException('Token tautan pembayaran belum dapat disimpan.');
-    }
-    mysqli_stmt_close($tokenUpdate);
-
-    $statusUrl = ppdb_public_base_url().'/status-pendaftaran.php?'.http_build_query([
-        'id' => $registrationId,
-        'token' => $receiptToken,
-    ], '', '&', PHP_QUERY_RFC3986);
-
-    $lines = [
-        'Assalamu’alaikum warahmatullahi wabarakatuh, Ayah/Bunda.',
-        'Terima kasih telah mendaftarkan ananda '.$registration['nm_peserta'].' pada SPMB Yayasan Wakaf Cendekia Takengon.',
-        'Berikut kami sampaikan informasi pembayaran pendaftaran:',
-        'Unit pendidikan: '.($registration['nama_unit'] ?? '-'),
-        'Tahun ajaran: '.$registration['th_ajaran'],
-        'Kode pendaftaran: '.$registrationId,
-    ];
-    if ((float) $registration['biaya_pendaftaran'] > 0) {
-        $lines[] = 'Biaya pendaftaran: Rp '.number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.');
-    } else {
-        $lines[] = 'Tidak ada biaya pendaftaran yang dipungut.';
-    }
-    if ($registration['bank_nama'] && $registration['nomor_rekening'] && $registration['nama_pemilik_rekening']) {
-        $lines[] = 'Transfer ke: '.$registration['bank_nama'].' '.$registration['nomor_rekening'].' a.n. '.$registration['nama_pemilik_rekening'];
-    }
-    if ($registration['tanggal_batas_bayar']) {
-        $lines[] = 'Batas pembayaran: '.date('d-m-Y', strtotime($registration['tanggal_batas_bayar']));
-    }
-    $lines[] = 'Mohon cantumkan kode pendaftaran '.$registrationId.' pada berita transfer.';
-    $lines[] = 'Silakan klik tautan di bawah ini untuk melihat status pendaftaran dan mengunggah bukti pembayaran:';
-    $lines[] = $statusUrl;
-    $lines[] = '';
-    $lines[] = 'Apabila Ayah/Bunda memerlukan bantuan, silakan membalas pesan ini.';
-    $lines[] = 'Terima kasih atas perhatian dan kepercayaan Ayah/Bunda.';
-    $lines[] = 'Wassalamu’alaikum warahmatullahi wabarakatuh.';
-    $lines[] = '';
-    $lines[] = ppdb_admin_contact_message();
-
-    $recipients = ppdb_registrant_recipients($registration);
-    if ($recipients === []) {
-        throw new RuntimeException('Nomor WhatsApp pendaftar tidak valid.');
-    }
-
-    $links = [];
-    foreach ($recipients as $number => $role) {
-        $links[] = [
-            'role' => $role,
-            'phone' => $number,
-            'display' => ppdb_display_phone($number),
-            'url' => ppdb_whatsapp_link($number, implode("\n", $lines)),
-        ];
-    }
-
-    return [
-        'status_url' => $statusUrl,
-        'message' => implode("\n", $lines),
-        'links' => $links,
-    ];
+    $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran
+        SET p.tanggal_batas_bayar=IF(COALESCE(c.biaya_pendaftaran,0)>0,COALESCE(p.tanggal_batas_bayar,DATE_ADD(CURDATE(),INTERVAL GREATEST(1,COALESCE(c.masa_pembayaran_hari,1)) DAY)),p.tanggal_batas_bayar),
+            p.status_pembayaran=IF(COALESCE(c.biaya_pendaftaran,0)>0,'belum_bayar','terverifikasi'),
+            p.status_ppdb=IF(COALESCE(c.biaya_pendaftaran,0)>0,'menunggu_pembayaran','menunggu_formulir')
+        WHERE p.id_pendaftaran=? AND p.status_ppdb='menunggu_kontak'");
+    mysqli_stmt_bind_param($update, 's', $registrationId);
+    mysqli_stmt_execute($update);
+    $changed = mysqli_stmt_affected_rows($update) > 0;
+    mysqli_stmt_close($update);
+    return $changed;
 }
 
 /**
- * Tautan formulir lengkap dibuat secara lokal: token formulir disimpan sekali
+ * Tautan perbaikan saat panitia membuka kembali formulir: token pertama disimpan
  * dan tetap berlaku, lalu teks WhatsApp disiapkan untuk dibuka admin.
  */
-function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string $revisionNote = '', bool $isRevision = false): array
+function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string $revisionNote = ''): array
 {
-    $lookup = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.nm_peserta,p.kode_unit,p.th_ajaran,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_formulir,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
+    $lookup = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.nm_peserta,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu FROM tb_pendaftaran p WHERE p.id_pendaftaran=? LIMIT 1');
     mysqli_stmt_bind_param($lookup, 's', $registrationId);
     mysqli_stmt_execute($lookup);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($lookup));
@@ -871,8 +804,8 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
     if (!$registration) {
         throw new RuntimeException('Data pendaftaran tidak ditemukan.');
     }
-    if (!in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true) && !($isRevision && $registration['status_ppdb'] === 'diterima')) {
-        throw new RuntimeException('Formulir hanya dapat dibuka setelah pembayaran disetujui.');
+    if (!in_array($registration['status_ppdb'], ['menunggu_formulir', 'diterima'], true)) {
+        throw new RuntimeException('Formulir hanya dapat dibuka kembali setelah pendaftar mengisi formulir.');
     }
 
     $formToken = bin2hex(random_bytes(32));
@@ -890,52 +823,26 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
         'token' => $formToken,
     ], '', '&', PHP_QUERY_RFC3986);
 
-    if ($isRevision) {
-        $lines = [
-            'Assalamu’alaikum warahmatullahi wabarakatuh.',
-            '',
-            'Yth. Ayah/Bunda/Wali dari Ananda '.$registration['nm_peserta'].',',
-            'Panitia SPMB Yayasan Wakaf Cendekia Takengon membuka kembali formulir pendaftaran Ananda untuk diperbaiki.',
-            'Kode pendaftaran: '.$registrationId,
-        ];
-        if ($revisionNote !== '') {
-            $lines[] = '';
-            $lines[] = 'Catatan perbaikan dari panitia: '.$revisionNote;
-        }
-        array_push(
-            $lines,
-            '',
-            'Isian yang telah dikirim sebelumnya tetap tersimpan. Mohon Ayah/Bunda memperbaiki bagian yang diminta, memeriksa kembali seluruh data, kemudian mengirimkan ulang formulir melalui tautan berikut:',
-            $formUrl,
-            '',
-            'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
-            'Wassalamu’alaikum warahmatullahi wabarakatuh.'
-        );
-    } else {
-        $lines = [
-            'Assalamu’alaikum warahmatullahi wabarakatuh.',
-            '',
-            'Yth. Ayah/Bunda/Wali dari Ananda '.$registration['nm_peserta'].',',
-            'Pembayaran pendaftaran Ananda pada '.($registration['nama_unit'] ?? 'unit pendidikan pilihan Ayah/Bunda').' telah kami verifikasi dan disetujui.',
-            'Terima kasih atas kepercayaan Ayah/Bunda kepada Yayasan Wakaf Cendekia Takengon.',
-            '',
-            'Kode pendaftaran: '.$registrationId,
-            '',
-            'Mohon Ayah/Bunda melanjutkan proses pendaftaran dengan membuka tautan berikut untuk mengisi formulir lengkap dan mengunggah dokumen persyaratan:',
-            $formUrl,
-            '',
-            'Panduan pengisian:',
-            '1. Isi setiap data dengan benar dan sesuai dokumen resmi.',
-            '2. Unggah dokumen atau foto yang lengkap, jelas, dan mudah dibaca.',
-            '3. Periksa kembali seluruh isian sebelum menekan tombol kirim.',
-            '',
-            'Formulir hanya dapat dikirim satu kali. Mohon pastikan seluruh data sudah benar sebelum dikirim.',
-            'Apabila Ayah/Bunda memerlukan bantuan, silakan hubungi admin SPMB melalui nomor di bawah.',
-            '',
-            'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
-            'Wassalamu’alaikum warahmatullahi wabarakatuh.',
-        ];
+    $lines = [
+        'Assalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Yth. Ayah/Bunda/Wali dari Ananda '.$registration['nm_peserta'].',',
+        'Panitia SPMB Yayasan Wakaf Cendekia Takengon membuka kembali formulir pendaftaran Ananda untuk diperbaiki.',
+        'Kode pendaftaran: '.$registrationId,
+    ];
+    if ($revisionNote !== '') {
+        $lines[] = '';
+        $lines[] = 'Catatan perbaikan dari panitia: '.$revisionNote;
     }
+    array_push(
+        $lines,
+        '',
+        'Isian yang telah dikirim sebelumnya tetap tersimpan. Mohon Ayah/Bunda memperbaiki bagian yang diminta, memeriksa kembali seluruh data, kemudian mengirimkan ulang formulir melalui tautan berikut:',
+        $formUrl,
+        '',
+        'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
+        'Wassalamu’alaikum warahmatullahi wabarakatuh.'
+    );
 
     $lines[] = '';
     $lines[] = ppdb_admin_contact_message();

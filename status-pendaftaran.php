@@ -9,7 +9,7 @@ $registration = null;
 $tokenIsValid = preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
 if ($tokenIsValid) {
     $tokenHash = hash('sha256', $receiptToken);
-    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.status_ppdb,p.status_data,p.status_pembayaran,p.tanggal_batas_bayar,u.nama_unit,u.jenjang,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
+    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
     mysqli_stmt_bind_param($stmt, 'ssss', $registrationId, $tokenHash, $tokenHash, $tokenHash);
     mysqli_stmt_execute($stmt);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -18,10 +18,18 @@ if ($tokenIsValid) {
 
 if (!$registration) {
     http_response_code(404);
+} elseif ($registration['status_ppdb'] === 'menunggu_kontak' && ppdb_activate_registration($conn, $registration['id_pendaftaran'])) {
+    // Pendaftar lama yang belum dikirimi tautan langsung masuk ke tahap berikutnya.
+    header('Location: status-pendaftaran.php?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $receiptToken]));
+    exit;
 }
 
 $statusInfo = $registration ? ppdb_status_info($registration['status_ppdb']) : null;
 $currentStep = $statusInfo['step'] ?? 0;
+// Pendaftar tidak menunggu pemeriksaan bukti: tahap berikutnya sudah bisa dikerjakan.
+if ($registration && $registration['status_ppdb'] === 'pembayaran_diperiksa') {
+    $currentStep = 3;
+}
 $paymentDeadlinePassed = $registration && $registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d');
 $hasPaymentAccount = $registration
     && !empty($registration['bank_nama'])
@@ -44,8 +52,8 @@ $revisionCount = isset($_GET['revisi']) && ctype_digit((string) $_GET['revisi'])
 
 $journeySteps = [
     ['title' => 'Registrasi awal', 'description' => 'Data dasar ananda diterima.'],
-    ['title' => 'Pembayaran', 'description' => 'Panitia mengirim tautan, Anda unggah bukti.'],
-    ['title' => 'Formulir lengkap', 'description' => 'Isi data detail dan dokumen pendukung.'],
+    ['title' => 'Pembayaran', 'description' => 'Transfer lalu unggah bukti di halaman ini.'],
+    ['title' => 'Formulir lengkap', 'description' => 'Konfirmasi data, baca materi, lalu isi formulir.'],
     ['title' => 'Pemeriksaan', 'description' => 'Panitia memverifikasi kelengkapan berkas.'],
     ['title' => 'Keputusan', 'description' => 'Diterima, daftar tunggu, atau tindak lanjut.'],
 ];
@@ -142,28 +150,21 @@ header('Referrer-Policy: no-referrer');
 
             <?php
             $panel = '';
-            if ($registration['status_ppdb'] === 'menunggu_kontak') {
-                $panel = 'kontak';
-            } elseif ($registration['status_ppdb'] === 'menunggu_pembayaran') {
+            if ($registration['status_ppdb'] === 'menunggu_pembayaran'
+                || ($registration['status_pembayaran'] === 'ditolak' && in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true))) {
                 $panel = 'bayar';
-            } elseif ($registration['status_ppdb'] === 'pembayaran_diperiksa') {
-                $panel = 'cek-bayar';
-            } elseif (in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true)) {
+            } elseif (!empty($registration['revisi_dibuka']) || in_array($registration['status_ppdb'], ['pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true)) {
                 $panel = 'formulir';
             } elseif ($registration['status_ppdb'] === 'formulir_terisi') {
                 $panel = 'cek-formulir';
+            } elseif ($registration['status_ppdb'] === 'diterima') {
+                $panel = 'diterima';
             }
             ?>
 
-            <?php if ($panel === 'kontak') { ?>
-                <div class="payment-guidance">
-                    <strong>Panitia akan menghubungi Anda</strong>
-                    <span>Tautan pembayaran dikirim ke nomor WhatsApp pendaftar: <strong><?php echo h(ppdb_display_phone($registration['no_hp_pendaftar'])); ?></strong></span>
-                    <span>Nomor ayah: <?php echo h(ppdb_display_phone($registration['no_hp_ayah'])); ?> · Ibu: <?php echo h(ppdb_display_phone($registration['no_hp_ibu'])); ?></span>
-                </div>
-            <?php } elseif ($panel === 'bayar') { ?>
+            <?php if ($panel === 'bayar') { ?>
                 <?php if ($registration['status_pembayaran'] === 'ditolak') { ?>
-                    <div class="payment-error" role="alert">Bukti pembayaran sebelumnya belum disetujui. <?php echo h($registration['catatan_bukti']); ?></div>
+                    <div class="payment-error" role="alert">Bukti pembayaran sebelumnya belum disetujui. <?php echo h($registration['catatan_bukti']); ?> Isian formulir Anda tetap tersimpan.</div>
                 <?php } ?>
                 <?php if ($paymentDeadlinePassed) { ?>
                     <div class="payment-guidance is-warning">Batas pembayaran telah lewat. Hubungi panitia sebelum mengirim pembayaran.</div>
@@ -220,7 +221,7 @@ header('Referrer-Policy: no-referrer');
                                 <span>Ayah/Bunda tidak perlu melakukan transfer. Silakan hubungi admin SPMB untuk arahan proses selanjutnya.</span>
                             </div>
                         <?php } ?>
-                    </div>
+                    </section>
                     <?php if ((float) $registration['biaya_pendaftaran'] > 0 && $hasPaymentAccount) { ?>
                     <form class="payment-upload" action="upload-bukti-pembayaran.php" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="id" value="<?php echo h($registration['id_pendaftaran']); ?>">
@@ -228,31 +229,40 @@ header('Referrer-Policy: no-referrer');
                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                         <label for="bukti_transfer">Unggah bukti transfer <span>Pastikan nama rekening, nominal, dan waktu transaksi terlihat jelas. Format JPG, PNG, atau PDF · maksimal 5 MB.</span></label>
                         <input id="bukti_transfer" type="file" name="bukti_transfer" accept="image/jpeg,image/png,application/pdf" required>
-                        <button class="download-button" type="submit">Kirim bukti untuk diperiksa <span aria-hidden="true">&uarr;</span></button>
+                        <button class="download-button" type="submit">Kirim bukti dan lanjutkan <span aria-hidden="true">&rarr;</span></button>
                     </form>
                     <?php } ?>
                 <?php } ?>
-            <?php } elseif ($panel === 'cek-bayar') { ?>
-                <div class="payment-guidance">
-                    <strong>Bukti transfer sedang diperiksa</strong>
-                    <span>Diunggah<?php echo $registration['diunggah_pada'] ? ' pada '.h(date('d-m-Y H:i', strtotime($registration['diunggah_pada']))) : ''; ?>.</span>
-                    <span>Setelah disetujui, Anda menerima tautan formulir lengkap melalui WhatsApp.</span>
-                </div>
             <?php } elseif ($panel === 'formulir') { ?>
                 <div class="payment-guidance">
-                    <strong>Pembayaran disetujui</strong>
-                    <span>Tautan formulir lengkap dikirim melalui WhatsApp. Gunakan kode pendaftaran <strong><?php echo h($registration['id_pendaftaran']); ?></strong> pada halaman formulir untuk melanjutkan.</span>
+                    <strong>Lanjutkan pengisian formulir</strong>
+                    <?php if ($registration['status_pembayaran'] === 'menunggu_verifikasi') { ?>
+                        <span>Bukti transfer sedang diperiksa panitia<?php echo $registration['diunggah_pada'] ? ' (diunggah '.h(date('d-m-Y H:i', strtotime($registration['diunggah_pada']))).')' : ''; ?>. Anda tidak perlu menunggu.</span>
+                    <?php } else { ?>
+                        <span>Isian yang sudah tersimpan akan dimuat kembali.</span>
+                    <?php } ?>
                 </div>
-                <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Buka formulir lengkap</a>
+                <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan formulir</a>
             <?php } elseif ($panel === 'cek-formulir') { ?>
                 <div class="payment-guidance">
                     <strong>Formulir lengkap diterima</strong>
                     <span><?php echo $documentCount; ?> dokumen pendukung telah diunggah. Data sedang diperiksa panitia.</span>
+                    <?php if ($registration['status_pembayaran'] === 'menunggu_verifikasi') { ?><span>Bukti transfer juga sedang diperiksa panitia.</span><?php } ?>
+                    <span>Hasil pendaftaran akan tampil di halaman ini. Untuk kembali, buka menu Lanjutkan pendaftaran di situs SPMB.</span>
                 </div>
+            <?php } elseif ($panel === 'diterima') { ?>
+                <div class="payment-success" role="status">
+                    <strong>Alhamdulillah, ananda <?php echo h($registration['nm_peserta']); ?> diterima di <?php echo h($registration['nama_unit']); ?>.</strong>
+                </div>
+                <?php if (!empty($registration['link_grup'])) { ?>
+                    <a class="download-button group-join-button" href="<?php echo h($registration['link_grup']); ?>" target="_blank" rel="noopener noreferrer">Gabung grup WhatsApp <?php echo h($registration['nama_unit']); ?></a>
+                <?php } else { ?>
+                    <div class="payment-guidance"><span>Informasi grup WhatsApp <?php echo h($registration['nama_unit']); ?> akan disampaikan oleh panitia.</span></div>
+                <?php } ?>
             <?php } ?>
 
             <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh ringkasan PDF</a>
-            <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain.</p>
+            <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain. Untuk kembali lagi, buka <a href="lanjutkan-pendaftaran.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>">Lanjutkan pendaftaran</a>.</p>
             <div class="admin-contact">
                 <span>Perlu bantuan? Hubungi admin SPMB.</span>
                 <a class="whatsapp-button" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait pendaftaran '.$registration['id_pendaftaran'].'.')); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi WhatsApp admin SPMB <?php echo h(ppdb_admin_whatsapp_display()); ?>">
@@ -265,8 +275,8 @@ header('Referrer-Policy: no-referrer');
         <section class="result-panel result-error">
             <p class="result-eyebrow">Tautan tidak valid</p>
             <h1>Status pendaftaran<br>tidak ditemukan.</h1>
-            <p class="result-description">Periksa kembali tautan dari pesan WhatsApp, atau hubungi panitia SPMB.</p>
-            <a class="download-button" href="./">Kembali ke beranda</a>
+            <p class="result-description">Masuk kembali lewat halaman Lanjutkan pendaftaran, atau hubungi panitia SPMB.</p>
+            <a class="download-button" href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a>
         </section>
     <?php } ?>
 

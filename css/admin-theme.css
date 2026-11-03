@@ -1896,3 +1896,8 @@ html:root[data-theme="dark"] .combined-quota {
 .progress-panel .progress-tooltip span {
     color: #cbd5e1;
 }
+
+.button-secondary:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}

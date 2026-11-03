@@ -20,7 +20,7 @@ if (!in_array($selectedTrack, ['', 'internal', 'eksternal'], true)) {
 }
 
 $statusOptions = [
-    'menunggu_kontak' => 'Menunggu dihubungi',
+    'menunggu_kontak' => 'Belum melanjutkan',
     'menunggu_pembayaran' => 'Menunggu bayar',
     'pembayaran_diperiksa' => 'Bukti bayar masuk',
     'pembayaran_terverifikasi' => 'Bayar disetujui',
@@ -82,7 +82,7 @@ $currentPage = (int) ($_GET['page'] ?? 1);
 $currentPage = min(max(1, $currentPage), $totalPages);
 $offset = ($currentPage - 1) * $perPage;
 
-$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_formulir IS NOT NULL AS link_formulir_terkirim,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
+$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
     .' ORDER BY FIELD(p.status_ppdb,\'menunggu_kontak\',\'pembayaran_diperiksa\',\'pembayaran_terverifikasi\',\'formulir_terisi\',\'menunggu_pembayaran\',\'menunggu_formulir\',\'daftar_tunggu\',\'diterima\',\'ditolak\',\'data_lama\'), p.waktu_daftar DESC, p.id_pendaftaran DESC'
     .' LIMIT '.$perPage.' OFFSET '.$offset;
@@ -256,12 +256,12 @@ require 'admin_header.php';
                             <td data-label="Unit"><?php echo h(ppdb_unit_display_name($row['nama_unit'] ?? 'Data lama')); ?><?php if (!empty($row['tingkat_kelas'])) { ?> <span class="unit-level">· <?php echo h($row['tingkat_kelas']); ?></span><?php } ?></td>
                             <td data-label="Jalur"><?php echo $row['jalur_pendaftaran'] === 'internal' ? 'Internal · SDM' : 'Eksternal · umum'; ?></td>
                             <td data-label="Tahun"><?php echo h($row['th_ajaran']); ?></td>
-                            <td data-label="Status"><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span></td>
+                            <td data-label="Status"><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span><?php if ($row['status_ppdb'] === 'formulir_terisi' && $row['status_pembayaran'] !== 'terverifikasi') { ?><small class="cell-sub">Pembayaran belum disetujui</small><?php } ?></td>
                             <td data-label="Tanggal"><?php echo h(date('d-m-Y', strtotime($row['tgl_daftar']))); ?></td>
                             <td data-label="Aksi">
                                 <div class="table-actions">
                                     <a class="table-action" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>">Detail</a>
-                                    <?php if (!empty($row['link_formulir_terkirim']) && in_array($row['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) { ?>
+                                    <?php if (in_array($row['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true) && in_array($row['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) { ?>
                                         <form action="revisi-formulir.php" method="post" class="revision-action" data-revisi>
                                             <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                                             <input type="hidden" name="id" value="<?php echo h($row['id_pendaftaran']); ?>">

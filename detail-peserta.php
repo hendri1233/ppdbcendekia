@@ -13,8 +13,6 @@ $error = '';
 $notice = '';
 $whatsappDeliveryNotice = '';
 $whatsappDeliveryTone = 'success';
-$shareLinks = null;
-$shareTitle = '';
 if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
     http_response_code(404);
     exit('Data peserta tidak ditemukan.');
@@ -45,6 +43,19 @@ function ppdb_seat_availability(mysqli $conn, array $locked): array
         'quota' => (int) $quota,
         'seat_available' => $quota !== null && $acceptedCount < (int) $quota,
     ];
+}
+
+/** Pendaftaran yang tidak valid dapat ditolak sebelum formulir masuk pemeriksaan. */
+function ppdb_detail_reject_form(string $registrationId): void
+{
+    echo '<div class="workflow-actions"><form method="post" class="stacked-action">';
+    echo '<input type="hidden" name="csrf_token" value="'.h(csrf_token()).'">';
+    echo '<input type="hidden" name="id" value="'.h($registrationId).'">';
+    echo '<input type="hidden" name="workflow_action" value="reject_initial">';
+    echo '<label for="reject-initial-note">Alasan penolakan (opsional)</label>';
+    echo '<input id="reject-initial-note" name="catatan_admin" maxlength="500">';
+    echo '<button class="button-danger" type="submit">Tolak pendaftaran</button>';
+    echo '</form></div>';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -82,43 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 mysqli_stmt_close($update);
             }
-        } elseif ($action === 'send_payment_link') {
-            try {
-                mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,p.nomor_antrian,c.kuota_internal,c.kuota_eksternal,c.masa_pembayaran_hari FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE');
-                mysqli_stmt_bind_param($lock, 's', $registrationId);
-                mysqli_stmt_execute($lock);
-                $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
-                mysqli_stmt_close($lock);
-                if (!$locked || !in_array($locked['status_ppdb'], ['menunggu_kontak', 'menunggu_pembayaran'], true)) {
-                    throw new RuntimeException('Tautan pembayaran hanya dapat disiapkan saat peserta menunggu dihubungi.');
-                }
-                $availability = ppdb_seat_availability($conn, $locked);
-                if (!$availability['seat_available']) {
-                    throw new RuntimeException('Kuota jalur pendaftaran sudah penuh. Tunda sampai kursi tersedia.');
-                }
-                // Batas bayar hanya dibuat saat pertama kali transitioning dari kontak.
-                $nextDeadline = $locked['status_ppdb'] === 'menunggu_pembayaran'
-                    ? null
-                    : date('Y-m-d', strtotime('+' . max(1, (int) $locked['masa_pembayaran_hari']) . ' days'));
-                $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='menunggu_pembayaran',status_pembayaran='belum_bayar',tanggal_batas_bayar=COALESCE(tanggal_batas_bayar,?) WHERE id_pendaftaran=?");
-                mysqli_stmt_bind_param($update, 'ss', $nextDeadline, $registrationId);
-                mysqli_stmt_execute($update);
-                mysqli_stmt_close($update);
-                mysqli_commit($conn);
-
-                $shareLinks = ppdb_wablas_send_links(ppdb_prepare_payment_link($conn, $registrationId));
-                $shareTitle = 'Tautan pembayaran siap dikirim. Pilih nomor di bawah untuk membuka WhatsApp.';
-                enqueue_google_sheets_registration($conn, $registrationId);
-                sync_google_sheets_registration($conn, $registrationId);
-                $notice = 'Tautan pembayaran sudah aktif. Klik salah satu nomor untuk mengirim lewat WhatsApp.';
-            } catch (Throwable $exception) {
-                mysqli_rollback($conn);
-                if (!$exception instanceof RuntimeException) {
-                    error_log('SPMB payment link setup failed ('.get_class($exception).').');
-                }
-                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Tautan pembayaran gagal disiapkan.';
-            }
         } elseif ($action === 'reject_initial') {
             try {
                 mysqli_begin_transaction($conn);
@@ -127,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_execute($lock);
                 $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
                 mysqli_stmt_close($lock);
-                if (!$locked || !in_array($locked['status_ppdb'], ['menunggu_kontak', 'menunggu_pembayaran', 'pembayaran_diperiksa'], true)) {
+                if (!$locked || !in_array($locked['status_ppdb'], ['menunggu_kontak', 'menunggu_pembayaran', 'pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true)) {
                     throw new RuntimeException('Pendaftaran ini sudah tidak dapat ditolak pada tahap ini.');
                 }
                 $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='ditolak',status_data='perlu_perbaikan',data_diperiksa_oleh=?,data_diperiksa_pada=NOW() WHERE id_pendaftaran=?");
@@ -162,11 +136,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($paymentUpdate);
 
                 if ($action === 'reject_payment') {
-                    $newPpdbStatus = 'menunggu_pembayaran';
+                    // Pendaftar yang sudah mengirim formulir tetap di tahapnya, cukup unggah ulang bukti.
+                    $newPpdbStatus = $locked['status_ppdb'] === 'pembayaran_diperiksa' ? 'menunggu_pembayaran' : $locked['status_ppdb'];
                     $newPaymentStatus = 'ditolak';
                 } else {
                     $availability = ppdb_seat_availability($conn, $locked);
-                    $newPpdbStatus = 'pembayaran_terverifikasi';
+                    $newPpdbStatus = $locked['status_ppdb'] === 'pembayaran_diperiksa' ? 'menunggu_formulir' : $locked['status_ppdb'];
                     $newPaymentStatus = 'terverifikasi';
                 }
                 $registrationUpdate = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET status_ppdb=?,status_pembayaran=?,pembayaran_diperiksa_oleh=?,pembayaran_diperiksa_pada=NOW() WHERE id_pendaftaran=?');
@@ -178,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 sync_google_sheets_registration($conn, $registrationId);
 
                 if ($action === 'approve_payment') {
-                    $notice = 'Pembayaran disetujui. Kirim tautan formulir lengkap ke pendaftar.';
+                    $notice = 'Pembayaran disetujui.';
                 } else {
                     $notice = $reviewNote !== ''
                         ? 'Bukti pembayaran ditolak. Peserta dapat mengunggah ulang: ' . $reviewNote
@@ -188,44 +163,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_rollback($conn);
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Status pembayaran belum dapat diperbarui.';
             }
-        } elseif ($action === 'send_formulir_link') {
+        } elseif ($action === 'reopen_registration') {
             try {
                 mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, "SELECT status_ppdb,status_data,status_pembayaran FROM tb_pendaftaran WHERE id_pendaftaran=? FOR UPDATE");
-                mysqli_stmt_bind_param($lock, 's', $registrationId);
-                if (!mysqli_stmt_execute($lock)) {
-                    mysqli_stmt_close($lock);
-                    throw new RuntimeException('Status pendaftaran belum dapat diverifikasi.');
-                }
-                $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
-                mysqli_stmt_close($lock);
-                $withdrawalRecovery = $locked
-                    && $locked['status_ppdb'] === 'ditolak'
-                    && $locked['status_data'] === 'belum_diperiksa'
-                    && $locked['status_pembayaran'] === 'terverifikasi';
-                if (
-                    !$locked
-                    || $locked['status_pembayaran'] !== 'terverifikasi'
-                    || (!in_array($locked['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true) && !$withdrawalRecovery)
-                ) {
-                    throw new RuntimeException('Tautan formulir hanya dapat disiapkan setelah pembayaran disetujui.');
-                }
-                $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='menunggu_formulir' WHERE id_pendaftaran=?");
+                $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='menunggu_formulir' WHERE id_pendaftaran=? AND status_ppdb='ditolak' AND status_data='belum_diperiksa' AND status_pembayaran IN ('terverifikasi','menunggu_verifikasi')");
                 mysqli_stmt_bind_param($update, 's', $registrationId);
-                if (!mysqli_stmt_execute($update)) {
+                mysqli_stmt_execute($update);
+                if (mysqli_stmt_affected_rows($update) !== 1) {
                     mysqli_stmt_close($update);
-                    throw new RuntimeException('Status pendaftaran belum dapat diperbarui.');
+                    throw new RuntimeException('Pendaftaran ini tidak dapat dibuka kembali.');
                 }
                 mysqli_stmt_close($update);
-                if (!mysqli_commit($conn)) {
-                    throw new RuntimeException('Status pendaftaran belum dapat diperbarui.');
-                }
-
-                $shareLinks = ppdb_wablas_send_links(ppdb_prepare_formulir_link($conn, $registrationId));
-                $shareTitle = 'Tautan formulir lengkap siap dikirim. Pilih nomor di bawah untuk membuka WhatsApp.';
+                mysqli_commit($conn);
+                enqueue_google_sheets_registration($conn, $registrationId);
+                sync_google_sheets_registration($conn, $registrationId);
+                $notice = 'Pendaftaran dibuka kembali. Pendaftar dapat melanjutkan lewat halaman Lanjutkan pendaftaran.';
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
-                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Tautan formulir gagal disiapkan.';
+                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Pendaftaran belum dapat dibuka kembali.';
             }
         } elseif (in_array($action, ['accept_final', 'waitlist_final', 'reject_formulir'], true)) {
             try {
@@ -239,6 +194,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fromWaitlist = $locked && $locked['status_ppdb'] === 'daftar_tunggu' && $action !== 'waitlist_final';
                 if (!$locked || ($locked['status_ppdb'] !== 'formulir_terisi' && !$fromWaitlist)) {
                     throw new RuntimeException('Formulir lengkap belum masuk antrean pemeriksaan.');
+                }
+                if ($action !== 'reject_formulir' && $locked['status_pembayaran'] !== 'terverifikasi') {
+                    throw new RuntimeException('Setujui bukti pembayaran terlebih dahulu sebelum menentukan keputusan.');
                 }
 
                 if ($action === 'accept_final') {
@@ -272,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($action === 'accept_final') {
                     if (!ppdb_wablas_enabled()) {
-                        $whatsappDeliveryNotice = 'Status penerimaan tersimpan, tetapi ucapan WhatsApp belum dikirim karena integrasi Wablas belum dikonfigurasi.';
+                        $whatsappDeliveryNotice = 'Status penerimaan tersimpan dan sudah tampil pada halaman pendaftaran pendaftar. Ucapan WhatsApp otomatis belum dikirim karena integrasi Wablas belum dikonfigurasi.';
                         $whatsappDeliveryTone = 'warning';
                     } else {
                         $recipientPhone = ppdb_normalize_whatsapp_number((string) $locked['no_hp_pendaftar']);
@@ -483,35 +441,7 @@ require 'admin_header.php';
     <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
     <?php if ($whatsappDeliveryNotice !== '') { ?><div class="alert-<?php echo h($whatsappDeliveryTone); ?>" role="status"><?php echo h($whatsappDeliveryNotice); ?></div><?php } ?>
 
-    <?php if ($shareLinks) { ?>
-        <section class="detail-panel wide share-panel" aria-labelledby="share-title">
-            <div class="share-panel__head">
-                <h2 id="share-title"><?php echo h($shareTitle); ?></h2>
-                <button class="button-secondary" type="button" data-copy-target="#share-url">Salin tautan</button>
-            </div>
-            <p class="share-panel__hint"><?php echo ppdb_wablas_enabled()
-                ? 'Pesan dikirim otomatis lewat Wablas. Jika ada yang gagal, klik nomornya untuk mengirim manual.'
-                : 'Pesan sudah terisi otomatis pada WhatsApp. Pilih nomor yang ingin dihubungi, lalu tekan tombol kirim di WhatsApp.'; ?></p>
-            <div class="share-links">
-                <?php foreach ($shareLinks['links'] as $link) { ?>
-                    <a class="share-link" href="<?php echo h($link['url']); ?>" target="_blank" rel="noopener">
-                        <span class="share-link__role"><?php echo h($link['role']); ?></span>
-                        <span class="share-link__phone"><?php echo h($link['display']); ?></span>
-                        <span class="share-link__action"><?php
-                            if (!isset($link['sent'])) { echo 'Buka WhatsApp'; }
-                            elseif ($link['sent']) { echo '&#10003; Terkirim otomatis'; }
-                            else { echo 'Gagal ('.h($link['send_error']).') &middot; kirim manual'; }
-                        ?></span>
-                    </a>
-                <?php } ?>
-            </div>
-            <label class="share-field">
-                <span>Tautan langsung</span>
-                <input id="share-url" type="text" readonly value="<?php echo h($shareLinks['status_url']); ?>" data-copy-source>
-            </label>
-        </section>
-    <?php } ?>
-
+<?php $paymentAwaitingReview = $latestPayment && $latestPayment['status_verifikasi'] === 'menunggu_verifikasi' && $participant['status_pembayaran'] === 'menunggu_verifikasi'; ?>
     <section class="detail-panel wide workflow-panel">
         <h2>Alur penerimaan</h2>
         <div class="workflow-summary">
@@ -524,30 +454,7 @@ require 'admin_header.php';
             <?php if ($participant['tanggal_batas_bayar']) { ?><div><span>Batas pembayaran</span><strong><?php echo h(date('d-m-Y', strtotime($participant['tanggal_batas_bayar']))); ?></strong></div><?php } ?>
         </div>
 
-        <?php if ($participant['status_ppdb'] === 'menunggu_kontak') { ?>
-            <p class="workflow-hint">Data awal sudah lengkap. Periksa nama, tanggal lahir, dan unit, lalu siapkan tautan pembayaran untuk dikirim ke nomor WhatsApp pendaftar.</p>
-            <div class="contact-strip">
-                <div><span>Pendaftar</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_pendaftar'])); ?></strong></div>
-                <div><span>Ayah</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ayah'])); ?></strong></div>
-                <div><span>Ibu</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ibu'])); ?></strong></div>
-            </div>
-            <div class="workflow-actions">
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="send_payment_link">
-                    <button class="button-primary" type="submit">Siapkan tautan pembayaran</button>
-                </form>
-                <form method="post" class="stacked-action">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="reject_initial">
-                    <label for="reject-initial-note">Alasan penolakan (opsional)</label>
-                    <input id="reject-initial-note" name="catatan_admin" maxlength="500">
-                    <button class="button-danger" type="submit">Tolak pendaftaran</button>
-                </form>
-            </div>
-        <?php } elseif ($participant['status_ppdb'] === 'pembayaran_diperiksa' && $latestPayment) { ?>
+        <?php if ($paymentAwaitingReview) { ?>
             <div class="payment-review-summary">
                 <span>Bukti transfer diunggah <?php echo h(date('d-m-Y H:i', strtotime($latestPayment['diunggah_pada']))); ?></span>
                 <a class="button-secondary" href="bukti-pembayaran-admin.php?id=<?php echo (int) $latestPayment['id']; ?>" target="_blank" rel="noopener">Lihat bukti transfer &#8599;</a>
@@ -572,40 +479,42 @@ require 'admin_header.php';
                     <button class="button-danger" type="submit">Tolak bukti</button>
                 </form>
             </div>
+        <?php } ?>
+
+        <?php if ($participant['status_ppdb'] === 'menunggu_kontak') { ?>
+            <p class="workflow-hint">Pendaftar belum melanjutkan ke tahap pembayaran. Halaman ini akan berubah otomatis saat pendaftar melanjutkan.</p>
+            <div class="contact-strip">
+                <div><span>Pendaftar</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_pendaftar'])); ?></strong></div>
+                <div><span>Ayah</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ayah'])); ?></strong></div>
+                <div><span>Ibu</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ibu'])); ?></strong></div>
+            </div>
+            <?php ppdb_detail_reject_form($registrationId); ?>
+        <?php } elseif ($participant['status_ppdb'] === 'pembayaran_diperiksa') { ?>
+            <p class="workflow-hint">Bukti transfer sudah masuk. Pendaftar dapat terus mengisi formulir sambil bukti ini diperiksa.</p>
+            <?php ppdb_detail_reject_form($registrationId); ?>
         <?php } elseif ($participant['status_ppdb'] === 'pembayaran_terverifikasi') { ?>
-            <p class="workflow-hint">Pembayaran disetujui. Siapkan tautan formulir lengkap untuk pendaftar; formulir hanya bisa diisi sekali.</p>
-            <div class="workflow-actions">
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="send_formulir_link">
-                    <button class="button-primary" type="submit">Siapkan tautan formulir lengkap</button>
-                </form>
-            </div>
+            <p class="workflow-hint">Pembayaran disetujui. Menunggu pendaftar mengisi formulir lengkap.</p>
+            <?php ppdb_detail_reject_form($registrationId); ?>
         <?php } elseif ($participant['status_ppdb'] === 'menunggu_formulir') { ?>
-            <p class="workflow-hint">Tautan formulir sudah disiapkan. Menunggu pendaftar mengisi formulir lengkap beserta dokumen pendukung.</p>
-            <div class="workflow-actions">
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="send_formulir_link">
-                    <button class="button-secondary" type="submit">Siapkan ulang tautan formulir</button>
-                </form>
-            </div>
+            <p class="workflow-hint">Menunggu pendaftar mengisi formulir lengkap beserta dokumen pendukung.</p>
+            <?php ppdb_detail_reject_form($registrationId); ?>
         <?php } elseif ($participant['status_ppdb'] === 'formulir_terisi') { ?>
-            <p class="workflow-hint">Formulir lengkap dan dokumen sudah masuk. Periksa kelengkapan berkas lalu tentukan keputusan akhir.</p>
+            <?php $paymentSettled = $participant['status_pembayaran'] === 'terverifikasi'; ?>
+            <p class="workflow-hint"><?php echo $paymentSettled
+                ? 'Formulir lengkap dan dokumen sudah masuk. Periksa kelengkapan berkas lalu tentukan keputusan akhir.'
+                : 'Formulir lengkap dan dokumen sudah masuk, tetapi pembayaran belum disetujui. Selesaikan pemeriksaan bukti transfer sebelum menerima peserta.'; ?></p>
             <div class="workflow-actions payment-actions">
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
                     <input type="hidden" name="workflow_action" value="accept_final">
-                    <button class="button-primary" type="submit">Terima peserta</button>
+                    <button class="button-primary" type="submit"<?php echo $paymentSettled ? '' : ' disabled title="Pembayaran belum disetujui"'; ?>>Terima peserta</button>
                 </form>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
                     <input type="hidden" name="workflow_action" value="waitlist_final">
-                    <button class="button-secondary" type="submit">Masukkan daftar tunggu</button>
+                    <button class="button-secondary" type="submit"<?php echo $paymentSettled ? '' : ' disabled title="Pembayaran belum disetujui"'; ?>>Masukkan daftar tunggu</button>
                 </form>
                 <form method="post" class="stacked-action">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
@@ -618,16 +527,9 @@ require 'admin_header.php';
             </div>
         <?php } elseif ($participant['status_ppdb'] === 'menunggu_pembayaran') { ?>
             <p class="workflow-hint">Menunggu bukti transfer dari pendaftar. Nomor <?php echo h($registrationId); ?> menjadi berita transfer.</p>
-            <div class="workflow-actions">
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="send_payment_link">
-                    <button class="button-secondary" type="submit">Siapkan ulang tautan pembayaran</button>
-                </form>
-            </div>
+            <?php ppdb_detail_reject_form($registrationId); ?>
         <?php } elseif ($participant['status_ppdb'] === 'diterima') { ?>
-            <p class="workflow-hint">Peserta telah diterima pada unit ini sesuai urutan dan kuota.</p>
+            <p class="workflow-hint">Peserta telah diterima pada unit ini sesuai urutan dan kuota. Hasil dan tautan grup WhatsApp unit tampil pada halaman pendaftaran pendaftar.</p>
         <?php } elseif ($participant['status_ppdb'] === 'daftar_tunggu') { ?>
             <p class="workflow-hint">
                 Peserta berada pada daftar tunggu jalur <?php echo h($participant['jalur_pendaftaran']); ?>, urutan ke-<?php echo $waitlist['position']; ?> dari <?php echo $waitlist['total']; ?>.
@@ -653,14 +555,14 @@ require 'admin_header.php';
                     <button class="button-danger" type="submit">Tolak dari daftar tunggu</button>
                 </form>
             </div>
-        <?php } elseif ($participant['status_ppdb'] === 'ditolak' && $participant['status_data'] === 'belum_diperiksa' && $participant['status_pembayaran'] === 'terverifikasi') { ?>
-            <p class="workflow-hint">Pendaftar memilih tidak melanjutkan pengisian formulir. Pilihan ini sudah tercatat untuk panitia. Jika pembatalan terjadi karena salah klik, Anda dapat mengirim ulang tautan formulir di bawah ini.</p>
+        <?php } elseif ($participant['status_ppdb'] === 'ditolak' && $participant['status_data'] === 'belum_diperiksa' && in_array($participant['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true)) { ?>
+            <p class="workflow-hint">Pendaftar memilih tidak melanjutkan pengisian formulir. Pilihan ini sudah tercatat untuk panitia. Jika pembatalan terjadi karena salah klik, Anda dapat membuka kembali pendaftarannya.</p>
             <div class="workflow-actions">
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="send_formulir_link">
-                    <button class="button-primary" type="submit">Kirim ulang tautan formulir</button>
+                    <input type="hidden" name="workflow_action" value="reopen_registration">
+                    <button class="button-primary" type="submit">Buka kembali pendaftaran</button>
                 </form>
             </div>
         <?php } elseif ($participant['status_ppdb'] === 'ditolak') { ?>

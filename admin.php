@@ -27,10 +27,10 @@ while ($row = mysqli_fetch_assoc($funnelQuery)) {
 }
 
 $funnelStages = [
-    ['key' => 'menunggu_kontak', 'label' => 'Menunggu dihubungi', 'hint' => 'Kirim tautan pembayaran'],
+    ['key' => 'menunggu_kontak', 'label' => 'Belum melanjutkan', 'hint' => 'Baru registrasi awal'],
     ['key' => 'menunggu_pembayaran', 'label' => 'Menunggu bayar', 'hint' => 'Menunggu bukti transfer'],
     ['key' => 'pembayaran_diperiksa', 'label' => 'Bukti masuk', 'hint' => 'Periksa bukti transfer'],
-    ['key' => 'pembayaran_terverifikasi', 'label' => 'Bayar disetujui', 'hint' => 'Siapkan tautan formulir'],
+    ['key' => 'pembayaran_terverifikasi', 'label' => 'Bayar disetujui', 'hint' => 'Menunggu isian lengkap'],
     ['key' => 'menunggu_formulir', 'label' => 'Menunggu formulir', 'hint' => 'Menunggu isian lengkap'],
     ['key' => 'formulir_terisi', 'label' => 'Formulir masuk', 'hint' => 'Periksa dan putuskan'],
 ];
@@ -42,7 +42,7 @@ foreach ($funnelStages as $stage) {
     $funnelBars[] = $stage + ['count' => $count];
 }
 $actionableTotal = 0;
-foreach (['menunggu_kontak', 'pembayaran_diperiksa', 'pembayaran_terverifikasi', 'formulir_terisi'] as $key) {
+foreach (['pembayaran_diperiksa', 'formulir_terisi'] as $key) {
     $actionableTotal += $funnelCounts[$key] ?? 0;
 }
 
@@ -263,7 +263,7 @@ if ($adminUnitCode === '') {
 
 $latestSql = 'SELECT p.id_pendaftaran,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.status_ppdb,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'.($adminUnitCode === '' ? '' : " WHERE p.kode_unit='".$escapedUnitCode."'").' ORDER BY p.tgl_daftar DESC,p.id_pendaftaran DESC LIMIT 8';
 $latestRegistrations = mysqli_query($conn, $latestSql);
-$attentionSql = "SELECT p.id_pendaftaran,p.nm_peserta,p.status_ppdb,p.tgl_daftar,p.waktu_daftar,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.status_ppdb IN ('menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi')".$registrationScope." ORDER BY FIELD(p.status_ppdb,'menunggu_kontak','pembayaran_diperiksa','pembayaran_terverifikasi','formulir_terisi'),p.waktu_daftar ASC LIMIT 8";
+$attentionSql = "SELECT p.id_pendaftaran,p.nm_peserta,p.status_ppdb,p.tgl_daftar,p.waktu_daftar,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.status_ppdb IN ('pembayaran_diperiksa','formulir_terisi')".$registrationScope." ORDER BY FIELD(p.status_ppdb,'pembayaran_diperiksa','formulir_terisi'),p.waktu_daftar ASC LIMIT 8";
 $attentionQuery = mysqli_query($conn, $attentionSql);
 
 // Data tampilan dasbor (hanya membaca angka yang sudah dihitung di atas).
@@ -275,7 +275,7 @@ $weekDelta = $weekRegistrants - array_sum($previousRegistrants);
 $activeRegistrations = $totalRegistrations - (int) ($funnelCounts['data_lama'] ?? 0);
 $acceptanceRate = $activeRegistrations > 0 ? (int) round($acceptedCount / $activeRegistrations * 100) : 0;
 $actionableBreakdown = [];
-foreach (['menunggu_kontak', 'pembayaran_diperiksa', 'pembayaran_terverifikasi', 'formulir_terisi'] as $key) {
+foreach (['pembayaran_diperiksa', 'formulir_terisi'] as $key) {
     $actionableBreakdown[] = ['key' => $key, 'label' => ppdb_admin_status_meta($key)['label'], 'count' => $funnelCounts[$key] ?? 0];
 }
 $statusMix = [];
@@ -317,7 +317,7 @@ require 'admin_header.php';
         </div>
         <div class="page-hero__actions">
             <?php if ($actionableTotal > 0) { ?>
-                <a class="button-primary" href="daftar_peserta.php?status=menunggu_kontak">Proses antrean</a>
+                <a class="button-primary" href="daftar_peserta.php?status=pembayaran_diperiksa">Proses antrean</a>
             <?php } else { ?>
                 <a class="button-primary" href="daftar_peserta.php">Lihat semua peserta</a>
             <?php } ?>

@@ -40,8 +40,12 @@ if (!$tokenIsValid) {
     http_response_code(404);
     exit('Pendaftaran tidak ditemukan.');
 }
-if ($registration['status_ppdb'] !== 'menunggu_pembayaran' || $registration['status_pembayaran'] === 'terverifikasi') {
-    return_to_applicant_status($registrationId, $receiptToken, 'Bukti hanya dapat diunggah setelah data disetujui dan sebelum status pembayaran selesai.');
+// Bukti yang ditolak boleh diunggah ulang pada tahap apa pun sebelum keputusan akhir.
+$canUpload = $registration['status_ppdb'] === 'menunggu_pembayaran'
+    ? $registration['status_pembayaran'] !== 'terverifikasi'
+    : $registration['status_pembayaran'] === 'ditolak' && in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true);
+if (!$canUpload) {
+    return_to_applicant_status($registrationId, $receiptToken, 'Bukti hanya dapat diunggah setelah formulir dikirim panitia dan sebelum status pembayaran selesai.');
 }
 if ($registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d')) {
     return_to_applicant_status($registrationId, $receiptToken, 'Batas pembayaran sudah lewat. Hubungi panitia.');
@@ -67,11 +71,12 @@ try {
     $storedMime = (string) $stored['mime'];
     $storedSize = (int) $stored['size'];
     $insert = mysqli_prepare($conn, "INSERT INTO tb_bukti_pembayaran (id_pendaftaran,nomor_referensi,nama_file_asli,path_file,mime_type,ukuran_byte,sha256) VALUES (?,?,?,?,?,?,?)");
-    mysqli_stmt_bind_param($insert, 'sssssis', $registrationId, $registrationId, $originalName, $storedPath, $storedMime, $storedSize, hash_file('sha256', $storedPath));
+    $storedHash = hash_file('sha256', $storedPath);
+    mysqli_stmt_bind_param($insert, 'sssssis', $registrationId, $registrationId, $originalName, $storedPath, $storedMime, $storedSize, $storedHash);
     mysqli_stmt_execute($insert);
     mysqli_stmt_close($insert);
 
-    $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb='pembayaran_diperiksa',status_pembayaran='menunggu_verifikasi' WHERE id_pendaftaran=?");
+    $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb=IF(status_ppdb='menunggu_pembayaran','pembayaran_diperiksa',status_ppdb),status_pembayaran='menunggu_verifikasi' WHERE id_pendaftaran=?");
     mysqli_stmt_bind_param($update, 's', $registrationId);
     mysqli_stmt_execute($update);
     mysqli_stmt_close($update);
@@ -88,4 +93,9 @@ try {
 
 sync_google_sheets_registration($conn, $registrationId);
 
-return_to_applicant_status($registrationId, $receiptToken);
+// Pendaftar langsung lanjut ke konfirmasi data; panitia memeriksa bukti secara terpisah.
+if ($registration['status_ppdb'] === 'formulir_terisi') {
+    return_to_applicant_status($registrationId, $receiptToken);
+}
+header('Location: formulir.php?'.http_build_query(['kode' => $registrationId, 'token' => $receiptToken, 'bayar' => 1]));
+exit;

@@ -474,6 +474,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 $storedLetterPath = prestasi_store_letter($conn, $registrationId, $_FILES['surat_prestasi']);
             }
 
+            ppdb_activate_registration($conn, $registrationId);
             enqueue_google_sheets_registration($conn, $registrationId);
             mysqli_commit($conn);
             unset($_SESSION[$internalSessionKey]);
@@ -535,7 +536,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             <div class="daftar-hero__copy">
                 <p class="eyebrow">Tahap 1 dari 3 · Registrasi awal</p>
                 <h1>Cukup data dasar,<br><span>sisanya kami pandu.</span></h1>
-                <p class="intro-copy">Isi tujuh isian singkat berikut. Panitia menghubungi Anda lewat WhatsApp untuk pembayaran, lalu Anda melengkapi formulir dan mengunggah dokumen.</p>
+                <p class="intro-copy">Isi tujuh isian singkat berikut, lalu lanjutkan langsung di situs ini: pembayaran, konfirmasi data, formulir lengkap, dan unggah dokumen.</p>
                 <ul class="daftar-chips" aria-label="Ringkasan registrasi awal">
                     <li>Sekitar 3 menit</li>
                     <li>Tanpa NIK &amp; dokumen</li>
@@ -544,7 +545,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             </div>
             <ol class="journey-list" aria-label="Alur pendaftaran">
                 <li class="is-active"><span aria-hidden="true">1</span><div><strong>Registrasi awal</strong><small>7 isian dasar, tanpa NIK</small></div></li>
-                <li><span aria-hidden="true">2</span><div><strong>Verifikasi &amp; pembayaran</strong><small>Panitia menghubungi lewat WhatsApp</small></div></li>
+                <li><span aria-hidden="true">2</span><div><strong>Pembayaran</strong><small>Transfer lalu unggah bukti di situs ini</small></div></li>
                 <li><span aria-hidden="true">3</span><div><strong>Formulir lengkap</strong><small>Data detail dan dokumen pendukung</small></div></li>
             </ol>
         </section>

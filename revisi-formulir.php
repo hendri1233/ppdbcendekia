@@ -47,7 +47,7 @@ try {
         throw new RuntimeException('Data peserta tidak ditemukan.');
     }
     mysqli_begin_transaction($conn);
-    $sql = 'SELECT nm_peserta,status_ppdb,status_data,kode_unit,token_formulir FROM tb_pendaftaran WHERE id_pendaftaran=?';
+    $sql = 'SELECT nm_peserta,status_ppdb,status_data,status_pembayaran,kode_unit FROM tb_pendaftaran WHERE id_pendaftaran=?';
     if (ppdb_is_super_admin()) {
         $lock = mysqli_prepare($conn, $sql.' FOR UPDATE');
         mysqli_stmt_bind_param($lock, 's', $registrationId);
@@ -62,9 +62,9 @@ try {
     if (!$registration) {
         throw new RuntimeException('Data peserta tidak ditemukan.');
     }
-    // Hanya pendaftar yang tautan formulirnya pernah dikirim (pembayaran disetujui).
-    if (empty($registration['token_formulir']) || !in_array($registration['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) {
-        throw new RuntimeException('Revisi hanya untuk peserta yang tautan formulirnya pernah dikirim.');
+    // Hanya pendaftar yang sudah membayar dan sampai ke tahap formulir.
+    if (!in_array($registration['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true) || !in_array($registration['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) {
+        throw new RuntimeException('Revisi hanya untuk peserta yang sudah sampai ke tahap formulir.');
     }
 
     // Peserta yang sudah diterima tetap diterima (kursi tidak dilepas); formulir dibuka lewat penanda revisi.
@@ -76,7 +76,7 @@ try {
     mysqli_stmt_execute($reopen);
     mysqli_stmt_close($reopen);
 
-    $shareLinks = ppdb_prepare_formulir_link($conn, $registrationId, $note, true);
+    $shareLinks = ppdb_prepare_formulir_link($conn, $registrationId, $note);
     mysqli_commit($conn);
     enqueue_google_sheets_registration($conn, $registrationId);
     sync_google_sheets_registration($conn, $registrationId);

@@ -960,3 +960,12 @@ body {
     display: block;
     font-size: var(--fs-base);
 }
+
+.registration-code + .code-hint {
+  margin-top: 10px;
+}
+
+.result-note a {
+  color: inherit;
+  font-weight: 600;
+}

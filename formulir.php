@@ -51,8 +51,12 @@ function formulir_token_matches(array $registration, string $token): bool
 /** Status yang boleh membuka isian formulir lengkap. */
 function formulir_is_open(array $registration): bool
 {
-    return in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true)
-        || !empty($registration['revisi_dibuka']);
+    if (!empty($registration['revisi_dibuka'])) {
+        return true;
+    }
+    // Bukti yang ditolak harus diunggah ulang dulu; isian yang tersimpan tidak hilang.
+    return $registration['status_pembayaran'] !== 'ditolak'
+        && in_array($registration['status_ppdb'], ['pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true);
 }
 
 /**
@@ -61,7 +65,7 @@ function formulir_is_open(array $registration): bool
  */
 function formulir_is_editable(string $status, bool $revisionOpen = false): bool
 {
-    return in_array($status, ['pembayaran_terverifikasi', 'menunggu_formulir'], true)
+    return in_array($status, ['pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true)
         || ($revisionOpen && $status === 'diterima');
 }
 
@@ -151,7 +155,13 @@ $alreadySubmitted = $authorized && in_array($registration['status_ppdb'], ['form
 $isRegistrantWithdrawal = $authorized
     && $registration['status_ppdb'] === 'ditolak'
     && $registration['status_data'] === 'belum_diperiksa'
-    && $registration['status_pembayaran'] === 'terverifikasi';
+    && in_array($registration['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true);
+// Tautan yang sama dipakai untuk semua tahap: selain pengisian formulir, tampilkan
+// halaman pembayaran atau hasil sesuai status pendaftaran.
+if ($authorized && !$formOpen && !$isRegistrantWithdrawal && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Location: status-pendaftaran.php?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $token]));
+    exit;
+}
 $materials = [];
 if ($authorized && $formOpen) {
     $materialQuery = mysqli_prepare($conn, 'SELECT id,jenis_materi,isi_html,nama_file_asli,mime_file_asli,nama_file_pratinjau,path_file_pratinjau,mime_file_pratinjau FROM tb_ppdb_materials WHERE kode_unit=? AND th_ajaran=?');
@@ -272,7 +282,7 @@ if ($formOpen && !empty($registration['revisi_dibuka']) || $draftSavedAt === 're
 $canShowFullForm = ($formValues['konfirmasi_lanjut'] ?? '') === '1' && ($formValues['materi_dikonfirmasi'] ?? '') === '1';
 
 if ($registration && !$authorized && preg_match('/^P[0-9]{9}$/', $code)) {
-    $errors[] = 'Kode pendaftaran tidak dikenali atau tautan tidak sah. Gunakan kode yang diterima melalui WhatsApp dari panitia.';
+    $errors[] = 'Tautan tidak sah. Silakan masuk lewat halaman Lanjutkan pendaftaran.';
 }
 
 // Aturan wajib/opsional dari super admin dan isian khusus jenjang (mis. TK A/B).
@@ -302,7 +312,7 @@ if (!$spmbGuideAvailable) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') === 'decline_formulir') {
     if (!$authorized) {
-        $errors[] = 'Tautan pendaftaran tidak sah. Gunakan tautan resmi dari panitia.';
+        $errors[] = 'Tautan pendaftaran tidak sah. Silakan masuk lewat halaman Lanjutkan pendaftaran.';
     } elseif (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Sesi formulir berakhir. Muat ulang halaman sebelum mencoba kembali.';
     } else {
@@ -318,8 +328,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             mysqli_stmt_close($lock);
             if (
                 !$lockedStatus
-                || !in_array($lockedStatus['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir'], true)
-                || $lockedStatus['status_pembayaran'] !== 'terverifikasi'
+                || !in_array($lockedStatus['status_ppdb'], ['pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true)
+                || !in_array($lockedStatus['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true)
             ) {
                 throw new RuntimeException('Pendaftaran ini tidak dapat dibatalkan pada tahap saat ini. Hubungi panitia SPMB.');
             }
@@ -342,7 +352,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             $registration['status_pembayaran'] = $lockedStatus['status_pembayaran'];
             $formOpen = false;
             $isRegistrantWithdrawal = true;
-            $notice = 'Pilihan Anda telah dicatat di sistem dan tersedia pada panel panitia SPMB. Jika Anda salah memilih, panitia dapat mengirimkan tautan formulir kembali.';
+            $notice = 'Pilihan Anda telah dicatat di sistem dan tersedia pada panel panitia SPMB. Jika Anda salah memilih, hubungi panitia agar pendaftaran dibuka kembali.';
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
             if ($exception instanceof RuntimeException) {
@@ -609,22 +619,15 @@ header('Referrer-Policy: no-referrer');
     <main>
         <?php if (!$authorized) { ?>
             <section class="gate-panel">
-                <p class="eyebrow">Tahap 3 dari 3 · Formulir lengkap</p>
-                <h1>Masukkan kode<br><span>pendaftaran Anda.</span></h1>
-                <p class="intro-copy">Kode ini hanya berlaku bagi pendaftar yang pembayarannya sudah disetujui panitia. Kode dikirim melalui WhatsApp.</p>
+                <p class="eyebrow">Formulir pendaftaran</p>
+                <h1>Tautan tidak<br><span>dapat digunakan.</span></h1>
+                <p class="intro-copy">Masukkan kode pendaftaran, tanggal lahir ananda, dan nomor WhatsApp untuk kembali ke pendaftaran Anda.</p>
 
                 <?php if ($errors) { ?>
                     <div class="error-summary" role="alert"><strong>Kode tidak dapat diverifikasi</strong><ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul></div>
                 <?php } ?>
 
-                <form class="gate-form" action="formulir.php" method="get" autocomplete="off">
-                    <div class="field field-wide" data-field="kode">
-                        <label for="kode">Kode pendaftaran <span class="required-mark" aria-hidden="true">*</span></label>
-                        <input id="kode" name="kode" value="<?php echo h($code); ?>" placeholder="Contoh: P202600123" maxlength="10" pattern="[Pp][0-9]{9}" required autofocus>
-                        <small class="field-hint">Kode terdiri huruf P diikuti 9 digit angka, contoh P202600123.</small>
-                    </div>
-                    <button type="submit" class="submit-button">Periksa kode</button>
-                </form>
+                <a class="submit-button" href="lanjutkan-pendaftaran.php?kode=<?php echo rawurlencode($code); ?>">Lanjutkan pendaftaran</a>
             </section>
 
         <?php } elseif (!$formOpen && $isRegistrantWithdrawal) { ?>
@@ -634,7 +637,7 @@ header('Referrer-Policy: no-referrer');
                 <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
                 <?php if ($sheetSyncFailed) { ?><div class="error-summary" role="alert">Status pendaftaran sudah tersimpan dan terlihat di panel admin, tetapi sinkronisasi ke spreadsheet gagal. Panitia dapat memeriksanya langsung pada data peserta.</div><?php } ?>
                 <?php if ($errors) { ?><div class="error-summary" role="alert"><ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul></div><?php } ?>
-                <p class="intro-copy">Panitia SPMB telah menerima informasi bahwa Anda memilih tidak melanjutkan pengisian formulir untuk <?php echo h($registration['nama_unit'] ?? 'unit pilihan Anda'); ?>. Formulir sementara tidak dapat dibuka. Jika pilihan ini tidak disengaja, silakan hubungi panitia untuk meminta tautan pengisian dikirim kembali.</p>
+                <p class="intro-copy">Panitia SPMB telah menerima informasi bahwa Anda memilih tidak melanjutkan pengisian formulir untuk <?php echo h($registration['nama_unit'] ?? 'unit pilihan Anda'); ?>. Formulir sementara tidak dapat dibuka. Jika pilihan ini tidak disengaja, silakan hubungi panitia agar pendaftaran dibuka kembali.</p>
                 <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
             </section>
 
@@ -645,7 +648,7 @@ header('Referrer-Policy: no-referrer');
                 <?php if ($alreadySubmitted) { ?>
                     <p class="intro-copy">Formulir lengkap untuk kode <?php echo h($registration['id_pendaftaran']); ?> sudah diterima dan sedang diperiksa panitia. Hubungi panitia bila perlu perbaikan.</p>
                 <?php } else { ?>
-                    <p class="intro-copy">Kode <?php echo h($registration['id_pendaftaran']); ?> belum membuka formulir lengkap. Tautan formulir hanya berlaku setelah bukti pembayaran disetujui panitia.</p>
+                    <p class="intro-copy">Kode <?php echo h($registration['id_pendaftaran']); ?> belum membuka formulir lengkap. Selesaikan pembayaran terlebih dahulu pada halaman status pendaftaran.</p>
                 <?php } ?>
                 <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
             </section>
@@ -671,6 +674,7 @@ header('Referrer-Policy: no-referrer');
                     </div>
                     <span class="confirm-badge">Kode <?php echo h($registration['id_pendaftaran']); ?></span>
                 </div>
+                <?php if (isset($_GET['bayar'])) { ?><p class="draft-restored" role="status">Bukti transfer sudah kami terima dan akan diperiksa panitia. Silakan lanjutkan pendaftaran.</p><?php } ?>
                 <dl class="confirm-grid">
                     <div><dt>Nama lengkap ananda</dt><dd><?php echo h($registration['nm_peserta']); ?></dd></div>
                     <div><dt>Tanggal lahir</dt><dd><?php echo h(ppdb_format_date_id($registration['tgl_lahir'])); ?></dd></div>
@@ -843,7 +847,7 @@ header('Referrer-Policy: no-referrer');
                 <div class="form-stage-intro">
                     <p class="eyebrow">Tahap 3 dari 3</p>
                     <h2>Formulir data lengkap</h2>
-                    <p>Isian tersimpan otomatis. Jika terhenti, buka kembali tautan dari WhatsApp untuk melanjutkan dari langkah terakhir.</p>
+                    <p>Isian tersimpan otomatis. Jika terhenti, buka menu Lanjutkan pendaftaran untuk melanjutkan dari langkah terakhir.</p>
                     <?php if ($draftSavedAt === 'revisi' && $_SERVER['REQUEST_METHOD'] !== 'POST') { ?><p class="draft-restored" role="status">Panitia membuka kembali formulir ini untuk diperbaiki. Isian yang pernah Anda kirim sudah dimuat; perbaiki bagian yang keliru lalu kirim ulang.</p><?php } elseif ($draftSavedAt && $_SERVER['REQUEST_METHOD'] !== 'POST') { ?><p class="draft-restored" role="status">Isian Anda yang tersimpan pada <?php echo h(date('d-m-Y H:i', strtotime($draftSavedAt))); ?> sudah dimuat kembali.</p><?php } ?>
                 </div>
                 <ol class="form-steps" data-step-nav aria-label="Langkah formulir">

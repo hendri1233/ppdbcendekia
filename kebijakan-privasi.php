@@ -57,7 +57,7 @@ public_page_start($conn, [
             <p>Penggunaan dan pemindahan informasi yang diterima dari Google API mematuhi <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Kebijakan Data Pengguna Layanan Google API</a>, termasuk ketentuan Penggunaan Terbatas (Limited Use). Data tersebut tidak dipakai untuk iklan dan tidak dibagikan kepada pihak lain. Akses dapat dicabut kapan saja oleh yayasan melalui dasbor admin atau halaman izin akun Google.</p>
 
             <h2>5. Keamanan</h2>
-            <p>Situs memakai koneksi terenkripsi (HTTPS). Panel admin dilindungi kata sandi dan pembatasan percobaan masuk; admin unit hanya dapat melihat pendaftar unitnya sendiri. Tautan formulir dan bukti pembayaran memakai kode unik yang hanya dikirim kepada pendaftar.</p>
+            <p>Situs memakai koneksi terenkripsi (HTTPS). Panel admin dilindungi kata sandi dan pembatasan percobaan masuk; admin unit hanya dapat melihat pendaftar unitnya sendiri. Halaman pendaftaran memakai kode unik pribadi, dan untuk masuk kembali pendaftar perlu mencocokkan kode pendaftaran, tanggal lahir ananda, serta nomor WhatsApp yang didaftarkan.</p>
 
             <h2>6. Lama penyimpanan</h2>
             <p>Data peserta didik yang diterima disimpan selama ananda bersekolah di unit yayasan dan sesudahnya sesuai kewajiban arsip sekolah. Data pendaftar yang tidak melanjutkan atau tidak diterima dapat dihapus atas permintaan, atau dihapus panitia setelah proses penerimaan tahun ajaran tersebut selesai.</p>

@@ -96,8 +96,8 @@
     noteLine.textContent = bankDetails
       ? "Transfer ke " +
         bankDetails +
-        " setelah Anda menerima tautan pembayaran dari panitia."
-      : "Informasi pembayaran dikirim setelah Anda dihubungi panitia.";
+        " setelah registrasi awal."
+      : "Informasi pembayaran tampil setelah registrasi awal.";
     offerSummary.append(feeLine, noteLine);
     offerSummary.hidden = false;
     offerSummary.classList.remove("is-flash");

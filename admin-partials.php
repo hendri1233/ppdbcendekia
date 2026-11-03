@@ -76,7 +76,7 @@ function ppdb_admin_navigation(string $activePage): array
 function ppdb_admin_status_meta(?string $status): array
 {
     $map = [
-        'menunggu_kontak' => ['label' => 'Menunggu kontak', 'tone' => 'slate', 'icon' => 'clock'],
+        'menunggu_kontak' => ['label' => 'Belum melanjutkan', 'tone' => 'slate', 'icon' => 'clock'],
         'menunggu_pembayaran' => ['label' => 'Menunggu bayar', 'tone' => 'amber', 'icon' => 'wallet'],
         'pembayaran_diperiksa' => ['label' => 'Cek bayar', 'tone' => 'amber', 'icon' => 'clock'],
         'pembayaran_terverifikasi' => ['label' => 'Bayar sah', 'tone' => 'teal', 'icon' => 'check'],
@@ -94,5 +94,5 @@ function ppdb_admin_status_meta(?string $status): array
 /** Menentukan apakah sebuah status menuntut perhatian admin. */
 function ppdb_admin_status_is_actionable(?string $status): bool
 {
-    return in_array($status, ['menunggu_kontak', 'pembayaran_diperiksa', 'pembayaran_terverifikasi', 'formulir_terisi'], true);
+    return in_array($status, ['pembayaran_diperiksa', 'formulir_terisi'], true);
 }

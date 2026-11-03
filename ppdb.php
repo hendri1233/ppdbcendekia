@@ -77,7 +77,7 @@ $faqItems = [
     ],
     [
         'q' => 'Bagaimana cara mendaftar?',
-        'a' => 'Pendaftaran berlangsung tiga tahap. Pertama, mengisi registrasi awal berisi data dasar ananda. Kedua, panitia menghubungi pendaftar melalui WhatsApp untuk pembayaran. Ketiga, pendaftar mengisi formulir lengkap dan mengunggah dokumen pendukung.',
+        'a' => 'Pendaftaran berlangsung tiga tahap. Pertama, mengisi registrasi awal berisi data dasar ananda. Kedua, pendaftar melakukan pembayaran dan mengunggah bukti transfer. Ketiga, pendaftar mengisi formulir lengkap dan mengunggah dokumen pendukung. Seluruhnya dilakukan langsung di situs ini.',
     ],
     [
         'q' => 'Dokumen apa saja yang harus disiapkan?',
@@ -85,7 +85,7 @@ $faqItems = [
     ],
     [
         'q' => 'Bagaimana saya memantau status pendaftaran?',
-        'a' => 'Setelah registrasi awal terkirim, Anda menerima kode pendaftaran dan tautan halaman status pribadi. Tautan berikutnya untuk pembayaran dan formulir lengkap dikirim panitia melalui WhatsApp. Simpan tautan tersebut dan jangan dibagikan kepada orang lain.',
+        'a' => 'Setelah registrasi awal terkirim, Anda menerima kode pendaftaran dan langsung melanjutkan ke pembayaran. Simpan kode tersebut. Untuk kembali atau melihat hasil, buka halaman Lanjutkan pendaftaran dengan kode, tanggal lahir ananda, dan nomor WhatsApp.',
     ],
     [
         'q' => 'Apakah data anak saya aman?',
@@ -93,7 +93,7 @@ $faqItems = [
     ],
     [
         'q' => 'Bagaimana jika kuota sudah terpenuhi?',
-        'a' => 'Pendaftar dapat ditempatkan pada daftar tunggu. Panitia akan menghubungi melalui WhatsApp apabila tersedia kursi.',
+        'a' => 'Pendaftar dapat ditempatkan pada daftar tunggu. Perkembangannya dapat dilihat di halaman Lanjutkan pendaftaran.',
     ],
 ];
 
@@ -252,14 +252,14 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                 </li>
                 <li class="step">
                     <span class="step__number">2</span>
-                    <h3>Verifikasi dan pembayaran</h3>
-                    <p>Panitia memeriksa data, lalu mengirim tautan pembayaran melalui WhatsApp. Anda mengunggah bukti transfer di halaman status.</p>
-                    <p class="step__meta">Dipandu melalui WhatsApp</p>
+                    <h3>Pembayaran</h3>
+                    <p>Lanjut langsung setelah registrasi awal: transfer sesuai petunjuk, lalu unggah buktinya. Anda tidak perlu menunggu dihubungi.</p>
+                    <p class="step__meta">Langsung di situs ini</p>
                 </li>
                 <li class="step">
                     <span class="step__number">3</span>
                     <h3>Formulir lengkap</h3>
-                    <p>Isi data identitas, alamat, dan keluarga, baca materi SPMB unit tujuan, lalu unggah dokumen pendukung.</p>
+                    <p>Lanjut pada halaman yang sama: isi data identitas, alamat, dan keluarga, baca materi SPMB unit tujuan, lalu unggah dokumen pendukung.</p>
                     <p class="step__meta">Sediakan waktu sekitar 1 jam</p>
                 </li>
             </ol>
@@ -405,7 +405,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
         <div class="shell closing__inner">
             <div>
                 <h2 id="closing-title">Registrasi awal hanya butuh beberapa menit.</h2>
-                <p>Siapkan nomor WhatsApp pendaftar, ayah, dan ibu. Panitia akan memandu langkah berikutnya.</p>
+                <p>Siapkan nomor WhatsApp pendaftar, ayah, dan ibu. Sudah pernah mendaftar? <a href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a>.</p>
             </div>
             <a class="button button--light button--lg" href="daftar.php">Mulai registrasi awal</a>
         </div>

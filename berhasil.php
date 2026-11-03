@@ -35,7 +35,7 @@ header('Referrer-Policy: no-referrer');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
-    <link rel="stylesheet" href="css/result.css?v=20261017-2">
+    <link rel="stylesheet" href="css/result.css?v=<?php echo (int) filemtime(__DIR__.'/css/result.css'); ?>">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="icon" type="image/png" sizes="48x48" href="img/favicons/favicon-48x48.png">
@@ -57,13 +57,13 @@ header('Referrer-Policy: no-referrer');
             <div class="success-symbol" aria-hidden="true">&check;</div>
             <p class="result-eyebrow">Registrasi awal tercatat</p>
             <h1>Terima kasih,<br><?php echo h($registration['nm_peserta']); ?>.</h1>
-            <p class="result-description">Data awal ananda sudah kami terima. Panitia akan menghubungi nomor WhatsApp pendaftar untuk instruksi pembayaran.</p>
+            <p class="result-description">Data awal ananda sudah kami terima. Silakan lanjutkan ke tahap berikutnya langsung dari halaman ini.</p>
 
             <div class="registration-code" role="group" aria-label="Kode pendaftaran">
                 <span>Kode pendaftaran</span>
                 <strong><?php echo h($registration['id_pendaftaran']); ?></strong>
             </div>
-            <p class="code-hint">Simpan kode ini. Kode diperlukan untuk membuka formulir lengkap setelah pembayaran disetujui.</p>
+            <p class="code-hint">Simpan kode ini. Kode, tanggal lahir ananda, dan nomor WhatsApp diperlukan untuk kembali ke pendaftaran dan melihat hasilnya.</p>
 
             <dl class="summary-list">
                 <div><dt>Nama lengkap ananda</dt><dd><?php echo h($registration['nm_peserta']); ?></dd></div>
@@ -79,14 +79,14 @@ header('Referrer-Policy: no-referrer');
             </dl>
 
             <ol class="next-steps" aria-label="Langkah berikutnya">
-                <li><span aria-hidden="true">1</span><div><strong>Menunggu panggilan panitia</strong><small>Panitia menghubungi lewat WhatsApp dengan tautan pembayaran.</small></div></li>
-                <li><span aria-hidden="true">2</span><div><strong>Bayar dan unggah bukti</strong><small>Unggah bukti transfer pada halaman status pendaftaran.</small></div></li>
-                <li><span aria-hidden="true">3</span><div><strong>Isi formulir lengkap</strong><small>Gunakan kode pendaftaran di atas beserta tautan dari WhatsApp.</small></div></li>
+                <li><span aria-hidden="true">1</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
+                <li><span aria-hidden="true">2</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.</small></div></li>
+                <li><span aria-hidden="true">3</span><div><strong>Lihat hasil pendaftaran</strong><small>Hasil dan tautan grup WhatsApp unit tampil di situs ini.</small></div></li>
             </ol>
 
-            <a class="download-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lihat status pendaftaran</a>
+            <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>
             <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>"><span aria-hidden="true">▤</span> Unduh bukti pendaftaran (PDF)</a>
-            <p class="result-note">Halaman status memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain.</p>
+            <p class="result-note">Jika halaman ini tertutup, buka menu <a href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a> untuk kembali.</p>
             <div class="admin-contact">
                 <span>Butuh bantuan dari panitia?</span>
                 <a class="whatsapp-button" href="<?php echo h($adminWhatsAppUrl); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi admin SPMB melalui WhatsApp di 0851 8483 9694">

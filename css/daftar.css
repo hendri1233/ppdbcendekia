@@ -3394,3 +3394,7 @@ body.page-daftar .radio-option:has(input:focus-visible) {
     display: grid;
     gap: 22px;
 }
+
+.confirm-dialog > .draft-restored {
+  margin: 12px 25px 0;
+}
