@@ -244,6 +244,14 @@
       control.disabled = !shown;
       control.required = shown && control.hasAttribute("data-prestasi-required");
     }
+    for (const category of prestasiSection.querySelectorAll("[data-prestasi-category]")) {
+      const complete = Array.from(category.querySelectorAll("input, textarea")).every(function (control) {
+        return control.disabled || control.validity.valid;
+      });
+      const status = category.querySelector("[data-prestasi-status]");
+      status.textContent = complete ? "Sudah diisi" : "Belum diisi";
+      category.classList.toggle("is-complete", complete);
+    }
   }
   function updateJalur() {
     if (!externalRoute || !jalurField) return;
@@ -265,7 +273,15 @@
   if (jalurField) {
     jalurField.addEventListener("change", updateJalur);
     if (externalRoute) externalRoute.addEventListener("change", updateJalur);
-    if (prestasiSection) prestasiSection.addEventListener("change", updatePrestasiConditions);
+    if (prestasiSection) {
+      prestasiSection.addEventListener("change", updatePrestasiConditions);
+      prestasiSection.addEventListener("input", updatePrestasiConditions);
+      // Kategori yang belum lengkap dibuka agar isian wajibnya terlihat saat dikirim.
+      prestasiSection.addEventListener("invalid", function (event) {
+        const category = event.target.closest("[data-prestasi-category]");
+        if (category) category.open = true;
+      }, true);
+    }
     updateJalur();
   }
 

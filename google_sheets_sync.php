@@ -269,7 +269,6 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
         $documentLabels['surat_prestasi'] = 'Surat pengantar prestasi';
         array_push($columns,
             ['Jalur SMP', 'Jalur seleksi', '_jalur_seleksi', 110],
-            ['Jalur SMP', 'Prestasi akademik', '_pr_jenis_prestasi', 240],
             ['Jalur SMP', 'Kelas 5 semester 1', '_pr_peringkat_k5_s1', 130],
             ['Jalur SMP', 'Kelas 5 semester 2', '_pr_peringkat_k5_s2', 130],
             ['Jalur SMP', 'Kelas 6 semester 1', '_pr_peringkat_k6_s1', 130],
