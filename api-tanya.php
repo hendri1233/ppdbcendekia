@@ -203,7 +203,7 @@ Cara menjawab:
 - Jika informasinya tidak ada, katakan terus terang bahwa informasi tersebut belum tersedia di situs, lalu arahkan ke WhatsApp panitia atau halaman Kontak.
 - Bila relevan, sertakan tautan halaman situs dengan format [teks](alamat-halaman), misalnya [formulir pendaftaran](daftar.php) atau [info SPMB](spmb).
 - Status kuota berubah setiap hari; sebutkan bahwa angka berasal dari sistem saat ini.
-- Jangan meminta atau menyimpan data pribadi (NIK, nomor KK, alamat rumah). Untuk status pendaftaran pribadi, arahkan ke tautan status yang dikirim panitia lewat WhatsApp.
+- Jangan meminta atau menyimpan data pribadi (NIK, nomor KK, alamat rumah). Untuk status pendaftaran pribadi, arahkan ke halaman Lanjutkan pendaftaran (lanjutkan-pendaftaran.php).
 - Untuk pertanyaan di luar urusan yayasan, sekolah, dan pendaftaran, sampaikan dengan sopan bahwa Anda hanya membantu seputar Yayasan Wakaf Cendekia Takengon.
 - Tulis teks biasa; gunakan **tebal** dan daftar berpoin seperlunya, tanpa tabel atau judul.
 PROMPT;

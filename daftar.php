@@ -510,6 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/daftar.css?v=<?php echo (int) @filemtime(__DIR__.'/css/daftar.css'); ?>">
+    <link rel="stylesheet" href="css/alur.css?v=<?php echo (int) @filemtime(__DIR__.'/css/alur.css'); ?>">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="icon" type="image/png" sizes="48x48" href="img/favicons/favicon-48x48.png">
@@ -535,12 +536,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
         <section class="intro intro-rail">
             <div class="daftar-hero__copy">
                 <p class="eyebrow">Tahap 1 dari 3 · Registrasi awal</p>
-                <h1>Cukup data dasar,<br><span>sisanya kami pandu.</span></h1>
+                <h1>Daftar langsung,<br><span>selesai di satu tempat.</span></h1>
                 <p class="intro-copy">Isi tujuh isian singkat berikut, lalu lanjutkan langsung di situs ini: pembayaran, konfirmasi data, formulir lengkap, dan unggah dokumen.</p>
                 <ul class="daftar-chips" aria-label="Ringkasan registrasi awal">
                     <li>Sekitar 3 menit</li>
                     <li>Tanpa NIK &amp; dokumen</li>
-                    <li>Dipandu lewat WhatsApp</li>
+                    <li>Seluruh tahap langsung di situs ini</li>
                 </ul>
             </div>
             <ol class="journey-list" aria-label="Alur pendaftaran">
@@ -628,11 +629,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <?php if (prestasi_is_ready($conn)) { prestasi_render_section($formValues, $smpSelected && $selectedJalur === 'prestasi'); } ?>
                         <label class="consent-check" for="konfirmasi_data">
                             <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
-                            <span>Saya memastikan data di atas sudah benar dan dapat dihubungi panitia melalui WhatsApp.</span>
+                            <span>Saya memastikan data di atas sudah benar dan nomor WhatsApp yang diisi aktif.</span>
                         </label>
                     </section>
                     <div class="form-footer">
-                        <p>Setelah dikirim Anda menerima kode pendaftaran untuk memantau status. Formulir lengkap hanya dibuka setelah bukti pembayaran disetujui.</p>
+                        <p>Setelah dikirim, Anda menerima kode pendaftaran dan langsung lanjut ke pembayaran, lalu formulir lengkap.</p>
                         <button type="submit" name="submit" value="1" class="submit-button" <?php echo !$openOffers ? 'disabled' : ''; ?>>Kirim registrasi awal</button>
                     </div>
                 </form>
@@ -694,12 +695,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                     </div>
                     <label class="consent-check" for="konfirmasi_data">
                         <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
-                        <span>Saya memastikan data di atas sudah benar dan dapat dihubungi panitia melalui WhatsApp.</span>
+                        <span>Saya memastikan data di atas sudah benar dan nomor WhatsApp yang diisi aktif.</span>
                     </label>
                 </section>
 
                 <div class="form-footer">
-                    <p>Setelah dikirim Anda menerima kode pendaftaran untuk memantau status. Formulir lengkap hanya dibuka setelah bukti pembayaran disetujui.</p>
+                    <p>Setelah dikirim, Anda menerima kode pendaftaran dan langsung lanjut ke pembayaran, lalu formulir lengkap.</p>
                     <button type="submit" name="submit" value="1" class="submit-button">Kirim registrasi awal</button>
                 </div>
             </form>
@@ -744,5 +745,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
 <script src="js/unit-picker.js?v=<?php echo (int) @filemtime(__DIR__.'/js/unit-picker.js'); ?>"></script>
 <script src="js/reveal.js?v=<?php echo (int) @filemtime(__DIR__.'/js/reveal.js'); ?>"></script>
 <script type="module" src="js/brosur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/brosur.js'); ?>"></script>
+<script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>
 </html>

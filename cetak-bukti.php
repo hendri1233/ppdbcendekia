@@ -7,6 +7,72 @@ require_once 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+/** Gambar JPG untuk PDF; Dompdf memasangnya tanpa ekstensi GD. */
+function cetak_image(string $path, string $class): string
+{
+    return is_file($path) ? '<img class="'.$class.'" src="data:image/jpeg;base64,'.base64_encode((string) file_get_contents($path)).'" alt="">' : '';
+}
+
+/** Kop surat dipakai bersama oleh bukti pendaftaran dan surat keterangan diterima. */
+function cetak_kop(string $unitName): string
+{
+    return '<table class="kop"><tr>
+        <td class="kop-logo">'.cetak_image(__DIR__.'/img/logo-pdf.jpg', 'logo').'</td>
+        <td class="kop-text">
+            <div class="kop-org">YAYASAN WAKAF CENDEKIA TAKENGON</div>
+            <div class="kop-unit">Panitia Penerimaan Peserta Didik Baru · '.h($unitName).'</div>
+            <div class="kop-meta">Badan Hukum SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022 · Nazhir Wakaf Uang BWI Kode 3.3.00369<br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp '.h(ppdb_admin_whatsapp_display()).' · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</div>
+        </td>
+    </tr></table>
+    <div class="kop-line"></div>';
+}
+
+function cetak_kop_css(): string
+{
+    return '.kop { width: 100%; border-collapse: collapse; }
+        .kop td { vertical-align: middle; }
+        .kop-logo { width: 84px; }
+        .logo { width: 76px; height: 76px; }
+        .kop-text { text-align: center; padding-right: 84px; }
+        .kop-org { color: #123f32; font-size: 18.5px; font-weight: bold; letter-spacing: .3px; line-height: 1.2; }
+        .kop-unit { color: #123f32; font-size: 12.5px; font-weight: bold; }
+        .kop-meta { margin-top: 2px; color: #4c5852; font-size: 8.8px; line-height: 1.1; }
+        .kop-line { margin-top: 8px; border-top: 2.2px solid #123f32; border-bottom: .6px solid #123f32; height: 2px; }';
+}
+
+/** Render A4 dengan font Source Serif, lalu kirim sebagai unduhan. */
+function cetak_stream(string $html, string $filename): void
+{
+    // Metrik font disimpan di folder sementara karena folder vendor belum tentu dapat ditulis.
+    $fontDir = sys_get_temp_dir().'/ppdb-dompdf-fonts';
+    $options = new Options();
+    $options->set('isRemoteEnabled', false);
+    $options->set('defaultFont', 'DejaVu Serif');
+    $options->set('chroot', __DIR__);
+    if (is_dir($fontDir) || @mkdir($fontDir, 0755, true)) {
+        $options->set('fontDir', $fontDir);
+        $options->set('fontCache', $fontDir);
+    }
+    $dompdf = new Dompdf($options);
+    $fontMetrics = $dompdf->getFontMetrics();
+    foreach ([
+        ['normal', 'normal', 'SourceSerif4-400.ttf'],
+        ['bold', 'normal', 'SourceSerif4-700.ttf'],
+        ['normal', 'italic', 'SourceSerif4-400italic.ttf'],
+    ] as [$weight, $style, $file]) {
+        $styleKey = $fontMetrics->getType($weight.' '.$style);
+        $installed = $fontMetrics->getFamily('source serif')[$styleKey] ?? '';
+        if ($installed === '' || !is_file($installed.'.ttf')) {
+            @$fontMetrics->registerFont(['family' => 'Source Serif', 'weight' => $weight, 'style' => $style], __DIR__.'/assets/fonts/'.$file);
+        }
+    }
+    $dompdf->loadHtml($html, 'UTF-8');
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+    $dompdf->stream($filename, ['Attachment' => true]);
+    exit;
+}
+
 $registrationId = $_GET['id'] ?? '';
 $receiptToken = $_GET['token'] ?? '';
 if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
@@ -16,7 +82,7 @@ if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
 
 $tokenIsValid = preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
 $tokenHash = $tokenIsValid ? hash('sha256', $receiptToken) : '';
-$stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran, p.th_ajaran, p.tgl_daftar, p.nm_peserta, p.tmp_lahir, p.tgl_lahir, p.jenis_kelamin, p.jalur_pendaftaran, p.status_ppdb, p.status_pembayaran, p.data_diperiksa_pada, '.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas, ' : '').'u.nama_unit, u.jenjang, u.npsn, u.email AS email_unit, g.link_grup, p.token_bukti, p.token_whatsapp, p.token_formulir FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit = u.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit = p.kode_unit WHERE p.id_pendaftaran = ? LIMIT 1');
+$stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran, p.th_ajaran, p.tgl_daftar, p.nomor_antrian, p.pendaftar, p.nm_peserta, p.tmp_lahir, p.tgl_lahir, p.jenis_kelamin, p.jalur_pendaftaran, p.status_ppdb, p.status_pembayaran, p.data_diperiksa_pada, '.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas, ' : '').'u.nama_unit, u.jenjang, u.npsn, u.email AS email_unit, g.link_grup, p.token_bukti, p.token_whatsapp, p.token_formulir FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit = u.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit = p.kode_unit WHERE p.id_pendaftaran = ? LIMIT 1');
 mysqli_stmt_bind_param($stmt, 's', $registrationId);
 mysqli_stmt_execute($stmt);
 $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -34,12 +100,8 @@ if ($registration['status_ppdb'] === 'diterima') {
     // Nama pimpinan mengikuti CMS; gambar tanda tangan dan stempel dipasang bila berkasnya tersedia.
     $leaderName = cms_setting($conn, 'leader_name', 'Ilawarni');
     $leaderRole = cms_setting($conn, 'leader_role', 'Pimpinan Yayasan');
-    $imageTag = static function (string $path, string $class): string {
-        return is_file($path) ? '<img class="'.$class.'" src="data:image/jpeg;base64,'.base64_encode((string) file_get_contents($path)).'" alt="">' : '';
-    };
-    $logoTag = $imageTag(__DIR__.'/img/logo-pdf.jpg', 'logo');
-    $watermarkTag = $imageTag(__DIR__.'/img/logo-pdf.jpg', 'watermark');
-    $signatureTag = $imageTag(__DIR__.'/assets/legal/ttd-stempel.jpg', 'signature');
+    $watermarkTag = cetak_image(__DIR__.'/img/logo-pdf.jpg', 'watermark');
+    $signatureTag = cetak_image(__DIR__.'/assets/legal/ttd-stempel.jpg', 'signature');
     $issuedOn = ppdb_format_date_id(substr((string) ($registration['data_diperiksa_pada'] ?: date('Y-m-d')), 0, 10));
     $letterNumber = ppdb_acceptance_number($registration);
     $birthPlace = trim((string) $registration['tmp_lahir']);
@@ -87,15 +149,7 @@ if ($registration['status_ppdb'] === 'diterima') {
         .watermark { position: fixed; top: 320px; left: 197px; width: 400px; height: 400px; opacity: 0.05; }
         .top-band { position: fixed; top: 0; left: 0; width: 100%; height: 9px; background: #123f32; }
         .page { padding: 30px 66px 0; }
-        .kop { width: 100%; border-collapse: collapse; }
-        .kop td { vertical-align: middle; }
-        .kop-logo { width: 84px; }
-        .logo { width: 76px; height: 76px; }
-        .kop-text { text-align: center; padding-right: 84px; }
-        .kop-org { color: #123f32; font-size: 18.5px; font-weight: bold; letter-spacing: .3px; line-height: 1.2; }
-        .kop-unit { color: #123f32; font-size: 12.5px; font-weight: bold; }
-        .kop-meta { margin-top: 2px; color: #4c5852; font-size: 8.8px; line-height: 1.1; }
-        .kop-line { margin-top: 8px; border-top: 2.2px solid #123f32; border-bottom: .6px solid #123f32; height: 2px; }
+        '.cetak_kop_css().'
         .title { margin-top: 12px; color: #123f32; font-size: 15.5px; font-weight: bold; text-align: center; letter-spacing: .6px; text-decoration: underline; }
         .number { text-align: center; font-size: 11px; }
         p { margin: 8px 0 0; text-align: justify; }
@@ -121,15 +175,7 @@ if ($registration['status_ppdb'] === 'diterima') {
         <div class="top-band"></div>
         '.$watermarkTag.'
         <div class="page">
-            <table class="kop"><tr>
-                <td class="kop-logo">'.$logoTag.'</td>
-                <td class="kop-text">
-                    <div class="kop-org">YAYASAN WAKAF CENDEKIA TAKENGON</div>
-                    <div class="kop-unit">Panitia Penerimaan Peserta Didik Baru · '.h($unitName).'</div>
-                    <div class="kop-meta">Badan Hukum SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022 · Nazhir Wakaf Uang BWI Kode 3.3.00369<br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp '.h(ppdb_admin_whatsapp_display()).' · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</div>
-                </td>
-            </tr></table>
-            <div class="kop-line"></div>
+            '.cetak_kop($unitName).'
 
             <div class="title">SURAT KETERANGAN DITERIMA</div>
             <div class="number">Nomor: '.h($letterNumber).'</div>
@@ -152,81 +198,70 @@ if ($registration['status_ppdb'] === 'diterima') {
         <div class="footer">Surat ini diterbitkan melalui sistem SPMB Yayasan Wakaf Cendekia Takengon · Nomor '.h($letterNumber).'</div>
     </body></html>';
 
-    // Metrik font disimpan di folder sementara karena folder vendor belum tentu dapat ditulis.
-    $fontDir = sys_get_temp_dir().'/ppdb-dompdf-fonts';
-    $options = new Options();
-    $options->set('isRemoteEnabled', false);
-    $options->set('defaultFont', 'DejaVu Serif');
-    $options->set('chroot', __DIR__);
-    if (is_dir($fontDir) || @mkdir($fontDir, 0755, true)) {
-        $options->set('fontDir', $fontDir);
-        $options->set('fontCache', $fontDir);
-    }
-    $dompdf = new Dompdf($options);
-    $fontMetrics = $dompdf->getFontMetrics();
-    foreach ([
-        ['normal', 'normal', 'SourceSerif4-400.ttf'],
-        ['bold', 'normal', 'SourceSerif4-700.ttf'],
-        ['normal', 'italic', 'SourceSerif4-400italic.ttf'],
-    ] as [$weight, $style, $file]) {
-        $styleKey = $fontMetrics->getType($weight.' '.$style);
-        $installed = $fontMetrics->getFamily('source serif')[$styleKey] ?? '';
-        if ($installed === '' || !is_file($installed.'.ttf')) {
-            @$fontMetrics->registerFont(['family' => 'Source Serif', 'weight' => $weight, 'style' => $style], __DIR__.'/assets/fonts/'.$file);
-        }
-    }
-    $dompdf->loadHtml($html, 'UTF-8');
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-    $dompdf->stream('surat-keterangan-diterima-'.$registrationId.'.pdf', ['Attachment' => true]);
-    exit;
+    cetak_stream($html, 'surat-keterangan-diterima-'.$registrationId.'.pdf');
 }
 
-$dateRegistered = date('d-m-Y', strtotime($registration['tgl_daftar']));
+$unitName = (string) ($registration['nama_unit'] ?? 'Belum ditentukan');
+$birthPlace = trim((string) $registration['tmp_lahir']);
+$rows = [
+    ['Nama peserta didik', '<strong>'.h($registration['nm_peserta']).'</strong>'],
+    ['Tempat, tanggal lahir', h(($birthPlace !== '' ? $birthPlace.', ' : '').ppdb_format_date_id($registration['tgl_lahir']))],
+    ['Jenis kelamin', h(ppdb_jenis_kelamin_label($registration['jenis_kelamin']))],
+    ['Didaftarkan oleh', h(ppdb_pendaftar_label($registration['pendaftar']))],
+    ['Unit pendidikan', h($unitName.(!empty($registration['tingkat_kelas']) ? ' · '.$registration['tingkat_kelas'] : ''))],
+    ['Jalur pendaftaran', $registration['jalur_pendaftaran'] === 'internal' ? 'Internal' : 'Umum'],
+    ['Tahun ajaran', h($registration['th_ajaran'])],
+    ['Nomor antrean', $registration['nomor_antrian'] ? '#'.(int) $registration['nomor_antrian'] : '-'],
+    ['Tanggal pendaftaran', h(ppdb_format_date_id($registration['tgl_daftar']))],
+];
+$rowsHtml = '';
+foreach ($rows as [$label, $value]) {
+    $rowsHtml .= '<tr><td class="label">'.h($label).'</td><td class="colon">:</td><td>'.$value.'</td></tr>';
+}
+$resumeUrl = ppdb_public_base_url().'/lanjutkan-pendaftaran.php?kode='.rawurlencode($registrationId);
 $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
-    @page { margin: 38px 48px; }
-    body { color: #1c3028; font-family: "DejaVu Sans", sans-serif; font-size: 10px; line-height: 1.55; }
-    .topline { height: 8px; background: #155b46; margin: -8px 0 25px; }
-    .masthead { padding-bottom: 16px; border-bottom: 1px solid #dce5de; }
-    .brand { color: #155b46; font-size: 10px; font-weight: bold; letter-spacing: 1.2px; }
-    .brand-sub { margin-top: 3px; color: #738078; font-size: 8px; letter-spacing: .4px; }
-    h1 { margin: 24px 0 4px; color: #183c30; font-size: 24px; }
-    .subtitle { margin: 0; color: #63716b; font-size: 10px; }
-    .code { margin: 24px 0 20px; padding: 16px 18px; background: #eef4ef; border-left: 4px solid #c45b3c; }
-    .code-label { color: #63716b; font-size: 8px; font-weight: bold; letter-spacing: .8px; }
-    .code-value { margin-top: 5px; color: #155b46; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
-    .section-title { margin: 22px 0 7px; color: #155b46; font-size: 9px; font-weight: bold; letter-spacing: .8px; }
-    table { width: 100%; border-collapse: collapse; }
-    td { padding: 10px 11px; border-bottom: 1px solid #e1e8e3; vertical-align: top; }
-    tr:nth-child(odd) td { background: #fafcfb; }
-    td:first-child { width: 36%; color: #68776f; }
-    td:last-child { color: #233a30; font-weight: bold; }
-    .note { margin-top: 24px; padding: 13px 15px; color: #586960; background: #f4f7f4; border: 1px solid #e1e8e3; font-size: 8.5px; line-height: 1.65; }
-    .footer { margin-top: 24px; padding-top: 12px; color: #63716b; border-top: 1px solid #dce5de; font-size: 8px; line-height: 1.7; }
-    .footer strong { color: #155b46; }
+    @page { margin: 0; }
+    body { margin: 0; color: #1f2622; font-family: "Source Serif", "DejaVu Serif", serif; font-size: 11.8px; line-height: 1.3; }
+    .watermark { position: fixed; top: 320px; left: 197px; width: 400px; height: 400px; opacity: 0.05; }
+    .top-band { position: fixed; top: 0; left: 0; width: 100%; height: 9px; background: #123f32; }
+    .page { padding: 30px 66px 0; }
+    '.cetak_kop_css().'
+    .title { margin-top: 18px; color: #123f32; font-size: 15.5px; font-weight: bold; text-align: center; letter-spacing: .6px; text-decoration: underline; }
+    .subtitle { margin-top: 2px; color: #4c5852; font-size: 11px; text-align: center; }
+    .code { margin: 18px 0 16px; padding: 12px 16px; text-align: center; border-top: 1px solid #123f32; border-bottom: 1px solid #123f32; }
+    .code-label { color: #4c5852; font-size: 9.5px; letter-spacing: 1px; }
+    .code-value { margin-top: 1px; color: #123f32; font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+    p { margin: 0 0 7px; text-align: justify; }
+    .data { width: 100%; margin: 2px 0 0 14px; border-collapse: collapse; }
+    .data td { padding: 2px 0; vertical-align: top; }
+    .label { width: 150px; }
+    .colon { width: 12px; }
+    h2 { margin: 18px 0 4px; color: #123f32; font-size: 12px; font-weight: bold; }
+    ol { margin: 3px 0 0; padding-left: 18px; }
+    li { margin-bottom: 3px; text-align: justify; }
+    a { color: #123f32; }
+    .note { margin-top: 16px; padding: 9px 12px; color: #4c5852; font-size: 9.5px; background: #f4f6f4; border-left: 2.5px solid #123f32; }
+    .footer { position: fixed; left: 66px; width: 662px; bottom: 16px; padding-top: 4px; color: #6a756f; border-top: .6px solid #b9c4be; font-size: 7.8px; text-align: center; }
 </style></head><body>
-    <div class="topline"></div>
-    <div class="masthead"><div class="brand">YAYASAN WAKAF CENDEKIA TAKENGON</div><div class="brand-sub">PENERIMAAN PESERTA DIDIK BARU</div></div>
-    <h1>Bukti Pendaftaran</h1>
-    <p class="subtitle">Ringkasan registrasi awal peserta didik</p>
-    <div class="code"><div class="code-label">KODE PENDAFTARAN</div><div class="code-value">'.h($registration['id_pendaftaran']).'</div></div>
-    <div class="section-title">INFORMASI PENDAFTARAN</div>
-    <table>
-        <tr><td>Nama peserta didik</td><td>'.h($registration['nm_peserta']).'</td></tr>
-        <tr><td>Unit pendidikan</td><td>'.h($registration['nama_unit'] ?? 'Belum ditentukan').'</td></tr>
-        <tr><td>Tahun ajaran</td><td>'.h($registration['th_ajaran']).'</td></tr>
-        <tr><td>Tanggal pendaftaran</td><td>'.h($dateRegistered).'</td></tr>
-    </table>
-    <div class="note"><strong>Informasi:</strong> Dokumen ini merupakan ringkasan bukti pendaftaran awal. Simpan kode pendaftaran untuk memantau proses berikutnya. Data identitas kependudukan, alamat lengkap, dan data keluarga tidak dicantumkan demi menjaga privasi.</div>
-    <div class="footer"><strong>Yayasan Wakaf Cendekia Takengon</strong><br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah<br>WhatsApp Admin SPMB: 0851 8483 9694</div>
+    <div class="top-band"></div>
+    '.cetak_image(__DIR__.'/img/logo-pdf.jpg', 'watermark').'
+    <div class="page">
+        '.cetak_kop($unitName).'
+        <div class="title">BUKTI PENDAFTARAN</div>
+        <div class="subtitle">Registrasi awal peserta didik baru</div>
+        <div class="code"><div class="code-label">KODE PENDAFTARAN</div><div class="code-value">'.h($registration['id_pendaftaran']).'</div></div>
+        <p>Dokumen ini menerangkan bahwa registrasi awal peserta didik berikut telah tercatat pada sistem SPMB Yayasan Wakaf Cendekia Takengon:</p>
+        <table class="data">'.$rowsHtml.'</table>
+        <h2>Tahap berikutnya</h2>
+        <ol>
+            <li>Lakukan pembayaran pendaftaran dan unggah bukti transfer, dengan mencantumkan kode pendaftaran pada berita transfer.</li>
+            <li>Konfirmasi data, baca brosur, rincian biaya, dan SOP, lalu lengkapi formulir dan dokumen persyaratan.</li>
+            <li>Setelah formulir terkirim, hasil pendaftaran dan surat keterangan diterima tampil pada halaman pendaftaran.</li>
+        </ol>
+        <p style="margin-top:9px">Untuk melanjutkan, buka <a href="'.h($resumeUrl).'">halaman Lanjutkan pendaftaran</a> lalu masukkan kode pendaftaran, tanggal lahir ananda, dan nomor WhatsApp yang didaftarkan.</p>
+        <div class="note">Dokumen ini bukan bukti penerimaan. NIK, alamat lengkap, dan data keluarga tidak dicantumkan demi menjaga privasi.</div>
+    </div>
+    <div class="footer">Diterbitkan melalui sistem SPMB Yayasan Wakaf Cendekia Takengon · Kode '.h($registration['id_pendaftaran']).'</div>
 </body></html>';
 
-$options = new Options();
-$options->set('isRemoteEnabled', false);
-$options->set('defaultFont', 'DejaVu Sans');
-$dompdf = new Dompdf($options);
-$dompdf->loadHtml($html, 'UTF-8');
-$dompdf->setPaper('A4', 'portrait');
-$dompdf->render();
-$dompdf->stream('bukti-pendaftaran-'.$registrationId.'.pdf', ['Attachment' => true]);
-exit;
+cetak_stream($html, 'bukti-pendaftaran-'.$registrationId.'.pdf');

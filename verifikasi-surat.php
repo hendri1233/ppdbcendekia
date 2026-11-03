@@ -32,6 +32,7 @@ if (!$letter) {
     <title>Verifikasi surat keterangan diterima | SPMB Cendekia</title>
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/result.css?v=<?php echo (int) filemtime(__DIR__.'/css/result.css'); ?>">
+    <link rel="stylesheet" href="css/alur.css?v=<?php echo (int) @filemtime(__DIR__.'/css/alur.css'); ?>">
     <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
 </head>
 <body>
@@ -64,5 +65,6 @@ if (!$letter) {
     </section>
     <footer>Yayasan Wakaf Cendekia Takengon</footer>
 </main>
+<script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>
 </html>

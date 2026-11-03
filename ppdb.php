@@ -127,7 +127,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
         <div>
             <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="./">Beranda</a></li><li aria-current="page">SPMB</li></ol>
             <p class="kicker">Penerimaan peserta didik baru &middot; Tahun ajaran <?= h($activeYear) ?></p>
-            <h1>Pendaftaran daring, dipandu panitia melalui WhatsApp.</h1>
+            <h1>Pendaftaran daring, selesai langsung di situs ini.</h1>
             <p>Lihat kuota setiap unit, ikuti tiga tahap pendaftaran, dan siapkan dokumen yang diperlukan sebelum mengisi formulir lengkap.</p>
             <div class="hero-slider__actions">
                 <a class="button button--primary button--lg" href="daftar.php">Mulai registrasi awal</a>
@@ -240,7 +240,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
             <header class="section-head">
                 <p class="kicker">Alur pendaftaran</p>
                 <h2 id="alur-title">Tiga tahap pendaftaran</h2>
-                <p>Data dasar lebih dulu. Formulir lengkap dan dokumen baru diminta setelah pembayaran disetujui panitia.</p>
+                <p>Data dasar lebih dulu, lalu pembayaran. Formulir lengkap dan dokumen diisi langsung setelah bukti transfer diunggah.</p>
             </header>
 
             <ol class="steps">

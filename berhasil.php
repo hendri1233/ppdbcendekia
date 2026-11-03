@@ -36,6 +36,7 @@ header('Referrer-Policy: no-referrer');
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/result.css?v=<?php echo (int) filemtime(__DIR__.'/css/result.css'); ?>">
+    <link rel="stylesheet" href="css/alur.css?v=<?php echo (int) @filemtime(__DIR__.'/css/alur.css'); ?>">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="icon" type="image/png" sizes="48x48" href="img/favicons/favicon-48x48.png">
@@ -54,17 +55,31 @@ header('Referrer-Policy: no-referrer');
 
     <?php if ($registration) { ?>
         <section class="result-panel">
-            <div class="success-symbol" aria-hidden="true">&check;</div>
-            <p class="result-eyebrow">Registrasi awal tercatat</p>
-            <h1>Terima kasih,<br><?php echo h($registration['nm_peserta']); ?>.</h1>
-            <p class="result-description">Data awal ananda sudah kami terima. Silakan lanjutkan ke tahap berikutnya langsung dari halaman ini.</p>
+            <header class="acceptance-hero">
+                <span class="acceptance-seal" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg></span>
+                <p class="acceptance-eyebrow">Registrasi awal tercatat</p>
+                <h1>Terima kasih, Ayah/Bunda</h1>
+                <p class="acceptance-name"><?php echo h($registration['nm_peserta']); ?></p>
+                <p class="acceptance-unit"><?php echo h($registration['nama_unit'] ?? 'Belum ditentukan'); ?> · Tahun ajaran <?php echo h($registration['th_ajaran']); ?></p>
+            </header>
 
             <div class="registration-code" role="group" aria-label="Kode pendaftaran">
                 <span>Kode pendaftaran</span>
                 <strong><?php echo h($registration['id_pendaftaran']); ?></strong>
+                <button class="flow-copy" type="button" data-copy="<?php echo h($registration['id_pendaftaran']); ?>" aria-label="Salin kode pendaftaran"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h10a2 2 0 0 1 2 2v12h-2V5H9V3ZM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 2v10h10V9H5Z"/></svg><span>Salin</span></button>
             </div>
             <p class="code-hint">Simpan kode ini. Kode, tanggal lahir ananda, dan nomor WhatsApp diperlukan untuk kembali ke pendaftaran dan melihat hasilnya.</p>
 
+            <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>
+
+            <h2 class="acceptance-heading">Tahap berikutnya</h2>
+            <ol class="next-steps" aria-label="Langkah berikutnya">
+                <li><span aria-hidden="true">1</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
+                <li><span aria-hidden="true">2</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.</small></div></li>
+                <li><span aria-hidden="true">3</span><div><strong>Langsung diterima</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan diterima langsung tampil.</small></div></li>
+            </ol>
+
+            <h2 class="acceptance-heading">Data pendaftaran</h2>
             <dl class="summary-list">
                 <div><dt>Nama lengkap ananda</dt><dd><?php echo h($registration['nm_peserta']); ?></dd></div>
                 <div><dt>Tanggal lahir</dt><dd><?php echo h(ppdb_format_date_id($registration['tgl_lahir'])); ?></dd></div>
@@ -78,14 +93,8 @@ header('Referrer-Policy: no-referrer');
                 <div><dt>Tanggal daftar</dt><dd><?php echo h(ppdb_format_date_id($registration['tgl_daftar'])); ?></dd></div>
             </dl>
 
-            <ol class="next-steps" aria-label="Langkah berikutnya">
-                <li><span aria-hidden="true">1</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
-                <li><span aria-hidden="true">2</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.</small></div></li>
-                <li><span aria-hidden="true">3</span><div><strong>Langsung diterima</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan diterima langsung tampil.</small></div></li>
-            </ol>
 
-            <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>
-            <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>"><span aria-hidden="true">▤</span> Unduh bukti pendaftaran (PDF)</a>
+            <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti pendaftaran (PDF)</a>
             <p class="result-note">Jika halaman ini tertutup, buka menu <a href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a> untuk kembali.</p>
             <div class="admin-contact">
                 <span>Butuh bantuan dari panitia?</span>
@@ -106,5 +115,6 @@ header('Referrer-Policy: no-referrer');
 
     <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
 </main>
+<script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>
 </html>

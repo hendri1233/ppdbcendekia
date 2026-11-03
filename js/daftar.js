@@ -231,6 +231,7 @@
   const jalurField = document.querySelector("[data-jalur-field]");
   const prestasiSection = document.querySelector("[data-prestasi-section]");
   const initialFields = document.querySelector("[data-initial-fields]");
+  const prestasiCategories = prestasiSection ? Array.from(prestasiSection.querySelectorAll("[data-prestasi-category]")) : [];
   function updatePrestasiConditions() {
     if (!prestasiSection) return;
     const active = !prestasiSection.hidden;
@@ -244,14 +245,30 @@
       control.disabled = !shown;
       control.required = shown && control.hasAttribute("data-prestasi-required");
     }
-    for (const category of prestasiSection.querySelectorAll("[data-prestasi-category]")) {
-      const complete = Array.from(category.querySelectorAll("input, textarea")).every(function (control) {
-        return control.disabled || control.validity.valid;
-      });
+    // Kategori terbuka bergiliran: yang berikutnya terkunci sampai kategori sebelumnya lengkap.
+    let locked = false;
+    for (const category of prestasiCategories) {
+      const complete = categoryComplete(category);
       const status = category.querySelector("[data-prestasi-status]");
-      status.textContent = complete ? "Sudah diisi" : "Belum diisi";
-      category.classList.toggle("is-complete", complete);
+      status.textContent = locked ? "Terkunci" : complete ? "Sudah diisi" : "Belum diisi";
+      category.classList.toggle("is-complete", !locked && complete);
+      category.classList.toggle("is-locked", locked);
+      if (locked) category.open = false;
+      if (!complete) locked = true;
     }
+  }
+  function categoryComplete(category) {
+    return Array.from(category.querySelectorAll("input, textarea")).every(function (control) {
+      return control.disabled || control.validity.valid;
+    });
+  }
+  function openCategory(target) {
+    for (const category of prestasiCategories) category.open = category === target;
+  }
+  function firstIncompleteCategory() {
+    return prestasiCategories.find(function (category) {
+      return !categoryComplete(category);
+    });
   }
   function updateJalur() {
     if (!externalRoute || !jalurField) return;
@@ -269,17 +286,44 @@
     if (initialFields) initialFields.hidden = isSmp && selected === "";
     if (prestasiSection) prestasiSection.hidden = !(isSmp && selected === "prestasi");
     updatePrestasiConditions();
+    if (prestasiSection && !prestasiSection.hidden && !prestasiCategories.some(function (category) { return category.open; })) {
+      openCategory(firstIncompleteCategory() || null);
+    }
   }
   if (jalurField) {
     jalurField.addEventListener("change", updateJalur);
     if (externalRoute) externalRoute.addEventListener("change", updateJalur);
     if (prestasiSection) {
-      prestasiSection.addEventListener("change", updatePrestasiConditions);
       prestasiSection.addEventListener("input", updatePrestasiConditions);
-      // Kategori yang belum lengkap dibuka agar isian wajibnya terlihat saat dikirim.
-      prestasiSection.addEventListener("invalid", function (event) {
+      prestasiSection.addEventListener("change", function (event) {
+        updatePrestasiConditions();
         const category = event.target.closest("[data-prestasi-category]");
-        if (category) category.open = true;
+        if (!category || !category.open || !categoryComplete(category)) return;
+        // Beri jeda agar pilihan terlihat sebelum lanjut ke kategori berikutnya.
+        window.setTimeout(function () {
+          if (!category.open || !categoryComplete(category)) return;
+          const next = firstIncompleteCategory();
+          openCategory(next || null);
+          if (next) next.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 420);
+      });
+      for (const category of prestasiCategories) {
+        category.querySelector("summary").addEventListener("click", function (event) {
+          if (category.classList.contains("is-locked")) {
+            event.preventDefault();
+            category.classList.remove("is-shake");
+            void category.offsetWidth;
+            category.classList.add("is-shake");
+          }
+        });
+        category.addEventListener("toggle", function () {
+          if (category.open) openCategory(category);
+        });
+      }
+      // Kategori pertama yang belum lengkap dibuka agar isian wajibnya terlihat saat dikirim.
+      prestasiSection.addEventListener("invalid", function () {
+        const first = firstIncompleteCategory();
+        if (first && !first.open) openCategory(first);
       }, true);
     }
     updateJalur();

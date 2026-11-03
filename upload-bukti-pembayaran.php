@@ -45,7 +45,7 @@ $canUpload = $registration['status_ppdb'] === 'menunggu_pembayaran'
     ? $registration['status_pembayaran'] !== 'terverifikasi'
     : $registration['status_pembayaran'] === 'ditolak' && in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true);
 if (!$canUpload) {
-    return_to_applicant_status($registrationId, $receiptToken, 'Bukti hanya dapat diunggah setelah formulir dikirim panitia dan sebelum status pembayaran selesai.');
+    return_to_applicant_status($registrationId, $receiptToken, 'Bukti hanya dapat diunggah sebelum status pembayaran selesai.');
 }
 if ($registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d')) {
     return_to_applicant_status($registrationId, $receiptToken, 'Batas pembayaran sudah lewat. Hubungi panitia.');

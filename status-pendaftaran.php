@@ -44,10 +44,13 @@ foreach (array_slice($bankNameWords ?: [], 0, 3) as $bankNameWord) {
 }
 $normalizedBankName = strtolower(trim(preg_replace('/[^a-z0-9]+/i', ' ', (string) ($registration['bank_nama'] ?? ''))));
 $bankLogo = '';
+$bankDisplayName = trim((string) ($registration['bank_nama'] ?? ''));
 if ($normalizedBankName === 'bsi' || strpos($normalizedBankName, 'syariah indonesia') !== false) {
     $bankLogo = 'img/Bank_Syariah_Indonesia.svg';
-} elseif ($normalizedBankName === 'bas' || strpos($normalizedBankName, 'aceh syariah') !== false || strpos($normalizedBankName, 'bank aceh') !== false) {
+    $bankDisplayName = 'Bank Syariah Indonesia';
+} elseif ($normalizedBankName === 'bas' || strpos($normalizedBankName, 'aceh') !== false) {
     $bankLogo = 'img/Logo_Bank_Aceh_Syariah.png';
+    $bankDisplayName = 'Bank Aceh Syariah';
 }
 $uploadError = trim($_GET['upload_error'] ?? '');
 $revisionCount = isset($_GET['revisi']) && ctype_digit((string) $_GET['revisi']) ? (int) $_GET['revisi'] : null;
@@ -84,6 +87,7 @@ header('Referrer-Policy: no-referrer');
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/result.css?v=<?php echo (int) filemtime(__DIR__.'/css/result.css'); ?>">
+    <link rel="stylesheet" href="css/alur.css?v=<?php echo (int) @filemtime(__DIR__.'/css/alur.css'); ?>">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="icon" type="image/png" sizes="48x48" href="img/favicons/favicon-48x48.png">
@@ -147,7 +151,7 @@ header('Referrer-Policy: no-referrer');
                 </ol>
                 <h2 class="acceptance-heading">Data peserta didik</h2>
             <?php } else { ?>
-            <div class="status-head">
+            <div class="status-head status-head--<?php echo h($statusInfo['tone']); ?>">
                 <div>
                     <p class="result-eyebrow">Status pendaftaran</p>
                     <h1><?php echo h($statusInfo['label']); ?></h1>
@@ -213,7 +217,6 @@ header('Referrer-Policy: no-referrer');
                 <?php } else { ?>
                     <section class="payment-instruction" aria-labelledby="payment-instruction-title">
                         <div class="payment-instruction__heading">
-                            <span class="payment-instruction__step">01</span>
                             <div>
                                 <p class="payment-instruction__eyebrow">Langkah pembayaran</p>
                                 <h2 id="payment-instruction-title">Instruksi pembayaran</h2>
@@ -224,29 +227,31 @@ header('Referrer-Policy: no-referrer');
                         <?php if ((float) $registration['biaya_pendaftaran'] > 0) { ?>
                             <div class="payment-amount">
                                 <span>Nominal yang perlu dibayarkan</span>
-                                <strong>Rp <?php echo h(number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.')); ?></strong>
+                                <div class="payment-amount__row">
+                                    <strong><small>Rp</small><?php echo h(number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.')); ?></strong>
+                                    <button class="flow-copy" type="button" data-copy="<?php echo (int) $registration['biaya_pendaftaran']; ?>" aria-label="Salin nominal"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h10a2 2 0 0 1 2 2v12h-2V5H9V3ZM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 2v10h10V9H5Z"/></svg><span>Salin</span></button>
+                                </div>
                             </div>
                             <?php if ($hasPaymentAccount) { ?>
-                                <div class="payment-bank-brand" aria-label="Bank tujuan: <?php echo h($registration['bank_nama']); ?>">
+                                <div class="payment-bank-brand" aria-label="Bank tujuan: <?php echo h($bankDisplayName); ?>">
                                     <?php if ($bankLogo !== '') { ?>
-                                        <img class="payment-bank-brand__logo" src="<?php echo h($bankLogo); ?>" alt="Logo <?php echo h($registration['bank_nama']); ?>">
+                                        <img class="payment-bank-brand__logo" src="<?php echo h($bankLogo); ?>" alt="Logo <?php echo h($bankDisplayName); ?>">
                                     <?php } else { ?>
                                         <span class="payment-bank-brand__mark" aria-hidden="true">
                                             <svg viewBox="0 0 32 32" focusable="false"><path d="M4 12h24L16 5 4 12Zm2 3v9H4v3h24v-3h-2v-9h-3v9h-5v-9h-4v9H9v-9H6Z"/></svg>
                                             <b><?php echo h($bankMonogram ?: 'BANK'); ?></b>
                                         </span>
                                     <?php } ?>
-                                    <span class="payment-bank-brand__name"><small>TRANSFER KE</small><strong><?php echo h($registration['bank_nama']); ?></strong></span>
+                                    <span class="payment-bank-brand__name"><small>Transfer ke</small><strong><?php echo h($bankDisplayName); ?></strong></span>
                                 </div>
                                 <dl class="payment-detail-list">
-                                    <div><dt>Bank tujuan</dt><dd><?php echo h($registration['bank_nama']); ?></dd></div>
-                                    <div><dt>Nomor rekening</dt><dd class="payment-account-number"><?php echo h($registration['nomor_rekening']); ?></dd></div>
-                                    <div><dt>Nama pemilik rekening</dt><dd><?php echo h($registration['nama_pemilik_rekening']); ?></dd></div>
+                                    <div><dt>Nomor rekening</dt><dd class="payment-account-number"><span><?php echo h($registration['nomor_rekening']); ?></span><button class="flow-copy" type="button" data-copy="<?php echo h($registration['nomor_rekening']); ?>" aria-label="Salin nomor rekening"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h10a2 2 0 0 1 2 2v12h-2V5H9V3ZM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 2v10h10V9H5Z"/></svg><span>Salin</span></button></dd></div>
+                                    <div><dt>Atas nama</dt><dd><?php echo h($registration['nama_pemilik_rekening']); ?></dd></div>
                                     <div><dt>Batas pembayaran</dt><dd><?php echo $registration['tanggal_batas_bayar'] ? h(ppdb_format_date_id($registration['tanggal_batas_bayar'])) : 'Belum ditentukan'; ?></dd></div>
                                 </dl>
                                 <div class="payment-reference">
                                     <span>Berita transfer / keterangan</span>
-                                    <strong><?php echo h($registration['id_pendaftaran']); ?></strong>
+                                    <div class="payment-reference__row"><strong><?php echo h($registration['id_pendaftaran']); ?></strong><button class="flow-copy" type="button" data-copy="<?php echo h($registration['id_pendaftaran']); ?>" aria-label="Salin kode berita transfer"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h10a2 2 0 0 1 2 2v12h-2V5H9V3ZM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 2v10h10V9H5Z"/></svg><span>Salin</span></button></div>
                                     <small>Mohon cantumkan kode ini agar pembayaran dapat dikenali dan diverifikasi.</small>
                                 </div>
                                 <ol class="payment-steps">
@@ -299,7 +304,7 @@ header('Referrer-Policy: no-referrer');
                 </div>
             <?php } ?>
 
-            <?php if (!$isAccepted) { ?><a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh ringkasan PDF</a><?php } ?>
+            <?php if (!$isAccepted) { ?><a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti pendaftaran (PDF)</a><?php } ?>
             <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain. Untuk kembali lagi, buka <a href="lanjutkan-pendaftaran.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>">Lanjutkan pendaftaran</a>.</p>
             <div class="admin-contact">
                 <span>Perlu bantuan? Hubungi admin SPMB.</span>
@@ -321,5 +326,6 @@ header('Referrer-Policy: no-referrer');
     <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a> · WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?></footer>
 </main>
 <script src="js/status.js?v=<?php echo (int) @filemtime(__DIR__.'/js/status.js'); ?>"></script>
+<script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>
 </html>

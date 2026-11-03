@@ -1,0 +1,926 @@
+/* Tampilan dan transisi alur pendaftaran, dari registrasi awal sampai hasil. Tidak mengubah fungsi. */
+
+@font-face {
+    font-family: 'Source Serif';
+    src: url('../assets/fonts/SourceSerif4-400.ttf') format('truetype');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Source Serif';
+    src: url('../assets/fonts/SourceSerif4-700.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    --flow-serif: 'Source Serif', Georgia, 'Times New Roman', serif;
+    --flow-bg: #f5f5f1;
+    --flow-green: var(--brand-800);
+    --flow-gold: #c9a24a;
+    --flow-shadow: 0 1px 2px rgba(12, 46, 35, 0.04), 0 14px 36px rgba(12, 46, 35, 0.07);
+}
+
+/* ---------- Halaman hasil: berhasil, status, verifikasi ---------- */
+body:has(.result-shell) {
+    background: var(--flow-bg);
+}
+
+.result-shell {
+    width: min(100% - 32px, 680px);
+    justify-content: flex-start;
+    padding: 26px 0 34px;
+}
+
+.result-brand {
+    margin-bottom: 16px;
+}
+
+.result-panel {
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow: var(--flow-shadow);
+}
+
+.result-eyebrow {
+    letter-spacing: 0.02em;
+}
+
+.acceptance-hero {
+    margin: 0 0 20px;
+    padding: 30px 24px 28px;
+    background: linear-gradient(155deg, var(--brand-900), var(--brand-700));
+    border-radius: 13px;
+}
+
+.acceptance-hero h1 {
+    font-family: var(--flow-serif);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.acceptance-eyebrow {
+    color: #ecd9a6;
+    letter-spacing: 0.04em;
+}
+
+.acceptance-heading {
+    margin: 28px 0 10px;
+    color: var(--flow-green);
+    font-family: var(--flow-serif);
+    font-size: 1.12rem;
+    font-weight: 700;
+}
+
+.next-steps {
+    border-radius: 12px;
+}
+
+.registration-code {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 2px 12px;
+    margin: 0;
+    padding: 14px 16px;
+    background: var(--brand-50);
+    border: 1px dashed var(--brand-300);
+    border-left: 1px dashed var(--brand-300);
+    border-radius: 11px;
+}
+
+.registration-code strong {
+    grid-column: 1;
+    color: var(--flow-green);
+    font-family: var(--flow-serif);
+    font-size: 1.55rem;
+    letter-spacing: 0.04em;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+.registration-code .flow-copy {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+}
+
+.code-hint {
+    margin: 9px 0 16px;
+}
+
+.download-button {
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    margin-top: 0;
+    border-radius: 10px;
+    box-shadow: 0 8px 18px rgba(20, 86, 63, 0.2);
+}
+
+.secondary-download {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    margin-top: 18px;
+    text-decoration: none;
+    border: 1.5px solid var(--brand-700);
+    border-radius: 10px;
+}
+
+.secondary-download:hover {
+    background: var(--brand-50);
+}
+
+.result-note {
+    margin-top: 14px;
+}
+
+.flow-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 12px;
+    color: var(--brand-700);
+    font: inherit;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    background: #fff;
+    border: 1px solid var(--brand-300);
+    border-radius: 8px;
+}
+
+.flow-copy svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+}
+
+.flow-copy:hover {
+    background: var(--brand-50);
+}
+
+.flow-copy.is-copied {
+    color: #fff;
+    background: var(--brand-700);
+    border-color: var(--brand-700);
+}
+
+/* Status */
+.status-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 16px;
+    margin: 0 0 20px;
+    padding: 24px;
+    color: #fff;
+    background: linear-gradient(155deg, var(--brand-900), var(--brand-700));
+    border-radius: 13px;
+}
+
+.status-head--danger {
+    background: linear-gradient(155deg, var(--maroon-900), var(--maroon-700));
+}
+
+.status-head .result-eyebrow {
+    color: #ecd9a6;
+}
+
+.status-head h1 {
+    margin: 2px 0 8px;
+    color: #fff;
+    font-family: var(--flow-serif);
+    font-size: clamp(1.45rem, 4.4vw, 1.9rem);
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.2;
+}
+
+.status-head .result-description {
+    margin: 0;
+    max-width: 44ch;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.status-head .registration-code {
+    display: block;
+    width: auto;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.status-head .registration-code span {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.status-head .registration-code strong {
+    color: #fff;
+    font-size: 1.12rem;
+}
+
+.journey-track {
+    padding: 18px;
+    background: #fff;
+    border: 1px solid var(--result-line);
+    border-radius: 13px;
+}
+
+.journey-step.is-stopped .journey-dot {
+    box-shadow: none;
+}
+
+@media (min-width: 640px) {
+    .journey-track {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .journey-step {
+        display: block;
+        padding: 0;
+        text-align: center;
+    }
+
+    .journey-step::before {
+        top: 13px;
+        bottom: auto;
+        left: calc(50% + 18px);
+        width: calc(100% - 28px);
+        height: 2px;
+    }
+
+    .journey-step:last-child::before {
+        display: none;
+    }
+
+    .journey-dot {
+        margin: 0 auto 8px;
+    }
+
+    .journey-step div {
+        padding: 0;
+    }
+
+    .journey-step strong {
+        font-size: var(--fs-xs);
+        line-height: 1.3;
+    }
+
+    .journey-step small {
+        display: none;
+    }
+}
+
+.summary-list {
+    margin-top: 18px;
+}
+
+/* Instruksi pembayaran */
+.payment-instruction {
+    margin-top: 22px;
+    padding: 0;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--result-line);
+    border-radius: 14px;
+}
+
+.payment-instruction__heading {
+    padding: 18px 20px 4px;
+}
+
+.payment-instruction__heading h2 {
+    color: var(--flow-green);
+    font-family: var(--flow-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.payment-instruction__eyebrow {
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+
+.payment-amount {
+    margin: 14px 20px 0;
+    padding: 18px 20px;
+    color: #fff;
+    background: linear-gradient(155deg, var(--brand-900), var(--brand-700));
+    border: 0;
+    border-radius: 12px;
+}
+
+.payment-amount > span {
+    display: block;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.payment-amount__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.payment-amount strong {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    color: #fff;
+    font-family: var(--flow-serif);
+    font-size: clamp(2rem, 7.5vw, 2.7rem);
+    font-weight: 700;
+    letter-spacing: 0.005em;
+    line-height: 1.1;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+.payment-amount strong small {
+    color: #ecd9a6;
+    font-size: 0.5em;
+    font-weight: 400;
+}
+
+.payment-amount .flow-copy {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.34);
+}
+
+.payment-amount .flow-copy:hover,
+.payment-amount .flow-copy.is-copied {
+    color: var(--brand-800);
+    background: #fff;
+}
+
+.payment-amount .flow-copy span {
+    display: inline;
+    color: inherit;
+    font-weight: 700;
+}
+
+.payment-bank-brand {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 18px;
+    margin: 14px 20px 0;
+    padding: 14px 18px;
+    background: #fff;
+    border: 1px solid var(--result-line);
+    border-radius: 12px;
+}
+
+.payment-bank-brand__logo {
+    width: auto;
+    max-width: 230px;
+    height: 42px;
+    object-fit: contain;
+}
+
+.payment-bank-brand__name {
+    text-align: right;
+}
+
+.payment-bank-brand__name small {
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.payment-detail-list {
+    margin: 6px 20px 0;
+}
+
+.payment-detail-list > div {
+    align-items: center;
+}
+
+button.download-button {
+    width: 100%;
+    font-family: inherit;
+    border: 0;
+}
+
+.payment-account-number {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin: 0;
+    color: var(--flow-green);
+    font-family: var(--flow-serif);
+    font-size: 1.18rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+.payment-account-number .flow-copy {
+    font-family: var(--font-sans);
+    letter-spacing: 0;
+}
+
+.payment-reference {
+    margin: 14px 20px 0;
+    padding: 14px 16px;
+    background: #fbf7ec;
+    border: 1px solid #ecdfbd;
+    border-radius: 12px;
+}
+
+.payment-reference__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 3px 0;
+}
+
+.payment-reference strong {
+    color: #5e4a14;
+    font-family: var(--flow-serif);
+    font-size: 1.22rem;
+    letter-spacing: 0.04em;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+.payment-steps {
+    margin: 14px 20px 18px;
+}
+
+.payment-upload {
+    margin-top: 18px;
+    padding: 18px 20px 20px;
+    background: var(--brand-50);
+    border: 1px solid var(--brand-200);
+    border-radius: 14px;
+}
+
+.payment-upload label {
+    font-weight: 700;
+}
+
+.payment-upload input[type='file'] {
+    width: 100%;
+    margin: 10px 0 12px;
+    padding: 12px;
+    background: #fff;
+    border: 1.5px dashed var(--brand-300);
+    border-radius: 10px;
+}
+
+.payment-guidance,
+.payment-error,
+.payment-success {
+    margin-top: 16px;
+    border-radius: 11px;
+}
+
+/* ---------- Formulir: tahap 2 sampai 3 dan halaman masuk kembali ---------- */
+body.page-flow {
+    background: var(--flow-bg);
+}
+
+.page-flow .site-header {
+    border-bottom: 0;
+}
+
+.page-flow .back-link {
+    padding: 8px 14px;
+    color: var(--brand-700);
+    font-size: var(--fs-xs);
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid var(--brand-200);
+    border-radius: 999px;
+}
+
+.page-flow .back-link:hover {
+    background: var(--brand-50);
+}
+
+.page-flow .form-stage-intro,
+.page-flow .materials-stage__heading {
+    padding: 26px 28px;
+    color: #fff;
+    background: linear-gradient(155deg, var(--brand-900), var(--brand-700));
+    border: 0;
+    border-radius: 16px;
+}
+
+.page-flow .form-stage-intro .eyebrow,
+.page-flow .materials-stage__heading .eyebrow {
+    color: #ecd9a6;
+    letter-spacing: 0.04em;
+    text-transform: none;
+}
+
+.page-flow .form-stage-intro h2,
+.page-flow .materials-stage__heading h2 {
+    margin: 2px 0 6px;
+    color: #fff;
+    font-family: var(--flow-serif);
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.page-flow .form-stage-intro p,
+.page-flow .materials-stage__heading p:last-child {
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.page-flow .form-stage-intro .draft-restored {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border: 0;
+}
+
+.page-flow .form-steps button {
+    background: #fff;
+    border-radius: 999px;
+    box-shadow: none;
+}
+
+.page-flow .form-steps button[aria-current='step'] {
+    color: #fff;
+    background: var(--brand-700);
+    border-color: var(--brand-700);
+    box-shadow: 0 6px 14px rgba(20, 86, 63, 0.22);
+}
+
+.page-flow .form-steps button[aria-current='step'] .form-steps__number {
+    color: var(--brand-800);
+    background: #fff;
+}
+
+.page-flow .form-section,
+.page-flow .participant-material {
+    border-radius: 16px;
+    box-shadow: var(--flow-shadow);
+}
+
+.page-flow .section-number {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    color: #fff;
+    font-family: var(--flow-serif);
+    font-size: 1.02rem;
+    font-weight: 700;
+    background: var(--brand-700);
+    border-radius: 50%;
+    font-variant-numeric: lining-nums;
+}
+
+.page-flow .section-heading h2,
+.page-flow .participant-material h3 {
+    color: var(--flow-green);
+    font-family: var(--flow-serif);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.page-flow .field input:not([type='radio']):not([type='checkbox']):not([type='file']),
+.page-flow .field select,
+.page-flow .field textarea {
+    border-radius: 9px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.page-flow .field input:not([type='radio']):not([type='checkbox']):not([type='file']):focus,
+.page-flow .field select:focus,
+.page-flow .field textarea:focus {
+    border-color: var(--brand-500);
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(42, 132, 99, 0.16);
+}
+
+.page-flow .submit-button {
+    border-radius: 10px;
+    box-shadow: 0 8px 18px rgba(20, 86, 63, 0.2);
+}
+
+.page-flow .step-button--back {
+    border-radius: 10px;
+}
+
+.page-flow .document-card {
+    border-radius: 13px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.page-flow .document-card:hover {
+    border-color: var(--brand-300);
+    box-shadow: 0 8px 20px rgba(12, 46, 35, 0.07);
+}
+
+.page-flow .file-drop {
+    border-radius: 10px;
+}
+
+.page-flow .document-source-field {
+    margin-top: 22px;
+}
+
+/* Bagian akhir formulir dibuat satu kolom agar pernyataan dan tombol kirim jelas. */
+.page-flow .form-footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin: 24px 0 0;
+    padding: 18px;
+    background: var(--brand-50);
+    border: 1px solid var(--brand-200);
+    border-radius: 13px;
+}
+
+.page-flow .form-footer p {
+    max-width: none;
+    margin: 0;
+}
+
+.page-flow .consent-check {
+    width: 100%;
+    max-width: none;
+    background: #fff;
+    border-radius: 10px;
+}
+
+.page-flow .form-footer .submit-button {
+    width: 100%;
+    min-height: 54px;
+    font-size: var(--fs-md);
+}
+
+.page-flow .materials-read-confirm {
+    border-radius: 12px;
+}
+
+/* Dialog konfirmasi dan pengantar */
+.page-flow .confirm-dialog {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 30px 70px rgba(7, 31, 23, 0.32);
+}
+
+.page-flow .confirm-dialog::backdrop {
+    background: rgba(7, 31, 23, 0.58);
+}
+
+.page-flow .confirm-dialog h2 {
+    color: var(--flow-green);
+    font-family: var(--flow-serif);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.page-flow .choice-yes,
+.page-flow .choice-no {
+    border-radius: 10px;
+}
+
+.page-flow .choice-yes:focus-visible,
+.page-flow .choice-no:focus-visible {
+    outline: 2px solid var(--brand-500);
+    outline-offset: 2px;
+}
+
+.page-flow .gate-panel h1 {
+    font-family: var(--flow-serif);
+    letter-spacing: 0;
+}
+
+.page-flow .gate-form {
+    border-radius: 16px;
+    box-shadow: var(--flow-shadow);
+}
+
+@media (max-width: 560px) {
+    .result-panel {
+        padding: 14px;
+    }
+
+    .status-head {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-amount,
+    .payment-bank-brand,
+    .payment-reference {
+        margin-inline: 14px;
+    }
+
+    .payment-instruction__heading {
+        padding-inline: 14px;
+    }
+
+    .payment-detail-list,
+    .payment-steps {
+        margin-inline: 14px;
+    }
+
+    .payment-bank-brand {
+        justify-content: flex-start;
+    }
+
+    .payment-bank-brand__name {
+        text-align: left;
+    }
+
+    .payment-bank-brand__logo {
+        max-width: 200px;
+        height: 36px;
+    }
+
+    .page-flow .form-stage-intro,
+    .page-flow .materials-stage__heading {
+        padding: 20px;
+    }
+}
+
+.flow-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    width: 100%;
+    height: 3px;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.flow-progress.is-active {
+    opacity: 1;
+}
+
+.flow-progress::before {
+    content: '';
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: var(--brand-700);
+}
+
+.flow-progress.is-active::before {
+    animation: flow-progress 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes flow-progress {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(250%); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    /* Perpindahan antarhalaman pada peramban yang mendukung. */
+    @view-transition {
+        navigation: auto;
+    }
+
+    ::view-transition-old(root) {
+        animation: flow-page-out 0.22s ease both;
+    }
+
+    ::view-transition-new(root) {
+        animation: flow-page-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes flow-page-out {
+        to { opacity: 0; transform: translateY(-6px); }
+    }
+
+    @keyframes flow-page-in {
+        from { opacity: 0; transform: translateY(10px); }
+    }
+
+    @keyframes flow-rise {
+        from { opacity: 0; transform: translateY(14px); }
+        to { opacity: 1; transform: none; }
+    }
+
+    @keyframes flow-fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes flow-pop {
+        0% { opacity: 0; transform: scale(0.72); }
+        65% { opacity: 1; transform: scale(1.06); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Panel utama tiap halaman muncul halus saat dimuat. */
+    .result-brand,
+    .gate-panel,
+    .site-header {
+        animation: flow-fade 0.45s ease backwards;
+    }
+
+    .result-panel {
+        animation: flow-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    /* Isi panel hasil muncul berurutan. */
+    .result-panel > * {
+        animation: flow-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    .result-panel > :nth-child(1) { animation-delay: 0.06s; }
+    .result-panel > :nth-child(2) { animation-delay: 0.12s; }
+    .result-panel > :nth-child(3) { animation-delay: 0.18s; }
+    .result-panel > :nth-child(4) { animation-delay: 0.24s; }
+    .result-panel > :nth-child(5) { animation-delay: 0.3s; }
+    .result-panel > :nth-child(n+6) { animation-delay: 0.36s; }
+
+    .acceptance-seal {
+        animation: flow-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
+    }
+
+    .journey-step {
+        animation: flow-rise 0.45s ease backwards;
+    }
+
+    .journey-step:nth-child(2) { animation-delay: 0.08s; }
+    .journey-step:nth-child(3) { animation-delay: 0.16s; }
+    .journey-step:nth-child(4) { animation-delay: 0.24s; }
+    .journey-step:nth-child(5) { animation-delay: 0.32s; }
+
+    .acceptance-button {
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    }
+
+    .acceptance-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(12, 46, 35, 0.16);
+    }
+
+    /* Tahap di dalam formulir: materi, formulir, dan setiap langkah isian. */
+    [data-material-stage]:not([hidden]),
+    #formulir-terbuka:not([hidden]),
+    .form-section:not([hidden]) {
+        animation: flow-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    /* Jalur prestasi: isian muncul saat kategorinya dibuka atau jawabannya berubah. */
+    .initial-fields:not([hidden]) > *,
+    .prestasi-section:not([hidden]),
+    .prestasi-section [data-prestasi-when]:not([hidden]) {
+        animation: flow-rise 0.36s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    .prestasi-category[open] .prestasi-category__body {
+        animation: flow-rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+
+    .prestasi-category,
+    .prestasi-category__number,
+    .prestasi-category__status {
+        transition: border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, color 0.22s ease, opacity 0.22s ease;
+    }
+
+    .prestasi-category summary::after {
+        transition: transform 0.24s ease;
+    }
+
+    .prestasi-category.is-shake {
+        animation: flow-shake 0.3s ease;
+    }
+
+    @keyframes flow-shake {
+        25% { transform: translateX(-4px); }
+        75% { transform: translateX(4px); }
+    }
+
+    /* Tinggi dropdown ikut bergerak pada peramban yang mendukung. */
+    @supports (interpolate-size: allow-keywords) {
+        :root {
+            interpolate-size: allow-keywords;
+        }
+
+        .prestasi-category::details-content {
+            block-size: 0;
+            overflow: hidden;
+            transition: block-size 0.3s cubic-bezier(0.22, 1, 0.36, 1), content-visibility 0.3s allow-discrete;
+        }
+
+        .prestasi-category[open]::details-content {
+            block-size: auto;
+        }
+    }
+}

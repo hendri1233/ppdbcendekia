@@ -99,10 +99,11 @@ header('Referrer-Policy: no-referrer');
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/daftar.css?v=<?php echo (int) filemtime(__DIR__.'/css/daftar.css'); ?>">
+    <link rel="stylesheet" href="css/alur.css?v=<?php echo (int) @filemtime(__DIR__.'/css/alur.css'); ?>">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
 </head>
-<body>
+<body class="page-flow">
 <div class="page-shell">
     <header class="site-header">
         <a class="brand" href="./" aria-label="Yayasan Wakaf Cendekia Takengon, beranda">
@@ -146,5 +147,6 @@ header('Referrer-Policy: no-referrer');
         <a class="admin-wa-link" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan untuk melanjutkan pendaftaran SPMB.')); ?>" target="_blank" rel="noopener noreferrer">Bantuan admin <?php echo h(ppdb_admin_whatsapp_display()); ?></a>
     </footer>
 </div>
+<script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>
 </html>

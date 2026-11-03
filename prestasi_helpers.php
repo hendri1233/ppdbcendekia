@@ -13,7 +13,7 @@ const PRESTASI_PERINGKAT_BARIS = [
     'peringkat_k5_s2' => 'Kelas 5 · Semester 2',
     'peringkat_k6_s1' => 'Kelas 6 · Semester 1',
 ];
-const PRESTASI_JUMLAH_HAFALAN = ['Tidak ada', '1 Juz', '1,5 Juz', '2 Juz', '2,5 Juz', '3 Juz'];
+const PRESTASI_JUMLAH_HAFALAN = ['1 Juz', '1,5 Juz', '2 Juz', '2,5 Juz', '3 Juz'];
 const PRESTASI_TIDAK_ADA = 'Tidak ada';
 
 /** Migrasi 030 sudah dijalankan; bila belum, pendaftaran SMP berjalan seperti unit lain. */
@@ -22,17 +22,27 @@ function prestasi_is_ready(mysqli $conn): bool
     return ppdb_table_exists($conn, 'tb_prestasi_peserta') && ppdb_column_exists($conn, 'tb_pendaftaran', 'jalur_seleksi');
 }
 
-/** Satu kategori prestasi yang wajib diisi, dibuka dan ditutup seperti dropdown. */
-function prestasi_category_open(string $title): void
+/** Satu kategori prestasi yang wajib diisi bergiliran, dibuka dan ditutup seperti dropdown. */
+function prestasi_category_open(int $number, string $title): void
 {
     echo '<details class="prestasi-category" data-prestasi-category>';
-    echo '<summary><span class="prestasi-category__title">'.h($title).' <span class="required-mark" aria-hidden="true">*</span></span><span class="prestasi-category__status" data-prestasi-status>Belum diisi</span></summary>';
+    echo '<summary><span class="prestasi-category__number" aria-hidden="true">'.$number.'</span><span class="prestasi-category__title">'.h($title).' <span class="required-mark" aria-hidden="true">*</span></span><span class="prestasi-category__status" data-prestasi-status>Belum diisi</span></summary>';
     echo '<div class="prestasi-category__body">';
 }
 
 function prestasi_category_close(): void
 {
     echo '</div></details>';
+}
+
+/** Pertanyaan pembuka setiap kategori: Ada atau Tidak ada. */
+function prestasi_render_question(string $name, string $question, string $value): void
+{
+    echo '<fieldset class="field field-wide"><legend>'.h($question).' <span class="required-mark" aria-hidden="true">*</span></legend><div class="radio-options">';
+    foreach (['Ada', PRESTASI_TIDAK_ADA] as $option) {
+        echo '<label class="radio-option"><input type="radio" name="'.h($name).'" value="'.h($option).'"'.($value === $option ? ' checked' : '').' data-prestasi-required><span>'.h($option).'</span></label>';
+    }
+    echo '</div></fieldset>';
 }
 
 /** Pilihan jalur, tampil setelah unit dan sebelum isian data awal. */
@@ -60,9 +70,11 @@ function prestasi_render_section(array $values, bool $visible): void
     echo '<small class="field-hint">Foto surat pengantar prestasi yang ditandatangani kepala sekolah, posisi berdiri dan dapat dibaca. Format JPG atau PNG, maksimal 5 MB. Bila ada isian yang keliru saat dikirim, pilih ulang fotonya.</small></div>';
 
     echo '<div class="field field-wide prestasi-categories"><p class="prestasi-categories__label">Prestasi akademik <span class="required-mark" aria-hidden="true">*</span></p>';
-    echo '<small class="field-hint">Wajib mengisi ketiga kategori berikut. Klik setiap kategori untuk membukanya, dan pilih "Tidak ada" bila ananda belum memiliki prestasi tersebut.</small>';
+    echo '<small class="field-hint">Isi ketiga kategori secara bergiliran. Jawab "Ada" atau "Tidak ada" pada setiap kategori; kategori berikutnya terbuka setelah yang sebelumnya selesai.</small>';
 
-    prestasi_category_open(PRESTASI_JENIS_AKADEMIK);
+    prestasi_category_open(1, PRESTASI_JENIS_AKADEMIK);
+    prestasi_render_question('akademik_ada', 'Apakah ananda memiliki peringkat di raport?', $value('akademik_ada'));
+    echo '<div class="prestasi-group" data-prestasi-when="akademik_ada" data-prestasi-is="Ada">';
     foreach (PRESTASI_PERINGKAT_BARIS as $name => $label) {
         echo '<fieldset class="field field-wide"><legend>'.h($label).' <span class="required-mark" aria-hidden="true">*</span></legend><div class="radio-options">';
         foreach (PRESTASI_PERINGKAT as $option) {
@@ -70,22 +82,20 @@ function prestasi_render_section(array $values, bool $visible): void
         }
         echo '</div></fieldset>';
     }
+    echo '</div>';
     prestasi_category_close();
 
-    prestasi_category_open(PRESTASI_JENIS_QURAN);
-    echo '<fieldset class="field field-wide"><legend>Jumlah hafalan ananda <span class="required-mark" aria-hidden="true">*</span></legend><div class="radio-options">';
+    prestasi_category_open(2, PRESTASI_JENIS_QURAN);
+    prestasi_render_question('hafalan_ada', "Apakah ananda memiliki hafalan Al-Qur'an minimal 1 juz?", $value('hafalan_ada'));
+    echo '<fieldset class="field field-wide" data-prestasi-when="hafalan_ada" data-prestasi-is="Ada"><legend>Jumlah hafalan ananda <span class="required-mark" aria-hidden="true">*</span></legend><div class="radio-options">';
     foreach ([...PRESTASI_JUMLAH_HAFALAN, 'Lainnya'] as $option) {
         echo '<label class="radio-option"><input type="radio" name="jumlah_hafalan" value="'.h($option).'"'.($value('jumlah_hafalan') === $option ? ' checked' : '').' data-prestasi-required><span>'.h($option).'</span></label>';
     }
     echo '</div><div class="prestasi-other" data-prestasi-when="jumlah_hafalan" data-prestasi-is="Lainnya"><label for="jumlah_hafalan_lain">Tuliskan jumlah hafalan</label><input id="jumlah_hafalan_lain" type="text" name="jumlah_hafalan_lain" maxlength="100" placeholder="Contoh: 1 Juz 4 surah" value="'.h($value('jumlah_hafalan_lain')).'" data-prestasi-required></div></fieldset>';
     prestasi_category_close();
 
-    prestasi_category_open(PRESTASI_JENIS_LOMBA);
-    echo '<fieldset class="field field-wide"><legend>Pernah memenangkan lomba? <span class="required-mark" aria-hidden="true">*</span></legend><div class="radio-options">';
-    foreach (['Ada', PRESTASI_TIDAK_ADA] as $option) {
-        echo '<label class="radio-option"><input type="radio" name="riwayat_lomba" value="'.h($option).'"'.($value('riwayat_lomba') === $option ? ' checked' : '').' data-prestasi-required><span>'.h($option).'</span></label>';
-    }
-    echo '</div></fieldset>';
+    prestasi_category_open(3, PRESTASI_JENIS_LOMBA);
+    prestasi_render_question('riwayat_lomba', 'Apakah ananda pernah memenangkan lomba?', $value('riwayat_lomba'));
     echo '<div class="field field-wide" data-prestasi-when="riwayat_lomba" data-prestasi-is="Ada"><label for="daftar_lomba">Lomba yang pernah dimenangkan <span class="required-mark" aria-hidden="true">*</span></label>';
     echo '<textarea id="daftar_lomba" name="daftar_lomba" rows="4" maxlength="2000" data-prestasi-required>'.h($value('daftar_lomba')).'</textarea>';
     echo '<small class="field-hint">Sebutkan juara, nama lomba, dan tingkatnya (gugus, kecamatan, kabupaten, provinsi, atau nasional). Contoh: Juara 1 lomba baca puisi tingkat kabupaten; Juara 3 lomba bercerita tingkat provinsi.</small></div>';
@@ -106,19 +116,31 @@ function prestasi_validate(array $input, array $files): array
     $data['jenis_prestasi'] = '';
     $data['kategori_hafalan'] = '';
     $data['riwayat_lomba'] = '';
+    $hasRank = $text('akademik_ada');
+    if (!in_array($hasRank, ['Ada', PRESTASI_TIDAK_ADA], true)) {
+        $errors[] = 'Lengkapi kategori akademik: pilih apakah ananda memiliki peringkat di raport.';
+    }
     foreach (PRESTASI_PERINGKAT_BARIS as $name => $label) {
-        $data[$name] = $text($name);
-        if (!in_array($data[$name], PRESTASI_PERINGKAT, true)) {
+        $data[$name] = $hasRank === 'Ada' ? $text($name) : 'Tidak ada peringkat';
+        if ($hasRank === 'Ada' && !in_array($data[$name], PRESTASI_PERINGKAT, true)) {
             $errors[] = 'Pilih peringkat '.$label.'.';
         }
     }
-    $amount = $text('jumlah_hafalan');
-    $data['jumlah_hafalan'] = $amount === 'Lainnya' ? $text('jumlah_hafalan_lain') : $amount;
-    $valid = $amount === 'Lainnya'
-        ? $data['jumlah_hafalan'] !== '' && mb_strlen($data['jumlah_hafalan']) <= 100
-        : in_array($amount, PRESTASI_JUMLAH_HAFALAN, true);
-    if (!$valid) {
-        $errors[] = "Lengkapi kategori Al-Qur'an: pilih atau tuliskan jumlah hafalan ananda.";
+    $hasMemorization = $text('hafalan_ada');
+    if ($hasMemorization === PRESTASI_TIDAK_ADA) {
+        $data['jumlah_hafalan'] = PRESTASI_TIDAK_ADA;
+    } elseif ($hasMemorization !== 'Ada') {
+        $data['jumlah_hafalan'] = '';
+        $errors[] = "Lengkapi kategori Al-Qur'an: pilih apakah ananda memiliki hafalan.";
+    } else {
+        $amount = $text('jumlah_hafalan');
+        $data['jumlah_hafalan'] = $amount === 'Lainnya' ? $text('jumlah_hafalan_lain') : $amount;
+        $valid = $amount === 'Lainnya'
+            ? $data['jumlah_hafalan'] !== '' && mb_strlen($data['jumlah_hafalan']) <= 100
+            : in_array($amount, PRESTASI_JUMLAH_HAFALAN, true);
+        if (!$valid) {
+            $errors[] = 'Pilih atau tuliskan jumlah hafalan ananda.';
+        }
     }
     $competition = $text('riwayat_lomba');
     $data['daftar_lomba'] = $competition === 'Ada' ? $text('daftar_lomba') : PRESTASI_TIDAK_ADA;

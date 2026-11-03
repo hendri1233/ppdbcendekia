@@ -3458,6 +3458,46 @@ body.page-daftar .radio-option:has(input:focus-visible) {
     min-width: 0;
 }
 
+.prestasi-category {
+    scroll-margin-top: 96px;
+}
+
+.prestasi-category__number {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    color: var(--green);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    background: #edf4f0;
+    border-radius: 50%;
+}
+
+.prestasi-category.is-complete .prestasi-category__number {
+    color: #fff;
+    background: var(--green);
+}
+
+.prestasi-category.is-locked summary {
+    color: #8b9791;
+    cursor: not-allowed;
+}
+
+.prestasi-category.is-locked .prestasi-category__number {
+    color: #8b9791;
+    background: #f0f2f1;
+}
+
+.prestasi-category.is-locked .prestasi-category__status {
+    color: #8b9791;
+}
+
+.prestasi-category.is-locked .required-mark {
+    display: none;
+}
+
 .prestasi-category__status {
     flex: none;
     color: #a13d32;
