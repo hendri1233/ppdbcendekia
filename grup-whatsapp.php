@@ -64,7 +64,7 @@ if ($adminUnitCode === '') {
 
 $activeAdminPage = 'groups';
 $adminPageTitle = 'Grup WhatsApp';
-$adminPageDescription = 'Kelola tautan grup WhatsApp unit yang disertakan saat peserta dinyatakan diterima.';
+$adminPageDescription = 'Kelola tautan grup WhatsApp unit yang tampil pada halaman pendaftar yang diterima.';
 require 'admin_header.php';
 ?>
 <div class="admin-content">
@@ -72,7 +72,7 @@ require 'admin_header.php';
         <div>
             <p class="eyebrow">Konfigurasi per unit</p>
             <h1>Grup WhatsApp</h1>
-            <p>Atur tautan undangan grup setiap unit. Tautan ini dikirim kepada pendaftar saat peserta dinyatakan diterima.</p>
+            <p>Atur tautan undangan grup setiap unit. Tautan ini tampil pada halaman pendaftar begitu ananda diterima.</p>
         </div>
     </header>
 

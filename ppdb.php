@@ -77,7 +77,7 @@ $faqItems = [
     ],
     [
         'q' => 'Bagaimana cara mendaftar?',
-        'a' => 'Pendaftaran berlangsung tiga tahap. Pertama, mengisi registrasi awal berisi data dasar ananda. Kedua, pendaftar melakukan pembayaran dan mengunggah bukti transfer. Ketiga, pendaftar mengisi formulir lengkap dan mengunggah dokumen pendukung. Seluruhnya dilakukan langsung di situs ini.',
+        'a' => 'Pendaftaran berlangsung tiga tahap. Pertama, mengisi registrasi awal berisi data dasar ananda. Kedua, pendaftar melakukan pembayaran dan mengunggah bukti transfer. Ketiga, pendaftar mengisi formulir lengkap dan mengunggah dokumen pendukung. Setelah formulir terkirim, ananda langsung diterima selama kursi tersedia. Seluruhnya dilakukan di situs ini.',
     ],
     [
         'q' => 'Dokumen apa saja yang harus disiapkan?',
@@ -260,7 +260,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                     <span class="step__number">3</span>
                     <h3>Formulir lengkap</h3>
                     <p>Lanjut pada halaman yang sama: isi data identitas, alamat, dan keluarga, baca materi SPMB unit tujuan, lalu unggah dokumen pendukung.</p>
-                    <p class="step__meta">Sediakan waktu sekitar 1 jam</p>
+                    <p class="step__meta">Setelah terkirim, hasil langsung tampil</p>
                 </li>
             </ol>
         </div>

@@ -2,7 +2,6 @@
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
-require_once 'wablas.php';
 require_once 'formulir_helpers.php';
 require_once 'prestasi_helpers.php';
 require_admin();
@@ -136,8 +135,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($paymentUpdate);
 
                 if ($action === 'reject_payment') {
-                    // Pendaftar yang sudah mengirim formulir tetap di tahapnya, cukup unggah ulang bukti.
-                    $newPpdbStatus = $locked['status_ppdb'] === 'pembayaran_diperiksa' ? 'menunggu_pembayaran' : $locked['status_ppdb'];
+                    // Penerimaan otomatis ditahan sampai bukti baru diunggah; isian formulir tetap tersimpan.
+                    $newPpdbStatus = [
+                        'pembayaran_diperiksa' => 'menunggu_pembayaran',
+                        'diterima' => 'formulir_terisi',
+                        'daftar_tunggu' => 'formulir_terisi',
+                    ][$locked['status_ppdb']] ?? $locked['status_ppdb'];
                     $newPaymentStatus = 'ditolak';
                 } else {
                     $availability = ppdb_seat_availability($conn, $locked);
@@ -224,7 +227,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($lock);
                 // Peserta daftar tunggu dapat diterima saat kursi tersedia, atau ditolak.
                 $fromWaitlist = $locked && $locked['status_ppdb'] === 'daftar_tunggu' && $action !== 'waitlist_final';
-                if (!$locked || ($locked['status_ppdb'] !== 'formulir_terisi' && !$fromWaitlist)) {
+                $cancelAcceptance = $locked && $locked['status_ppdb'] === 'diterima' && $action === 'reject_formulir';
+                if (!$locked || ($locked['status_ppdb'] !== 'formulir_terisi' && !$fromWaitlist && !$cancelAcceptance)) {
                     throw new RuntimeException('Formulir lengkap belum masuk antrean pemeriksaan.');
                 }
                 if ($action !== 'reject_formulir' && $locked['status_pembayaran'] !== 'terverifikasi') {
@@ -261,52 +265,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ][$action];
 
                 if ($action === 'accept_final') {
-                    if (!ppdb_wablas_enabled()) {
-                        $whatsappDeliveryNotice = 'Status penerimaan tersimpan dan sudah tampil pada halaman pendaftaran pendaftar. Ucapan WhatsApp otomatis belum dikirim karena integrasi Wablas belum dikonfigurasi.';
-                        $whatsappDeliveryTone = 'warning';
-                    } else {
-                        $recipientPhone = ppdb_normalize_whatsapp_number((string) $locked['no_hp_pendaftar']);
-                        if ($recipientPhone === '') {
-                            $whatsappDeliveryNotice = 'Peserta sudah diterima, tetapi nomor WhatsApp pendaftar tidak valid sehingga pesan belum dapat dikirim.';
-                            $whatsappDeliveryTone = 'warning';
-                        } else {
-                            $messageLines = [
-                                'Assalamu’alaikum warahmatullahi wabarakatuh.',
-                                '',
-                                'Alhamdulillah, ananda *'.$locked['nm_peserta'].'* telah dinyatakan *DITERIMA* di *'.$locked['nama_unit'].'*.',
-                                'Terima kasih telah mempercayakan pendidikan ananda kepada kami.',
-                                'Tetap semangat belajar dan bertumbuh. Semoga ananda meraih prestasi dan menjadi kebanggaan keluarga.',
-                            ];
-                            $groupLink = trim((string) ($locked['link_grup'] ?? ''));
-                            if ($groupLink !== '') {
-                                $messageLines[] = '';
-                                $messageLines[] = 'Silakan bergabung dengan grup WhatsApp '.$locked['nama_unit'].' melalui tautan berikut:';
-                                $messageLines[] = $groupLink;
-                            } else {
-                                $messageLines[] = '';
-                                $messageLines[] = 'Informasi grup WhatsApp akan disampaikan oleh panitia.';
-                            }
-                            $messageLines[] = '';
-                            $messageLines[] = ppdb_admin_contact_message();
-
-                            try {
-                                $delivery = ppdb_wablas_send($recipientPhone, implode("\n", $messageLines));
-                                if ($delivery['ok']) {
-                                    $whatsappDeliveryNotice = 'Ucapan penerimaan berhasil dikirim otomatis melalui WhatsApp pendaftar.';
-                                } else {
-                                    $whatsappDeliveryNotice = 'Peserta sudah diterima, tetapi ucapan WhatsApp belum terkirim: '.$delivery['error'];
-                                    $whatsappDeliveryTone = 'warning';
-                                }
-                            } catch (Throwable $exception) {
-                                error_log('SPMB acceptance WhatsApp notification failed: '.$exception->getMessage());
-                                $whatsappDeliveryNotice = 'Peserta sudah diterima, tetapi ucapan WhatsApp belum terkirim. Periksa konfigurasi Wablas dan coba hubungi pendaftar secara manual.';
-                                $whatsappDeliveryTone = 'warning';
-                            }
-                        }
-                    }
                     if (trim((string) ($locked['link_grup'] ?? '')) === '') {
-                        $groupReminder = 'Tautan grup WhatsApp unit belum diatur pada menu Grup WhatsApp.';
-                        $whatsappDeliveryNotice = trim($whatsappDeliveryNotice.' '.$groupReminder);
+                        $whatsappDeliveryNotice = 'Tautan grup WhatsApp unit belum diatur pada menu Grup WhatsApp.';
                         $whatsappDeliveryTone = 'warning';
                     }
                 }
@@ -561,7 +521,17 @@ require 'admin_header.php';
             <p class="workflow-hint">Menunggu bukti transfer dari pendaftar. Nomor <?php echo h($registrationId); ?> menjadi berita transfer.</p>
             <?php ppdb_detail_reject_form($registrationId); ?>
         <?php } elseif ($participant['status_ppdb'] === 'diterima') { ?>
-            <p class="workflow-hint">Peserta telah diterima pada unit ini sesuai urutan dan kuota. Hasil dan tautan grup WhatsApp unit tampil pada halaman pendaftaran pendaftar.</p>
+            <p class="workflow-hint">Peserta diterima otomatis setelah menyelesaikan pendaftaran. Hasil, tautan grup WhatsApp unit, dan surat keterangan diterima tampil pada halaman pendaftar. Bila bukti transfer ditolak, penerimaan ditahan sampai pendaftar mengunggah bukti baru.</p>
+            <div class="workflow-actions">
+                <form method="post" class="stacked-action" data-confirm="Batalkan penerimaan peserta ini?">
+                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                    <input type="hidden" name="workflow_action" value="reject_formulir">
+                    <label for="cancel-acceptance-note">Alasan pembatalan</label>
+                    <input id="cancel-acceptance-note" name="catatan_admin" maxlength="500" required>
+                    <button class="button-danger" type="submit">Batalkan penerimaan</button>
+                </form>
+            </div>
         <?php } elseif ($participant['status_ppdb'] === 'daftar_tunggu') { ?>
             <p class="workflow-hint">
                 Peserta berada pada daftar tunggu jalur <?php echo h($participant['jalur_pendaftaran']); ?>, urutan ke-<?php echo $waitlist['position']; ?> dari <?php echo $waitlist['total']; ?>.

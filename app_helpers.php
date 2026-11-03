@@ -535,14 +535,14 @@ function ppdb_status_catalog(): array
             'short' => 'Diterima',
             'step' => 5,
             'tone' => 'ok',
-            'public' => 'Selamat, pendaftaran Anda telah diterima.',
+            'public' => 'Selamat, ananda telah diterima.',
         ],
         'daftar_tunggu' => [
             'label' => 'Daftar tunggu kuota',
             'short' => 'Daftar tunggu',
             'step' => 5,
             'tone' => 'warn',
-            'public' => 'Anda berada pada daftar tunggu. Panitia akan menghubungi bila tersedia kursi.',
+            'public' => 'Formulir Anda sudah lengkap, tetapi kursi pada jalur ini sedang penuh. Ananda masuk daftar tunggu dan hasilnya akan tampil di halaman ini bila kursi tersedia.',
         ],
         'ditolak' => [
             'label' => 'Perlu tindak lanjut panitia',
@@ -758,33 +758,70 @@ function ppdb_registrant_recipients(array $registration): array
     return $recipients;
 }
 
-/**
- * Pesan pengingat singkat sesuai tahap yang sedang berjalan. Tidak membuat
- * token baru maupun mengubah status; tautan resmi tetap dikirim dari detail peserta.
- */
-function ppdb_status_reminder_message(array $registration): string
+/** Nomor surat keterangan diterima, misalnya 00046/SPMB-KB/YWCT/XI/2026. */
+function ppdb_acceptance_number(array $registration): string
 {
-    $student = (string) ($registration['nm_peserta'] ?? '');
-    $code = (string) ($registration['id_pendaftaran'] ?? '');
-    $bodies = [
-        'menunggu_kontak' => 'Registrasi awal ananda '.$student.' sudah kami terima. Mohon lanjutkan pendaftaran melalui halaman Lanjutkan pendaftaran di situs SPMB.',
-        'menunggu_pembayaran' => 'Kami mengingatkan bahwa pembayaran pendaftaran ananda '.$student.' belum kami terima. Mohon unggah bukti pembayaran melalui halaman Lanjutkan pendaftaran di situs SPMB.',
-        'pembayaran_diperiksa' => 'Bukti pembayaran ananda '.$student.' sudah kami terima. Mohon lanjutkan pengisian formulir melalui halaman Lanjutkan pendaftaran di situs SPMB.',
-        'pembayaran_terverifikasi' => 'Pembayaran pendaftaran ananda '.$student.' sudah kami verifikasi. Langkah berikutnya adalah melengkapi formulir pendaftaran.',
-        'menunggu_formulir' => 'Kami mengingatkan bahwa formulir pendaftaran ananda '.$student.' belum dilengkapi. Mohon isi formulir melalui halaman Lanjutkan pendaftaran di situs SPMB.',
-        'formulir_terisi' => 'Formulir pendaftaran ananda '.$student.' sudah kami terima dan sedang diverifikasi panitia.',
-        'daftar_tunggu' => 'Pendaftaran ananda '.$student.' saat ini berada dalam daftar tunggu kuota. Panitia akan mengabarkan perkembangan selanjutnya.',
-        'ditolak' => 'Pendaftaran ananda '.$student.' memerlukan tindak lanjut. Mohon hubungi panitia SPMB untuk informasi lebih lanjut.',
-    ];
-    $body = $bodies[$registration['status_ppdb'] ?? ''] ?? 'Kami ingin menyampaikan informasi terkait pendaftaran ananda '.$student.'.';
+    $issuedAt = strtotime((string) ($registration['data_diperiksa_pada'] ?? '')) ?: time();
+    $months = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    return substr((string) $registration['id_pendaftaran'], -5).'/SPMB-'.($registration['jenjang'] ?? 'UNIT').'/YWCT/'.$months[(int) date('n', $issuedAt) - 1].'/'.date('Y', $issuedAt);
+}
 
-    return implode("\n", [
-        'Assalamualaikum Ayah/Bunda pendaftar SPMB Cendekia Takengon.',
-        $body,
-        'Kode pendaftaran: '.$code,
-        ppdb_admin_contact_message(),
-        'Terima kasih.',
-    ]);
+/** Tanda keaslian tautan verifikasi; kuncinya hash token yang tidak pernah tampil ke publik. */
+function ppdb_acceptance_signature(array $registration): string
+{
+    return substr(hash_hmac('sha256', 'surat-diterima|'.$registration['id_pendaftaran'], (string) ($registration['token_bukti'] ?? '')), 0, 20);
+}
+
+/** Tata tertib pada surat keterangan diterima, dibedakan untuk usia dini dan sekolah. */
+function ppdb_acceptance_rules(?string $jenjang): array
+{
+    if (in_array($jenjang, ['KB', 'TPA', 'TK'], true)) {
+        return [
+            'Orang tua/wali mengantar dan menjemput ananda tepat waktu sesuai jadwal kegiatan.',
+            'Ananda mengenakan seragam atau pakaian yang rapi, bersih, dan menutup aurat sesuai ketentuan sekolah.',
+            'Orang tua/wali membiasakan adab dan akhlak islami serta bekerja sama dengan pendidik dalam pembinaan ananda.',
+            'Orang tua/wali memberi tahu sekolah apabila ananda sakit atau berhalangan hadir, dan tidak mengantar ananda dalam keadaan sakit menular.',
+            'Ananda tidak membawa benda berbahaya atau barang berharga ke sekolah.',
+            'Orang tua/wali menjaga kebersihan dan fasilitas sekolah, serta menyelesaikan kewajiban administrasi sesuai rincian biaya yang berlaku.',
+        ];
+    }
+    return [
+        'Peserta didik hadir tepat waktu dan mengikuti seluruh kegiatan sesuai kalender pendidikan sekolah.',
+        'Peserta didik mengenakan seragam lengkap, rapi, dan menutup aurat sesuai ketentuan sekolah.',
+        'Peserta didik menjunjung tinggi adab dan akhlak islami serta menghormati pendidik, tenaga kependidikan, dan sesama peserta didik.',
+        'Peserta didik dilarang melakukan perundungan, perkelahian, atau kekerasan dalam bentuk apa pun.',
+        'Peserta didik dilarang membawa atau menggunakan rokok, narkoba, senjata tajam, dan benda terlarang lainnya.',
+        'Peserta didik menjaga kebersihan dan fasilitas sekolah, serta orang tua/wali menyelesaikan kewajiban administrasi sesuai rincian biaya yang berlaku.',
+    ];
+}
+
+/**
+ * Pendaftar yang sudah mengirim formulir dan bukti transfer langsung diterima selama
+ * kursi jalurnya tersedia; bila kursi habis, masuk daftar tunggu. Dipanggil di dalam transaksi.
+ */
+function ppdb_finalize_registration(mysqli $conn, string $registrationId): void
+{
+    $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.status_pembayaran,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,c.kuota_internal,c.kuota_eksternal FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE');
+    mysqli_stmt_bind_param($lock, 's', $registrationId);
+    mysqli_stmt_execute($lock);
+    $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
+    mysqli_stmt_close($lock);
+    if (!$locked || $locked['status_ppdb'] !== 'formulir_terisi' || !in_array($locked['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true)) {
+        return;
+    }
+
+    $acceptedQuery = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND status_ppdb='diterima'");
+    mysqli_stmt_bind_param($acceptedQuery, 'sss', $locked['kode_unit'], $locked['th_ajaran'], $locked['jalur_pendaftaran']);
+    mysqli_stmt_execute($acceptedQuery);
+    $accepted = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($acceptedQuery))['total'];
+    mysqli_stmt_close($acceptedQuery);
+
+    $quota = (int) ($locked['jalur_pendaftaran'] === 'internal' ? $locked['kuota_internal'] : $locked['kuota_eksternal']);
+    $newStatus = $accepted < $quota ? 'diterima' : 'daftar_tunggu';
+    $update = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET status_ppdb=?,data_diperiksa_oleh=NULL,data_diperiksa_pada=NOW() WHERE id_pendaftaran=?');
+    mysqli_stmt_bind_param($update, 'ss', $newStatus, $registrationId);
+    mysqli_stmt_execute($update);
+    mysqli_stmt_close($update);
 }
 
 /**

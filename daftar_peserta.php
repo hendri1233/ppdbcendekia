@@ -7,7 +7,6 @@ require_once __DIR__ . '/admin-partials.php';
 
 $waNotice = $_SESSION['wa_notice'] ?? null;
 unset($_SESSION['wa_notice']);
-$useWablas = ppdb_wablas_enabled();
 
 $search = trim($_GET['q'] ?? '');
 $selectedYear = trim($_GET['year'] ?? '');
@@ -52,7 +51,10 @@ if ($selectedUnit !== '') {
     $conditions[] = 'p.kode_unit = ?';
     $parameters[] = $selectedUnit;
 }
-if ($selectedStatus !== '') {
+if ($selectedStatus === 'pembayaran_diperiksa') {
+    // Bukti tetap perlu diperiksa walau pendaftar sudah otomatis diterima.
+    $conditions[] = "p.status_pembayaran = 'menunggu_verifikasi'";
+} elseif ($selectedStatus !== '') {
     $conditions[] = 'p.status_ppdb = ?';
     $parameters[] = $selectedStatus;
 }
@@ -243,9 +245,7 @@ require 'admin_header.php';
                         $progressStep = $isRejected ? ppdb_rejected_completed_steps($row) + 1 : (int) $statusInfo['step'];
                         $isArchived = $progressStep === 0;
                         $isAccepted = $row['status_ppdb'] === 'diterima';
-                        $waNumber = (string) array_key_first(ppdb_registrant_recipients($row));
-                        $canNotify = !$isArchived && !$isAccepted && $waNumber !== '';
-                        $waLink = $canNotify && !$useWablas ? ppdb_whatsapp_link($waNumber, ppdb_status_reminder_message($row)) : ''; ?>
+                        ?>
                         <tr data-row-id="<?php echo h($row['id_pendaftaran']); ?>">
                             <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
@@ -257,7 +257,7 @@ require 'admin_header.php';
                             <td data-label="Unit"><?php echo h(ppdb_unit_display_name($row['nama_unit'] ?? 'Data lama')); ?><?php if (!empty($row['tingkat_kelas'])) { ?> <span class="unit-level">· <?php echo h($row['tingkat_kelas']); ?></span><?php } ?></td>
                             <td data-label="Jalur"><?php echo $row['jalur_pendaftaran'] === 'internal' ? 'Internal · SDM' : 'Eksternal · umum'; ?></td>
                             <td data-label="Tahun"><?php echo h($row['th_ajaran']); ?></td>
-                            <td data-label="Status"><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span><?php if ($row['status_ppdb'] === 'formulir_terisi' && $row['status_pembayaran'] !== 'terverifikasi') { ?><small class="cell-sub">Pembayaran belum disetujui</small><?php } ?></td>
+                            <td data-label="Status"><span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span><?php if ($row['status_pembayaran'] === 'menunggu_verifikasi') { ?><small class="cell-sub">Bukti transfer belum diperiksa</small><?php } elseif ($row['status_pembayaran'] === 'ditolak' && $row['status_ppdb'] === 'formulir_terisi') { ?><small class="cell-sub">Menunggu bukti transfer baru</small><?php } ?></td>
                             <td data-label="Tanggal"><?php echo h(date('d-m-Y', strtotime($row['tgl_daftar']))); ?></td>
                             <td data-label="Aksi">
                                 <div class="table-actions">
@@ -293,18 +293,6 @@ require 'admin_header.php';
                                     <?php } elseif ($isCurrent) { ?>
                                         <div class="stage-current">
                                             <span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span>
-                                            <?php if ($canNotify && $useWablas) { ?>
-                                                <form action="kirim-notifikasi-wa.php" method="post" data-wa-send>
-                                                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                                                    <input type="hidden" name="id" value="<?php echo h($row['id_pendaftaran']); ?>">
-                                                    <input type="hidden" name="return" value="<?php echo h(with_query([])); ?>">
-                                                    <button class="table-action stage-wa" type="submit" title="Kirim otomatis lewat Wablas ke <?php echo h(ppdb_display_phone($waNumber)); ?>">Notifikasi WA</button>
-                                                </form>
-                                            <?php } elseif ($canNotify) { ?>
-                                                <a class="table-action stage-wa" href="<?php echo h($waLink); ?>" target="_blank" rel="noopener" title="Kirim notifikasi WhatsApp ke <?php echo h(ppdb_display_phone($waNumber)); ?>">Notifikasi WA</a>
-                                            <?php } else { ?>
-                                                <small class="cell-sub">No. WA tidak valid</small>
-                                            <?php } ?>
                                         </div>
                                     <?php } else { ?>
                                         <span class="stage-state <?php echo $isRejected ? 'is-stopped' : 'is-upcoming'; ?>"><?php echo $isRejected ? 'Terhenti' : 'Belum'; ?></span>

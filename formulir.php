@@ -499,6 +499,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             mysqli_stmt_bind_param($statusUpdate, 'ssssssss', $dataStatus, $nisn, $sourceSchool, $birthPlace, $religion, $fullAddress, $informationSource, $registration['id_pendaftaran']);
             mysqli_stmt_execute($statusUpdate);
             mysqli_stmt_close($statusUpdate);
+            ppdb_finalize_registration($conn, $registration['id_pendaftaran']);
 
             $isRevision = $oldValues !== [];
             if ($isRevision) {
@@ -902,7 +903,7 @@ header('Referrer-Policy: no-referrer');
                                 <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
                                 <span>Saya memastikan seluruh data di atas benar dan dapat dipertanggungjawabkan.</span>
                             </label>
-                            <p>NIPD dan tanggal masuk sekolah ditetapkan operator setelah peserta diterima. Data bertanda opsional boleh dikosongkan.</p>
+                            <p>Setelah formulir terkirim, hasil pendaftaran dan surat keterangan diterima langsung tampil. NIPD dan tanggal masuk sekolah ditetapkan operator setelah peserta diterima. Data bertanda opsional boleh dikosongkan.</p>
                             <button type="submit" name="submit" value="1" class="submit-button" data-final-submit>Kirim formulir lengkap</button>
                         </div>
                         <?php formulir_step_actions($stepIndex, count($steps)); ?>

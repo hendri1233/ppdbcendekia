@@ -30,6 +30,7 @@ $currentStep = $statusInfo['step'] ?? 0;
 if ($registration && $registration['status_ppdb'] === 'pembayaran_diperiksa') {
     $currentStep = 3;
 }
+$isAccepted = $registration && $registration['status_ppdb'] === 'diterima';
 $rejectedCompletedSteps = $registration && $registration['status_ppdb'] === 'ditolak' ? ppdb_rejected_completed_steps($registration) : null;
 $paymentDeadlinePassed = $registration && $registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d');
 $hasPaymentAccount = $registration
@@ -110,7 +111,42 @@ header('Referrer-Policy: no-referrer');
             <div class="payment-error" role="alert"><?php echo h($uploadError); ?></div>
         <?php } ?>
 
-        <section class="result-panel status-panel">
+        <section class="result-panel status-panel<?php echo $isAccepted ? ' is-accepted' : ''; ?>">
+            <?php if ($isAccepted) { ?>
+                <header class="acceptance-hero">
+                    <span class="acceptance-seal" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg></span>
+                    <p class="acceptance-eyebrow">Hasil pendaftaran · Tahun ajaran <?php echo h($registration['th_ajaran']); ?></p>
+                    <h1>Selamat, ananda diterima</h1>
+                    <p class="acceptance-name"><?php echo h($registration['nm_peserta']); ?></p>
+                    <p class="acceptance-unit"><?php echo h($registration['nama_unit']); ?></p>
+                    <p class="acceptance-code">Kode pendaftaran <strong><?php echo h($registration['id_pendaftaran']); ?></strong></p>
+                </header>
+
+                <div class="acceptance-actions">
+                    <?php if (!empty($registration['link_grup'])) { ?>
+                        <a class="acceptance-button acceptance-button--group group-join-button" href="<?php echo h($registration['link_grup']); ?>" target="_blank" rel="noopener noreferrer">
+                            <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm5.92 15.5c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
+                            <span>Gabung grup WhatsApp <?php echo h($registration['nama_unit']); ?></span>
+                        </a>
+                    <?php } else { ?>
+                        <p class="acceptance-note">Tautan grup WhatsApp <?php echo h($registration['nama_unit']); ?> sedang disiapkan panitia dan akan tampil di halaman ini.</p>
+                    <?php } ?>
+                    <a class="acceptance-button acceptance-button--pdf" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 16 6.5 10.5l1.4-1.4 3.1 3.1V3h2v9.2l3.1-3.1 1.4 1.4L12 16Zm-7 3h14v2H5v-2Z"/></svg>
+                        <span>Unduh surat keterangan diterima (PDF)</span>
+                    </a>
+                </div>
+                <?php if ($registration['status_pembayaran'] === 'menunggu_verifikasi') { ?>
+                    <p class="acceptance-note">Bukti transfer Anda masih diperiksa panitia. Penerimaan ditinjau kembali bila bukti tersebut tidak sah.</p>
+                <?php } ?>
+
+                <h2 class="acceptance-heading">Langkah berikutnya</h2>
+                <ol class="next-steps" aria-label="Langkah berikutnya">
+                    <li><span aria-hidden="true">1</span><div><strong>Gabung grup WhatsApp unit</strong><small>Informasi lanjutan dari sekolah disampaikan melalui grup.</small></div></li>
+                    <li><span aria-hidden="true">2</span><div><strong>Simpan surat keterangan diterima</strong><small>Unduh PDF, baca ketentuan dan tata tertibnya, lalu simpan sebagai bukti ananda telah diterima.</small></div></li>
+                </ol>
+                <h2 class="acceptance-heading">Data peserta didik</h2>
+            <?php } else { ?>
             <div class="status-head">
                 <div>
                     <p class="result-eyebrow">Status pendaftaran</p>
@@ -141,6 +177,7 @@ header('Referrer-Policy: no-referrer');
                     </li>
                 <?php } ?>
             </ol>
+            <?php } ?>
 
             <dl class="summary-list">
                 <div><dt>Nama ananda</dt><dd><?php echo h($registration['nm_peserta']); ?></dd></div>
@@ -162,8 +199,6 @@ header('Referrer-Policy: no-referrer');
                 $panel = 'formulir';
             } elseif ($registration['status_ppdb'] === 'formulir_terisi') {
                 $panel = 'cek-formulir';
-            } elseif ($registration['status_ppdb'] === 'diterima') {
-                $panel = 'diterima';
             } elseif ($rejectedCompletedSteps !== null) {
                 $panel = 'ditolak';
             }
@@ -262,18 +297,9 @@ header('Referrer-Policy: no-referrer');
                     <strong>Perlu tindak lanjut panitia.</strong>
                     Pendaftaran terhenti pada tahap <?php echo h($journeySteps[$rejectedCompletedSteps]['title']); ?>. Silakan hubungi panitia SPMB untuk informasi lebih lanjut.
                 </div>
-            <?php } elseif ($panel === 'diterima') { ?>
-                <div class="payment-success" role="status">
-                    <strong>Alhamdulillah, ananda <?php echo h($registration['nm_peserta']); ?> diterima di <?php echo h($registration['nama_unit']); ?>.</strong>
-                </div>
-                <?php if (!empty($registration['link_grup'])) { ?>
-                    <a class="download-button group-join-button" href="<?php echo h($registration['link_grup']); ?>" target="_blank" rel="noopener noreferrer">Gabung grup WhatsApp <?php echo h($registration['nama_unit']); ?></a>
-                <?php } else { ?>
-                    <div class="payment-guidance"><span>Informasi grup WhatsApp <?php echo h($registration['nama_unit']); ?> akan disampaikan oleh panitia.</span></div>
-                <?php } ?>
             <?php } ?>
 
-            <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh ringkasan PDF</a>
+            <?php if (!$isAccepted) { ?><a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh ringkasan PDF</a><?php } ?>
             <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain. Untuk kembali lagi, buka <a href="lanjutkan-pendaftaran.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>">Lanjutkan pendaftaran</a>.</p>
             <div class="admin-contact">
                 <span>Perlu bantuan? Hubungi admin SPMB.</span>

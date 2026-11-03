@@ -81,7 +81,7 @@ header('Referrer-Policy: no-referrer');
             <ol class="next-steps" aria-label="Langkah berikutnya">
                 <li><span aria-hidden="true">1</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
                 <li><span aria-hidden="true">2</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.</small></div></li>
-                <li><span aria-hidden="true">3</span><div><strong>Lihat hasil pendaftaran</strong><small>Hasil dan tautan grup WhatsApp unit tampil di situs ini.</small></div></li>
+                <li><span aria-hidden="true">3</span><div><strong>Langsung diterima</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan diterima langsung tampil.</small></div></li>
             </ol>
 
             <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>

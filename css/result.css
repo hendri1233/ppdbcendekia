@@ -983,3 +983,124 @@ body {
 .journey-step.is-stopped strong {
     color: #b42318;
 }
+
+.acceptance-hero {
+    margin: -6px 0 22px;
+    padding: 30px 24px 26px;
+    color: #fff;
+    text-align: center;
+    background: linear-gradient(160deg, var(--result-dark), var(--result-green));
+    border-radius: 12px;
+}
+
+.acceptance-seal {
+    display: inline-grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 14px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.16);
+}
+
+.acceptance-seal svg {
+    width: 34px;
+    height: 34px;
+    fill: var(--result-green);
+}
+
+.acceptance-eyebrow {
+    margin: 0 0 8px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+}
+
+.acceptance-hero h1 {
+    margin: 0 0 16px;
+    color: #fff;
+    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    line-height: 1.2;
+}
+
+.acceptance-name {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.acceptance-unit {
+    margin: 3px 0 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.acceptance-code {
+    display: inline-block;
+    margin: 16px 0 0;
+    padding: 6px 14px;
+    font-size: var(--fs-xs);
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+}
+
+.acceptance-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.acceptance-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 50px;
+    padding: 12px 18px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 9px;
+}
+
+.acceptance-button svg {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.acceptance-button--group {
+    color: #fff;
+    background: #15803d;
+}
+
+.acceptance-button--group:hover {
+    background: #116a32;
+}
+
+.acceptance-button--pdf {
+    color: var(--result-green);
+    background: #fff;
+    border: 1.5px solid var(--result-green);
+}
+
+.acceptance-button--pdf:hover {
+    background: #eef5f1;
+}
+
+.acceptance-note {
+    margin: 12px 0 0;
+    padding: 11px 14px;
+    color: var(--result-muted);
+    font-size: var(--fs-xs);
+    line-height: 1.55;
+    background: #f5f7f6;
+    border: 1px solid var(--result-line);
+    border-radius: 8px;
+}
+
+.acceptance-heading {
+    margin: 26px 0 10px;
+    font-size: 1rem;
+}

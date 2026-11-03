@@ -80,6 +80,7 @@ try {
     mysqli_stmt_bind_param($update, 's', $registrationId);
     mysqli_stmt_execute($update);
     mysqli_stmt_close($update);
+    ppdb_finalize_registration($conn, $registrationId);
     enqueue_google_sheets_registration($conn, $registrationId);
     mysqli_commit($conn);
 } catch (Throwable $exception) {
