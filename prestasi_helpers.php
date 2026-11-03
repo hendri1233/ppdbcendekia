@@ -60,6 +60,7 @@ function prestasi_render_section(array $values, bool $visible): void
     prestasi_render_radios('jenis_prestasi', PRESTASI_JENIS, $value('jenis_prestasi'));
     echo '</fieldset>';
 
+    echo '<div class="prestasi-group" data-prestasi-when="jenis_prestasi" data-prestasi-is="'.h(PRESTASI_JENIS[0]).'">';
     foreach (PRESTASI_PERINGKAT_BARIS as $name => $label) {
         echo '<fieldset class="field field-wide"><legend>'.h($label).' <span class="required-mark" aria-hidden="true">*</span></legend><div class="radio-options">';
         foreach (PRESTASI_PERINGKAT as $option) {
@@ -67,7 +68,9 @@ function prestasi_render_section(array $values, bool $visible): void
         }
         echo '</div></fieldset>';
     }
+    echo '</div>';
 
+    echo '<div class="prestasi-group" data-prestasi-when="jenis_prestasi" data-prestasi-is="'.h(PRESTASI_JENIS[1]).'">';
     echo '<fieldset class="field field-wide"><legend>Prestasi hafalan Al-Qur\'an minimal 1 juz <span class="required-mark" aria-hidden="true">*</span></legend>';
     prestasi_render_radios('kategori_hafalan', PRESTASI_KATEGORI, $value('kategori_hafalan'));
     echo '</fieldset>';
@@ -86,6 +89,7 @@ function prestasi_render_section(array $values, bool $visible): void
     echo '<textarea id="daftar_lomba" name="daftar_lomba" rows="4" maxlength="2000" data-prestasi-required>'.h($value('daftar_lomba')).'</textarea>';
     echo '<small class="field-hint">Sebutkan juara, nama lomba, dan tingkatnya. Contoh: Juara 1 lomba baca puisi tingkat kabupaten; Juara 3 lomba bercerita tingkat provinsi.</small></div>';
     echo '</div>';
+    echo '</div>';
 }
 
 /** Periksa isian jalur prestasi; mengembalikan [data untuk disimpan, daftar galat]. */
@@ -101,36 +105,44 @@ function prestasi_validate(array $input, array $files): array
     if (!in_array($data['jenis_prestasi'], PRESTASI_JENIS, true)) {
         $errors[] = 'Pilih prestasi peringkat di kelas.';
     }
-    foreach (PRESTASI_PERINGKAT_BARIS as $name => $label) {
-        $data[$name] = $text($name);
-        if (!in_array($data[$name], PRESTASI_PERINGKAT, true)) {
-            $errors[] = 'Pilih peringkat '.$label.'.';
-        }
+    foreach (array_keys(PRESTASI_PERINGKAT_BARIS) as $name) {
+        $data[$name] = '';
     }
-    $data['kategori_hafalan'] = $text('kategori_hafalan');
-    if (!in_array($data['kategori_hafalan'], PRESTASI_KATEGORI, true)) {
-        $errors[] = "Pilih prestasi hafalan Al-Qur'an atau akademik/nonakademik.";
-    }
+    $data['kategori_hafalan'] = '';
     $data['jumlah_hafalan'] = '';
-    if ($data['kategori_hafalan'] === PRESTASI_KATEGORI_HAFALAN) {
-        $amount = $text('jumlah_hafalan');
-        $data['jumlah_hafalan'] = $amount === 'Lainnya' ? $text('jumlah_hafalan_lain') : $amount;
-        $valid = $amount === 'Lainnya'
-            ? $data['jumlah_hafalan'] !== '' && mb_strlen($data['jumlah_hafalan']) <= 100
-            : in_array($amount, PRESTASI_JUMLAH_HAFALAN, true);
-        if (!$valid) {
-            $errors[] = 'Pilih atau tuliskan jumlah hafalan ananda.';
-        }
-    }
-    $data['riwayat_lomba'] = $text('riwayat_lomba');
-    if (!in_array($data['riwayat_lomba'], PRESTASI_LOMBA, true)) {
-        $errors[] = 'Pilih riwayat lomba ananda.';
-    }
+    $data['riwayat_lomba'] = '';
     $data['daftar_lomba'] = '';
-    if ($data['riwayat_lomba'] === PRESTASI_LOMBA_PERNAH) {
-        $data['daftar_lomba'] = $text('daftar_lomba');
-        if ($data['daftar_lomba'] === '' || mb_strlen($data['daftar_lomba']) > 2000) {
-            $errors[] = 'Tuliskan lomba yang pernah dimenangkan ananda (maksimal 2000 karakter).';
+    if ($data['jenis_prestasi'] === PRESTASI_JENIS[0]) {
+        foreach (PRESTASI_PERINGKAT_BARIS as $name => $label) {
+            $data[$name] = $text($name);
+            if (!in_array($data[$name], PRESTASI_PERINGKAT, true)) {
+                $errors[] = 'Pilih peringkat '.$label.'.';
+            }
+        }
+    } elseif ($data['jenis_prestasi'] === PRESTASI_JENIS[1]) {
+        $data['kategori_hafalan'] = $text('kategori_hafalan');
+        if (!in_array($data['kategori_hafalan'], PRESTASI_KATEGORI, true)) {
+            $errors[] = "Pilih prestasi hafalan Al-Qur'an atau akademik/nonakademik.";
+        }
+        if ($data['kategori_hafalan'] === PRESTASI_KATEGORI_HAFALAN) {
+            $amount = $text('jumlah_hafalan');
+            $data['jumlah_hafalan'] = $amount === 'Lainnya' ? $text('jumlah_hafalan_lain') : $amount;
+            $valid = $amount === 'Lainnya'
+                ? $data['jumlah_hafalan'] !== '' && mb_strlen($data['jumlah_hafalan']) <= 100
+                : in_array($amount, PRESTASI_JUMLAH_HAFALAN, true);
+            if (!$valid) {
+                $errors[] = 'Pilih atau tuliskan jumlah hafalan ananda.';
+            }
+        }
+        $data['riwayat_lomba'] = $text('riwayat_lomba');
+        if (!in_array($data['riwayat_lomba'], PRESTASI_LOMBA, true)) {
+            $errors[] = 'Pilih riwayat lomba ananda.';
+        }
+        if ($data['riwayat_lomba'] === PRESTASI_LOMBA_PERNAH) {
+            $data['daftar_lomba'] = $text('daftar_lomba');
+            if ($data['daftar_lomba'] === '' || mb_strlen($data['daftar_lomba']) > 2000) {
+                $errors[] = 'Tuliskan lomba yang pernah dimenangkan ananda (maksimal 2000 karakter).';
+            }
         }
     }
     return [$data, $errors];

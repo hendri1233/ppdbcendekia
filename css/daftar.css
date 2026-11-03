@@ -3389,3 +3389,8 @@ body.page-daftar .radio-option:has(input:focus-visible) {
     color: #fff;
     background: var(--green);
 }
+
+.prestasi-group {
+    display: grid;
+    gap: 22px;
+}
