@@ -622,11 +622,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                             $selectedJalur = is_string($formValues['jalur_seleksi'] ?? null) ? $formValues['jalur_seleksi'] : '';
                             if (prestasi_is_ready($conn)) { prestasi_render_jalur_field($selectedJalur, $smpSelected); }
                             ?>
-                            <div class="initial-fields" data-initial-fields>
-                                <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 2); } ?>
-                            </div>
                         </div>
                         <?php if (prestasi_is_ready($conn)) { prestasi_render_section($formValues, $smpSelected && $selectedJalur === 'prestasi'); } ?>
+                        <div class="initial-block">
+                            <h3 class="initial-block__title">Data ananda dan pendaftar</h3>
+                            <div class="field-grid">
+                                <div class="initial-fields" data-initial-fields>
+                                    <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 2); } ?>
+                                </div>
+                            </div>
+                        </div>
                         <label class="consent-check" for="konfirmasi_data">
                             <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
                             <span>Saya memastikan data di atas sudah benar dan nomor WhatsApp yang diisi aktif.</span>

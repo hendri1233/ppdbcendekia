@@ -3519,3 +3519,24 @@ body.page-daftar .radio-option:has(input:focus-visible) {
 .prestasi-category__body > :first-child {
     margin-top: 12px;
 }
+
+.initial-block {
+    margin-top: 20px;
+}
+
+.initial-block__title {
+    display: none;
+    margin: 0 0 18px;
+    font-size: var(--fs-md);
+}
+
+/* Jalur prestasi diisi lebih dulu, lalu data ananda dan pendaftar sebagai bagian tersendiri. */
+.prestasi-section:not([hidden]) + .initial-block {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+}
+
+.prestasi-section:not([hidden]) + .initial-block .initial-block__title {
+    display: block;
+}
