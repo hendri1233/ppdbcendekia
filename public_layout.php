@@ -63,12 +63,6 @@ function public_navigation(mysqli $conn): array
 
     return [
         ['key' => 'beranda', 'href' => './', 'label' => 'Beranda'],
-        ['key' => 'tentang', 'href' => 'tentang', 'label' => 'Tentang', 'children' => [
-            ['href' => 'tentang#prakata', 'label' => 'Prakata pimpinan'],
-            ['href' => 'tentang#manajemen', 'label' => 'Profil manajemen'],
-            ['href' => 'tentang#visi-misi', 'label' => 'Visi dan misi'],
-            ['href' => 'tentang#fasilitas', 'label' => 'Fasilitas'],
-        ]],
         ['key' => 'unit', 'href' => './#unit-title', 'label' => 'Unit Pendidikan', 'children' => $unitChildren],
         ['key' => 'kurikulum', 'href' => 'kurikulum', 'label' => 'Kurikulum', 'children' => [
             ['href' => 'kurikulum#penggerak', 'label' => 'Program Penggerak'],
@@ -90,6 +84,12 @@ function public_navigation(mysqli $conn): array
             ['href' => 'usaha#koperasi-kenara', 'label' => 'Koperasi Kenara Cendekia Takengon'],
         ]],
         ['key' => 'berita', 'href' => 'berita', 'label' => 'Berita'],
+        ['key' => 'tentang', 'href' => 'tentang', 'label' => 'Tentang', 'children' => [
+            ['href' => 'tentang#prakata', 'label' => 'Prakata pimpinan'],
+            ['href' => 'tentang#manajemen', 'label' => 'Profil manajemen'],
+            ['href' => 'tentang#visi-misi', 'label' => 'Visi dan misi'],
+            ['href' => 'tentang#fasilitas', 'label' => 'Fasilitas'],
+        ]],
         ['key' => 'kontak', 'href' => 'kontak', 'label' => 'Kontak'],
     ];
 }
