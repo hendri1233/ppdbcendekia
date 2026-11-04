@@ -72,17 +72,34 @@ while ($row = mysqli_fetch_assoc($quotaQuery)) {
     $quotaRows[] = $row;
 }
 
-// Pencapaian kuota unit yang sedang dibuka, per jalur yang dibuka, untuk panel capaian harian.
-$quotaProgress = [];
+// Pencapaian kuota per unit untuk panel capaian harian. Unit yang dibuka menampilkan jalur yang dibuka;
+// unit yang ditutup tetap tampil dengan kuota tahun ajaran terbarunya (baris sudah urut tahun terbaru).
+$openUnits = [];
 foreach ($quotaRows as $row) {
+    foreach (['internal', 'eksternal'] as $route) {
+        if ($row[$route.'_dibuka'] && $row['kuota_'.$route] > 0) {
+            $openUnits[$row['kode_unit']] = true;
+        }
+    }
+}
+$quotaProgress = [];
+$closedUnitsShown = [];
+foreach ($quotaRows as $row) {
+    $unitOpen = isset($openUnits[$row['kode_unit']]);
+    if (!$unitOpen && isset($closedUnitsShown[$row['kode_unit']])) {
+        continue;
+    }
     $routes = [];
     foreach (['internal' => 'Internal', 'eksternal' => 'Eksternal'] as $route => $label) {
-        if ($row[$route.'_dibuka'] && $row['kuota_'.$route] > 0) {
+        if ($row['kuota_'.$route] > 0 && (!$unitOpen || $row[$route.'_dibuka'])) {
             $routes[] = ['key' => $route, 'label' => $label, 'filled' => $row[$route.'_terisi'], 'quota' => $row['kuota_'.$route]];
         }
     }
     if (!$routes) {
         continue;
+    }
+    if (!$unitOpen) {
+        $closedUnitsShown[$row['kode_unit']] = true;
     }
     $filled = array_sum(array_column($routes, 'filled'));
     $quota = array_sum(array_column($routes, 'quota'));
@@ -91,6 +108,7 @@ foreach ($quotaRows as $row) {
         'jenjang' => $row['jenjang'],
         'name' => ppdb_unit_display_name($row['nama_unit']),
         'year' => $row['th_ajaran'],
+        'closed' => !$unitOpen,
         'routes' => $routes,
         'filled' => $filled,
         'quota' => $quota,
@@ -665,7 +683,7 @@ require 'admin_header.php';
             <li><span class="progress-key is-quota" aria-hidden="true"></span>Batas kuota</li>
         </ul>
         <?php if (!$quotaProgress) { ?>
-            <p class="panel-note chain-empty">Belum ada unit yang membuka pendaftaran.</p>
+            <p class="panel-note chain-empty">Belum ada unit dengan kuota. Isi kuota di menu Kuota &amp; pembayaran.</p>
         <?php } else { ?>
             <div class="chain-carousel" data-chain-carousel>
                 <div class="chain-carousel__bar">
@@ -682,8 +700,9 @@ require 'admin_header.php';
                             <span class="quota-progress__value"><b><?php echo $unit['filled']; ?></b> / <?php echo $unit['quota']; ?> kursi · <?php echo $unit['percent']; ?>%</span>
                         </div>
                         <small class="quota-progress__meta">
-                            <?php if (!empty($unit['combined'])) { ?>Unit yang dibuka: <?php echo h(implode(', ', $unit['units'])); ?> · <?php } ?>
+                            <?php if (!empty($unit['combined'])) { ?>Unit: <?php echo h(implode(', ', $unit['units'])); ?> · <?php } ?>
                             Tahun ajaran <?php echo h($unit['year']); ?> · Diterima <?php echo $unit['accepted']; ?>
+                            <?php if (!empty($unit['closed'])) { ?> · Pendaftaran ditutup<?php } ?>
                             <?php if ($unit['filled'] >= $unit['quota']) { ?> · <span class="quota-progress__full">Kuota terpenuhi</span><?php } ?>
                         </small>
                         <?php if (!empty($unit['combined'])) { ?>
