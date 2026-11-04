@@ -70,7 +70,7 @@ function public_navigation(mysqli $conn): array
             ['href' => 'kurikulum#merdeka', 'label' => 'Merdeka Belajar'],
             ['href' => 'kurikulum#deep_learning', 'label' => 'Deep Learning'],
         ]],
-        ['key' => 'inspirasi', 'href' => 'program', 'label' => 'Program & Inspirasi', 'children' => [
+        ['key' => 'inspirasi', 'href' => 'program', 'label' => 'Program', 'children' => [
             ['href' => 'program', 'label' => 'Program yayasan'],
             ['href' => 'galeri', 'label' => 'Galeri kegiatan'],
             ['href' => 'cerita#prestasi', 'label' => 'Prestasi'],
@@ -79,9 +79,16 @@ function public_navigation(mysqli $conn): array
         ]],
         ['key' => 'sosial', 'href' => 'sosial', 'label' => 'Sosial', 'children' => [
             ['href' => 'sosial#lembaga-wakaf', 'label' => 'Lembaga Wakaf Insan Cendekia Takengon'],
+            ['href' => 'sosial#program-wakaf', 'label' => 'Program wakaf'],
+            ['href' => 'sosial#kegiatan-wakaf', 'label' => 'Kegiatan wakaf'],
+            ['href' => 'sosial#legalitas', 'label' => 'Legalitas'],
+            ['href' => 'sosial#media-sosial', 'label' => 'Media sosial'],
+            ['href' => 'sosial#kontak-lembaga', 'label' => 'Kontak lembaga'],
         ]],
         ['key' => 'usaha', 'href' => 'usaha', 'label' => 'Usaha', 'children' => [
             ['href' => 'usaha#koperasi-kenara', 'label' => 'Koperasi Kenara Cendekia Takengon'],
+            ['href' => 'usaha#kegiatan-koperasi', 'label' => 'Kegiatan koperasi'],
+            ['href' => 'usaha#legalitas', 'label' => 'Legalitas'],
         ]],
         ['key' => 'berita', 'href' => 'berita', 'label' => 'Berita'],
         ['key' => 'tentang', 'href' => 'tentang', 'label' => 'Tentang', 'children' => [

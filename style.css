@@ -5327,3 +5327,10 @@ a.org-card:hover,
     }
 }
 
+/* Di desktop logo sudah menuju beranda; menu Beranda hanya tampil di ponsel dan tablet. */
+@media (min-width: 1321px) {
+    .nav-item--beranda {
+        display: none;
+    }
+}
+
