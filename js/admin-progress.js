@@ -28,7 +28,6 @@
     const NS = 'http://www.w3.org/2000/svg';
     const PAD = { top: 24, right: 18, bottom: 42, left: 34 };
     const DAY_NAMES = { Min: 'Minggu', Sen: 'Senin', Sel: 'Selasa', Rab: 'Rabu', Kam: 'Kamis', Jum: 'Jumat', Sab: 'Sabtu' };
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let range = 14;
 
     const el = (name, attrs, parent) => {
@@ -171,13 +170,7 @@
         });
 
         // Rantai: garis dan mata rantai yang menyambung puncak batang.
-        const line = el('path', { d: smoothPath(coords), class: 'combined-chain__line' }, lineLayer);
-        if (!reduceMotion && line.getTotalLength) {
-            const length = line.getTotalLength();
-            line.style.strokeDasharray = length;
-            line.style.strokeDashoffset = length;
-            requestAnimationFrame(() => { line.style.strokeDashoffset = 0; });
-        }
+        el('path', { d: smoothPath(coords), class: 'combined-chain__line' }, lineLayer);
 
         // Garis bantu dan titik saat kursor di atas grafik.
         const guide = el('line', { y1: PAD.top, y2: PAD.top + plotHeight, class: 'chain-guide' }, lineLayer);

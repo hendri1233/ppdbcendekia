@@ -25,7 +25,7 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
             var root = document.documentElement, theme = 'light';
             try { theme = localStorage.getItem('cendekia-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (e) {}
             root.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
-            root.classList.add('js', 'is-loading');
+            root.classList.add('js');
             try { if (localStorage.getItem('cendekia-sidebar') === 'collapsed') root.classList.add('sidebar-collapsed'); } catch (e) {}
         })();
     </script>
@@ -34,7 +34,9 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
     <title><?php echo h($adminPageTitle); ?> · Panel Admin SPMB Cendekia Takengon</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <!-- Font dimuat tanpa menahan tampilan halaman. -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/admin.css'); ?>">
     <link rel="stylesheet" href="css/cms-admin.css?v=<?php echo (int) filemtime(__DIR__.'/css/cms-admin.css'); ?>">
@@ -49,10 +51,6 @@ $adminRoleLabel = ppdb_is_super_admin() ? 'Super Admin' : 'Admin Unit · '.($_SE
     <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
 <body>
-<div class="page-loader" role="status" aria-live="polite" data-page-loader>
-    <span class="page-loader__ring" aria-hidden="true"><img src="img/logo-display.png" alt="" width="40" height="40"></span>
-    <span class="visually-hidden">Memuat halaman…</span>
-</div>
 <a class="skip-link" href="#admin-utama">Lompat ke konten</a>
 
 <div class="admin-shell">

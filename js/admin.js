@@ -7,28 +7,12 @@
 
     const root = document.documentElement;
 
-    // --- Loader halaman: tampil saat memuat dan saat berpindah halaman ---
-    const finishLoading = () => root.classList.remove('is-loading');
-    if (document.readyState === 'complete') {
-        finishLoading();
-    } else {
-        window.addEventListener('load', finishLoading, { once: true });
-        setTimeout(finishLoading, 2500);
+    // --- Pekerjaan lambat (spreadsheet, lokasi peta) berjalan setelah halaman siap ---
+    if (document.querySelector('[data-admin-background]')) {
+        window.setTimeout(() => {
+            fetch('admin-latar.php', { credentials: 'same-origin', keepalive: true }).catch(() => {});
+        }, 600);
     }
-    window.addEventListener('pageshow', (event) => {
-        if (event.persisted) root.classList.remove('is-loading', 'is-leaving');
-    });
-    document.addEventListener('click', (event) => {
-        const link = event.target.closest('a[href]');
-        if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if ((link.target && link.target !== '_self') || link.hasAttribute('download')) return;
-        const url = new URL(link.href, location.href);
-        if (url.origin !== location.origin || !/^https?:$/.test(url.protocol)) return;
-        if (url.pathname === location.pathname && url.search === location.search && url.hash) return;
-        // Unduhan berkas (PDF, bukti, dokumen) tidak berpindah halaman.
-        if (/(export-token-internal|bukti-pembayaran-admin|dokumen-admin|cetak-bukti|ppdb-materi-file)\.php$/.test(url.pathname)) return;
-        root.classList.add('is-leaving');
-    });
 
     // --- Tema terang/gelap ---
     const themeButtons = document.querySelectorAll('[data-theme-toggle]');

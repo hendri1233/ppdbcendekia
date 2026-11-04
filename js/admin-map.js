@@ -9,7 +9,41 @@
 
     const container = document.querySelector('[data-link-map]');
     const dataNode = document.getElementById('link-map-data');
-    if (!container || !dataNode || typeof L === 'undefined') return;
+    if (!container || !dataNode) return;
+
+    // Pustaka peta dan kepingan peta baru diunduh saat bagian peta hampir terlihat.
+    function loadLeaflet() {
+        const style = document.createElement('link');
+        style.rel = 'stylesheet';
+        style.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+        style.integrity = 'sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==';
+        style.crossOrigin = 'anonymous';
+        // Peta dibuat setelah gaya dan skrip siap agar kepingannya tersusun rapat.
+        let pending = 2;
+        const ready = () => { pending -= 1; if (pending === 0) initMap(); };
+        style.onload = ready;
+        document.head.appendChild(style);
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+        script.integrity = 'sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==';
+        script.crossOrigin = 'anonymous';
+        script.onload = ready;
+        document.head.appendChild(script);
+    }
+
+    if ('IntersectionObserver' in window) {
+        const mapObserver = new IntersectionObserver((entries) => {
+            if (entries.some((entry) => entry.isIntersecting)) {
+                mapObserver.disconnect();
+                loadLeaflet();
+            }
+        }, { rootMargin: '500px 0px' });
+        mapObserver.observe(container);
+    } else {
+        loadLeaflet();
+    }
+
+    function initMap() {
 
     let data = {};
     try {
@@ -155,4 +189,5 @@
             syncButton();
         }
     });
+    }
 })();

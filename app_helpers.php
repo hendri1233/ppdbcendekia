@@ -717,6 +717,47 @@ function ppdb_whatsapp_link(string $phone, string $message): string
     return 'https://wa.me/'.$number.'?text='.rawurlencode($message);
 }
 
+/** Ringkasan data pendaftar sesuai hak admin; nilai rev berubah bila ada perubahan data atau status. */
+function ppdb_admin_live_state(mysqli $conn): ?array
+{
+    try {
+        $sql = 'SELECT status_ppdb,status_pembayaran,COUNT(*) AS total,MAX(waktu_daftar) AS terakhir FROM tb_pendaftaran';
+        if (ppdb_is_super_admin()) {
+            $stmt = mysqli_prepare($conn, $sql.' GROUP BY status_ppdb,status_pembayaran');
+        } else {
+            $unitCode = (string) $_SESSION['admin_unit_code'];
+            $stmt = mysqli_prepare($conn, $sql.' WHERE kode_unit=? GROUP BY status_ppdb,status_pembayaran');
+            mysqli_stmt_bind_param($stmt, 's', $unitCode);
+        }
+        mysqli_stmt_execute($stmt);
+        $rows = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+        mysqli_stmt_close($stmt);
+    } catch (Throwable $exception) {
+        error_log('Ringkasan pembaruan admin gagal: '.$exception->getMessage());
+        return null;
+    }
+    $total = 0;
+    $proof = 0;
+    foreach ($rows as $row) {
+        $total += (int) $row['total'];
+        if ($row['status_pembayaran'] === 'menunggu_verifikasi' && $row['status_ppdb'] !== 'ditolak') {
+            $proof += (int) $row['total'];
+        }
+    }
+    return ['rev' => md5((string) json_encode($rows)), 'total' => $total, 'proof' => $proof];
+}
+
+/** Spreadsheet perlu diperbarui: ada antrean baru, atau antrean gagal yang sudah lewat 15 menit. */
+function ppdb_admin_sync_is_due(mysqli $conn): bool
+{
+    try {
+        $result = mysqli_query($conn, "SELECT 1 FROM tb_google_sync_outbox WHERE status='pending' OR (status='failed' AND (last_attempt_at IS NULL OR last_attempt_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE))) LIMIT 1");
+        return $result && mysqli_num_rows($result) > 0;
+    } catch (Throwable $exception) {
+        return false;
+    }
+}
+
 /** Kontak resmi admin SPMB untuk ditampilkan dan dicantumkan pada pesan pendaftar. */
 function ppdb_admin_whatsapp_number(): string
 {

@@ -4,7 +4,6 @@
     'use strict';
 
     var SVG = 'http://www.w3.org/2000/svg';
-    var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var dataNode = document.getElementById('dashboard-data');
     var data = { days: [], mix: [] };
     try { if (dataNode) { data = JSON.parse(dataNode.textContent); } } catch (e) {}
@@ -20,33 +19,9 @@
         return Math.round(value).toLocaleString('id-ID');
     }
 
-    /* Angka KPI menghitung naik saat kartu terlihat. */
-    function countUp(node) {
-        var target = parseInt(node.getAttribute('data-count'), 10) || 0;
-        if (reduceMotion || target === 0) { node.textContent = formatNumber(target); return; }
-        var start = null;
-        var duration = 900;
-        function step(time) {
-            if (start === null) { start = time; }
-            var progress = Math.min(1, (time - start) / duration);
-            node.textContent = formatNumber(target * (1 - Math.pow(1 - progress, 3)));
-            if (progress < 1) { requestAnimationFrame(step); }
-        }
-        node.textContent = '0';
-        requestAnimationFrame(step);
-    }
-
-    var counters = document.querySelectorAll('[data-count]');
-    if ('IntersectionObserver' in window) {
-        var counterObserver = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) { countUp(entry.target); counterObserver.unobserve(entry.target); }
-            });
-        }, { threshold: 0.4 });
-        counters.forEach(function (node) { counterObserver.observe(node); });
-    } else {
-        counters.forEach(countUp);
-    }
+    document.querySelectorAll('[data-count]').forEach(function (node) {
+        node.textContent = formatNumber(parseInt(node.getAttribute('data-count'), 10) || 0);
+    });
 
     /* Garis halus melalui titik-titik (kurva monotone sederhana). */
     function smoothPath(points) {
@@ -126,13 +101,7 @@
             var points = days.map(function (day, index) { return [x(index), y(day[series])]; });
             var line = smoothPath(points);
             el('path', { d: line + ' L' + x(days.length - 1) + ',' + y(0) + ' L' + x(0) + ',' + y(0) + ' Z', fill: 'url(#trend-grad-' + series + ')', class: 'trend-area' }, svg);
-            var path = el('path', { d: line, class: 'trend-line is-' + series }, svg);
-            if (!reduceMotion && path.getTotalLength) {
-                var length = path.getTotalLength();
-                path.style.strokeDasharray = length;
-                path.style.strokeDashoffset = length;
-                requestAnimationFrame(function () { path.style.strokeDashoffset = 0; });
-            }
+            el('path', { d: line, class: 'trend-line is-' + series }, svg);
         });
 
         var guide = el('line', { y1: pad.top, y2: pad.top + innerH, class: 'trend-guide', opacity: 0 }, svg);

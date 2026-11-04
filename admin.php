@@ -320,7 +320,7 @@ require 'admin_header.php';
     <?php if (isset($_GET['admin_created'])) { ?><div class="alert-success" role="status">Akun admin baru berhasil dibuat.</div><?php } ?>
     <?php if ($syncFlash) { ?><div class="<?php echo $syncFlash['failed'] > 0 ? 'alert-error' : 'alert-success'; ?>" role="status">Sinkronisasi selesai: <?php echo (int) $syncFlash['synced']; ?> spreadsheet unit berhasil, <?php echo (int) $syncFlash['failed']; ?> perlu dicoba ulang.</div><?php } ?>
 
-    <header class="page-hero dash-hero">
+    <header class="page-hero dash-hero" data-live-region="hero">
         <div class="page-hero__text">
             <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'Penerimaan peserta didik baru' : 'Penerimaan · '.h(ppdb_unit_display_name($_SESSION['admin_unit_name'] ?? 'Unit')); ?></p>
             <h1>Selamat datang kembali, <?php echo h(explode(' ', (string) ($_SESSION['admin_name'] ?? 'Administrator'))[0]); ?>.</h1>
@@ -344,7 +344,7 @@ require 'admin_header.php';
         </div>
     </header>
 
-    <section class="stats-grid" aria-label="Statistik utama">
+    <section class="stats-grid" aria-label="Statistik utama" data-live-region="stats">
         <article class="stat-card is-primary">
             <span class="stat-icon" aria-hidden="true"><?php echo ppdb_admin_icon('users'); ?></span>
             <span class="stat-label">Total pendaftar</span>
@@ -423,7 +423,7 @@ require 'admin_header.php';
     <script type="application/json" id="dashboard-data"><?php echo json_encode($dashboardData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>
 
     <div class="dashboard-grid">
-        <section class="panel">
+        <section class="panel" data-live-region="queue">
             <div class="panel-header">
                 <div><h2>Antrean kerja</h2><span class="panel-subtitle">Peserta yang menunggu tindakan Anda</span></div>
                 <?php if ($actionableTotal > 0) { ?><span class="counter-badge"><?php echo $actionableTotal; ?> pending</span><?php } ?>
@@ -516,7 +516,7 @@ require 'admin_header.php';
     </section><?php } ?>
 
     <div class="dashboard-grid">
-        <section class="panel">
+        <section class="panel" data-live-region="latest">
             <div class="panel-header">
                 <div><h2>Pendaftaran terbaru</h2><span class="panel-subtitle">8 pendaftar terakhir</span></div>
                 <a class="panel-link" href="daftar_peserta.php">Semua peserta</a>
@@ -788,8 +788,6 @@ require 'admin_header.php';
         <p class="panel-note unit-stage-note">Pengunjung ditebak dari alamat IP dan hanya sampai tingkat kabupaten/kota; pengguna data seluler sering tercatat di kota pusat jaringan operator (misalnya Medan). Pendaftar dipetakan dari alamat formulir lengkap (desa/kecamatan), atau dari koordinat Dapodik bila sudah dicatat operator.<?php if ($linkMap['unlocated'] > 0) { ?> <?php echo $linkMap['unlocated']; ?> pengunjung tidak terbaca lokasinya.<?php } ?><?php if ($registrantMap['pending'] > 0) { ?> <?php echo $registrantMap['pending']; ?> pendaftar belum berhasil dipetakan; lokasinya dilengkapi otomatis saat dashboard dibuka kembali.<?php } ?></p>
     </section>
 </div>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="js/admin-progress.js?v=<?php echo (int) @filemtime(__DIR__.'/js/admin-progress.js'); ?>" defer></script>
 <script src="js/admin-map.js?v=<?php echo (int) @filemtime(__DIR__.'/js/admin-map.js'); ?>" defer></script>
 <script src="js/admin-dashboard.js?v=<?php echo (int) @filemtime(__DIR__.'/js/admin-dashboard.js'); ?>" defer></script>

@@ -246,6 +246,29 @@ function ppdb_region_label(string $name): string
  * hanya boleh memakai beberapa permintaan baru; sisanya dilengkapi saat
  * dashboard dibuka berikutnya. Hasil gagal disimpan 7 hari sebelum dicoba lagi.
  */
+/**
+ * Pencarian koordinat ke layanan luar hanya berjalan di latar belakang (admin-latar.php).
+ * Halaman admin membaca cache saja agar tidak menunggu layanan tersebut.
+ */
+function ppdb_geo_network(?bool $allow = null): bool
+{
+    static $allowed = false;
+    if ($allow !== null) {
+        $allowed = $allow;
+    }
+    return $allowed;
+}
+
+/** Mencatat atau membaca adanya lokasi yang belum tersimpan di cache. */
+function ppdb_geo_has_misses(bool $record = false): bool
+{
+    static $misses = false;
+    if ($record) {
+        $misses = true;
+    }
+    return $misses;
+}
+
 function ppdb_geo_cached_request(mysqli $conn, string $cacheKey, string $endpoint, array $params): ?array
 {
     static $budget = 3;
@@ -264,6 +287,10 @@ function ppdb_geo_cached_request(mysqli $conn, string $cacheKey, string $endpoin
     }
     if ($cached && ((int) $cached['found'] === 1 || strtotime($cached['created_at']) > time() - 7 * 86400)) {
         return (int) $cached['found'] === 1 ? $cached : null;
+    }
+    if (!ppdb_geo_network()) {
+        ppdb_geo_has_misses(true);
+        return null;
     }
     if ($budget < 1 || !function_exists('curl_init')) {
         return null;

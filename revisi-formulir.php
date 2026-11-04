@@ -79,7 +79,6 @@ try {
     $shareLinks = ppdb_prepare_formulir_link($conn, $registrationId, $note);
     mysqli_commit($conn);
     enqueue_google_sheets_registration($conn, $registrationId);
-    sync_google_sheets_registration($conn, $registrationId);
 } catch (Throwable $exception) {
     mysqli_rollback($conn);
     if (!$exception instanceof RuntimeException) {

@@ -40,7 +40,7 @@ html:root:not([data-theme="dark"]) {
 
     --admin-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px -6px rgba(15, 35, 80, 0.08);
     --admin-card-shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.05), 0 14px 32px -12px rgba(15, 35, 80, 0.18);
-    --admin-glass: rgba(255, 255, 255, 0.78);
+    --admin-glass: rgba(255, 255, 255, 1);
 }
 
 /* ---------------- Token: mode gelap ---------------- */
@@ -80,7 +80,7 @@ html:root[data-theme="dark"] {
 
     --admin-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
     --admin-card-shadow-hover: 0 0 0 1px rgba(147, 197, 253, 0.12), 0 18px 36px -14px rgba(0, 0, 0, 0.7);
-    --admin-glass: rgba(16, 26, 46, 0.78);
+    --admin-glass: rgba(16, 26, 46, 1);
     color-scheme: dark;
 }
 
@@ -323,8 +323,6 @@ body {
 /* ---------------- Topbar ---------------- */
 .admin-topbar {
     background: var(--admin-glass);
-    -webkit-backdrop-filter: saturate(180%) blur(14px);
-    backdrop-filter: saturate(180%) blur(14px);
     border-bottom: 1px solid var(--admin-line);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
 }
@@ -426,8 +424,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 999px;
     font-size: var(--fs-xs);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
 }
 
 .dash-hero__today .ico {
@@ -1005,8 +1001,6 @@ html:root[data-theme="dark"] .range-toggle button[aria-pressed="true"] {
     box-shadow: 0 16px 32px -12px rgba(2, 8, 23, 0.6);
     font-size: var(--fs-xs);
     pointer-events: none;
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
 }
 
 .trend-tooltip[hidden] {
@@ -1232,8 +1226,6 @@ html:root[data-theme="dark"] .range-toggle button[aria-pressed="true"] {
         z-index: 65;
         display: block;
         background: rgba(4, 11, 29, 0.55);
-        -webkit-backdrop-filter: blur(3px);
-        backdrop-filter: blur(3px);
         opacity: 0;
         pointer-events: none;
         transition: opacity 280ms ease;
@@ -1393,8 +1385,6 @@ html:root[data-theme="dark"] .range-toggle button[aria-pressed="true"] {
         gap: 4px;
         padding: 6px;
         background: var(--admin-glass);
-        -webkit-backdrop-filter: saturate(180%) blur(16px);
-        backdrop-filter: saturate(180%) blur(16px);
         border: 1px solid var(--admin-line);
         border-radius: 20px;
         box-shadow: 0 16px 36px -14px rgba(15, 35, 80, 0.35);
@@ -1884,4 +1874,82 @@ html:root[data-theme="dark"] .combined-quota {
 
 [data-theme="dark"] .stage-state.is-stopped {
   color: #fda29b;
+}
+
+/* Panel admin tanpa animasi masuk agar halaman langsung siap; hanya spinner tombol dan penanda peta yang bergerak. */
+.admin-shell *:not(.spinner):not(.link-map *),
+.admin-shell *:not(.link-map *)::before,
+.admin-shell *:not(.link-map *)::after {
+    animation: none !important;
+}
+
+/* Pemberitahuan pembaruan data otomatis */
+.live-bar {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(560px, calc(100vw - 24px));
+    padding: 10px 10px 10px 16px;
+    color: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    background: #0b1d45;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 14px;
+    box-shadow: 0 16px 36px -12px rgba(2, 8, 23, 0.55);
+}
+
+.live-bar[hidden] {
+    display: none;
+}
+
+.live-bar__action {
+    flex: none;
+    padding: 7px 12px;
+    color: #0b1d45;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    background: #fff;
+    border: 0;
+    border-radius: 9px;
+}
+
+.live-bar__action:hover {
+    background: #dbe7ff;
+}
+
+.live-bar__close {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+}
+
+.live-bar__close:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+@media (max-width: 820px) {
+    .live-bar {
+        right: 12px;
+        bottom: 92px;
+        left: 12px;
+        max-width: none;
+    }
+
+    .live-bar__text {
+        flex: 1;
+        min-width: 0;
+    }
 }

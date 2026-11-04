@@ -85,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_bind_param($update, 'sssss', $registrationId, $nipd, $admissionDate === '' ? null : $admissionDate, $latitude === '' ? null : $latitude, $longitude === '' ? null : $longitude);
                 if (mysqli_stmt_execute($update)) {
                     enqueue_google_sheets_registration($conn, $registrationId);
-                    sync_google_sheets_registration($conn, $registrationId);
                     $notice = 'Data operator berhasil diperbarui.';
                 } else {
                     $error = 'Data operator belum dapat disimpan.';
@@ -109,7 +108,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($update);
                 mysqli_commit($conn);
                 enqueue_google_sheets_registration($conn, $registrationId);
-                sync_google_sheets_registration($conn, $registrationId);
                 $notice = $reviewNote !== '' ? 'Pendaftaran ditolak. Catatan: ' . $reviewNote : 'Pendaftaran ditolak setelah pemeriksaan data awal.';
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
@@ -153,7 +151,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($registrationUpdate);
                 mysqli_commit($conn);
                 enqueue_google_sheets_registration($conn, $registrationId);
-                sync_google_sheets_registration($conn, $registrationId);
 
                 if ($action === 'approve_payment') {
                     $notice = 'Pembayaran disetujui.';
@@ -211,7 +208,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($update);
                 mysqli_commit($conn);
                 enqueue_google_sheets_registration($conn, $registrationId);
-                sync_google_sheets_registration($conn, $registrationId);
                 $notice = 'Pendaftaran dilanjutkan kembali. Pendaftar dapat meneruskan dari tahap terakhirnya.';
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
@@ -272,7 +268,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 enqueue_google_sheets_registration($conn, $registrationId);
-                sync_google_sheets_registration($conn, $registrationId);
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Keputusan belum dapat disimpan.';
