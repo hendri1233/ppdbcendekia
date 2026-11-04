@@ -488,7 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             // Pendaftar langsung diarahkan; pesan WhatsApp dan spreadsheet menyusul di belakang.
             header('Location: berhasil.php?id='.urlencode($registrationId).'&token='.urlencode($receiptToken));
             ppdb_finish_response();
-            ppdb_send_registration_whatsapp($conn, $registrationId, $receiptToken);
+            ppdb_send_registration_whatsapp($conn, $registrationId);
             sync_google_sheets_registration($conn, $registrationId);
             exit;
         } catch (Throwable $exception) {

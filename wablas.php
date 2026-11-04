@@ -87,7 +87,6 @@ function ppdb_registration_whatsapp_message(array $registration, string $continu
         'Alhamdulillah, registrasi awal telah kami terima dan Ananda *sudah mendapatkan kursi* di *'.$registration['nama_unit'].'* untuk Tahun Ajaran '.$registration['th_ajaran'].'.',
         '',
         'Kode pendaftaran: *'.$registration['id_pendaftaran'].'*',
-        'Nomor antrean: *#'.(int) $registration['nomor_antrian'].'*',
     ];
     if ((float) $registration['biaya_pendaftaran'] > 0) {
         $lines[] = 'Biaya pendaftaran: Rp '.number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.');
@@ -98,7 +97,7 @@ function ppdb_registration_whatsapp_message(array $registration, string $continu
     array_push(
         $lines,
         '',
-        'Mohon Ayah/Bunda melanjutkan pendaftaran melalui tautan berikut:',
+        'Lanjutkan pendaftaran melalui tautan berikut:',
         $continueUrl,
         '',
         'Tautan ini bersifat pribadi. Mohon disimpan dan tidak dibagikan kepada orang lain.',
@@ -113,13 +112,13 @@ function ppdb_registration_whatsapp_message(array $registration, string $continu
 }
 
 /** Kirim konfirmasi kursi ke nomor pendaftar. Kegagalan hanya dicatat agar pendaftaran tetap berjalan. */
-function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId, string $token): bool
+function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId): bool
 {
     if (!ppdb_wablas_enabled()) {
         return false;
     }
     try {
-        $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.th_ajaran,p.nomor_antrian,p.no_hp_pendaftar,p.tanggal_batas_bayar,u.nama_unit,q.biaya_pendaftaran FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? LIMIT 1');
+        $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.th_ajaran,p.no_hp_pendaftar,p.tanggal_batas_bayar,p.token_bukti,u.nama_unit,q.biaya_pendaftaran FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? LIMIT 1');
         mysqli_stmt_bind_param($stmt, 's', $registrationId);
         mysqli_stmt_execute($stmt);
         $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -128,8 +127,8 @@ function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId, s
         if ($phone === '') {
             return false;
         }
-        $continueUrl = ppdb_public_base_url().'/formulir.php?'.http_build_query(['kode' => $registrationId, 'token' => $token], '', '&', PHP_QUERY_RFC3986);
-        $delivery = ppdb_wablas_send($phone, ppdb_registration_whatsapp_message($registration, $continueUrl));
+        ppdb_resume_token($conn, $registrationId);
+        $delivery = ppdb_wablas_send($phone, ppdb_registration_whatsapp_message($registration, ppdb_continue_url($registration)));
         if (!$delivery['ok']) {
             error_log('Konfirmasi WhatsApp '.$registrationId.' gagal: '.$delivery['error']);
         }

@@ -22,6 +22,7 @@ Options -Indexes
     RewriteRule ^(tentang|kontak|kurikulum|cerita|program|galeri|kebijakan-privasi)\.php$ $1 [R=301,L,NE]
 
     # Rute publik bersih diteruskan ke file PHP yang sudah ada.
+    RewriteRule ^lanjut/(P[0-9]{9})-([a-f0-9]{12})/?$ lanjut.php?kode=$1&sig=$2 [END]
     RewriteRule ^berita/([a-z0-9-]+)/?$ berita.php?baca=$1 [QSA,NC,END]
     RewriteRule ^unit/([a-z0-9-]+)/?$ unit.php?slug=$1 [QSA,NC,END]
     RewriteRule ^(tentang|kontak|kurikulum|cerita|program|galeri|kebijakan-privasi)/?$ $1.php [NC,END]

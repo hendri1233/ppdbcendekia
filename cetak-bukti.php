@@ -81,7 +81,7 @@ if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
 
 $tokenIsValid = preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
 $tokenHash = $tokenIsValid ? hash('sha256', $receiptToken) : '';
-$stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran, p.th_ajaran, p.tgl_daftar, p.nomor_antrian, p.pendaftar, p.nm_peserta, p.tmp_lahir, p.tgl_lahir, p.jenis_kelamin, p.jalur_pendaftaran, p.status_ppdb, p.status_pembayaran, p.data_diperiksa_pada, '.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas, ' : '').'u.nama_unit, u.jenjang, u.npsn, u.email AS email_unit, pr.phone AS telepon_unit, g.link_grup, p.token_bukti, p.token_whatsapp, p.token_formulir FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit = u.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit = p.kode_unit LEFT JOIN tb_cms_unit_profiles pr ON pr.kode_unit = p.kode_unit WHERE p.id_pendaftaran = ? LIMIT 1');
+$stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran, p.th_ajaran, p.tgl_daftar, p.pendaftar, p.nm_peserta, p.tmp_lahir, p.tgl_lahir, p.jenis_kelamin, p.jalur_pendaftaran, p.status_ppdb, p.status_pembayaran, p.data_diperiksa_pada, '.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas, ' : '').'u.nama_unit, u.jenjang, u.npsn, u.email AS email_unit, pr.phone AS telepon_unit, g.link_grup, p.token_bukti, p.token_whatsapp, p.token_formulir FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit = u.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit = p.kode_unit LEFT JOIN tb_cms_unit_profiles pr ON pr.kode_unit = p.kode_unit WHERE p.id_pendaftaran = ? LIMIT 1');
 mysqli_stmt_bind_param($stmt, 's', $registrationId);
 mysqli_stmt_execute($stmt);
 $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -207,7 +207,6 @@ $rows = [
     ['Unit pendidikan', h($unitName.(!empty($registration['tingkat_kelas']) ? ' · '.$registration['tingkat_kelas'] : ''))],
     ['Jalur pendaftaran', $registration['jalur_pendaftaran'] === 'internal' ? 'Internal' : 'Umum'],
     ['Tahun ajaran', h($registration['th_ajaran'])],
-    ['Nomor antrean', $registration['nomor_antrian'] ? '#'.(int) $registration['nomor_antrian'] : '-'],
     ['Tanggal pendaftaran', h(ppdb_format_date_id($registration['tgl_daftar']))],
 ];
 $rowsHtml = '';

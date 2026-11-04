@@ -802,6 +802,39 @@ function ppdb_registrant_recipients(array $registration): array
     return $recipients;
 }
 
+/** Tanda tautan pendek pendaftar; kuncinya hash token yang tidak pernah tampil ke publik. */
+function ppdb_continue_signature(array $registration): string
+{
+    $key = (string) ($registration['token_bukti'] ?? '');
+    return $key === '' ? '' : substr(hash_hmac('sha256', 'lanjut|'.$registration['id_pendaftaran'], $key), 0, 12);
+}
+
+/** Tautan pendek untuk pesan WhatsApp, misalnya https://situs/lanjut/P202600087-3f9a1c7e2b4d. */
+function ppdb_continue_url(array $registration): string
+{
+    return ppdb_public_base_url().'/lanjut/'.$registration['id_pendaftaran'].'-'.ppdb_continue_signature($registration);
+}
+
+/** Token halaman pendaftaran yang selalu sama untuk satu pendaftar, agar tab yang sudah terbuka tetap berlaku. */
+function ppdb_resume_token(mysqli $conn, string $registrationId): string
+{
+    $lookup = mysqli_prepare($conn, 'SELECT token_bukti,token_whatsapp FROM tb_pendaftaran WHERE id_pendaftaran=? LIMIT 1');
+    mysqli_stmt_bind_param($lookup, 's', $registrationId);
+    mysqli_stmt_execute($lookup);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($lookup)) ?: [];
+    mysqli_stmt_close($lookup);
+    $key = (string) ($row['token_bukti'] ?? '');
+    $token = $key === '' ? bin2hex(random_bytes(32)) : hash_hmac('sha256', 'token-lanjut|'.$registrationId, $key);
+    $tokenHash = hash('sha256', $token);
+    if (($row['token_whatsapp'] ?? '') !== $tokenHash) {
+        $save = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET token_whatsapp=? WHERE id_pendaftaran=?');
+        mysqli_stmt_bind_param($save, 'ss', $tokenHash, $registrationId);
+        mysqli_stmt_execute($save);
+        mysqli_stmt_close($save);
+    }
+    return $token;
+}
+
 /** Nomor surat keterangan diterima, misalnya 00046/SPMB-KB/YWCT/XI/2026. */
 function ppdb_acceptance_number(array $registration): string
 {
@@ -892,7 +925,7 @@ function ppdb_activate_registration(mysqli $conn, string $registrationId): bool
  */
 function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string $revisionNote = ''): array
 {
-    $lookup = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.nm_peserta,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu FROM tb_pendaftaran p WHERE p.id_pendaftaran=? LIMIT 1');
+    $lookup = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.nm_peserta,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_bukti FROM tb_pendaftaran p WHERE p.id_pendaftaran=? LIMIT 1');
     mysqli_stmt_bind_param($lookup, 's', $registrationId);
     mysqli_stmt_execute($lookup);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($lookup));
@@ -904,20 +937,9 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
         throw new RuntimeException('Formulir hanya dapat dibuka kembali setelah pendaftar mengisi formulir.');
     }
 
-    $formToken = bin2hex(random_bytes(32));
-    $formTokenHash = hash('sha256', $formToken);
-    $tokenUpdate = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET token_formulir=COALESCE(token_formulir,?),token_whatsapp=? WHERE id_pendaftaran=?');
-    mysqli_stmt_bind_param($tokenUpdate, 'sss', $formTokenHash, $formTokenHash, $registrationId);
-    if (!mysqli_stmt_execute($tokenUpdate)) {
-        mysqli_stmt_close($tokenUpdate);
-        throw new RuntimeException('Token formulir belum dapat disimpan.');
-    }
-    mysqli_stmt_close($tokenUpdate);
-
-    $formUrl = ppdb_public_base_url().'/formulir.php?'.http_build_query([
-        'kode' => $registrationId,
-        'token' => $formToken,
-    ], '', '&', PHP_QUERY_RFC3986);
+    // Token dipastikan aktif agar tautan pendek membuka formulir yang sama.
+    ppdb_resume_token($conn, $registrationId);
+    $formUrl = ppdb_continue_url(['id_pendaftaran' => $registrationId, 'token_bukti' => $registration['token_bukti']]);
 
     $lines = [
         'Assalamu’alaikum warahmatullahi wabarakatuh.',

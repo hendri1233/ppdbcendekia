@@ -72,12 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             lanjut_record_failure($conn, $codeKey);
             $error = 'Data tidak cocok. Periksa kembali kode pendaftaran, tanggal lahir ananda, dan nomor WhatsApp.';
         } else {
-            $token = bin2hex(random_bytes(32));
-            $tokenHash = hash('sha256', $token);
-            $save = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET token_whatsapp=? WHERE id_pendaftaran=?');
-            mysqli_stmt_bind_param($save, 'ss', $tokenHash, $code);
-            mysqli_stmt_execute($save);
-            mysqli_stmt_close($save);
+            $token = ppdb_resume_token($conn, $code);
             header('Location: formulir.php?'.http_build_query(['kode' => $code, 'token' => $token]));
             exit;
         }
