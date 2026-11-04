@@ -425,7 +425,7 @@ require 'admin_header.php';
             <p><?php echo h($participant['id_pendaftaran']); ?> · <?php echo h(ppdb_unit_display_name($participant['nama_unit'] ?? 'Data lama')); ?><?php echo !empty($participant['tingkat_kelas']) ? ' · '.h($participant['tingkat_kelas']) : ''; ?> · <?php echo h($participant['th_ajaran']); ?></p>
         </div>
         <div class="table-actions">
-            <a class="button-secondary" href="cetak-bukti.php?id=<?php echo rawurlencode($registrationId); ?>">Unduh bukti PDF</a>
+            <a class="button-secondary" href="cetak-bukti?id=<?php echo rawurlencode($registrationId); ?>">Unduh bukti PDF</a>
             <a class="button-secondary" href="daftar_peserta.php">&larr; Kembali</a>
         </div>
     </div>

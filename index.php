@@ -203,7 +203,7 @@ public_page_start($conn, [
             </div>
             <div class="ppdb-band__actions">
                 <a class="button button--light button--lg" href="spmb">Info SPMB</a>
-                <?php if ($openUnitCount > 0) { ?><a class="button button--ghost-light button--lg" href="daftar.php">Daftar sekarang</a><?php } ?>
+                <?php if ($openUnitCount > 0) { ?><a class="button button--ghost-light button--lg" href="daftar">Daftar sekarang</a><?php } ?>
             </div>
             </div>
         </div>

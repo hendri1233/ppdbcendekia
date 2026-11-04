@@ -281,7 +281,7 @@
             send.disabled = true;
             input.disabled = true;
             try {
-                const response = await fetch('api-tanya.php', {
+                const response = await fetch('api-tanya', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: history.slice(-8) }),

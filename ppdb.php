@@ -135,7 +135,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
             <h1>Pendaftaran daring, selesai langsung di situs ini.</h1>
             <p>Lihat kuota setiap unit, ikuti tiga tahap pendaftaran, dan siapkan dokumen yang diperlukan sebelum mengisi formulir lengkap.</p>
             <div class="hero-slider__actions">
-                <a class="button button--primary button--lg" href="daftar.php">Mulai registrasi awal</a>
+                <a class="button button--primary button--lg" href="daftar">Mulai registrasi awal</a>
                 <a class="button button--quiet button--lg" href="spmb#persiapan">Lihat persyaratan</a>
             </div>
         </div>
@@ -221,7 +221,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                             <?php if ($isOpen) { ?>
                                 <span class="badge badge--success">Dibuka</span>
                                 <?php if ($unit['terbuka']) { ?>
-                                    <a class="button button--secondary button--sm" href="daftar.php?unit=<?= rawurlencode($unit['kode_unit']) ?>&amp;tahun=<?= rawurlencode($activeYear) ?>">Daftar ke <?= h($unit['jenjang']) ?><span class="visually-hidden"> <?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></span></a>
+                                    <a class="button button--secondary button--sm" href="daftar?unit=<?= rawurlencode($unit['kode_unit']) ?>&amp;tahun=<?= rawurlencode($activeYear) ?>">Daftar ke <?= h($unit['jenjang']) ?><span class="visually-hidden"> <?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></span></a>
                                 <?php } ?>
                             <?php } elseif ($externalFull || ($unit['kuota_total'] > 0 && $unit['sisa_total'] === 0)) { ?>
                                 <span class="badge badge--warning">Kuota terpenuhi</span>
@@ -410,9 +410,9 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
         <div class="shell closing__inner">
             <div>
                 <h2 id="closing-title">Registrasi awal hanya butuh beberapa menit.</h2>
-                <p>Siapkan nomor WhatsApp pendaftar, ayah, dan ibu. Sudah pernah mendaftar? <a href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a>.</p>
+                <p>Siapkan nomor WhatsApp pendaftar, ayah, dan ibu. Sudah pernah mendaftar? <a href="lanjutkan-pendaftaran">Lanjutkan pendaftaran</a>.</p>
             </div>
-            <a class="button button--light button--lg" href="daftar.php">Mulai registrasi awal</a>
+            <a class="button button--light button--lg" href="daftar">Mulai registrasi awal</a>
         </div>
     </section>
 

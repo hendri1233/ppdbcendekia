@@ -7,7 +7,7 @@ start_app_session();
 function return_to_applicant_status(string $registrationId, string $token, string $message = ''): void
 {
     $query = http_build_query(['id' => $registrationId, 'token' => $token, 'upload_error' => $message]);
-    header('Location: status-pendaftaran.php?'.$query);
+    header('Location: status-pendaftaran?'.$query);
     exit;
 }
 
@@ -98,5 +98,5 @@ sync_google_sheets_registration($conn, $registrationId);
 if ($registration['status_ppdb'] === 'formulir_terisi') {
     return_to_applicant_status($registrationId, $receiptToken);
 }
-header('Location: formulir.php?'.http_build_query(['kode' => $registrationId, 'token' => $receiptToken, 'bayar' => 1]));
+header('Location: formulir?'.http_build_query(['kode' => $registrationId, 'token' => $receiptToken, 'bayar' => 1]));
 exit;

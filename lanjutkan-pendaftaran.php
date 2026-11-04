@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Data tidak cocok. Periksa kembali kode pendaftaran, tanggal lahir ananda, dan nomor WhatsApp.';
         } else {
             $token = ppdb_resume_token($conn, $code);
-            header('Location: formulir.php?'.http_build_query(['kode' => $code, 'token' => $token]));
+            header('Location: formulir?'.http_build_query(['kode' => $code, 'token' => $token]));
             exit;
         }
     }
@@ -105,7 +105,7 @@ header('Referrer-Policy: no-referrer');
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
             <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · SPMB online</small></span>
         </a>
-        <a class="back-link" href="daftar.php">Daftar baru</a>
+        <a class="back-link" href="daftar">Daftar baru</a>
     </header>
     <main>
         <section class="gate-panel">
@@ -117,7 +117,7 @@ header('Referrer-Policy: no-referrer');
                 <div class="error-summary" role="alert"><strong>Belum dapat dilanjutkan</strong><ul><li><?php echo h($error); ?></li></ul></div>
             <?php } ?>
 
-            <form class="gate-form" action="lanjutkan-pendaftaran.php" method="post" autocomplete="off">
+            <form class="gate-form" action="lanjutkan-pendaftaran" method="post" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                 <div class="field field-wide">
                     <label for="kode">Kode pendaftaran <span class="required-mark" aria-hidden="true">*</span></label>

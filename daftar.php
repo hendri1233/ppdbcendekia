@@ -52,7 +52,7 @@ $brochureResult = mysqli_query($conn, "SELECT id,kode_unit,th_ajaran,path_file_p
 while ($brochureResult && $brochure = mysqli_fetch_assoc($brochureResult)) {
     if (ppdb_material_has_preview($brochure)) {
         $brochures[$brochure['kode_unit'].'|'.$brochure['th_ajaran']] = [
-            'url' => 'ppdb-materi-file.php?id='.(int) $brochure['id'].'&file=preview',
+            'url' => 'ppdb-materi-file?id='.(int) $brochure['id'].'&file=preview',
             'type' => $brochure['mime_file_pratinjau'] === 'application/pdf' ? 'pdf' : 'image',
         ];
     }
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'valid
                     mysqli_commit($conn);
                     session_regenerate_id(true);
                     $_SESSION[$internalSessionKey] = (int) $validToken['id'];
-                    header('Location: daftar.php?internal=1&form=1');
+                    header('Location: daftar?internal=1&form=1');
                     exit;
                 }
                 $countAttempt = mysqli_prepare($conn, 'UPDATE tb_token_internal_attempts SET attempts=attempts+1 WHERE ip_hash=?');
@@ -192,7 +192,7 @@ if ($routeOffer && $routeError === '') {
     ppdb_track_unit_link_visit($conn, (string) $routeOffer['kode_unit']);
 }
 
-$formAction = 'daftar.php';
+$formAction = 'daftar';
 if ($routeOffer && $routeType === 'internal') {
     $formAction .= '?internal=1&form=1';
 }
@@ -504,7 +504,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             unset($_SESSION[$internalSessionKey]);
 
             // Pendaftar langsung diarahkan; pesan WhatsApp dan spreadsheet menyusul di belakang.
-            header('Location: berhasil.php?id='.urlencode($registrationId).'&token='.urlencode($receiptToken));
+            header('Location: berhasil?id='.urlencode($registrationId).'&token='.urlencode($receiptToken));
             ppdb_finish_response();
             ppdb_send_registration_whatsapp($conn, $registrationId);
             sync_google_sheets_registration($conn, $registrationId);
@@ -617,7 +617,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 <?php if (!$openOffers) { ?>
                     <div class="error-summary" role="status"><strong>Pendaftaran eksternal belum tersedia</strong><ul><li>Belum ada kuota eksternal yang dibuka untuk tahun ajaran 2027/2028 atau kuota telah terpenuhi. Silakan hubungi panitia SPMB.</li></ul></div>
                 <?php } ?>
-                <form class="registration-form" id="form-utama" action="daftar.php" method="post" enctype="multipart/form-data" autocomplete="on" novalidate>
+                <form class="registration-form" id="form-utama" action="daftar" method="post" enctype="multipart/form-data" autocomplete="on" novalidate>
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <section class="form-section" aria-labelledby="data-title">
                         <div class="section-heading">
@@ -676,7 +676,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <div><h2 id="internal-code-title">Pendaftaran</h2><p>Masukkan kode 9 karakter yang terdiri dari huruf besar, huruf kecil, dan angka. Setiap kode hanya berlaku untuk satu peserta dan satu kali pendaftaran.</p></div>
                     </div>
                     <?php if ($tokenEntryError !== '') { ?><div class="error-summary" role="alert"><strong>Kode belum dapat digunakan</strong><ul><li><?php echo h($tokenEntryError); ?></li></ul></div><?php } ?>
-                    <form class="registration-form" action="daftar.php?internal=1" method="post">
+                    <form class="registration-form" action="daftar?internal=1" method="post">
                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                         <input type="hidden" name="action" value="validate_internal_token">
                         <div class="field-grid">

@@ -159,7 +159,7 @@ $isRegistrantWithdrawal = $authorized
 // Tautan yang sama dipakai untuk semua tahap: selain pengisian formulir, tampilkan
 // halaman pembayaran atau hasil sesuai status pendaftaran.
 if ($authorized && !$formOpen && !$isRegistrantWithdrawal && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    header('Location: status-pendaftaran.php?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $token]));
+    header('Location: status-pendaftaran?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $token]));
     exit;
 }
 $materials = [];
@@ -542,7 +542,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             if ($isRevision) {
                 $statusQuery['revisi'] = (string) $changeCount;
             }
-            header('Location: status-pendaftaran.php?'.http_build_query($statusQuery));
+            header('Location: status-pendaftaran?'.http_build_query($statusQuery));
             exit;
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
@@ -615,7 +615,7 @@ header('Referrer-Policy: no-referrer');
             <img class="brand-logo" src="img/logo-display.png" alt="" width="46" height="45">
             <span class="brand-copy"><strong>Wakaf Cendekia</strong><small>Takengon · SPMB online</small></span>
         </a>
-        <?php if ($authorized) { ?><a class="back-link" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a><?php } ?>
+        <?php if ($authorized) { ?><a class="back-link" href="status-pendaftaran?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a><?php } ?>
     </header>
 
     <main>
@@ -629,7 +629,7 @@ header('Referrer-Policy: no-referrer');
                     <div class="error-summary" role="alert"><strong>Kode tidak dapat diverifikasi</strong><ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul></div>
                 <?php } ?>
 
-                <a class="submit-button" href="lanjutkan-pendaftaran.php?kode=<?php echo rawurlencode($code); ?>">Lanjutkan pendaftaran</a>
+                <a class="submit-button" href="lanjutkan-pendaftaran?kode=<?php echo rawurlencode($code); ?>">Lanjutkan pendaftaran</a>
             </section>
 
         <?php } elseif (!$formOpen && $isRegistrantWithdrawal) { ?>
@@ -640,7 +640,7 @@ header('Referrer-Policy: no-referrer');
                 <?php if ($sheetSyncFailed) { ?><div class="error-summary" role="alert">Status pendaftaran sudah tersimpan dan terlihat di panel admin, tetapi sinkronisasi ke spreadsheet gagal. Panitia dapat memeriksanya langsung pada data peserta.</div><?php } ?>
                 <?php if ($errors) { ?><div class="error-summary" role="alert"><ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul></div><?php } ?>
                 <p class="intro-copy">Panitia SPMB telah menerima informasi bahwa Anda memilih tidak melanjutkan pengisian formulir untuk <?php echo h($registration['nama_unit'] ?? 'unit pilihan Anda'); ?>. Formulir sementara tidak dapat dibuka. Jika pilihan ini tidak disengaja, silakan hubungi panitia agar pendaftaran dibuka kembali.</p>
-                <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
+                <a class="submit-button" href="status-pendaftaran?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
             </section>
 
         <?php } elseif (!$formOpen) { ?>
@@ -652,7 +652,7 @@ header('Referrer-Policy: no-referrer');
                 <?php } else { ?>
                     <p class="intro-copy">Kode <?php echo h($registration['id_pendaftaran']); ?> belum membuka formulir lengkap. Selesaikan pembayaran terlebih dahulu pada halaman status pendaftaran.</p>
                 <?php } ?>
-                <a class="submit-button" href="status-pendaftaran.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
+                <a class="submit-button" href="status-pendaftaran?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($token); ?>">Lihat status pendaftaran</a>
             </section>
 
         <?php } else { ?>
@@ -800,8 +800,8 @@ header('Referrer-Policy: no-referrer');
                         'kode' => $registration['id_pendaftaran'],
                         'token' => $token,
                     ];
-                    $previewUrl = 'ppdb-materi-file.php?'.http_build_query($fileQuery);
-                    $downloadUrl = 'ppdb-materi-file.php?'.http_build_query(array_merge($fileQuery, ['file' => 'original']));
+                    $previewUrl = 'ppdb-materi-file?'.http_build_query($fileQuery);
+                    $downloadUrl = 'ppdb-materi-file?'.http_build_query(array_merge($fileQuery, ['file' => 'original']));
                 ?>
                     <article class="participant-material">
                         <h3><?php echo h($materialLabel); ?></h3>
@@ -857,7 +857,7 @@ header('Referrer-Policy: no-referrer');
                         <li><button type="button" data-step-target="<?php echo (int) $stepIndex; ?>"<?php echo $stepIndex === $currentStep ? ' aria-current="step"' : ''; ?>><span class="form-steps__number"><?php echo $stepIndex + 1; ?></span><span class="form-steps__label"><?php echo h($step['title']); ?></span></button></li>
                     <?php } ?>
                 </ol>
-                <form class="registration-form" id="form-utama" action="formulir.php" method="post" enctype="multipart/form-data" autocomplete="on" novalidate data-current-step="<?php echo (int) $currentStep; ?>" data-birth-date="<?php echo h((string) $registration['tgl_lahir']); ?>" data-gender="<?php echo h((string) $registration['jenis_kelamin']); ?>">
+                <form class="registration-form" id="form-utama" action="formulir" method="post" enctype="multipart/form-data" autocomplete="on" novalidate data-current-step="<?php echo (int) $currentStep; ?>" data-birth-date="<?php echo h((string) $registration['tgl_lahir']); ?>" data-gender="<?php echo h((string) $registration['jenis_kelamin']); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                     <input type="hidden" name="kode" value="<?php echo h($registration['id_pendaftaran']); ?>">
                     <input type="hidden" name="token" value="<?php echo h($token); ?>">

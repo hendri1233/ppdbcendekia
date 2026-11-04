@@ -18,7 +18,7 @@ header('Cache-Control: no-store, private');
 header('Referrer-Policy: no-referrer');
 header('X-Robots-Tag: noindex, nofollow');
 if (!$registration || !hash_equals(ppdb_continue_signature($registration), $signature)) {
-    header('Location: '.ppdb_public_base_url().'/lanjutkan-pendaftaran.php');
+    header('Location: '.ppdb_public_base_url().'/lanjutkan-pendaftaran');
     exit;
 }
-header('Location: '.ppdb_public_base_url().'/formulir.php?'.http_build_query(['kode' => $code, 'token' => ppdb_resume_token($conn, $code)]));
+header('Location: '.ppdb_public_base_url().'/formulir?'.http_build_query(['kode' => $code, 'token' => ppdb_resume_token($conn, $code)]));

@@ -140,7 +140,7 @@ if ($registration['status_ppdb'] === 'diterima') {
         $rulesHtml .= '<li>'.h($rule).'</li>';
     }
     $groupLink = trim((string) ($registration['link_grup'] ?? ''));
-    $verifyUrl = ppdb_public_base_url().'/verifikasi-surat.php?kode='.rawurlencode($registrationId).'&sig='.ppdb_acceptance_signature($registration);
+    $verifyUrl = ppdb_public_base_url().'/verifikasi-surat?kode='.rawurlencode($registrationId).'&sig='.ppdb_acceptance_signature($registration);
     $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
         @page { margin: 0; }
         body { margin: 0; color: #1f2622; font-family: "Source Serif", "DejaVu Serif", serif; font-size: 11.8px; line-height: 1.26; }
@@ -213,7 +213,7 @@ $rowsHtml = '';
 foreach ($rows as [$label, $value]) {
     $rowsHtml .= '<tr><td class="label">'.h($label).'</td><td class="colon">:</td><td>'.$value.'</td></tr>';
 }
-$resumeUrl = ppdb_public_base_url().'/lanjutkan-pendaftaran.php?kode='.rawurlencode($registrationId);
+$resumeUrl = ppdb_public_base_url().'/lanjutkan-pendaftaran?kode='.rawurlencode($registrationId);
 $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
     @page { margin: 0; }
     body { margin: 0; color: #1f2622; font-family: "Source Serif", "DejaVu Serif", serif; font-size: 11.8px; line-height: 1.3; }

@@ -20,7 +20,7 @@ if (!$registration) {
     http_response_code(404);
 } elseif ($registration['status_ppdb'] === 'menunggu_kontak' && ppdb_activate_registration($conn, $registration['id_pendaftaran'])) {
     // Pendaftar lama yang belum dikirimi tautan langsung masuk ke tahap berikutnya.
-    header('Location: status-pendaftaran.php?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $receiptToken]));
+    header('Location: status-pendaftaran?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $receiptToken]));
     exit;
 }
 
@@ -119,7 +119,7 @@ header('Referrer-Policy: no-referrer');
                     <?php } else { ?>
                         <p class="acceptance-note">Tautan grup WhatsApp <?php echo h($registration['nama_unit']); ?> sedang disiapkan panitia dan akan tampil di halaman ini.</p>
                     <?php } ?>
-                    <a class="acceptance-button acceptance-button--pdf" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">
+                    <a class="acceptance-button acceptance-button--pdf" href="cetak-bukti?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 16 6.5 10.5l1.4-1.4 3.1 3.1V3h2v9.2l3.1-3.1 1.4 1.4L12 16Zm-7 3h14v2H5v-2Z"/></svg>
                         <span>Unduh surat keterangan diterima (PDF)</span>
                     </a>
@@ -246,7 +246,7 @@ header('Referrer-Policy: no-referrer');
                         <?php } ?>
                     </section>
                     <?php if ((float) $registration['biaya_pendaftaran'] > 0 && $hasPaymentAccount) { ?>
-                    <form class="payment-upload" action="upload-bukti-pembayaran.php" method="post" enctype="multipart/form-data">
+                    <form class="payment-upload" action="upload-bukti-pembayaran" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="id" value="<?php echo h($registration['id_pendaftaran']); ?>">
                         <input type="hidden" name="token" value="<?php echo h($receiptToken); ?>">
                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
@@ -265,7 +265,7 @@ header('Referrer-Policy: no-referrer');
                         <span>Isian yang sudah tersimpan akan dimuat kembali.</span>
                     <?php } ?>
                 </div>
-                <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan formulir</a>
+                <a class="download-button" href="formulir?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan formulir</a>
             <?php } elseif ($panel === 'cek-formulir') { ?>
                 <div class="payment-guidance">
                     <strong>Formulir lengkap diterima</strong>
@@ -280,8 +280,8 @@ header('Referrer-Policy: no-referrer');
                 </div>
             <?php } ?>
 
-            <?php if (!$isAccepted) { ?><a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti pendaftaran (PDF)</a><?php } ?>
-            <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain. Untuk kembali lagi, buka <a href="lanjutkan-pendaftaran.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>">Lanjutkan pendaftaran</a>.</p>
+            <?php if (!$isAccepted) { ?><a class="secondary-download" href="cetak-bukti?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti pendaftaran (PDF)</a><?php } ?>
+            <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain. Untuk kembali lagi, buka <a href="lanjutkan-pendaftaran?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>">Lanjutkan pendaftaran</a>.</p>
             <div class="admin-contact">
                 <span>Perlu bantuan? Hubungi admin SPMB.</span>
                 <a class="whatsapp-button" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan bantuan terkait pendaftaran '.$registration['id_pendaftaran'].'.')); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi WhatsApp admin SPMB <?php echo h(ppdb_admin_whatsapp_display()); ?>">
@@ -295,7 +295,7 @@ header('Referrer-Policy: no-referrer');
             <p class="result-eyebrow">Tautan tidak valid</p>
             <h1>Status pendaftaran<br>tidak ditemukan.</h1>
             <p class="result-description">Masuk kembali lewat halaman Lanjutkan pendaftaran, atau hubungi panitia SPMB.</p>
-            <a class="download-button" href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a>
+            <a class="download-button" href="lanjutkan-pendaftaran">Lanjutkan pendaftaran</a>
         </section>
     <?php } ?>
 

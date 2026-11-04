@@ -22,7 +22,7 @@
     const url = new URL(link.href, window.location.href);
     const samePageAnchor = url.pathname === window.location.pathname && url.hash !== "";
     // PDF diunduh tanpa meninggalkan halaman, jadi garisnya tidak perlu tampil.
-    if (url.origin !== window.location.origin || samePageAnchor || url.pathname.endsWith("cetak-bukti.php")) return;
+    if (url.origin !== window.location.origin || samePageAnchor || url.pathname.endsWith("cetak-bukti")) return;
     show();
   });
 

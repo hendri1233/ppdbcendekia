@@ -187,7 +187,7 @@ function public_page_start(mysqli $conn, array $page): void
                     </li>
                 <?php } ?>
             </ul>
-            <a class="button button--primary nav-apply" href="daftar.php">Informasi SPMB</a>
+            <a class="button button--primary nav-apply" href="daftar">Informasi SPMB</a>
         </nav>
 
         <div class="header-tools">
@@ -264,7 +264,7 @@ function public_page_end(mysqli $conn): void
             <div class="footer-ppdb">
                 <h2 class="footer-heading">SPMB <?= h(PUBLIC_PPDB_YEAR) ?></h2>
                 <p class="footer-note">Pendaftaran dibuka per unit. Registrasi awal hanya butuh beberapa menit.</p>
-                <a class="button button--light button--sm footer-cta" href="daftar.php">Daftar sekarang</a>
+                <a class="button button--light button--sm footer-cta" href="daftar">Daftar sekarang</a>
             </div>
             <?php if ($socials) { ?>
                 <h2 class="footer-heading footer-heading--spaced">Ikuti kami</h2>

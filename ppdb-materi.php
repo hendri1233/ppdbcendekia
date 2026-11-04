@@ -526,8 +526,8 @@ require 'admin_header.php';
             $submittedBody = $_POST['isi_html'][$type] ?? null;
             $body = ppdb_sanitize_rich_text((string) ($submittedBody ?? $material['isi_html'] ?? ''));
             $fileQuery = ['id' => (int) ($material['id'] ?? 0), 'file' => 'preview'];
-            $previewUrl = 'ppdb-materi-file.php?'.http_build_query($fileQuery);
-            $originalUrl = 'ppdb-materi-file.php?'.http_build_query(array_merge($fileQuery, ['file' => 'original']));
+            $previewUrl = 'ppdb-materi-file?'.http_build_query($fileQuery);
+            $originalUrl = 'ppdb-materi-file?'.http_build_query(array_merge($fileQuery, ['file' => 'original']));
         ?>
             <section class="panel material-edit-panel">
                 <div class="panel-header"><div><span class="materials-section-kicker"><?php echo h($units[$selectedUnit] ?? ''); ?> · <?php echo h($selectedYear); ?></span><h2><?php echo h($label); ?></h2><span class="panel-subtitle"><?php echo $materialReady ? 'Materi tersimpan dan siap ditampilkan kepada pendaftar.' : 'Materi belum tersedia untuk kombinasi unit dan tahun ini.'; ?></span></div><span class="materials-item-status<?php echo $materialReady ? ' is-present' : ''; ?>"><?php echo $materialReady ? 'Tersimpan' : 'Belum diisi'; ?></span></div>

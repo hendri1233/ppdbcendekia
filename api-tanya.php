@@ -145,11 +145,11 @@ function ai_knowledge_base(mysqli $conn): string
     }
 
     $lines[] = '';
-    $lines[] = '# Alur pendaftaran (halaman spmb, formulir di daftar.php)';
+    $lines[] = '# Alur pendaftaran (halaman spmb, formulir di daftar)';
     $lines[] = '1. Registrasi awal di daftar.php: nama lengkap ananda, tanggal lahir, jenis kelamin, siapa yang mendaftarkan, nomor WhatsApp pendaftar, ayah, dan ibu. Sekitar 3 menit, tanpa NIK.';
     $lines[] = '2. Pembayaran: langsung setelah registrasi awal, pendaftar transfer lalu mengunggah bukti di situs tanpa menunggu dihubungi panitia.';
     $lines[] = '3. Formulir lengkap di situs yang sama: data identitas, alamat, keluarga, membaca materi SPMB unit, lalu mengunggah dokumen. Sediakan sekitar 1 jam. Setelah formulir terkirim, ananda langsung diterima selama kursi tersedia, lalu tautan grup WhatsApp unit dan surat keterangan diterima (PDF) tampil.';
-    $lines[] = 'Setelah registrasi awal pendaftar menerima kode pendaftaran. Untuk kembali atau melihat hasil dan tautan grup WhatsApp unit, buka lanjutkan-pendaftaran.php dengan kode, tanggal lahir ananda, dan nomor WhatsApp. Jalur internal SDM yayasan memakai kode undangan terpisah. Pendaftar bisa masuk daftar tunggu bila kuota penuh.';
+    $lines[] = 'Setelah registrasi awal pendaftar menerima kode pendaftaran. Untuk kembali atau melihat hasil dan tautan grup WhatsApp unit, buka lanjutkan-pendaftaran dengan kode, tanggal lahir ananda, dan nomor WhatsApp. Jalur internal SDM yayasan memakai kode undangan terpisah. Pendaftar bisa masuk daftar tunggu bila kuota penuh.';
 
     $guide = ppdb_technical_guide();
     if (!empty($guide['documents'])) {
@@ -200,9 +200,9 @@ Cara menjawab:
 - Gunakan Bahasa Indonesia yang ramah, sopan, dan ringkas (umumnya 2–5 kalimat atau daftar pendek). Boleh menyapa dengan "Ayah/Bunda" bila sesuai.
 - Jawab hanya berdasarkan bagian "Informasi situs" di bawah. Jangan mengarang biaya, tanggal, kuota, nama guru, akreditasi, prestasi, atau kebijakan yang tidak tercantum.
 - Jika informasinya tidak ada, katakan terus terang bahwa informasi tersebut belum tersedia di situs, lalu arahkan ke WhatsApp panitia atau halaman Kontak.
-- Bila relevan, sertakan tautan halaman situs dengan format [teks](alamat-halaman), misalnya [formulir pendaftaran](daftar.php) atau [info SPMB](spmb).
+- Bila relevan, sertakan tautan halaman situs dengan format [teks](alamat-halaman), misalnya [formulir pendaftaran](daftar) atau [info SPMB](spmb).
 - Status kuota berubah setiap hari; sebutkan bahwa angka berasal dari sistem saat ini.
-- Jangan meminta atau menyimpan data pribadi (NIK, nomor KK, alamat rumah). Untuk status pendaftaran pribadi, arahkan ke halaman Lanjutkan pendaftaran (lanjutkan-pendaftaran.php).
+- Jangan meminta atau menyimpan data pribadi (NIK, nomor KK, alamat rumah). Untuk status pendaftaran pribadi, arahkan ke halaman Lanjutkan pendaftaran (lanjutkan-pendaftaran).
 - Untuk pertanyaan di luar urusan yayasan, sekolah, dan pendaftaran, sampaikan dengan sopan bahwa Anda hanya membantu seputar Yayasan Wakaf Cendekia Takengon.
 - Tulis teks biasa; gunakan **tebal** dan daftar berpoin seperlunya, tanpa tabel atau judul.
 PROMPT;

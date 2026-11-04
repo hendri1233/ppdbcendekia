@@ -77,7 +77,7 @@ header('Referrer-Policy: no-referrer');
             </div>
             <p class="code-hint">Simpan kode ini. Kode, tanggal lahir ananda, dan nomor WhatsApp diperlukan untuk kembali ke pendaftaran dan melihat hasilnya.</p>
 
-            <a class="download-button" href="formulir.php?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>
+            <a class="download-button" href="formulir?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>
 
             <h2 class="acceptance-heading">Tahap berikutnya</h2>
             <ol class="next-steps" aria-label="Langkah berikutnya">
@@ -100,8 +100,8 @@ header('Referrer-Policy: no-referrer');
             </dl>
 
 
-            <a class="secondary-download" href="cetak-bukti.php?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti pendaftaran (PDF)</a>
-            <p class="result-note">Jika halaman ini tertutup, buka menu <a href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a> untuk kembali.</p>
+            <a class="secondary-download" href="cetak-bukti?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti pendaftaran (PDF)</a>
+            <p class="result-note">Jika halaman ini tertutup, buka menu <a href="lanjutkan-pendaftaran">Lanjutkan pendaftaran</a> untuk kembali.</p>
             <div class="admin-contact">
                 <span>Butuh bantuan dari panitia?</span>
                 <a class="whatsapp-button" href="<?php echo h($adminWhatsAppUrl); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi admin SPMB melalui WhatsApp di <?php echo h(ppdb_admin_whatsapp_display()); ?>">

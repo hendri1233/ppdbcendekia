@@ -6,7 +6,7 @@ require_super_admin();
 
 $error = '';
 $notice = '';
-$internalEntryUrl = ppdb_public_base_url().'/daftar.php?internal=1';
+$internalEntryUrl = ppdb_public_base_url().'/daftar?internal=1';
 $academicYears = [];
 for ($year = 2027; $year <= 2040; $year++) {
     $academicYears[] = $year.'/'.($year + 1);
