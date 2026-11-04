@@ -490,7 +490,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             $nisn = formulir_condition_met($inputFields['NISN'], $_POST) ? $value('NISN') : '';
             // Sekolah asal di bawah yayasan cukup dipilih; namanya diisikan otomatis.
             $previousSchool = $value('jenjang_sekolah_asal');
-            $sourceSchool = $previousSchool === 'Sekolah lain' ? $value('asal_sekolah') : (str_ends_with($previousSchool, 'IT Cendekia') ? $previousSchool : '');
+            $sourceSchool = $previousSchool === 'Sekolah lain' ? $value('asal_sekolah') : (str_ends_with($previousSchool, 'IT Cendekia') ? $inputFields['jenjang_sekolah_asal']['options'][$previousSchool] : '');
             $birthPlace = $value('tmp_lahir');
             $religion = $value('agama');
             $informationSource = $value('sumber_informasi');
