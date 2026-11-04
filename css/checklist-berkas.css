@@ -1,0 +1,125 @@
+/* Halaman centang berkas unit; dibuka di ponsel dari grup WhatsApp. */
+body {
+    margin: 0;
+    background: var(--brand-50);
+    color: var(--brand-950);
+    font-family: "Open Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+}
+
+.berkas {
+    box-sizing: border-box;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+}
+
+.berkas h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    line-height: 1.25;
+}
+
+.berkas-unit {
+    margin: 0 0 .25rem;
+    color: var(--brand-700);
+    font-weight: 700;
+}
+
+.berkas-lead {
+    margin: .5rem 0 0;
+}
+
+.berkas-progress {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 1rem -1rem 0;
+    padding: .75rem 1rem;
+    background: var(--brand-50);
+}
+
+.berkas-progress strong {
+    display: block;
+    margin-bottom: .375rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.berkas-progress progress {
+    display: block;
+    width: 100%;
+    height: .5rem;
+    accent-color: var(--brand-600);
+}
+
+.berkas-error {
+    margin: .5rem 0 0;
+    padding: .75rem;
+    border-radius: .5rem;
+    background: var(--maroon-100);
+    color: var(--maroon-800);
+}
+
+.berkas-group {
+    min-width: 0;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.berkas-group legend {
+    margin-bottom: .5rem;
+    padding: 0;
+    color: var(--brand-800);
+    font-weight: 700;
+}
+
+.berkas-item {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+    padding: .75rem;
+    border: 1px solid var(--brand-200);
+    background: #fff;
+    cursor: pointer;
+}
+
+.berkas-item + .berkas-item {
+    border-top: 0;
+}
+
+.berkas-item:first-of-type {
+    border-radius: .5rem .5rem 0 0;
+}
+
+.berkas-item:last-of-type {
+    border-radius: 0 0 .5rem .5rem;
+}
+
+.berkas-item input {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0;
+    accent-color: var(--brand-600);
+}
+
+.berkas-item:has(input:focus-visible) {
+    outline: 2px solid var(--brand-600);
+    outline-offset: -2px;
+}
+
+.berkas-item:has(input:checked) strong {
+    color: var(--brand-700);
+}
+
+.berkas-item strong,
+.berkas-item small {
+    display: block;
+}
+
+.berkas-item small {
+    margin-top: .125rem;
+    color: var(--brand-800);
+    font-size: .8125rem;
+}
