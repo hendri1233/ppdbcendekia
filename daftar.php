@@ -213,6 +213,20 @@ $tkFullLevels = $tkRouteOffer && ($tkRouteOffer['jenjang'] ?? '') === 'TK'
     ? ppdb_full_levels(ppdb_level_quotas($conn, (string) $tkRouteOffer['kode_unit'], (string) $tkRouteOffer['th_ajaran']), $routeType === 'internal' ? 'internal' : 'eksternal')
     : [];
 
+/** Ketersediaan kuota per jenis kelamin dalam JSON, untuk label pilihan jenis kelamin di formulir. */
+function gender_availability_json(mysqli $conn, array $offer, string $route): string
+{
+    if (($offer['jenjang'] ?? '') !== 'SMP') {
+        return '';
+    }
+    $availability = [];
+    foreach (ppdb_gender_quotas($conn, (string) $offer['kode_unit'], (string) $offer['th_ajaran']) as $gender => $routes) {
+        [$quota, $filled] = $routes[$route];
+        $availability[$gender] = ['left' => max(0, $quota - $filled)];
+    }
+    return $availability ? (string) json_encode($availability) : '';
+}
+
 /** Pilihan jenjang tujuan khusus unit TK, tampil di samping pilihan unit. */
 function render_tk_level_field(array $options, string $value, bool $visible, array $fullLevels = []): void
 {
@@ -384,6 +398,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 throw new RuntimeException('Kuota jalur ini untuk unit dan tahun ajaran tersebut sudah terpenuhi.');
             }
             // Baris pengaturan unit sudah dikunci di atas, jadi hitungan per jenjang aman dari pendaftar bersamaan.
+            // Unit SMP: kuota laki-laki dan perempuan dihitung terpisah pada setiap jalur.
+            if (in_array($gender, ppdb_full_levels(ppdb_gender_quotas($conn, $unitCode, $academicYear), $routeType), true)) {
+                throw new RuntimeException('Mohon maaf, kuota '.strtolower(PPDB_GENDERS[$gender]).' untuk jalur ini sudah penuh.');
+            }
             if ($tkLevel !== null && in_array($tkLevel, ppdb_full_levels(ppdb_level_quotas($conn, $unitCode, $academicYear), $routeType), true)) {
                 throw new RuntimeException('Kuota '.$tkLevel.' untuk jalur ini sudah penuh. Silakan pilih jenjang lain atau hubungi panitia.');
             }
@@ -620,7 +638,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                                             ? brochure_attributes($brochures, $offerValue, $offer['nama_unit'])
                                             : ' data-unavailable="'.h($offer['availability']).'" data-unavailable-message="'.h($offer['availability_message']).'"';
                                     ?>
-                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>" data-name="<?php echo h($offer['nama_unit']); ?>"<?php echo $offerAttributes; ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?><?php echo ['penuh' => ' (penuh)', 'ditutup' => ' (ditutup)', 'belum' => ' (belum dibuka)'][$offer['availability']] ?? ''; ?></option>
+                                        <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>" data-name="<?php echo h($offer['nama_unit']); ?>" data-gender="<?php echo h(gender_availability_json($conn, $offer, 'eksternal')); ?>"<?php echo $offerAttributes; ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?><?php echo ['penuh' => ' (penuh)', 'ditutup' => ' (ditutup)', 'belum' => ' (belum dibuka)'][$offer['availability']] ?? ''; ?></option>
                                     <?php } ?>
                                 </select>
                                 <button type="button" class="brochure-trigger" data-brochure-open hidden>Lihat brosur unit</button>
@@ -705,6 +723,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                     </div>
                     <div class="field-grid">
                         <?php if (($routeOffer['jenjang'] ?? '') === 'TK') { render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), true, $tkFullLevels); } ?>
+                        <?php if ($routeOffer && gender_availability_json($conn, $routeOffer, 'internal') !== '') { ?><div hidden data-gender-route="<?php echo h(gender_availability_json($conn, $routeOffer, 'internal')); ?>"></div><?php } ?>
                         <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 3); } ?>
                     </div>
                     <label class="consent-check" for="konfirmasi_data">

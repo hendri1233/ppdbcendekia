@@ -247,14 +247,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $scheduleError = 'Jadwal tutup harus setelah jadwal buka.';
     }
 
-    // Unit TK: kuota diisi per jenjang (TK A / TK B), jumlahnya menjadi kuota per jalur.
+    // Unit TK per jenjang dan unit SMP per jenis kelamin: jumlahnya menjadi kuota per jalur.
     $levelQuotaInput = null;
-    $usesLevelQuotas = ($units[$unitCode]['jenjang'] ?? '') === 'TK' && ppdb_table_exists($conn, 'tb_kuota_tingkat');
-    if ($usesLevelQuotas) {
+    $unitJenjang = $units[$unitCode]['jenjang'] ?? '';
+    $levelKeys = [];
+    if ($unitJenjang === 'TK' && ppdb_table_exists($conn, 'tb_kuota_tingkat')) {
+        $levelKeys = PPDB_TK_LEVELS;
+    } elseif ($unitJenjang === 'SMP' && ppdb_table_exists($conn, 'tb_kuota_jenis_kelamin')) {
+        $levelKeys = array_keys(PPDB_GENDERS);
+    }
+    if ($levelKeys) {
         $levelQuotaInput = [];
         $quotaInternal = 0;
         $quotaExternal = 0;
-        foreach (PPDB_TK_LEVELS as $level) {
+        foreach ($levelKeys as $level) {
             foreach (['internal', 'eksternal'] as $route) {
                 $value = filter_var($_POST['kuota_tingkat'][$level][$route] ?? null, FILTER_VALIDATE_INT);
                 if ($value === false || $value < 0 || $value > 10000) {
@@ -304,12 +310,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $levelError = '';
             if ($levelQuotaInput !== null) {
-                $currentLevels = ppdb_level_quotas($conn, $unitCode, $academicYear);
+                $currentLevels = $unitJenjang === 'SMP' ? ppdb_gender_quotas($conn, $unitCode, $academicYear, true) : ppdb_level_quotas($conn, $unitCode, $academicYear);
                 foreach ($levelQuotaInput as $level => $routes) {
                     foreach ($routes as $route => $value) {
                         $filled = $currentLevels[$level][$route][1] ?? 0;
                         if ($value < $filled && $levelError === '') {
-                            $levelError = 'Kuota '.$level.' '.$route.' tidak dapat lebih kecil dari pendaftar aktifnya ('.$filled.').';
+                            $levelError = 'Kuota '.(PPDB_GENDERS[$level] ?? $level).' '.$route.' tidak dapat lebih kecil dari pendaftar aktifnya ('.$filled.').';
                         }
                     }
                 }
@@ -334,7 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     mysqli_stmt_close($scheduleSave);
                 }
                 if ($saved && $levelQuotaInput !== null) {
-                    $levelSave = mysqli_prepare($conn, 'INSERT INTO tb_kuota_tingkat (kode_unit,th_ajaran,tingkat_kelas,kuota_internal,kuota_eksternal) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota_internal=VALUES(kuota_internal),kuota_eksternal=VALUES(kuota_eksternal)');
+                    $levelSave = mysqli_prepare($conn, ($unitJenjang === 'SMP' ? 'INSERT INTO tb_kuota_jenis_kelamin (kode_unit,th_ajaran,jenis_kelamin,kuota_internal,kuota_eksternal)' : 'INSERT INTO tb_kuota_tingkat (kode_unit,th_ajaran,tingkat_kelas,kuota_internal,kuota_eksternal)').' VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota_internal=VALUES(kuota_internal),kuota_eksternal=VALUES(kuota_eksternal)');
                     foreach ($levelQuotaInput as $level => $routes) {
                         mysqli_stmt_bind_param($levelSave, 'sssii', $unitCode, $academicYear, $level, $routes['internal'], $routes['eksternal']);
                         $saved = $saved && mysqli_stmt_execute($levelSave);
@@ -369,7 +375,7 @@ $settings = mysqli_query($conn, "SELECT c.*,u.nama_unit,u.jenjang,
 $settingsRows = [];
 $settingsByKey = [];
 while ($setting = mysqli_fetch_assoc($settings)) {
-    $setting['levels'] = $setting['jenjang'] === 'TK' ? ppdb_level_quotas($conn, $setting['kode_unit'], $setting['th_ajaran']) : [];
+    $setting['levels'] = $setting['jenjang'] === 'TK' ? ppdb_level_quotas($conn, $setting['kode_unit'], $setting['th_ajaran']) : ($setting['jenjang'] === 'SMP' ? ppdb_gender_quotas($conn, $setting['kode_unit'], $setting['th_ajaran'], true) : []);
     $settingsRows[] = $setting;
     $settingsByKey[$setting['kode_unit'].'|'.$setting['th_ajaran']] = [
         'kuota_internal' => (int) $setting['kuota_internal'],
@@ -494,7 +500,7 @@ require 'admin_header.php';
                     data-reserved="<?php echo h((string) ($settingsByKey[($_POST['kode_unit'] ?? '').'|'.($_POST['th_ajaran'] ?? '')]['reserved_eksternal'] ?? '0')); ?>">
             </div>
             <?php if (ppdb_table_exists($conn, 'tb_kuota_tingkat')) { $postedUnitIsTk = ($units[$_POST['kode_unit'] ?? '']['jenjang'] ?? '') === 'TK'; ?>
-                <fieldset class="level-quota" data-level-quota<?php echo $postedUnitIsTk ? '' : ' hidden'; ?>>
+                <fieldset class="level-quota" data-level-quota data-level-jenjang="TK"<?php echo $postedUnitIsTk ? '' : ' hidden'; ?>>
                     <legend>Kuota per jenjang TK</legend>
                     <p class="level-quota__hint">Kuota internal dan eksternal TK di atas otomatis menjadi jumlah dari isian berikut.</p>
                     <?php foreach (PPDB_TK_LEVELS as $level) { $levelKey = strtolower(str_replace(' ', '-', $level)); ?>
@@ -502,6 +508,20 @@ require 'admin_header.php';
                             <div class="filter-field">
                                 <label for="kuota-<?php echo $levelKey.'-'.$route; ?>"><?php echo h($level.' '.$routeLabel); ?></label>
                                 <input id="kuota-<?php echo $levelKey.'-'.$route; ?>" name="kuota_tingkat[<?php echo h($level); ?>][<?php echo $route; ?>]" type="number" min="0" max="10000" value="<?php echo h((string) ($_POST['kuota_tingkat'][$level][$route] ?? '0')); ?>" data-level="<?php echo h($level); ?>" data-route="<?php echo $route; ?>"<?php echo $postedUnitIsTk ? ' required' : ' disabled'; ?>>
+                            </div>
+                        <?php } ?>
+                    <?php } ?>
+                </fieldset>
+            <?php } ?>
+            <?php if (ppdb_table_exists($conn, 'tb_kuota_jenis_kelamin')) { $postedUnitIsSmp = ($units[$_POST['kode_unit'] ?? '']['jenjang'] ?? '') === 'SMP'; ?>
+                <fieldset class="level-quota" data-level-quota data-level-jenjang="SMP"<?php echo $postedUnitIsSmp ? '' : ' hidden'; ?>>
+                    <legend>Kuota SMP per jenis kelamin</legend>
+                    <p class="level-quota__hint">Kuota internal dan eksternal SMP di atas otomatis menjadi jumlah dari isian berikut.</p>
+                    <?php foreach (PPDB_GENDERS as $gender => $genderLabel) { ?>
+                        <?php foreach (['internal' => 'internal SDM', 'eksternal' => 'eksternal umum'] as $route => $routeLabel) { ?>
+                            <div class="filter-field">
+                                <label for="kuota-<?php echo $gender.'-'.$route; ?>"><?php echo h($genderLabel.' '.$routeLabel); ?></label>
+                                <input id="kuota-<?php echo $gender.'-'.$route; ?>" name="kuota_tingkat[<?php echo $gender; ?>][<?php echo $route; ?>]" type="number" min="0" max="10000" value="<?php echo h((string) ($_POST['kuota_tingkat'][$gender][$route] ?? '0')); ?>" data-level="<?php echo $gender; ?>" data-route="<?php echo $route; ?>"<?php echo $postedUnitIsSmp ? ' required' : ' disabled'; ?>>
                             </div>
                         <?php } ?>
                     <?php } ?>

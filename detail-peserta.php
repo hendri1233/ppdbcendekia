@@ -40,7 +40,8 @@ function ppdb_seat_availability(mysqli $conn, array $locked): array
     return [
         'accepted' => $acceptedCount,
         'quota' => (int) $quota,
-        'seat_available' => $quota !== null && $acceptedCount < (int) $quota,
+        'seat_available' => $quota !== null && $acceptedCount < (int) $quota
+            && ppdb_gender_seat_open($conn, $locked['kode_unit'], $locked['th_ajaran'], $locked['jalur_pendaftaran'], $locked['jenis_kelamin'] ?? null) !== false,
     ];
 }
 
@@ -166,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'reopen_registration') {
             try {
                 mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, "SELECT p.status_ppdb,p.status_pembayaran,p.alamat,p.tanggal_batas_bayar,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.masa_pembayaran_hari FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE");
+                $lock = mysqli_prepare($conn, "SELECT p.status_ppdb,p.status_pembayaran,p.jenis_kelamin,p.alamat,p.tanggal_batas_bayar,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.masa_pembayaran_hari FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE");
                 mysqli_stmt_bind_param($lock, 's', $registrationId);
                 mysqli_stmt_execute($lock);
                 $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
@@ -184,6 +185,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $slotQuota = (int) ($locked['jalur_pendaftaran'] === 'internal' ? $locked['kuota_internal'] : $locked['kuota_eksternal']);
                 if ($slotsUsed >= $slotQuota) {
                     throw new RuntimeException('Kuota jalur ini sudah penuh. Tambah kuota di menu Kuota & pembayaran sebelum melanjutkan pendaftaran ini.');
+                }
+                if (in_array($locked['jenis_kelamin'], ppdb_full_levels(ppdb_gender_quotas($conn, $locked['kode_unit'], $locked['th_ajaran']), $locked['jalur_pendaftaran']), true)) {
+                    throw new RuntimeException('Kuota '.strtolower(PPDB_GENDERS[$locked['jenis_kelamin']]).' pada jalur ini sudah penuh. Tambah kuota di menu Kuota & pembayaran sebelum melanjutkan pendaftaran ini.');
                 }
 
                 // Pendaftar kembali ke tahap terakhirnya; isian yang pernah dikirim tetap dimuat.
@@ -216,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (in_array($action, ['accept_final', 'waitlist_final', 'reject_formulir'], true)) {
             try {
                 mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.status_data,p.status_pembayaran,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,p.nomor_antrian,p.nm_peserta,p.no_hp_pendaftar,u.nama_unit,g.link_grup,c.kuota_internal,c.kuota_eksternal FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? FOR UPDATE');
+                $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.status_data,p.status_pembayaran,p.jenis_kelamin,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,p.nomor_antrian,p.nm_peserta,p.no_hp_pendaftar,u.nama_unit,g.link_grup,c.kuota_internal,c.kuota_eksternal FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? FOR UPDATE');
                 mysqli_stmt_bind_param($lock, 's', $registrationId);
                 mysqli_stmt_execute($lock);
                 $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));

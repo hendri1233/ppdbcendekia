@@ -32,6 +32,11 @@ while ($unit = mysqli_fetch_assoc($unitQuery)) {
     $unit['sisa_total'] = max(0, $unit['kuota_total'] - $unit['pendaftar_total']);
     $unit['dibuka_total'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1 || (int) ($unit['internal_dibuka'] ?? 0) === 1;
     $unit['levels'] = $unit['jenjang'] === 'TK' && $unit['th_ajaran'] ? ppdb_level_quotas($conn, $unit['kode_unit'], $unit['th_ajaran']) : [];
+    if ($unit['jenjang'] === 'SMP' && $unit['th_ajaran']) {
+        foreach (ppdb_gender_quotas($conn, $unit['kode_unit'], $unit['th_ajaran']) as $gender => $routes) {
+            $unit['levels'][PPDB_GENDERS[$gender]] = $routes;
+        }
+    }
     $units[] = $unit;
     if ($unit['terbuka']) {
         $openUnits[] = $unit;

@@ -81,6 +81,7 @@ function ppdb_column_exists(mysqli $conn, string $table, string $column): bool
 
 /** Jenjang di dalam unit TK; setiap jenjang mempunyai kuota sendiri (migrasi 026). */
 const PPDB_TK_LEVELS = ['TK A', 'TK B'];
+const PPDB_GENDERS = ['laki-laki' => 'Laki-laki', 'perempuan' => 'Perempuan'];
 
 function ppdb_table_exists(mysqli $conn, string $table): bool
 {
@@ -134,6 +135,63 @@ function ppdb_level_quotas(mysqli $conn, string $unitCode, string $academicYear)
     }
     mysqli_stmt_close($count);
     return $levels;
+}
+
+/**
+ * Kuota unit SMP per jenis kelamin, bentuknya sama dengan kuota jenjang:
+ * ['laki-laki' => ['internal' => [kuota, terisi], 'eksternal' => [kuota, terisi]], ...].
+ * Kosong bila kuotanya belum diatur; unit hanya dibatasi kuota jalur. $withUnset tetap menghitung
+ * pendaftar aktif untuk layar pengaturan, agar kuota pertama tidak lebih kecil dari pendaftar yang ada.
+ */
+function ppdb_gender_quotas(mysqli $conn, string $unitCode, string $academicYear, bool $withUnset = false): array
+{
+    if (!ppdb_table_exists($conn, 'tb_kuota_jenis_kelamin')) {
+        return [];
+    }
+    $stmt = mysqli_prepare($conn, 'SELECT jenis_kelamin,kuota_internal,kuota_eksternal FROM tb_kuota_jenis_kelamin WHERE kode_unit=? AND th_ajaran=?');
+    mysqli_stmt_bind_param($stmt, 'ss', $unitCode, $academicYear);
+    mysqli_stmt_execute($stmt);
+    $rows = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+    if (!$rows && !$withUnset) {
+        return [];
+    }
+    $quotas = [];
+    foreach (PPDB_GENDERS as $gender => $_label) {
+        $quotas[$gender] = ['internal' => [0, 0], 'eksternal' => [0, 0]];
+    }
+    foreach ($rows as $row) {
+        if (isset($quotas[$row['jenis_kelamin']])) {
+            $quotas[$row['jenis_kelamin']]['internal'][0] = (int) $row['kuota_internal'];
+            $quotas[$row['jenis_kelamin']]['eksternal'][0] = (int) $row['kuota_eksternal'];
+        }
+    }
+    $count = mysqli_prepare($conn, "SELECT jenis_kelamin,jalur_pendaftaran,COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND status_ppdb NOT IN ('ditolak','data_lama') GROUP BY jenis_kelamin,jalur_pendaftaran");
+    mysqli_stmt_bind_param($count, 'ss', $unitCode, $academicYear);
+    mysqli_stmt_execute($count);
+    $result = mysqli_stmt_get_result($count);
+    while ($row = mysqli_fetch_assoc($result)) {
+        if (isset($quotas[$row['jenis_kelamin']][$row['jalur_pendaftaran']])) {
+            $quotas[$row['jenis_kelamin']][$row['jalur_pendaftaran']][1] = (int) $row['total'];
+        }
+    }
+    mysqli_stmt_close($count);
+    return $quotas;
+}
+
+/** Kursi yang masih bisa diterima bagi satu jenis kelamin; null bila kuotanya belum diatur. */
+function ppdb_gender_seat_open(mysqli $conn, string $unitCode, string $academicYear, string $route, ?string $gender): ?bool
+{
+    $quota = ppdb_gender_quotas($conn, $unitCode, $academicYear)[$gender][$route][0] ?? null;
+    if ($quota === null) {
+        return null;
+    }
+    $count = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? AND jalur_pendaftaran=? AND jenis_kelamin=? AND status_ppdb='diterima'");
+    mysqli_stmt_bind_param($count, 'ssss', $unitCode, $academicYear, $route, $gender);
+    mysqli_stmt_execute($count);
+    $accepted = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($count))['total'];
+    mysqli_stmt_close($count);
+    return $accepted < $quota;
 }
 
 /** Jenjang TK yang kuotanya pada jalur tertentu sudah habis. */
@@ -878,7 +936,7 @@ function ppdb_acceptance_rules(?string $jenjang): array
  */
 function ppdb_finalize_registration(mysqli $conn, string $registrationId): void
 {
-    $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.status_pembayaran,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,c.kuota_internal,c.kuota_eksternal FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE');
+    $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.status_pembayaran,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,p.jenis_kelamin,c.kuota_internal,c.kuota_eksternal FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE');
     mysqli_stmt_bind_param($lock, 's', $registrationId);
     mysqli_stmt_execute($lock);
     $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
@@ -894,7 +952,8 @@ function ppdb_finalize_registration(mysqli $conn, string $registrationId): void
     mysqli_stmt_close($acceptedQuery);
 
     $quota = (int) ($locked['jalur_pendaftaran'] === 'internal' ? $locked['kuota_internal'] : $locked['kuota_eksternal']);
-    $newStatus = $accepted < $quota ? 'diterima' : 'daftar_tunggu';
+    $genderSeatOpen = ppdb_gender_seat_open($conn, $locked['kode_unit'], $locked['th_ajaran'], $locked['jalur_pendaftaran'], $locked['jenis_kelamin']);
+    $newStatus = $accepted < $quota && $genderSeatOpen !== false ? 'diterima' : 'daftar_tunggu';
     $update = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET status_ppdb=?,data_diperiksa_oleh=NULL,data_diperiksa_pada=NOW() WHERE id_pendaftaran=?');
     mysqli_stmt_bind_param($update, 'ss', $newStatus, $registrationId);
     mysqli_stmt_execute($update);

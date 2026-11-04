@@ -190,9 +190,30 @@
     if (unitField) unitField.classList.toggle("field-wide", !isTk);
   }
 
+  // Unit SMP: pilihan jenis kelamin menampilkan sisa kuota masing-masing.
+  const genderSelect = document.getElementById("jenis_kelamin");
+  const genderRoute = document.querySelector("[data-gender-route]");
+  function updateGenderOptions() {
+    if (!genderSelect) return;
+    const option = externalRoute ? externalRoute.selectedOptions[0] : null;
+    const source = option ? option.dataset.gender : genderRoute ? genderRoute.dataset.genderRoute : "";
+    const availability = source ? JSON.parse(source) : null;
+    for (const choice of genderSelect.options) {
+      if (!choice.value) continue;
+      choice.dataset.label = choice.dataset.label || choice.textContent;
+      const info = availability ? availability[choice.value] : null;
+      const full = Boolean(info && info.left < 1);
+      choice.disabled = full;
+      choice.textContent = choice.dataset.label + (full ? " (kuota penuh)" : info ? " (sisa " + info.left + ")" : "");
+      if (full && choice.selected) genderSelect.value = "";
+    }
+  }
+  updateGenderOptions();
+
   if (externalRoute) {
     externalRoute.addEventListener("change", updateDapodikAge);
     externalRoute.addEventListener("change", updateTkLevel);
+    externalRoute.addEventListener("change", updateGenderOptions);
     updateTkLevel();
   }
   if (birthDateInput) {

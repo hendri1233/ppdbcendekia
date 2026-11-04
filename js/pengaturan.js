@@ -29,19 +29,20 @@
         jadwal_tutup: form.querySelector('#jadwal_tutup'),
     };
 
-    // Unit TK: kuota diisi per jenjang dan kuota jalur menjadi jumlahnya.
-    const levelBox = form.querySelector('[data-level-quota]');
-    const levelInputs = levelBox ? Array.from(levelBox.querySelectorAll('input[data-level]')) : [];
+    // Unit TK per jenjang dan unit SMP per jenis kelamin: kuota jalur menjadi jumlahnya.
+    const levelBoxes = Array.from(form.querySelectorAll('[data-level-quota]'));
+    const levelInputs = Array.from(form.querySelectorAll('[data-level-quota] input[data-level]'));
 
-    function selectedUnitIsTk() {
+    function activeLevelBox() {
         const option = unitSelect.selectedOptions[0];
-        return Boolean(levelBox && option && option.dataset.jenjang === 'TK');
+        return option ? levelBoxes.find((box) => box.dataset.levelJenjang === option.dataset.jenjang) : undefined;
     }
 
     function sumLevels() {
-        if (!selectedUnitIsTk()) return;
+        const box = activeLevelBox();
+        if (!box) return;
         const totals = { internal: 0, eksternal: 0 };
-        levelInputs.forEach((input) => {
+        box.querySelectorAll('input[data-level]').forEach((input) => {
             totals[input.dataset.route] += parseInt(input.value || '0', 10);
         });
         quotaInputs[0].value = totals.internal;
@@ -50,18 +51,19 @@
     }
 
     function syncLevelMode(setting) {
-        if (!levelBox) return;
-        const isTk = selectedUnitIsTk();
-        levelBox.hidden = !isTk;
+        const active = activeLevelBox();
+        levelBoxes.forEach((box) => { box.hidden = box !== active; });
         levelInputs.forEach((input) => {
-            input.disabled = !isTk;
-            input.required = isTk;
+            const inActive = Boolean(active) && active.contains(input);
+            input.disabled = !inActive;
+            input.required = inActive;
+            if (!inActive) return;
             const level = setting && setting.levels ? setting.levels[input.dataset.level] : null;
             const pair = level ? level[input.dataset.route] : null;
             if (setting !== undefined) input.value = pair ? pair[0] : 0;
             input.dataset.reserved = pair ? String(pair[1]) : '0';
         });
-        quotaInputs.forEach((input) => { input.readOnly = isTk; });
+        quotaInputs.forEach((input) => { input.readOnly = Boolean(active); });
         sumLevels();
     }
 
@@ -136,7 +138,7 @@
     levelInputs.forEach((input) => input.addEventListener('input', () => {
         const reserved = parseInt(input.dataset.reserved || '0', 10);
         input.setCustomValidity(parseInt(input.value || '0', 10) < reserved
-            ? 'Kuota jenjang ini tidak boleh lebih kecil dari pendaftar aktifnya (' + reserved + ').'
+            ? 'Kuota ini tidak boleh lebih kecil dari pendaftar aktifnya (' + reserved + ').'
             : '');
         sumLevels();
     }));
@@ -159,7 +161,7 @@
     if (!form.dataset.submitted) {
         loadSetting();
     } else {
-        // Setelah submit gagal: pertahankan isian, cukup atur tampilan jenjang TK.
+        // Setelah submit gagal: pertahankan isian, cukup atur tampilan kotak kuota.
         syncLevelMode(undefined);
     }
 })();
