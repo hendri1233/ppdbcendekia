@@ -104,6 +104,29 @@
         }
     }
 
+    // --- Tombol hijau SPMB: pilihan informasi dan pendaftaran ---
+    const applyMenu = document.querySelector('[data-apply-menu]');
+    const applyToggle = applyMenu ? applyMenu.querySelector('[data-apply-toggle]') : null;
+    if (applyMenu && applyToggle) {
+        const setApplyMenu = (open) => {
+            applyMenu.classList.toggle('is-open', open);
+            applyToggle.setAttribute('aria-expanded', String(open));
+        };
+        applyToggle.addEventListener('click', () => setApplyMenu(!applyMenu.classList.contains('is-open')));
+        applyMenu.addEventListener('click', (event) => {
+            if (event.target.closest('a')) setApplyMenu(false);
+        });
+        document.addEventListener('click', (event) => {
+            if (!applyMenu.contains(event.target)) setApplyMenu(false);
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && applyMenu.classList.contains('is-open')) {
+                setApplyMenu(false);
+                applyToggle.focus();
+            }
+        });
+    }
+
     // --- Bayangan header setelah halaman di-scroll ---
     const siteHeader = document.querySelector('.site-header');
     if (siteHeader) {

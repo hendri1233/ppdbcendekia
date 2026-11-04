@@ -84,7 +84,6 @@ function public_navigation(mysqli $conn): array
             ['href' => 'cerita#alumni', 'label' => 'Cerita alumni'],
         ]],
         ['key' => 'berita', 'href' => 'berita', 'label' => 'Berita'],
-        ['key' => 'ppdb', 'href' => 'spmb', 'label' => 'SPMB'],
         ['key' => 'kontak', 'href' => 'kontak', 'label' => 'Kontak'],
     ];
 }
@@ -187,7 +186,13 @@ function public_page_start(mysqli $conn, array $page): void
                     </li>
                 <?php } ?>
             </ul>
-            <a class="button button--primary nav-apply" href="daftar">Informasi SPMB</a>
+            <div class="nav-apply-menu" data-apply-menu>
+                <button class="button button--primary nav-apply" type="button" aria-expanded="false" aria-controls="menu-spmb" data-apply-toggle>SPMB<?= public_icon('chevron') ?></button>
+                <ul class="subnav subnav--apply" id="menu-spmb">
+                    <li><a href="spmb#unit">Informasi SPMB</a></li>
+                    <li><a href="daftar">Daftar</a></li>
+                </ul>
+            </div>
         </nav>
 
         <div class="header-tools">

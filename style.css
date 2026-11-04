@@ -4995,3 +4995,62 @@ dd {
         line-height: 1.6;
     }
 }
+
+/* Tombol hijau SPMB di header: membuka pilihan informasi dan pendaftaran. */
+.nav-apply-menu {
+    position: relative;
+}
+
+.primary-navigation .nav-apply {
+    cursor: pointer;
+}
+
+.nav-apply .icon {
+    width: 14px;
+    height: 14px;
+    transition: transform 180ms var(--ease-out);
+}
+
+.nav-apply-menu.is-open > .nav-apply .icon {
+    transform: rotate(180deg);
+}
+
+.subnav--apply {
+    left: auto;
+    right: 0;
+    min-width: 200px;
+}
+
+.nav-apply-menu.is-open > .subnav {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 150ms ease, transform 150ms var(--ease-out), visibility 0s;
+}
+
+@media (hover: hover) and (min-width: 1321px) {
+    .nav-apply-menu:hover > .subnav {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition: opacity 150ms ease, transform 150ms var(--ease-out), visibility 0s;
+    }
+
+    .nav-apply-menu:hover > .nav-apply .icon {
+        transform: rotate(180deg);
+    }
+}
+
+@media (max-width: 1320px) {
+    .primary-navigation .nav-apply {
+        width: 100%;
+    }
+
+    .subnav--apply {
+        margin: 8px 0 0;
+    }
+
+    .nav-apply-menu.is-open > .subnav {
+        display: block;
+    }
+}
