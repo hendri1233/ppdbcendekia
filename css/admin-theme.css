@@ -1816,13 +1816,12 @@ html:root[data-theme="dark"] .combined-quota {
     fill: var(--line);
 }
 
-/* Capaian harian: garis halus bergradasi dan batang pendaftar baru */
+/* Capaian harian: batang kursi terisi di atas bayangan kuota, disambung rantai */
 .chain-bars.is-internal { color: var(--route-internal); }
 .chain-bars.is-eksternal { color: var(--route-eksternal); }
 
 .chain-bar {
     fill: currentColor;
-    opacity: 0.32;
     transform-box: fill-box;
     transform-origin: bottom;
     animation: chain-bar-grow 520ms var(--admin-ease) both;
@@ -1832,23 +1831,8 @@ html:root[data-theme="dark"] .combined-quota {
     from { transform: scaleY(0); }
 }
 
-.chain-line {
-    stroke-width: 2.5;
+.combined-chain__line {
     transition: stroke-dashoffset 1100ms var(--admin-ease);
-}
-
-.chain-area {
-    opacity: 1;
-}
-
-.chain-stop-top {
-    stop-color: currentColor;
-    stop-opacity: 0.2;
-}
-
-.chain-stop-bottom {
-    stop-color: currentColor;
-    stop-opacity: 0;
 }
 
 .chain-guide {
@@ -1875,20 +1859,12 @@ html:root[data-theme="dark"] .combined-quota {
     fill: transparent;
 }
 
-.progress-key.is-bar {
-    width: 10px;
-    height: 12px;
-    background: var(--muted);
-    border-radius: 2px 2px 0 0;
-    opacity: 0.45;
-}
-
 @media (prefers-reduced-motion: reduce) {
     .chain-bar {
         animation: none;
     }
 
-    .chain-line {
+    .combined-chain__line {
         transition: none;
     }
 }
