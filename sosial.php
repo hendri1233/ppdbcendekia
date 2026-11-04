@@ -23,7 +23,7 @@ $programs = [
 $activities = [
     ['label' => '14 Oktober 2026', 'title' => 'Wakaf Amalan yang Terus Mengalir', 'summary' => 'Artikel ajakan berwakaf dari lembaga.', 'path' => 'berita-detail.php?id=15'],
     ['label' => '12 Maret 2026', 'title' => 'Cerdas Cermat Sirah Nabawiyah antar Guru', 'summary' => 'Kegiatan yang diselenggarakan Yayasan Cendekia Takengon.', 'path' => 'berita-detail.php?id=13'],
-    ['label' => 'Dokumentasi', 'title' => 'Kick Off Inkubasi Wakaf Produktif', 'summary' => 'Pelaksanaan oleh Kementerian Agama Republik Indonesia di Cendekia Coffee.', 'path' => 'galeri.php'],
+    ['label' => 'Dokumentasi', 'title' => 'Kick Off Inkubasi Wakaf Produktif', 'summary' => 'Pelaksanaan oleh Kementerian Agama Republik Indonesia.', 'path' => 'galeri.php'],
     ['label' => 'Dokumentasi', 'title' => 'Rapat program kerja', 'summary' => 'Rapat Lembaga Wakaf Insan Cendekia terkait program kerja.', 'path' => 'galeri.php'],
 ];
 
