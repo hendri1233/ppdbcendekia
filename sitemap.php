@@ -12,6 +12,7 @@ $paths = [
     'berita',
     'cerita',
     'program',
+    'sosial',
     'galeri',
     'unit',
     'kebijakan-privasi',

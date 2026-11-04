@@ -83,6 +83,12 @@ function public_navigation(mysqli $conn): array
             ['href' => 'cerita#testimoni', 'label' => 'Testimoni'],
             ['href' => 'cerita#alumni', 'label' => 'Cerita alumni'],
         ]],
+        ['key' => 'sosial', 'href' => 'sosial', 'label' => 'Sosial', 'children' => [
+            ['href' => 'sosial#lembaga-wakaf', 'label' => 'Lembaga Wakaf Insan Cendekia Takengon'],
+        ]],
+        ['key' => 'usaha', 'href' => 'usaha', 'label' => 'Usaha', 'children' => [
+            ['href' => 'usaha#koperasi-kenara', 'label' => 'Koperasi Kenara Cendekia Takengon'],
+        ]],
         ['key' => 'berita', 'href' => 'berita', 'label' => 'Berita'],
         ['key' => 'kontak', 'href' => 'kontak', 'label' => 'Kontak'],
     ];
