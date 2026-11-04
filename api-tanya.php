@@ -104,7 +104,7 @@ function ai_knowledge_base(mysqli $conn): string
     $lines[] = 'Berdiri 5 Januari 2022. Badan hukum: SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022. Nazhir wakaf uang terdaftar di Badan Wakaf Indonesia, kode 3.3.00369.';
     $lines[] = 'Pimpinan: '.cms_setting($conn, 'leader_name', 'Ilawarni').' ('.cms_setting($conn, 'leader_role', 'Pimpinan yayasan').').';
     $lines[] = 'Alamat: '.cms_setting($conn, 'contact_address');
-    $lines[] = 'WhatsApp panitia: '.cms_setting($conn, 'contact_phone').'. Email: '.cms_setting($conn, 'contact_email').'. Situs: '.cms_setting($conn, 'contact_website');
+    $lines[] = 'WhatsApp panitia: '.ppdb_admin_whatsapp_display().'. Email: '.cms_setting($conn, 'contact_email').'. Situs: '.cms_setting($conn, 'contact_website');
     if (cms_setting($conn, 'contact_hours') !== '') {
         $lines[] = 'Jam layanan: '.cms_setting($conn, 'contact_hours');
     }
@@ -131,7 +131,6 @@ function ai_knowledge_base(mysqli $conn): string
             ppdb_unit_display_name($unit['nama_unit']).' ('.ppdb_jenjang_label($unit['jenjang']).')',
             $unit['npsn'] ? 'NPSN '.$unit['npsn'] : '',
             $unit['email'] ? 'email '.$unit['email'] : '',
-            $unit['phone'] ? 'telepon '.$unit['phone'] : '',
             'SPMB: '.$status,
             (float) $unit['biaya_pendaftaran'] > 0 ? 'biaya pendaftaran Rp '.number_format((float) $unit['biaya_pendaftaran'], 0, ',', '.') : '',
             'halaman: unit/'.ppdb_unit_public_slug($unit),

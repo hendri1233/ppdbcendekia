@@ -2,8 +2,7 @@
 require_once __DIR__ . '/public_layout.php';
 
 $email = cms_setting($conn, 'contact_email', 'wakafcendekiatakengon@gmail.com');
-$phone = cms_setting($conn, 'contact_phone', '082181649543');
-$waNumber = ppdb_normalize_whatsapp_number($phone);
+$phone = ppdb_admin_whatsapp_display();
 $updatedAt = '30 Oktober 2026';
 
 public_page_start($conn, [
@@ -66,7 +65,7 @@ public_page_start($conn, [
             <p>Ayah/Bunda dapat meminta salinan, perbaikan, atau penghapusan data pendaftaran dengan menghubungi panitia. Perbaikan data formulir juga dapat diajukan melalui panitia selama masa pendaftaran.</p>
 
             <h2>8. Kontak</h2>
-            <p>Pertanyaan tentang kebijakan ini dapat disampaikan ke email <a href="mailto:<?= h($email) ?>"><?= h($email) ?></a> atau WhatsApp panitia <a href="https://wa.me/<?= h($waNumber ?: '6282181649543') ?>" rel="noopener"><?= h($phone) ?></a>.</p>
+            <p>Pertanyaan tentang kebijakan ini dapat disampaikan ke email <a href="mailto:<?= h($email) ?>"><?= h($email) ?></a> atau WhatsApp panitia <a href="<?= h(ppdb_admin_whatsapp_url()) ?>" rel="noopener"><?= h($phone) ?></a>.</p>
 
             <h2>9. Perubahan kebijakan</h2>
             <p>Kebijakan ini dapat diperbarui sewaktu-waktu. Tanggal pembaruan terakhir tercantum di bagian atas halaman.</p>

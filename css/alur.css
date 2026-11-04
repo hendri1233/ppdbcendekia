@@ -77,6 +77,30 @@ body:has(.result-shell) {
     border-radius: 12px;
 }
 
+.seat-notice {
+    margin: 0 0 16px;
+    padding: 16px 18px;
+    color: var(--brand-900);
+    background: #fbf7ec;
+    border: 1px solid #ecdfbd;
+    border-left: 4px solid var(--flow-gold);
+    border-radius: 11px;
+}
+
+.seat-notice strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--flow-green);
+    font-family: var(--flow-serif);
+    font-size: 1.14rem;
+}
+
+.seat-notice p {
+    margin: 6px 0 0;
+    font-size: var(--fs-sm);
+    line-height: 1.55;
+}
+
 .registration-code {
     display: grid;
     grid-template-columns: 1fr auto;

@@ -61,3 +61,81 @@ function ppdb_wablas_send_links(array $shareLinks): array
     }
     return $shareLinks;
 }
+
+/** Selesaikan respons ke peramban lebih dulu bila server mendukung, lalu lanjutkan pekerjaan di belakang. */
+function ppdb_finish_response(): void
+{
+    ignore_user_abort(true);
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } elseif (function_exists('litespeed_finish_request')) {
+        litespeed_finish_request();
+    }
+}
+
+/** Pesan konfirmasi kursi untuk nomor pendaftar setelah registrasi awal. */
+function ppdb_registration_whatsapp_message(array $registration, string $continueUrl): string
+{
+    $lines = [
+        'Assalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Yth. Ayah/Bunda dari Ananda *'.$registration['nm_peserta'].'*,',
+        '',
+        'Alhamdulillah, registrasi awal telah kami terima dan Ananda *sudah mendapatkan kursi* di *'.$registration['nama_unit'].'* untuk Tahun Ajaran '.$registration['th_ajaran'].'.',
+        '',
+        'Kode pendaftaran: *'.$registration['id_pendaftaran'].'*',
+        'Nomor antrean: *#'.(int) $registration['nomor_antrian'].'*',
+    ];
+    if ((float) $registration['biaya_pendaftaran'] > 0) {
+        $lines[] = 'Biaya pendaftaran: Rp '.number_format((float) $registration['biaya_pendaftaran'], 0, ',', '.');
+        if (!empty($registration['tanggal_batas_bayar'])) {
+            $lines[] = 'Batas pembayaran: '.ppdb_format_date_id($registration['tanggal_batas_bayar']);
+        }
+    }
+    array_push(
+        $lines,
+        '',
+        'Mohon Ayah/Bunda melanjutkan pendaftaran melalui tautan berikut:',
+        $continueUrl,
+        '',
+        'Tautan ini bersifat pribadi. Mohon disimpan dan tidak dibagikan kepada orang lain.',
+        '',
+        'Terima kasih atas kepercayaan Ayah/Bunda kepada Yayasan Wakaf Cendekia Takengon.',
+        'Wassalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Admin SPMB Yayasan Wakaf Cendekia Takengon',
+        'WhatsApp: '.ppdb_admin_whatsapp_display()
+    );
+    return implode("\n", $lines);
+}
+
+/** Kirim konfirmasi kursi ke nomor pendaftar. Kegagalan hanya dicatat agar pendaftaran tetap berjalan. */
+function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId, string $token): bool
+{
+    if (!ppdb_wablas_enabled()) {
+        return false;
+    }
+    try {
+        $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.th_ajaran,p.nomor_antrian,p.no_hp_pendaftar,p.tanggal_batas_bayar,u.nama_unit,q.biaya_pendaftaran FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? LIMIT 1');
+        mysqli_stmt_bind_param($stmt, 's', $registrationId);
+        mysqli_stmt_execute($stmt);
+        $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+        mysqli_stmt_close($stmt);
+        $phone = ppdb_normalize_whatsapp_number((string) ($registration['no_hp_pendaftar'] ?? ''));
+        if ($phone === '') {
+            return false;
+        }
+        $continueUrl = ppdb_public_base_url().'/formulir.php?'.http_build_query(['kode' => $registrationId, 'token' => $token], '', '&', PHP_QUERY_RFC3986);
+        $delivery = ppdb_wablas_send($phone, ppdb_registration_whatsapp_message($registration, $continueUrl));
+        if (!$delivery['ok']) {
+            error_log('Konfirmasi WhatsApp '.$registrationId.' gagal: '.$delivery['error']);
+        }
+        return $delivery['ok'];
+    } catch (Throwable $exception) {
+        error_log('Konfirmasi WhatsApp '.$registrationId.' gagal: '.$exception->getMessage());
+        return false;
+    }
+}

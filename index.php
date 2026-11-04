@@ -39,7 +39,7 @@ public_page_start($conn, [
         'url' => $siteUrl,
         'logo' => $siteUrl.'/img/logo-display.png',
         'image' => $siteUrl.'/img/og-cendekia.jpg',
-        'telephone' => '+6285184539694',
+        'telephone' => '+'.ppdb_admin_whatsapp_number(),
         'email' => cms_setting($conn, 'contact_email', 'wakafcendekiatakengon@gmail.com'),
         'sameAs' => [
             'https://www.instagram.com/cendekia_tkn?vrfl=MzhqbWgyeHN5bjV2',

@@ -208,7 +208,7 @@ function public_page_start(mysqli $conn, array $page): void
 function public_page_end(mysqli $conn): void
 {
     $units = cms_units($conn);
-    $phone = cms_setting($conn, 'contact_phone', '082181649543');
+    $phone = ppdb_admin_whatsapp_display();
     $email = cms_setting($conn, 'contact_email', 'wakafcendekiatakengon@gmail.com');
     $address = cms_setting($conn, 'contact_address', 'Jalan Pertamina–Kebet, Kampung Lemah Burbana, Bebesen, Aceh Tengah 24552');
     $socials = [
@@ -231,7 +231,7 @@ function public_page_end(mysqli $conn): void
             <p><?= h(cms_setting($conn, 'site_tagline', 'Shaleh, cerdas, dan terampil.')) ?></p>
             <ul class="footer-contact">
                 <li><?= public_icon('pin') ?><span><?= h($address) ?></span></li>
-                <li><?= public_icon('phone') ?><a href="https://wa.me/<?= h(ppdb_normalize_whatsapp_number($phone) ?: '6282181649543') ?>" rel="noopener"><?= h($phone) ?></a></li>
+                <li><?= public_icon('phone') ?><a href="<?= h(ppdb_admin_whatsapp_url()) ?>" rel="noopener"><?= h($phone) ?></a></li>
                 <li><?= public_icon('mail') ?><a href="mailto:<?= h($email) ?>"><?= h($email) ?></a></li>
             </ul>
         </div>

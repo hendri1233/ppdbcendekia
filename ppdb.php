@@ -382,7 +382,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
             <header class="section-head">
                 <p class="kicker">Bantuan</p>
                 <h2 id="faq-title">Tanya jawab</h2>
-                <p>Belum menemukan jawabannya? Hubungi panitia melalui WhatsApp <a href="https://wa.me/6282181649543" rel="noopener">0821-8164-9543</a>.</p>
+                <p>Belum menemukan jawabannya? Hubungi panitia melalui WhatsApp <a href="<?= h(ppdb_admin_whatsapp_url()) ?>" rel="noopener"><?= h(ppdb_admin_whatsapp_display()) ?></a>.</p>
             </header>
 
             <div class="faq-list" data-accordion>

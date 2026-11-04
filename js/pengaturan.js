@@ -21,7 +21,6 @@
     ];
 
     const fields = {
-        bank_nama: form.querySelector('#bank_nama'),
         nomor_rekening: form.querySelector('#nomor_rekening'),
         nama_pemilik_rekening: form.querySelector('#nama_pemilik_rekening'),
         biaya_pendaftaran: form.querySelector('#biaya_pendaftaran'),

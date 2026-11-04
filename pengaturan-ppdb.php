@@ -224,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quotaInternal = filter_var($_POST['kuota_internal'] ?? null, FILTER_VALIDATE_INT);
     $quotaExternal = filter_var($_POST['kuota_eksternal'] ?? null, FILTER_VALIDATE_INT);
     $feeInput = trim($_POST['biaya_pendaftaran'] ?? '');
-    $bankName = trim($_POST['bank_nama'] ?? '');
+    $bankName = PPDB_BANK_NAME;
     $accountNumber = trim($_POST['nomor_rekening'] ?? '');
     $accountName = trim($_POST['nama_pemilik_rekening'] ?? '');
     $paymentDays = filter_var($_POST['masa_pembayaran_hari'] ?? null, FILTER_VALIDATE_INT);
@@ -277,8 +277,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Masa pembayaran harus antara 1 dan 30 hari.';
     } elseif (strlen($bankName) > 80 || strlen($accountNumber) > 50 || strlen($accountName) > 120) {
         $error = 'Data rekening melebihi batas karakter.';
-    } elseif ((float) $feeInput > 0 && ($bankName === '' || $accountNumber === '' || $accountName === '')) {
-        $error = 'Lengkapi bank, nomor rekening, dan nama pemilik sebelum menetapkan biaya.';
+    } elseif ((float) $feeInput > 0 && ($accountNumber === '' || $accountName === '')) {
+        $error = 'Lengkapi nomor rekening dan nama pemilik sebelum menetapkan biaya.';
     } elseif (($internalOpen && $quotaInternal < 1) || ($externalOpen && $quotaExternal < 1)) {
         $error = 'Kuota jalur harus lebih dari nol untuk membuka pendaftaran jalur tersebut.';
     } elseif ($scheduleError !== '') {
@@ -375,7 +375,6 @@ while ($setting = mysqli_fetch_assoc($settings)) {
         'kuota_internal' => (int) $setting['kuota_internal'],
         'kuota_eksternal' => (int) $setting['kuota_eksternal'],
         'biaya_pendaftaran' => (string) $setting['biaya_pendaftaran'],
-        'bank_nama' => $setting['bank_nama'],
         'nomor_rekening' => $setting['nomor_rekening'],
         'nama_pemilik_rekening' => $setting['nama_pemilik_rekening'],
         'masa_pembayaran_hari' => (int) $setting['masa_pembayaran_hari'],
@@ -517,8 +516,8 @@ require 'admin_header.php';
                 <input id="biaya_pendaftaran" name="biaya_pendaftaran" inputmode="decimal" placeholder="Contoh: 250000 — kosongkan bila tidak dipungut" value="<?php echo h($_POST['biaya_pendaftaran'] ?? ''); ?>" required>
             </div>
             <div class="filter-field">
-                <label for="bank_nama">Bank atau e-wallet</label>
-                <input id="bank_nama" name="bank_nama" maxlength="80" placeholder="Contoh: BPI" value="<?php echo h($_POST['bank_nama'] ?? ''); ?>">
+                <label for="bank_nama">Bank</label>
+                <input id="bank_nama" value="<?php echo h(PPDB_BANK_NAME); ?>" readonly>
             </div>
             <div class="filter-field">
                 <label for="nomor_rekening">Nomor rekening</label>

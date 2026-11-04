@@ -1,7 +1,6 @@
 <?php
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
-require_once 'cms_helpers.php';
 require_once 'vendor/autoload.php';
 
 use Dompdf\Dompdf;
@@ -14,14 +13,14 @@ function cetak_image(string $path, string $class): string
 }
 
 /** Kop surat dipakai bersama oleh bukti pendaftaran dan surat keterangan diterima. */
-function cetak_kop(string $unitName): string
+function cetak_kop(string $unitName, string $adminPhone): string
 {
     return '<table class="kop"><tr>
         <td class="kop-logo">'.cetak_image(__DIR__.'/img/logo-pdf.jpg', 'logo').'</td>
         <td class="kop-text">
             <div class="kop-org">YAYASAN WAKAF CENDEKIA TAKENGON</div>
             <div class="kop-unit">Panitia Penerimaan Peserta Didik Baru · '.h($unitName).'</div>
-            <div class="kop-meta">Badan Hukum SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022 · Nazhir Wakaf Uang BWI Kode 3.3.00369<br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp '.h(ppdb_admin_whatsapp_display()).' · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</div>
+            <div class="kop-meta">Badan Hukum SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022 · Nazhir Wakaf Uang BWI Kode 3.3.00369<br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp Admin '.h($adminPhone).' · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</div>
         </td>
     </tr></table>
     <div class="kop-line"></div>';
@@ -82,7 +81,7 @@ if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
 
 $tokenIsValid = preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
 $tokenHash = $tokenIsValid ? hash('sha256', $receiptToken) : '';
-$stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran, p.th_ajaran, p.tgl_daftar, p.nomor_antrian, p.pendaftar, p.nm_peserta, p.tmp_lahir, p.tgl_lahir, p.jenis_kelamin, p.jalur_pendaftaran, p.status_ppdb, p.status_pembayaran, p.data_diperiksa_pada, '.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas, ' : '').'u.nama_unit, u.jenjang, u.npsn, u.email AS email_unit, g.link_grup, p.token_bukti, p.token_whatsapp, p.token_formulir FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit = u.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit = p.kode_unit WHERE p.id_pendaftaran = ? LIMIT 1');
+$stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran, p.th_ajaran, p.tgl_daftar, p.nomor_antrian, p.pendaftar, p.nm_peserta, p.tmp_lahir, p.tgl_lahir, p.jenis_kelamin, p.jalur_pendaftaran, p.status_ppdb, p.status_pembayaran, p.data_diperiksa_pada, '.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas, ' : '').'u.nama_unit, u.jenjang, u.npsn, u.email AS email_unit, pr.phone AS telepon_unit, g.link_grup, p.token_bukti, p.token_whatsapp, p.token_formulir FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit = u.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit = p.kode_unit LEFT JOIN tb_cms_unit_profiles pr ON pr.kode_unit = p.kode_unit WHERE p.id_pendaftaran = ? LIMIT 1');
 mysqli_stmt_bind_param($stmt, 's', $registrationId);
 mysqli_stmt_execute($stmt);
 $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -96,12 +95,11 @@ if (!$registration || (!$tokenAuthorized && !$adminAuthorized)) {
     exit('Bukti pendaftaran tidak ditemukan.');
 }
 
+// Kop memakai nomor admin unit dari Profil unit; bila belum diisi memakai nomor yayasan.
+$unitAdminPhone = trim((string) ($registration['telepon_unit'] ?? '')) ?: ppdb_admin_whatsapp_display();
+
 if ($registration['status_ppdb'] === 'diterima') {
-    // Nama pimpinan mengikuti CMS; gambar tanda tangan dan stempel dipasang bila berkasnya tersedia.
-    $leaderName = cms_setting($conn, 'leader_name', 'Ilawarni');
-    $leaderRole = cms_setting($conn, 'leader_role', 'Pimpinan Yayasan');
     $watermarkTag = cetak_image(__DIR__.'/img/logo-pdf.jpg', 'watermark');
-    $signatureTag = cetak_image(__DIR__.'/assets/legal/ttd-stempel.jpg', 'signature');
     $issuedOn = ppdb_format_date_id(substr((string) ($registration['data_diperiksa_pada'] ?: date('Y-m-d')), 0, 10));
     $letterNumber = ppdb_acceptance_number($registration);
     $birthPlace = trim((string) $registration['tmp_lahir']);
@@ -167,20 +165,18 @@ if ($registration['status_ppdb'] === 'diterima') {
         .verify strong { color: #123f32; }
         .verify a { color: #123f32; word-break: break-all; }
         .signer { text-align: left; }
-        .signature { width: 130px; height: 58px; }
-        .signature-space { height: 54px; }
-        .signer-name { font-weight: bold; text-decoration: underline; }
+        .signer-org { color: #123f32; font-weight: bold; }
         .footer { position: fixed; left: 66px; width: 662px; bottom: 16px; padding-top: 4px; color: #6a756f; border-top: .6px solid #b9c4be; font-size: 7.8px; text-align: center; }
     </style></head><body>
         <div class="top-band"></div>
         '.$watermarkTag.'
         <div class="page">
-            '.cetak_kop($unitName).'
+            '.cetak_kop($unitName, $unitAdminPhone).'
 
             <div class="title">SURAT KETERANGAN DITERIMA</div>
             <div class="number">Nomor: '.h($letterNumber).'</div>
 
-            <p>Yang bertanda tangan di bawah ini, '.h($leaderRole).', berdasarkan hasil pendaftaran SPMB Tahun Ajaran '.h($registration['th_ajaran']).' dan kelengkapan data yang disampaikan pendaftar, dengan ini menerangkan bahwa:</p>
+            <p>Yayasan Wakaf Cendekia Takengon, berdasarkan hasil pendaftaran SPMB Tahun Ajaran '.h($registration['th_ajaran']).' dan kelengkapan data yang disampaikan pendaftar, dengan ini menerangkan bahwa:</p>
             <table class="data">'.$rowsHtml.'</table>
             <div class="verdict">DINYATAKAN DITERIMA SEBAGAI PESERTA DIDIK BARU</div>
 
@@ -191,8 +187,8 @@ if ($registration['status_ppdb'] === 'diterima') {
             <p style="margin-top:5px">Demikian surat keterangan ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
 
             <table class="sign"><tr>
-                <td class="verify"><strong>Verifikasi keaslian surat</strong><br>Keaslian surat ini dapat diperiksa melalui tautan berikut:<br><a href="'.h($verifyUrl).'">'.h($verifyUrl).'</a></td>
-                <td class="signer">Takengon, '.h($issuedOn).'<br>'.h($leaderRole).',<br>'.($signatureTag !== '' ? $signatureTag : '<div class="signature-space"></div>').'<div class="signer-name">'.h($leaderName).'</div></td>
+                <td class="verify"><strong>Verifikasi keaslian surat</strong><br>Surat ini diterbitkan secara elektronik tanpa tanda tangan. Keasliannya dapat diperiksa melalui tautan berikut:<br><a href="'.h($verifyUrl).'">'.h($verifyUrl).'</a></td>
+                <td class="signer">Takengon, '.h($issuedOn).'<br>Atas nama,<br><span class="signer-org">Yayasan Wakaf Cendekia Takengon</span></td>
             </tr></table>
         </div>
         <div class="footer">Surat ini diterbitkan melalui sistem SPMB Yayasan Wakaf Cendekia Takengon · Nomor '.h($letterNumber).'</div>
@@ -246,7 +242,7 @@ $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
     <div class="top-band"></div>
     '.cetak_image(__DIR__.'/img/logo-pdf.jpg', 'watermark').'
     <div class="page">
-        '.cetak_kop($unitName).'
+        '.cetak_kop($unitName, $unitAdminPhone).'
         <div class="title">BUKTI PENDAFTARAN</div>
         <div class="subtitle">Registrasi awal peserta didik baru</div>
         <div class="code"><div class="code-label">KODE PENDAFTARAN</div><div class="code-value">'.h($registration['id_pendaftaran']).'</div></div>

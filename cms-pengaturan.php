@@ -5,7 +5,6 @@ $self = 'cms-pengaturan.php';
 $fields = [
     'site_tagline' => ['Semboyan', 120],
     'contact_address' => ['Alamat', 300],
-    'contact_phone' => ['WhatsApp panitia', 30],
     'contact_email' => ['Email', 120],
     'contact_website' => ['Situs', 200],
     'contact_hours' => ['Jam layanan', 160],
@@ -25,9 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($values['contact_email'] !== '' && !filter_var($values['contact_email'], FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('Format email tidak valid.');
-        }
-        if ($values['contact_phone'] !== '' && ppdb_normalize_whatsapp_number($values['contact_phone']) === '') {
-            throw new RuntimeException('Nomor WhatsApp tidak valid. Gunakan format 08xx atau 628xx.');
         }
         foreach (['contact_website', 'social_instagram', 'social_facebook', 'social_youtube', 'social_tiktok'] as $key) {
             if (!cms_valid_url($values[$key])) {
@@ -78,7 +74,7 @@ require 'admin_header.php';
             <div class="cms-form cms-grid">
                 <div class="cms-field cms-field--wide"><label class="cms-label" for="site_tagline">Semboyan</label><input id="site_tagline" name="site_tagline" value="<?php echo $value('site_tagline'); ?>" maxlength="120"></div>
                 <div class="cms-field cms-field--wide"><label class="cms-label" for="contact_address">Alamat</label><textarea id="contact_address" name="contact_address" rows="2" maxlength="300"><?php echo $value('contact_address'); ?></textarea></div>
-                <div class="cms-field"><label class="cms-label" for="contact_phone">WhatsApp panitia</label><input id="contact_phone" name="contact_phone" value="<?php echo $value('contact_phone'); ?>" maxlength="30" inputmode="tel"></div>
+                <div class="cms-field"><span class="cms-label">WhatsApp admin yayasan</span><input value="<?php echo h(ppdb_admin_whatsapp_display()); ?>" readonly aria-label="WhatsApp admin yayasan"><span class="cms-hint">Nomor resmi yang tampil di seluruh situs.</span></div>
                 <div class="cms-field"><label class="cms-label" for="contact_email">Email</label><input id="contact_email" name="contact_email" type="email" value="<?php echo $value('contact_email'); ?>" maxlength="120"></div>
                 <div class="cms-field"><label class="cms-label" for="contact_website">Situs</label><input id="contact_website" name="contact_website" value="<?php echo $value('contact_website'); ?>" maxlength="200" placeholder="https://"></div>
                 <div class="cms-field"><label class="cms-label" for="contact_hours">Jam layanan</label><input id="contact_hours" name="contact_hours" value="<?php echo $value('contact_hours'); ?>" maxlength="160" placeholder="Senin–Jumat, 08.00–15.00 WIB"></div>

@@ -5,6 +5,7 @@ require_once 'ppdb_material_helpers.php';
 require_once 'google_sheets_sync.php';
 require_once 'web_stats.php';
 require_once 'prestasi_helpers.php';
+require_once 'wablas.php';
 start_app_session();
 if (isset($_GET['internal'])) {
     header('Referrer-Policy: no-referrer');
@@ -419,7 +420,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             mysqli_stmt_execute($sequenceUpdate);
             mysqli_stmt_close($sequenceUpdate);
 
-            $queueNumber = (int) $lockedOffer['nomor_antrian_terakhir'] + 1;
+            // Antrean mengikuti pendaftar yang masih tercatat, jadi data uji yang dihapus tidak memakai nomor.
+            $queueQuery = mysqli_prepare($conn, 'SELECT COALESCE(MAX(nomor_antrian),0) AS terakhir FROM tb_pendaftaran WHERE kode_unit=? AND th_ajaran=? FOR UPDATE');
+            mysqli_stmt_bind_param($queueQuery, 'ss', $unitCode, $academicYear);
+            mysqli_stmt_execute($queueQuery);
+            $queueNumber = (int) mysqli_fetch_assoc(mysqli_stmt_get_result($queueQuery))['terakhir'] + 1;
+            mysqli_stmt_close($queueQuery);
             $queueUpdate = mysqli_prepare($conn, 'UPDATE tb_pengaturan_ppdb SET nomor_antrian_terakhir = ? WHERE kode_unit = ? AND th_ajaran = ?');
             mysqli_stmt_bind_param($queueUpdate, 'iss', $queueNumber, $unitCode, $academicYear);
             mysqli_stmt_execute($queueUpdate);
@@ -479,8 +485,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             mysqli_commit($conn);
             unset($_SESSION[$internalSessionKey]);
 
-            sync_google_sheets_registration($conn, $registrationId);
+            // Pendaftar langsung diarahkan; pesan WhatsApp dan spreadsheet menyusul di belakang.
             header('Location: berhasil.php?id='.urlencode($registrationId).'&token='.urlencode($receiptToken));
+            ppdb_finish_response();
+            ppdb_send_registration_whatsapp($conn, $registrationId, $receiptToken);
+            sync_google_sheets_registration($conn, $registrationId);
             exit;
         } catch (Throwable $exception) {
             mysqli_rollback($conn);
@@ -572,7 +581,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             <div class="daftar-card daftar-card--help">
                 <h2>Butuh bantuan?</h2>
                 <p>Hubungi nomor WhatsApp resmi SPMB. Panitia tidak pernah meminta transfer lewat nomor lain.</p>
-                <a class="daftar-help-link" href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a>
+                <a class="daftar-help-link" href="<?php echo h(ppdb_admin_whatsapp_url()); ?>" target="_blank" rel="noopener"><?php echo h(ppdb_admin_whatsapp_display()); ?></a>
             </div>
         </aside>
 
@@ -596,7 +605,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <div class="section-heading">
                             <div><p class="route-tag">Pendaftaran</p><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Pilih unit, lalu isi tujuh data awal. NIK dan dokumen menyusul setelah pembayaran.</p></div>
                         </div>
-                        <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
+                        <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="<?php echo h(ppdb_admin_whatsapp_url()); ?>" target="_blank" rel="noopener"><?php echo h(ppdb_admin_whatsapp_display()); ?></a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
                         <div class="field-grid">
                             <?php $tkSelected = ($routeOffer['jenjang'] ?? '') === 'TK'; ?>
                             <div class="field<?php echo $tkSelected ? '' : ' field-wide'; ?>" data-unit-field>
@@ -676,7 +685,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                             <?php if ($routeBrochure !== '') { ?><button type="button" class="brochure-trigger" data-brochure-open data-brochure-auto<?php echo $routeBrochure; ?>>Lihat brosur unit</button><?php } ?>
                         </div>
                     </div>
-                    <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="https://wa.me/6285184539694" target="_blank" rel="noopener">0851-8453-9694</a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
+                    <p class="contact-notice">Ayah/Bunda, sebelum mengisi data, mohon simpan terlebih dahulu nomor WhatsApp resmi SPMB Cendekia <a href="<?php echo h(ppdb_admin_whatsapp_url()); ?>" target="_blank" rel="noopener"><?php echo h(ppdb_admin_whatsapp_display()); ?></a> untuk menghindari penipuan yang mengatasnamakan sekolah.</p>
                 </section>
 
                 <?php if ($errors) { ?>

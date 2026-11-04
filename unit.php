@@ -92,7 +92,7 @@ public_page_start($conn, [
                     <?php if ($unit['npsn']) { ?><div><dt>NPSN</dt><dd><?= h($unit['npsn']) ?></dd></div><?php } ?>
                     <?php if ($unit['alamat']) { ?><div><dt>Alamat</dt><dd><?= h($unit['alamat']) ?></dd></div><?php } ?>
                     <?php if ($unit['email']) { ?><div><dt>Email</dt><dd><a href="mailto:<?= h($unit['email']) ?>"><?= h($unit['email']) ?></a></dd></div><?php } ?>
-                    <?php if ($unit['phone']) { ?><div><dt>Telepon</dt><dd><a href="tel:<?= h(preg_replace('/[^0-9+]/', '', $unit['phone'])) ?>"><?= h($unit['phone']) ?></a></dd></div><?php } ?>
+                    <div><dt>WhatsApp SPMB</dt><dd><a href="<?= h(ppdb_admin_whatsapp_url()) ?>" rel="noopener"><?= h(ppdb_admin_whatsapp_display()) ?></a></dd></div>
                 </dl>
             </div>
             <div class="side-card">

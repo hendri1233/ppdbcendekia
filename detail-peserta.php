@@ -289,6 +289,7 @@ if (!$participant) {
     http_response_code(404);
     exit('Data peserta tidak ditemukan.');
 }
+$participant['bank_nama'] = PPDB_BANK_NAME;
 $dapodikAge = ppdb_dapodik_age($participant['tgl_lahir'], $participant['th_ajaran']);
 $participant['umur_dapodik'] = ppdb_dapodik_age_label($dapodikAge);
 $participant += formulir_flatten_parent_profiles(formulir_parent_profiles($conn, $registrationId));

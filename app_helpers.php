@@ -758,15 +758,18 @@ function ppdb_admin_sync_is_due(mysqli $conn): bool
     }
 }
 
+/** Bank penerima pembayaran pendaftaran seluruh unit; nomor dan pemilik rekening diatur per unit. */
+const PPDB_BANK_NAME = 'Bank Aceh Syariah';
+
 /** Kontak resmi admin SPMB untuk ditampilkan dan dicantumkan pada pesan pendaftar. */
 function ppdb_admin_whatsapp_number(): string
 {
-    return '6285184839694';
+    return '6285284539694';
 }
 
 function ppdb_admin_whatsapp_display(): string
 {
-    return '0851 8483 9694';
+    return '0852 8453 9694';
 }
 
 function ppdb_admin_whatsapp_url(string $message = ''): string

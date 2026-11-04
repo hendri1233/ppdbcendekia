@@ -1,13 +1,14 @@
 <?php
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
+require_once 'wablas.php';
 
 $registrationId = $_GET['id'] ?? '';
 $receiptToken = $_GET['token'] ?? '';
 $registration = null;
 if (preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1) {
     $tokenHash = hash('sha256', $receiptToken);
-    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.th_ajaran,p.tgl_daftar,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.status_ppdb,p.nomor_antrian,p.token_bukti,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
+    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.th_ajaran,p.tgl_daftar,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.status_ppdb,p.nomor_antrian,p.token_bukti,p.tanggal_batas_bayar,p.no_hp_pendaftar,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
     mysqli_stmt_bind_param($stmt, 's', $registrationId);
     mysqli_stmt_execute($stmt);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -59,9 +60,15 @@ header('Referrer-Policy: no-referrer');
                 <span class="acceptance-seal" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg></span>
                 <p class="acceptance-eyebrow">Registrasi awal tercatat</p>
                 <h1>Terima kasih, Ayah/Bunda</h1>
-                <p class="acceptance-name"><?php echo h($registration['nm_peserta']); ?></p>
+                <p class="acceptance-name">Ananda <?php echo h($registration['nm_peserta']); ?></p>
                 <p class="acceptance-unit"><?php echo h($registration['nama_unit'] ?? 'Belum ditentukan'); ?> · Tahun ajaran <?php echo h($registration['th_ajaran']); ?></p>
             </header>
+
+            <div class="seat-notice" role="status">
+                <strong>Alhamdulillah, Ananda sudah mendapatkan kursi</strong>
+                <p>Ananda <?php echo h($registration['nm_peserta']); ?> telah tercatat mendapatkan kursi di <?php echo h($registration['nama_unit'] ?? 'unit pilihan'); ?> untuk Tahun Ajaran <?php echo h($registration['th_ajaran']); ?><?php echo $registration['nomor_antrian'] ? ' dengan nomor antrean <b>#'.(int) $registration['nomor_antrian'].'</b>' : ''; ?>. Mohon lanjutkan pembayaran dan pengisian formulir<?php echo $registration['tanggal_batas_bayar'] ? ', dengan batas pembayaran <b>'.h(ppdb_format_date_id($registration['tanggal_batas_bayar'])).'</b>' : ''; ?>.</p>
+                <?php if (ppdb_wablas_enabled() && ppdb_normalize_whatsapp_number((string) $registration['no_hp_pendaftar']) !== '') { ?><p>Konfirmasi dan tautan lanjutan juga kami kirim ke WhatsApp <?php echo h(ppdb_display_phone($registration['no_hp_pendaftar'])); ?>.</p><?php } ?>
+            </div>
 
             <div class="registration-code" role="group" aria-label="Kode pendaftaran">
                 <span>Kode pendaftaran</span>
@@ -98,7 +105,7 @@ header('Referrer-Policy: no-referrer');
             <p class="result-note">Jika halaman ini tertutup, buka menu <a href="lanjutkan-pendaftaran.php">Lanjutkan pendaftaran</a> untuk kembali.</p>
             <div class="admin-contact">
                 <span>Butuh bantuan dari panitia?</span>
-                <a class="whatsapp-button" href="<?php echo h($adminWhatsAppUrl); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi admin SPMB melalui WhatsApp di 0851 8483 9694">
+                <a class="whatsapp-button" href="<?php echo h($adminWhatsAppUrl); ?>" target="_blank" rel="noopener noreferrer" aria-label="Hubungi admin SPMB melalui WhatsApp di <?php echo h(ppdb_admin_whatsapp_display()); ?>">
                     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm0 23.54h-.01c-1.93 0-3.83-.52-5.48-1.51l-.39-.23-4.09 1.07 1.09-3.96-.25-.4a10.62 10.62 0 0 1-1.65-5.63c0-5.92 4.85-10.74 10.79-10.74 2.88 0 5.59 1.12 7.62 3.14a10.61 10.61 0 0 1 3.16 7.59c0 5.92-4.85 10.74-10.79 10.74Zm5.92-8.04c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
                     <span><?php echo h(ppdb_admin_whatsapp_display()); ?></span>
                 </a>

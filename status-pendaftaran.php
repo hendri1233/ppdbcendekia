@@ -9,7 +9,7 @@ $registration = null;
 $tokenIsValid = preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
 if ($tokenIsValid) {
     $tokenHash = hash('sha256', $receiptToken);
-    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,p.alamat,p.data_diperiksa_pada,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
+    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,p.alamat,p.data_diperiksa_pada,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
     mysqli_stmt_bind_param($stmt, 'ssss', $registrationId, $tokenHash, $tokenHash, $tokenHash);
     mysqli_stmt_execute($stmt);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -34,24 +34,8 @@ $isAccepted = $registration && $registration['status_ppdb'] === 'diterima';
 $rejectedCompletedSteps = $registration && $registration['status_ppdb'] === 'ditolak' ? ppdb_rejected_completed_steps($registration) : null;
 $paymentDeadlinePassed = $registration && $registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d');
 $hasPaymentAccount = $registration
-    && !empty($registration['bank_nama'])
     && !empty($registration['nomor_rekening'])
     && !empty($registration['nama_pemilik_rekening']);
-$bankNameWords = $registration ? preg_split('/\s+/', trim((string) ($registration['bank_nama'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) : [];
-$bankMonogram = '';
-foreach (array_slice($bankNameWords ?: [], 0, 3) as $bankNameWord) {
-    $bankMonogram .= strtoupper(substr($bankNameWord, 0, 1));
-}
-$normalizedBankName = strtolower(trim(preg_replace('/[^a-z0-9]+/i', ' ', (string) ($registration['bank_nama'] ?? ''))));
-$bankLogo = '';
-$bankDisplayName = trim((string) ($registration['bank_nama'] ?? ''));
-if ($normalizedBankName === 'bsi' || strpos($normalizedBankName, 'syariah indonesia') !== false) {
-    $bankLogo = 'img/Bank_Syariah_Indonesia.svg';
-    $bankDisplayName = 'Bank Syariah Indonesia';
-} elseif ($normalizedBankName === 'bas' || strpos($normalizedBankName, 'aceh') !== false) {
-    $bankLogo = 'img/Logo_Bank_Aceh_Syariah.png';
-    $bankDisplayName = 'Bank Aceh Syariah';
-}
 $uploadError = trim($_GET['upload_error'] ?? '');
 $revisionCount = isset($_GET['revisi']) && ctype_digit((string) $_GET['revisi']) ? (int) $_GET['revisi'] : null;
 
@@ -233,16 +217,9 @@ header('Referrer-Policy: no-referrer');
                                 </div>
                             </div>
                             <?php if ($hasPaymentAccount) { ?>
-                                <div class="payment-bank-brand" aria-label="Bank tujuan: <?php echo h($bankDisplayName); ?>">
-                                    <?php if ($bankLogo !== '') { ?>
-                                        <img class="payment-bank-brand__logo" src="<?php echo h($bankLogo); ?>" alt="Logo <?php echo h($bankDisplayName); ?>">
-                                    <?php } else { ?>
-                                        <span class="payment-bank-brand__mark" aria-hidden="true">
-                                            <svg viewBox="0 0 32 32" focusable="false"><path d="M4 12h24L16 5 4 12Zm2 3v9H4v3h24v-3h-2v-9h-3v9h-5v-9h-4v9H9v-9H6Z"/></svg>
-                                            <b><?php echo h($bankMonogram ?: 'BANK'); ?></b>
-                                        </span>
-                                    <?php } ?>
-                                    <span class="payment-bank-brand__name"><small>Transfer ke</small><strong><?php echo h($bankDisplayName); ?></strong></span>
+                                <div class="payment-bank-brand" aria-label="Bank tujuan: <?php echo h(PPDB_BANK_NAME); ?>">
+                                    <img class="payment-bank-brand__logo" src="img/Logo_Bank_Aceh_Syariah.png" alt="Logo <?php echo h(PPDB_BANK_NAME); ?>">
+                                    <span class="payment-bank-brand__name"><small>Transfer ke</small><strong><?php echo h(PPDB_BANK_NAME); ?></strong></span>
                                 </div>
                                 <dl class="payment-detail-list">
                                     <div><dt>Nomor rekening</dt><dd class="payment-account-number"><span><?php echo h($registration['nomor_rekening']); ?></span><button class="flow-copy" type="button" data-copy="<?php echo h($registration['nomor_rekening']); ?>" aria-label="Salin nomor rekening"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h10a2 2 0 0 1 2 2v12h-2V5H9V3ZM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 2v10h10V9H5Z"/></svg><span>Salin</span></button></dd></div>
