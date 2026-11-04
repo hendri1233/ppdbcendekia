@@ -3296,6 +3296,10 @@ select:focus-visible {
     --dot: var(--admin-accent);
 }
 
+.link-map-marker.is-registrant {
+    --dot: #e0a01b;
+}
+
 .link-map-marker__core,
 .link-map-marker__pulse {
     position: absolute;
@@ -3343,6 +3347,7 @@ select:focus-visible {
     border-radius: 50% 50% 50% 0;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
     transform: rotate(-45deg);
+    animation: map-blink 1.6s ease-in-out infinite;
 }
 
 @keyframes map-pulse {

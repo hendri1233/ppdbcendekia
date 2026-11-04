@@ -1,7 +1,7 @@
 /**
  * Peta dashboard: pengunjung tautan pendaftaran (satu titik berkedip per
  * kabupaten/kota, ukurannya mengikuti jumlah pengunjung) dan pendaftar yang
- * telah menyelesaikan formulir lengkap (penanda marun di desa/kecamatan).
+ * telah menyelesaikan formulir lengkap (penanda berkedip di desa/kecamatan).
  * Tampilan awal terfokus ke Kabupaten Aceh Tengah.
  */
 (function () {
@@ -64,7 +64,7 @@
         const size = Math.min(30, 16 + 4 * Math.sqrt(point.registrants));
         const icon = L.divIcon({
             className: 'link-map-marker is-registrant',
-            html: '<span class="link-map-marker__core">' + (point.registrants > 1 ? point.registrants : '') + '</span>',
+            html: '<span class="link-map-marker__pulse"></span><span class="link-map-marker__core">' + (point.registrants > 1 ? point.registrants : '') + '</span>',
             iconSize: [size, size],
         });
         const units = point.units
