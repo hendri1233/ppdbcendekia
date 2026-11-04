@@ -290,6 +290,10 @@ require 'admin_header.php';
                                 <td data-label="<?php echo h($stage); ?>" class="stage-cell">
                                     <?php if ($isDone) { ?>
                                         <span class="stage-state is-complete">&#10003; Selesai</span>
+                                        <?php if ($stage === 'Registrasi' || $stage === 'Hasil') {
+                                            $isCompletePrint = $stage === 'Hasil'; ?>
+                                            <a class="stage-print" href="cetak-registrasi.php?id=<?php echo rawurlencode($row['id_pendaftaran']).($isCompletePrint ? '&amp;berkas=lengkap' : ''); ?>" target="_blank" rel="noopener" title="<?php echo $isCompletePrint ? 'Cetak data lengkap peserta, orang tua, wali, dan berkas (A4)' : 'Cetak registrasi, bukti transfer, dan berkas jalur prestasi (A4)'; ?>" aria-label="<?php echo $isCompletePrint ? 'Cetak data lengkap' : 'Cetak registrasi'; ?> <?php echo h($row['nm_peserta']); ?>"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg></a>
+                                        <?php } ?>
                                     <?php } elseif ($isCurrent) { ?>
                                         <div class="stage-current">
                                             <span class="status-pill tone-<?php echo h($meta['tone']); ?>"><?php echo h($meta['label']); ?></span>

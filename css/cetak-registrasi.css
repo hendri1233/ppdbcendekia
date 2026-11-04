@@ -1,0 +1,335 @@
+@font-face {
+    font-family: "Source Serif";
+    src: url("../assets/fonts/SourceSerif4-400.ttf") format("truetype");
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Source Serif";
+    src: url("../assets/fonts/SourceSerif4-700.ttf") format("truetype");
+    font-weight: 700;
+}
+
+@page {
+    size: A4 portrait;
+    margin: 12mm 14mm 10mm;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: #1f2622;
+    background: #e8ecea;
+    font-family: "Source Serif", Georgia, "Times New Roman", serif;
+    font-size: 10.5pt;
+    line-height: 1.32;
+}
+
+.toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    color: #fff;
+    background: #123f32;
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+}
+
+.toolbar button {
+    min-height: 36px;
+    padding: 0 18px;
+    color: #123f32;
+    background: #fff;
+    border: 0;
+    border-radius: 6px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 210mm;
+    max-width: 100%;
+    min-height: 297mm;
+    margin: 16px auto;
+    padding: 12mm 14mm 16mm;
+    background: #fff;
+    box-shadow: 0 1px 6px rgb(0 0 0 / 20%);
+}
+
+/* Logo samar di tengah setiap lembar, seperti surat resmi yayasan. */
+.sheet::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 112mm;
+    height: 112mm;
+    background: url("../img/logo-512.png") center / contain no-repeat;
+    opacity: 0.07;
+    transform: translate(-50%, -50%);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}
+
+.sheet > * {
+    position: relative;
+}
+
+.print-frame {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.print-frame > tbody > tr > td {
+    padding: 0;
+}
+
+.print-frame__space {
+    display: none;
+    padding: 0;
+}
+
+.kop {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 7px;
+    border-bottom: 2.5px solid #123f32;
+    box-shadow: 0 2px 0 #fff, 0 3px 0 #123f32;
+}
+
+.kop img {
+    flex: none;
+    width: 76px;
+    height: 76px;
+}
+
+.kop div {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding-right: 76px;
+    text-align: center;
+}
+
+.kop strong {
+    color: #123f32;
+    font-size: 16pt;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+
+.kop span {
+    color: #123f32;
+    font-size: 10.5pt;
+    font-weight: 700;
+}
+
+.kop small {
+    color: #4c5852;
+    font-size: 8pt;
+    line-height: 1.25;
+}
+
+h1 {
+    margin: 12px 0 0;
+    color: #123f32;
+    font-size: 14pt;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.subtitle {
+    margin: 2px 0 0;
+    color: #4c5852;
+    font-size: 10pt;
+    text-align: center;
+}
+
+.code {
+    margin: 8px 0 0;
+    padding: 4px 12px;
+    text-align: center;
+    border-top: 1px solid #123f32;
+    border-bottom: 1px solid #123f32;
+}
+
+.code span {
+    display: block;
+    color: #4c5852;
+    font-size: 8pt;
+    letter-spacing: 0.12em;
+}
+
+.code strong {
+    color: #123f32;
+    font-size: 15pt;
+    letter-spacing: 0.1em;
+    line-height: 1.2;
+}
+
+h2 {
+    margin: 10px 0 2px;
+    color: #123f32;
+    font-size: 11pt;
+}
+
+.data {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data th,
+.data td {
+    padding: 1.5px 6px;
+    font-weight: 400;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 0.5px solid #c3ccc7;
+    overflow-wrap: anywhere;
+}
+
+.data th {
+    width: 36%;
+    color: #4c5852;
+}
+
+.data tr {
+    break-inside: avoid;
+}
+
+h2 {
+    break-after: avoid;
+}
+
+.data .is-empty {
+    color: #a3341f;
+    font-style: italic;
+}
+
+.empty-summary {
+    margin: 8px 0 0;
+    padding: 4px 8px;
+    color: #a3341f;
+    border-left: 3px solid #a3341f;
+    font-size: 9.5pt;
+}
+
+.attachment-list {
+    margin: 0;
+    padding-left: 22px;
+    columns: 2;
+}
+
+.signature {
+    width: 62mm;
+    margin: 10px 0 0 auto;
+    text-align: center;
+    break-inside: avoid;
+}
+
+.signature p {
+    margin: 0;
+}
+
+.signature__line {
+    margin-top: 46px;
+    border-top: 1px solid #1f2622;
+}
+
+.attachment-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #123f32;
+}
+
+.attachment-head img {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    margin: 0;
+}
+
+.attachment-head h2 {
+    margin: 0;
+}
+
+.attachment > img,
+.attachment > canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 240mm;
+    margin: 8px auto 0;
+    object-fit: contain;
+}
+
+.attachment-note {
+    margin: 10px 0 0;
+    color: #4c5852;
+}
+
+.page-footer {
+    display: none;
+}
+
+@media print {
+    body {
+        background: none;
+    }
+
+    .toolbar {
+        display: none;
+    }
+
+    .sheet {
+        width: auto;
+        min-height: 272mm;
+        margin: 0;
+        padding: 0 0 8mm;
+        box-shadow: none;
+        break-after: page;
+    }
+
+    .sheet:last-of-type {
+        break-after: auto;
+    }
+
+    .attachment {
+        break-inside: avoid;
+    }
+
+    .print-frame__space {
+        display: table-cell;
+        height: 9mm;
+    }
+
+    /* Elemen fixed diulang Chrome pada setiap halaman cetak. */
+    .page-footer {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: block;
+        padding-top: 3px;
+        color: #6a756f;
+        border-top: 0.5px solid #b9c4be;
+        font-size: 7.5pt;
+        text-align: center;
+    }
+}
