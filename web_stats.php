@@ -327,16 +327,20 @@ function ppdb_reverse_kabupaten(mysqli $conn, float $lat, float $lon): ?array
  * Koordinat alamat pendaftar dari isian formulir, dicari dari yang paling
  * rinci (desa) ke yang paling umum (kabupaten). Hasil ditolak bila jatuh di
  * provinsi lain. Mengembalikan koordinat beserta tingkat ketepatannya.
+ * Pencarian desa diulang tanpa kecamatan karena pembagian kecamatan di formulir
+ * dan OpenStreetMap kerap berbeda; hasilnya wajib berada di kabupaten yang sama
+ * agar desa bernama sama di tempat lain tidak terpakai.
  */
 function ppdb_geocode_address(mysqli $conn, string $desa, string $kecamatan, string $kabupaten, string $provinsi): ?array
 {
     $parts = array_map('ppdb_region_label', ['desa' => $desa, 'kecamatan' => $kecamatan, 'kabupaten' => $kabupaten, 'provinsi' => $provinsi]);
-    $levels = [
-        'desa' => [$parts['desa'], $parts['kecamatan'], $parts['kabupaten'], $parts['provinsi']],
-        'kecamatan' => [$parts['kecamatan'], $parts['kabupaten'], $parts['provinsi']],
-        'kabupaten' => [$parts['kabupaten'], $parts['provinsi']],
+    $attempts = [
+        ['desa', [$parts['desa'], $parts['kecamatan'], $parts['kabupaten'], $parts['provinsi']], false],
+        ['desa', [$parts['desa'], $parts['kabupaten'], $parts['provinsi']], true],
+        ['kecamatan', [$parts['kecamatan'], $parts['kabupaten'], $parts['provinsi']], false],
+        ['kabupaten', [$parts['kabupaten'], $parts['provinsi']], false],
     ];
-    foreach ($levels as $level => $query) {
+    foreach ($attempts as [$level, $query, $sameKabupaten]) {
         if (in_array('', array_slice($query, 0, -1), true) || $parts['kabupaten'] === '') {
             continue;
         }
@@ -347,6 +351,9 @@ function ppdb_geocode_address(mysqli $conn, string $desa, string $kecamatan, str
         }
         if ($parts['provinsi'] !== '' && $result['provinsi'] !== null
             && ppdb_region_key($result['provinsi']) !== ppdb_region_key($parts['provinsi'])) {
+            continue;
+        }
+        if ($sameKabupaten && ppdb_region_key((string) $result['kabupaten']) !== ppdb_region_key($parts['kabupaten'])) {
             continue;
         }
 
