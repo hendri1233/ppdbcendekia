@@ -438,6 +438,16 @@ function ppdb_schedule_open_sql(mysqli $conn, string $alias = 'q'): string
     return '(('.$prefix.'jadwal_buka IS NULL OR '.$prefix.'jadwal_buka<='.$now.') AND ('.$prefix.'jadwal_tutup IS NULL OR '.$prefix.'jadwal_tutup>'.$now.'))';
 }
 
+/** Syarat SQL jalur internal terbuka: mengikuti centang admin dan jadwal tutup, tetapi tidak menunggu jadwal buka. */
+function ppdb_internal_open_condition_sql(mysqli $conn, string $alias = 'q'): string
+{
+    $prefix = $alias === '' ? '' : $alias.'.';
+    if (!ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'jadwal_tutup')) {
+        return $prefix.'internal_dibuka=1';
+    }
+    return '('.$prefix.'internal_dibuka=1 AND ('.$prefix."jadwal_tutup IS NULL OR ".$prefix."jadwal_tutup>'".ppdb_now_wib()."'))";
+}
+
 /** Kolom SQL status jalur yang sudah memperhitungkan jadwal, misalnya "(q.eksternal_dibuka=1 AND ...) AS eksternal_dibuka". */
 function ppdb_route_open_sql(mysqli $conn, string $column, string $alias = 'q'): string
 {

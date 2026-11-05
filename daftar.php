@@ -12,7 +12,7 @@ if (isset($_GET['internal'])) {
     header('Cache-Control: private, no-store');
 }
 
-$offerResult = mysqli_query($conn, "SELECT q.kode_unit,q.th_ajaran,q.kuota_internal,q.kuota_eksternal,".ppdb_route_open_sql($conn, 'internal_dibuka').",".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.nomor_antrian_terakhir,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi FROM tb_pengaturan_ppdb q JOIN tb_unit_pendidikan u ON u.kode_unit=q.kode_unit ORDER BY q.th_ajaran,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
+$offerResult = mysqli_query($conn, "SELECT q.kode_unit,q.th_ajaran,q.kuota_internal,q.kuota_eksternal,".ppdb_internal_open_condition_sql($conn)." AS internal_dibuka,".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.nomor_antrian_terakhir,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi FROM tb_pengaturan_ppdb q JOIN tb_unit_pendidikan u ON u.kode_unit=q.kode_unit ORDER BY q.th_ajaran,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
 $openOffers = [];
 $fullOffers = [];
 // Semua unit tetap tampil di pilihan; unit yang belum dibuka, sudah ditutup, atau penuh memunculkan popup.
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'valid
                 mysqli_commit($conn);
                 $tokenEntryError = 'Terlalu banyak percobaan. Silakan coba kembali setelah 15 menit.';
             } else {
-                $tokenQuery = mysqli_prepare($conn, "SELECT t.id FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran WHERE BINARY t.kode_token=BINARY ? AND t.used_at IS NULL AND t.revoked_at IS NULL AND q.internal_dibuka=1 AND ".ppdb_schedule_open_sql($conn)." AND q.kuota_internal>0 LIMIT 1");
+                $tokenQuery = mysqli_prepare($conn, "SELECT t.id FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran WHERE BINARY t.kode_token=BINARY ? AND t.used_at IS NULL AND t.revoked_at IS NULL AND ".ppdb_internal_open_condition_sql($conn)." AND q.kuota_internal>0 LIMIT 1");
                 mysqli_stmt_bind_param($tokenQuery, 's', $tokenInput);
                 mysqli_stmt_execute($tokenQuery);
                 $validToken = mysqli_fetch_assoc(mysqli_stmt_get_result($tokenQuery));
@@ -147,7 +147,7 @@ $selectedAcademicYear = '';
 if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
     $internalTokenId = filter_var($_SESSION[$internalSessionKey] ?? null, FILTER_VALIDATE_INT);
     if ($internalTokenId !== false && $internalTokenId !== null && $internalTokenId > 0) {
-        $internalQuery = mysqli_prepare($conn, "SELECT t.id,t.kode_unit,t.th_ajaran,t.used_at,t.revoked_at,q.kuota_internal,".ppdb_route_open_sql($conn, 'internal_dibuka').",".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=t.kode_unit AND p.th_ajaran=t.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.id=? LIMIT 1");
+        $internalQuery = mysqli_prepare($conn, "SELECT t.id,t.kode_unit,t.th_ajaran,t.used_at,t.revoked_at,q.kuota_internal,".ppdb_internal_open_condition_sql($conn)." AS internal_dibuka,".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=t.kode_unit AND p.th_ajaran=t.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.id=? LIMIT 1");
         mysqli_stmt_bind_param($internalQuery, 'i', $internalTokenId);
         mysqli_stmt_execute($internalQuery);
         $internalCode = mysqli_fetch_assoc(mysqli_stmt_get_result($internalQuery));
@@ -156,7 +156,8 @@ if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
             unset($_SESSION[$internalSessionKey]);
             $tokenEntryRequested = true;
         } elseif (!(int) $internalCode['internal_dibuka'] || (int) $internalCode['kuota_internal'] < 1) {
-            $routeError = ppdb_schedule_closed_message($internalCode, 'Pendaftaran internal untuk unit dan tahun ajaran ini sedang ditutup.');
+            // Jadwal buka tidak menahan jalur internal, jadi pesannya hanya boleh merujuk jadwal tutup.
+            $routeError = ppdb_schedule_closed_message(['jadwal_tutup' => $internalCode['jadwal_tutup'] ?? null], 'Pendaftaran internal untuk unit dan tahun ajaran ini sedang ditutup.');
         } elseif ((int) $internalCode['internal_terisi'] >= (int) $internalCode['kuota_internal']
             && $_SERVER['REQUEST_METHOD'] !== 'POST') {
             $routeError = 'Kuota internal sudah terpenuhi. Hubungi panitia untuk informasi lebih lanjut.';
@@ -358,7 +359,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
         $storedLetterPath = null;
         try {
             mysqli_begin_transaction($conn);
-            $offerLock = mysqli_prepare($conn, 'SELECT kuota_internal,kuota_eksternal,'.ppdb_route_open_sql($conn, 'internal_dibuka', '').','.ppdb_route_open_sql($conn, 'eksternal_dibuka', '').',nomor_antrian_terakhir FROM tb_pengaturan_ppdb WHERE kode_unit = ? AND th_ajaran = ? FOR UPDATE');
+            $offerLock = mysqli_prepare($conn, 'SELECT kuota_internal,kuota_eksternal,'.ppdb_internal_open_condition_sql($conn, '').' AS internal_dibuka,'.ppdb_route_open_sql($conn, 'eksternal_dibuka', '').',nomor_antrian_terakhir FROM tb_pengaturan_ppdb WHERE kode_unit = ? AND th_ajaran = ? FOR UPDATE');
             mysqli_stmt_bind_param($offerLock, 'ss', $unitCode, $academicYear);
             mysqli_stmt_execute($offerLock);
             $lockedOffer = mysqli_fetch_assoc(mysqli_stmt_get_result($offerLock));
@@ -588,7 +589,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 </div>
                 <div class="progress-ring__track"><div class="progress-ring__bar" data-progress-bar></div></div>
             </div>
+            <?php if ($routeType === 'eksternal' && !$tokenEntryRequested && empty($_SESSION[$internalSessionKey])) { ?>
             <div class="intro-meta"><span class="meta-dot" aria-hidden="true"></span> <?php echo $openOffers ? 'Pendaftaran mengikuti kuota yang dibuka tiap unit.' : ($fullOffers ? 'Kuota pendaftaran saat ini telah terpenuhi.' : 'Pendaftaran belum dibuka. Pilih unit untuk melihat informasinya.'); ?></div>
+            <?php } ?>
             <div class="daftar-card">
                 <h2>Siapkan sebelum mengisi</h2>
                 <ul class="daftar-checklist">

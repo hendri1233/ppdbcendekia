@@ -556,7 +556,7 @@ require 'admin_header.php';
                     <label for="jadwal_tutup">Jadwal tutup (WIB)</label>
                     <input id="jadwal_tutup" name="jadwal_tutup" type="datetime-local" value="<?php echo h(is_string($_POST['jadwal_tutup'] ?? null) ? $_POST['jadwal_tutup'] : ''); ?>">
                 </div>
-                <p class="field-span-2 level-quota__hint">Pendaftaran unit hanya dapat diakses di antara jadwal buka dan tutup, selama jalurnya dicentang buka. Kosongkan bila tanpa batas waktu. Kuota tidak berubah.</p>
+                <p class="field-span-2 level-quota__hint">Jalur eksternal hanya dapat diakses di antara jadwal buka dan tutup, selama jalurnya dicentang buka. Jalur internal dapat diakses sebelum jadwal buka bila dicentang buka, dan berhenti pada jadwal tutup. Kosongkan bila tanpa batas waktu. Kuota tidak berubah.</p>
             <?php } ?>
             <label class="quota-toggle">
                 <input type="checkbox" name="internal_dibuka" value="1" <?php echo isset($_POST['internal_dibuka']) ? 'checked' : ''; ?>>
