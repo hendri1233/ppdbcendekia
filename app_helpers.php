@@ -832,12 +832,12 @@ const PPDB_BANK_NAME = 'Bank Aceh Syariah';
 /** Kontak resmi admin SPMB untuk ditampilkan dan dicantumkan pada pesan pendaftar. */
 function ppdb_admin_whatsapp_number(): string
 {
-    return '6285284539694';
+    return '6282276359227';
 }
 
 function ppdb_admin_whatsapp_display(): string
 {
-    return '0852 8453 9694';
+    return '0822 7635 9227';
 }
 
 function ppdb_admin_whatsapp_url(string $message = ''): string
