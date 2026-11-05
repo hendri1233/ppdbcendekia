@@ -5,7 +5,7 @@
  */
 
 const PRESTASI_JENIS_AKADEMIK = 'Akademik / peringkat raport';
-const PRESTASI_JENIS_QURAN = "Al-Qur'an minimal hafalan 1 juz";
+const PRESTASI_JENIS_QURAN = "Al-Qur'an minimal hafalan 2 juz";
 const PRESTASI_JENIS_LOMBA = 'Non akademik / perlombaan';
 const PRESTASI_PERINGKAT = ['Peringkat 1', 'Peringkat 2', 'Peringkat 3', 'Tidak ada peringkat'];
 const PRESTASI_PERINGKAT_BARIS = [
