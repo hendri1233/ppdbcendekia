@@ -14,7 +14,7 @@ const PRESTASI_PERINGKAT_BARIS = [
     'peringkat_k5_s1' => 'Kelas 5 · Semester 1',
     'peringkat_k5_s2' => 'Kelas 5 · Semester 2',
 ];
-const PRESTASI_JUMLAH_HAFALAN = ['1 Juz', '1,5 Juz', '2 Juz', '2,5 Juz', '3 Juz'];
+const PRESTASI_JUMLAH_HAFALAN = ['2 Juz', '2,5 Juz', '3 Juz', '3 Juz - Seterusnya'];
 const PRESTASI_TIDAK_ADA = 'Tidak ada';
 
 /** Migrasi 030 sudah dijalankan; bila belum, pendaftaran SMP berjalan seperti unit lain. */
@@ -89,10 +89,10 @@ function prestasi_render_section(array $values, bool $visible): void
     prestasi_category_open(2, PRESTASI_JENIS_QURAN);
     prestasi_render_question('hafalan_ada', "Apakah ananda memiliki hafalan Al-Qur'an minimal 1 juz?", $value('hafalan_ada'));
     echo '<fieldset class="field field-wide" data-prestasi-when="hafalan_ada" data-prestasi-is="Ada"><legend>Jumlah hafalan ananda <span class="required-mark" aria-hidden="true">*</span></legend><div class="radio-options">';
-    foreach ([...PRESTASI_JUMLAH_HAFALAN, 'Lainnya'] as $option) {
+    foreach (PRESTASI_JUMLAH_HAFALAN as $option) {
         echo '<label class="radio-option"><input type="radio" name="jumlah_hafalan" value="'.h($option).'"'.($value('jumlah_hafalan') === $option ? ' checked' : '').' data-prestasi-required><span>'.h($option).'</span></label>';
     }
-    echo '</div><div class="prestasi-other" data-prestasi-when="jumlah_hafalan" data-prestasi-is="Lainnya"><label for="jumlah_hafalan_lain">Tuliskan jumlah hafalan</label><input id="jumlah_hafalan_lain" type="text" name="jumlah_hafalan_lain" maxlength="100" placeholder="Contoh: 1 Juz 4 surah" value="'.h($value('jumlah_hafalan_lain')).'" data-prestasi-required></div></fieldset>';
+    echo '</div></fieldset>';
     prestasi_category_close();
 
     prestasi_category_open(3, PRESTASI_JENIS_LOMBA);
@@ -135,12 +135,9 @@ function prestasi_validate(array $input, array $files): array
         $errors[] = "Lengkapi kategori Al-Qur'an: pilih apakah ananda memiliki hafalan.";
     } else {
         $amount = $text('jumlah_hafalan');
-        $data['jumlah_hafalan'] = $amount === 'Lainnya' ? $text('jumlah_hafalan_lain') : $amount;
-        $valid = $amount === 'Lainnya'
-            ? $data['jumlah_hafalan'] !== '' && mb_strlen($data['jumlah_hafalan']) <= 100
-            : in_array($amount, PRESTASI_JUMLAH_HAFALAN, true);
-        if (!$valid) {
-            $errors[] = 'Pilih atau tuliskan jumlah hafalan ananda.';
+        $data['jumlah_hafalan'] = $amount;
+        if (!in_array($amount, PRESTASI_JUMLAH_HAFALAN, true)) {
+            $errors[] = 'Pilih jumlah hafalan ananda.';
         }
     }
     $competition = $text('riwayat_lomba');
