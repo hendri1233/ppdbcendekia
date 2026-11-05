@@ -753,6 +753,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <p class="unavailable-dialog__eyebrow">Informasi pendaftaran</p>
     <h2 id="unavailable-title" data-unavailable-title>Pendaftaran belum dibuka</h2>
     <p id="unavailable-message" class="unavailable-dialog__message" data-unavailable-message></p>
+    <?php if (prestasi_is_ready($conn)) { ?>
+    <div class="unavailable-dialog__prepare" data-unavailable-prepare hidden>
+        <p class="unavailable-dialog__prepare-title">Sambil menunggu tanggal pembukaan</p>
+        <p>Ayah/Bunda dapat menyiapkan berkas yang akan dilampirkan saat mendaftar melalui jalur prestasi, yaitu surat pengantar prestasi.</p>
+        <p class="prestasi-template">Belum punya suratnya? Unduh template, isi di sekolah, lalu minta tanda tangan dan stempel kepala sekolah: <a href="assets/template/surat-keterangan-prestasi.docx" download>Unduh Word</a> <a href="assets/template/surat-keterangan-prestasi.pdf" download>Unduh PDF</a></p>
+    </div>
+    <?php } ?>
 </dialog>
 <dialog class="brochure-viewer" data-brochure-viewer aria-labelledby="brochure-title">
     <div class="brochure-viewer__bar">

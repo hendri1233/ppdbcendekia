@@ -31,6 +31,9 @@
       titles[option.dataset.unavailable] || "Pendaftaran belum dibuka";
     unavailableDialog.querySelector("[data-unavailable-message]").textContent = message;
     unavailableDialog.dataset.state = option.dataset.unavailable;
+    // Persiapan berkas hanya relevan untuk SMP yang belum dibuka (surat jalur prestasi).
+    const prepare = unavailableDialog.querySelector("[data-unavailable-prepare]");
+    if (prepare) prepare.hidden = !(option.dataset.unavailable === "belum" && option.dataset.jenjang === "SMP");
     unavailableDialog.showModal();
   }
   if (externalRoute) {

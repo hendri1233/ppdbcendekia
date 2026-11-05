@@ -1076,7 +1076,8 @@ a {
     width: min(100% - 32px, 440px);
     margin: auto;
     padding: 34px 30px 30px;
-    overflow: hidden;
+    max-height: calc(100dvh - 32px);
+    overflow: hidden auto;
     color: var(--ink);
     text-align: center;
     background: linear-gradient(155deg, rgba(255, 255, 255, 0.86) 0%, rgba(242, 248, 244, 0.72) 100%);
@@ -1205,6 +1206,34 @@ a {
     color: var(--d-text, #56635d);
     font-size: var(--fs-md);
     line-height: 1.65;
+}
+
+.unavailable-dialog__prepare {
+    margin-top: 18px;
+    padding-top: 16px;
+    color: var(--d-text, #56635d);
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    border-top: 1px solid rgba(20, 74, 58, 0.14);
+}
+
+.unavailable-dialog__prepare[hidden] {
+    display: none;
+}
+
+.unavailable-dialog__prepare p {
+    margin: 0 0 8px;
+}
+
+.unavailable-dialog__prepare .unavailable-dialog__prepare-title {
+    margin-bottom: 4px;
+    color: var(--ink);
+    font-weight: 800;
+}
+
+.unavailable-dialog__prepare .prestasi-template {
+    margin: 0;
+    color: var(--d-text, #56635d);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
