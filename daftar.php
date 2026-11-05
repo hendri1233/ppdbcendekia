@@ -40,8 +40,9 @@ while ($offer = mysqli_fetch_assoc($offerResult)) {
         $offer['availability_message'] = 'Mohon maaf Ayah/Bunda, pendaftaran '.$unitLabel.' sudah ditutup pada '.ppdb_format_datetime_id($offer['jadwal_tutup']).'.';
     } else {
         $offer['availability'] = 'belum';
-        $offer['availability_message'] = 'Pendaftaran '.$unitLabel.' belum dibuka.'
-            .(ppdb_schedule_phase($offer['jadwal_buka'], null) === 'belum' ? ' Pendaftaran mulai dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'. Pendaftaran ditutup apabila kuota sudah penuh.' : '');
+        $offer['availability_message'] = ppdb_schedule_phase($offer['jadwal_buka'], null) === 'belum'
+            ? 'Pendaftaran '.$unitLabel.' mulai dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'. Pendaftaran ditutup apabila kuota sudah penuh.'
+            : 'Pendaftaran '.$unitLabel.' belum dibuka.';
     }
     $allOffers[] = $offer;
 }
