@@ -41,7 +41,7 @@ while ($offer = mysqli_fetch_assoc($offerResult)) {
     } else {
         $offer['availability'] = 'belum';
         $offer['availability_message'] = ppdb_schedule_phase($offer['jadwal_buka'], null) === 'belum'
-            ? 'Pendaftaran '.$unitLabel.' mulai dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'. Pendaftaran ditutup apabila kuota sudah penuh.'
+            ? 'SPMB '.$unitLabel.' mulai dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'. Pendaftaran ditutup apabila kuota sudah penuh.'
             : 'Pendaftaran '.$unitLabel.' belum dibuka.';
     }
     $allOffers[] = $offer;
