@@ -3630,6 +3630,10 @@ dd {
         grid-template-columns: 64px minmax(0, 1fr) minmax(240px, 300px);
     }
 
+    .unit-row__capacity:empty {
+        display: none;
+    }
+
     .unit-row__status {
         grid-column: 2 / -1;
         justify-content: flex-start;

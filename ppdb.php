@@ -31,6 +31,9 @@ while ($unit = mysqli_fetch_assoc($unitQuery)) {
     $unit['pendaftar_total'] = $unit['terisi'] + $unit['internal_terisi'];
     $unit['sisa_total'] = max(0, $unit['kuota_total'] - $unit['pendaftar_total']);
     $unit['dibuka_total'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1 || (int) ($unit['internal_dibuka'] ?? 0) === 1;
+    // Angka kuota baru ditampilkan setelah unit dibuka; penuh dan ditutup tetap tampil.
+    $unit['kuota_tampil'] = $unit['kuota_total'] > 0
+        && ($unit['dibuka_total'] || $unit['sisa_total'] === 0 || ppdb_schedule_phase($unit['jadwal_buka'] ?? null, $unit['jadwal_tutup'] ?? null) === 'selesai');
     $unit['levels'] = $unit['jenjang'] === 'TK' && $unit['th_ajaran'] ? ppdb_level_quotas($conn, $unit['kode_unit'], $unit['th_ajaran']) : [];
     if ($unit['jenjang'] === 'SMP' && $unit['th_ajaran']) {
         foreach (ppdb_gender_quotas($conn, $unit['kode_unit'], $unit['th_ajaran']) as $gender => $routes) {
@@ -123,8 +126,9 @@ public_page_start($conn, [
 ?>
 <?php
 // Ringkasan hero: dijumlahkan dari data unit di atas, tanpa query tambahan.
-$summaryQuota = array_sum(array_column($units, 'kuota_total'));
-$summarySeats = array_sum(array_column($units, 'sisa_total'));
+$visibleUnits = array_filter($units, static fn (array $unit): bool => $unit['kuota_tampil']);
+$summaryQuota = array_sum(array_column($visibleUnits, 'kuota_total'));
+$summarySeats = array_sum(array_column($visibleUnits, 'sisa_total'));
 $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit['dibuka_total'] && $unit['sisa_total'] > 0));
 ?>
 <section class="page-hero page-hero--ppdb">
@@ -190,6 +194,9 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                             <p><?= h(implode(' · ', array_filter([ppdb_jenjang_label($unit['jenjang']), $unit['npsn'] ? 'NPSN '.$unit['npsn'] : '', $ageText]))) ?></p>
                             <?php if ($scheduleText !== '') { ?><p class="unit-row__schedule">Jadwal pendaftaran: <?= h($scheduleText) ?></p><?php } ?>
                         </div>
+                        <?php if (!$unit['kuota_tampil']) { ?>
+                        <div class="unit-row__capacity"></div>
+                        <?php } else { ?>
                         <div class="unit-row__capacity">
                             <dl class="unit-row__numbers">
                                 <div>
@@ -217,6 +224,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                                 </ul>
                             <?php } ?>
                         </div>
+                        <?php } ?>
                         <div class="unit-row__status">
                             <?php if ($isOpen) { ?>
                                 <span class="badge badge--success">Dibuka</span>
