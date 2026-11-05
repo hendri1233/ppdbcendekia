@@ -144,7 +144,8 @@ $routeError = '';
 $routeSelected = true;
 $selectedUnitCode = '';
 $selectedAcademicYear = '';
-if ($tokenEntryRequested || !empty($_SESSION[$internalSessionKey])) {
+// Sesi kode internal hanya dipakai di alamat jalur internal; /daftar tetap menampilkan pilihan unit.
+if ($tokenEntryRequested) {
     $internalTokenId = filter_var($_SESSION[$internalSessionKey] ?? null, FILTER_VALIDATE_INT);
     if ($internalTokenId !== false && $internalTokenId !== null && $internalTokenId > 0) {
         $internalQuery = mysqli_prepare($conn, "SELECT t.id,t.kode_unit,t.th_ajaran,t.used_at,t.revoked_at,q.kuota_internal,".ppdb_internal_open_condition_sql($conn)." AS internal_dibuka,".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=t.kode_unit AND p.th_ajaran=t.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi FROM tb_token_internal t JOIN tb_pengaturan_ppdb q ON q.kode_unit=t.kode_unit AND q.th_ajaran=t.th_ajaran JOIN tb_unit_pendidikan u ON u.kode_unit=t.kode_unit WHERE t.id=? LIMIT 1");
@@ -589,7 +590,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 </div>
                 <div class="progress-ring__track"><div class="progress-ring__bar" data-progress-bar></div></div>
             </div>
-            <?php if ($routeType === 'eksternal' && !$tokenEntryRequested && empty($_SESSION[$internalSessionKey])) { ?>
+            <?php if ($routeType === 'eksternal' && !$tokenEntryRequested) { ?>
             <div class="intro-meta"><span class="meta-dot" aria-hidden="true"></span> <?php echo $openOffers ? 'Pendaftaran mengikuti kuota yang dibuka tiap unit.' : ($fullOffers ? 'Kuota pendaftaran saat ini telah terpenuhi.' : 'Pendaftaran belum dibuka. Pilih unit untuk melihat informasinya.'); ?></div>
             <?php } ?>
             <div class="daftar-card">
@@ -608,7 +609,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
         </aside>
 
         <div class="initial-main">
-            <?php if ($routeType === 'eksternal' && !$tokenEntryRequested && empty($_SESSION[$internalSessionKey])) { ?>
+            <?php if ($routeType === 'eksternal' && !$tokenEntryRequested) { ?>
                 <?php if ($routeError !== '' && $_SERVER['REQUEST_METHOD'] !== 'POST') { ?>
                     <div class="error-summary" role="alert"><strong>Pilihan pendaftaran tidak tersedia</strong><ul><li><?php echo h($routeError); ?></li></ul></div>
                 <?php } ?>
