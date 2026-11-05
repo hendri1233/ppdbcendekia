@@ -588,7 +588,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 </div>
                 <div class="progress-ring__track"><div class="progress-ring__bar" data-progress-bar></div></div>
             </div>
-            <div class="intro-meta"><span class="meta-dot" aria-hidden="true"></span> <?php echo $openOffers ? 'Pendaftaran mengikuti kuota yang dibuka tiap unit.' : ($fullOffers ? 'Kuota pendaftaran saat ini telah terpenuhi.' : 'Pendaftaran belum dibuka oleh admin.'); ?></div>
+            <div class="intro-meta"><span class="meta-dot" aria-hidden="true"></span> <?php echo $openOffers ? 'Pendaftaran mengikuti kuota yang dibuka tiap unit.' : ($fullOffers ? 'Kuota pendaftaran saat ini telah terpenuhi.' : 'Pendaftaran belum dibuka. Pilih unit untuk melihat informasinya.'); ?></div>
             <div class="daftar-card">
                 <h2>Siapkan sebelum mengisi</h2>
                 <ul class="daftar-checklist">
@@ -615,7 +615,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <ul><?php foreach ($errors as $error) { ?><li><?php echo h($error); ?></li><?php } ?></ul>
                     </div>
                 <?php } ?>
-                <?php if (!$openOffers) { ?>
+                <?php if (!$allOffers) { ?>
                     <div class="error-summary" role="status"><strong>Pendaftaran eksternal belum tersedia</strong><ul><li>Belum ada kuota eksternal yang dibuka untuk tahun ajaran 2027/2028 atau kuota telah terpenuhi. Silakan hubungi panitia SPMB.</li></ul></div>
                 <?php } ?>
                 <form class="registration-form" id="form-utama" action="daftar" method="post" enctype="multipart/form-data" autocomplete="on" novalidate>
