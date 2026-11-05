@@ -65,8 +65,8 @@ header('Referrer-Policy: no-referrer');
             </header>
 
             <div class="seat-notice" role="status">
-                <strong>Alhamdulillah, Ananda sudah mendapatkan kursi</strong>
-                <p>Ananda <?php echo h($registration['nm_peserta']); ?> telah tercatat mendapatkan kursi di <?php echo h($registration['nama_unit'] ?? 'unit pilihan'); ?> untuk Tahun Ajaran <?php echo h($registration['th_ajaran']); ?>. Mohon lanjutkan pembayaran dan pengisian formulir<?php echo $registration['tanggal_batas_bayar'] ? ', dengan batas pembayaran <b>'.h(ppdb_format_date_id($registration['tanggal_batas_bayar'])).'</b>' : ''; ?>.</p>
+                <strong>Alhamdulillah, Ananda sudah melakukan registrasi awal</strong>
+                <p>Selanjutnya ikuti petunjuk di bawah ini.</p>
                 <?php if (ppdb_wablas_enabled() && ppdb_normalize_whatsapp_number((string) $registration['no_hp_pendaftar']) !== '') { ?><p>Konfirmasi dan tautan lanjutan juga kami kirim ke WhatsApp <?php echo h(ppdb_display_phone($registration['no_hp_pendaftar'])); ?>.</p><?php } ?>
             </div>
 
