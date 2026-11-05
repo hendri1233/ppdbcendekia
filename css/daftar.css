@@ -1184,15 +1184,6 @@ a {
     background: linear-gradient(150deg, rgba(244, 234, 210, 0.95), rgba(255, 255, 255, 0.6));
 }
 
-.unavailable-dialog__eyebrow {
-    margin: 0 0 6px;
-    color: var(--green);
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-}
-
 .unavailable-dialog h2 {
     margin: 0;
     font-family: var(--font-sans);

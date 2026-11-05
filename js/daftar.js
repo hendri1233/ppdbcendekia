@@ -20,7 +20,7 @@
     if (!externalRoute) return;
     const option = externalRoute.selectedOptions[0];
     if (!option || !option.dataset.unavailable) return;
-    const message = option.dataset.unavailableMessage || "Mohon maaf Ayah/Bunda, pendaftaran unit ini belum dibuka.";
+    const message = option.dataset.unavailableMessage || "Pendaftaran unit ini belum dibuka.";
     externalRoute.value = "";
     if (!unavailableDialog || typeof unavailableDialog.showModal !== "function") {
       window.alert(message);

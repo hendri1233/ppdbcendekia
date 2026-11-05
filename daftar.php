@@ -40,7 +40,7 @@ while ($offer = mysqli_fetch_assoc($offerResult)) {
         $offer['availability_message'] = 'Mohon maaf Ayah/Bunda, pendaftaran '.$unitLabel.' sudah ditutup pada '.ppdb_format_datetime_id($offer['jadwal_tutup']).'.';
     } else {
         $offer['availability'] = 'belum';
-        $offer['availability_message'] = 'Mohon maaf Ayah/Bunda, pendaftaran '.$unitLabel.' belum dibuka.'
+        $offer['availability_message'] = 'Pendaftaran '.$unitLabel.' belum dibuka.'
             .(ppdb_schedule_phase($offer['jadwal_buka'], null) === 'belum' ? ' Pendaftaran mulai dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'. Pendaftaran ditutup apabila kuota sudah penuh.' : '');
     }
     $allOffers[] = $offer;
@@ -750,7 +750,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
         <svg class="unavailable-dialog__icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         <svg class="unavailable-dialog__icon-full" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14c1.8.9 3 2.9 3 5.5"/></svg>
     </span>
-    <p class="unavailable-dialog__eyebrow">Informasi pendaftaran</p>
     <h2 id="unavailable-title" data-unavailable-title>Pendaftaran belum dibuka</h2>
     <p id="unavailable-message" class="unavailable-dialog__message" data-unavailable-message></p>
     <?php if (prestasi_is_ready($conn)) { ?>
