@@ -14,7 +14,8 @@ const PRESTASI_PERINGKAT_BARIS = [
     'peringkat_k5_s1' => 'Kelas 5 · Semester 1',
     'peringkat_k5_s2' => 'Kelas 5 · Semester 2',
 ];
-const PRESTASI_JUMLAH_HAFALAN = ['2 Juz', '2,5 Juz', '3 Juz', '3 Juz - Seterusnya'];
+const PRESTASI_HAFALAN_SETERUSNYA = '3 Juz - Seterusnya';
+const PRESTASI_JUMLAH_HAFALAN = ['2 Juz', '2,5 Juz', '3 Juz', PRESTASI_HAFALAN_SETERUSNYA];
 const PRESTASI_TIDAK_ADA = 'Tidak ada';
 
 /** Migrasi 030 sudah dijalankan; bila belum, pendaftaran SMP berjalan seperti unit lain. */
@@ -92,7 +93,7 @@ function prestasi_render_section(array $values, bool $visible): void
     foreach (PRESTASI_JUMLAH_HAFALAN as $option) {
         echo '<label class="radio-option"><input type="radio" name="jumlah_hafalan" value="'.h($option).'"'.($value('jumlah_hafalan') === $option ? ' checked' : '').' data-prestasi-required><span>'.h($option).'</span></label>';
     }
-    echo '</div></fieldset>';
+    echo '</div><div class="prestasi-other" data-prestasi-when="jumlah_hafalan" data-prestasi-is="'.h(PRESTASI_HAFALAN_SETERUSNYA).'"><label for="jumlah_hafalan_lain">Tuliskan jumlah hafalan <span class="required-mark" aria-hidden="true">*</span></label><input id="jumlah_hafalan_lain" type="text" name="jumlah_hafalan_lain" maxlength="100" placeholder="Contoh: 5 Juz" value="'.h($value('jumlah_hafalan_lain')).'" data-prestasi-required></div></fieldset>';
     prestasi_category_close();
 
     prestasi_category_open(3, PRESTASI_JENIS_LOMBA);
@@ -138,6 +139,11 @@ function prestasi_validate(array $input, array $files): array
         $data['jumlah_hafalan'] = $amount;
         if (!in_array($amount, PRESTASI_JUMLAH_HAFALAN, true)) {
             $errors[] = 'Pilih jumlah hafalan ananda.';
+        } elseif ($amount === PRESTASI_HAFALAN_SETERUSNYA) {
+            $data['jumlah_hafalan'] = $text('jumlah_hafalan_lain');
+            if ($data['jumlah_hafalan'] === '' || mb_strlen($data['jumlah_hafalan']) > 100) {
+                $errors[] = 'Tuliskan jumlah hafalan ananda (maksimal 100 karakter).';
+            }
         }
     }
     $competition = $text('riwayat_lomba');
