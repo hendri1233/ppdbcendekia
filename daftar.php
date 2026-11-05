@@ -41,7 +41,7 @@ while ($offer = mysqli_fetch_assoc($offerResult)) {
     } else {
         $offer['availability'] = 'belum';
         $offer['availability_message'] = 'Mohon maaf Ayah/Bunda, pendaftaran '.$unitLabel.' belum dibuka.'
-            .(ppdb_schedule_phase($offer['jadwal_buka'], null) === 'belum' ? ' Pendaftaran dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'.' : '');
+            .(ppdb_schedule_phase($offer['jadwal_buka'], null) === 'belum' ? ' Pendaftaran mulai dibuka '.ppdb_format_datetime_id($offer['jadwal_buka']).'. Pendaftaran ditutup apabila kuota sudah penuh.' : '');
     }
     $allOffers[] = $offer;
 }
@@ -757,7 +757,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <div class="unavailable-dialog__prepare" data-unavailable-prepare hidden>
         <p class="unavailable-dialog__prepare-title">Sambil menunggu tanggal pembukaan</p>
         <p>Ayah/Bunda dapat menyiapkan berkas yang akan dilampirkan saat mendaftar melalui jalur prestasi, yaitu surat pengantar prestasi.</p>
-        <p class="prestasi-template">Belum punya suratnya? Unduh template, isi di sekolah, lalu minta tanda tangan dan stempel kepala sekolah: <a href="assets/template/surat-keterangan-prestasi.docx" download>Unduh Word</a> <a href="assets/template/surat-keterangan-prestasi.pdf" download>Unduh PDF</a></p>
+        <p class="prestasi-template">Belum punya suratnya? Unduh template, isi di sekolah, lalu minta tanda tangan dan stempel kepala sekolah: <a href="assets/template/surat-keterangan-prestasi.docx" download>Unduh Word</a></p>
     </div>
     <?php } ?>
 </dialog>
