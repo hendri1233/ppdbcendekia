@@ -9,9 +9,10 @@ const PRESTASI_JENIS_QURAN = "Al-Qur'an minimal hafalan 1 juz";
 const PRESTASI_JENIS_LOMBA = 'Non akademik / perlombaan';
 const PRESTASI_PERINGKAT = ['Peringkat 1', 'Peringkat 2', 'Peringkat 3', 'Tidak ada peringkat'];
 const PRESTASI_PERINGKAT_BARIS = [
+    'peringkat_k4_s1' => 'Kelas 4 · Semester 1',
+    'peringkat_k4_s2' => 'Kelas 4 · Semester 2',
     'peringkat_k5_s1' => 'Kelas 5 · Semester 1',
     'peringkat_k5_s2' => 'Kelas 5 · Semester 2',
-    'peringkat_k6_s1' => 'Kelas 6 · Semester 1',
 ];
 const PRESTASI_JUMLAH_HAFALAN = ['1 Juz', '1,5 Juz', '2 Juz', '2,5 Juz', '3 Juz'];
 const PRESTASI_TIDAK_ADA = 'Tidak ada';
@@ -69,7 +70,7 @@ function prestasi_render_section(array $values, bool $visible): void
     echo '<p class="prestasi-template">Belum punya suratnya? Unduh template, isi di sekolah, lalu minta tanda tangan dan stempel kepala sekolah: <a href="assets/template/surat-keterangan-prestasi.docx" download>Unduh Word</a> <a href="assets/template/surat-keterangan-prestasi.pdf" download>Unduh PDF</a></p>';
     echo '<small class="field-hint">Foto surat pengantar prestasi yang ditandatangani kepala sekolah, posisi berdiri dan dapat dibaca. Format JPG atau PNG, maksimal 5 MB. Bila ada isian yang keliru saat dikirim, pilih ulang fotonya.</small></div>';
 
-    echo '<div class="field field-wide prestasi-categories"><p class="prestasi-categories__label">Prestasi akademik <span class="required-mark" aria-hidden="true">*</span></p>';
+    echo '<div class="field field-wide prestasi-categories"><p class="prestasi-categories__label">JENIS PRESTASI <span class="required-mark" aria-hidden="true">*</span></p>';
     echo '<small class="field-hint">Isi ketiga kategori secara bergiliran. Jawab "Ada" atau "Tidak ada" pada setiap kategori; kategori berikutnya terbuka setelah yang sebelumnya selesai.</small>';
 
     prestasi_category_open(1, PRESTASI_JENIS_AKADEMIK);
@@ -154,8 +155,8 @@ function prestasi_validate(array $input, array $files): array
 
 function prestasi_save(mysqli $conn, string $registrationId, array $data): void
 {
-    $stmt = mysqli_prepare($conn, 'INSERT INTO tb_prestasi_peserta (id_pendaftaran,jenis_prestasi,peringkat_k5_s1,peringkat_k5_s2,peringkat_k6_s1,kategori_hafalan,jumlah_hafalan,riwayat_lomba,daftar_lomba) VALUES (?,?,?,?,?,?,?,?,?)');
-    mysqli_stmt_bind_param($stmt, 'sssssssss', $registrationId, $data['jenis_prestasi'], $data['peringkat_k5_s1'], $data['peringkat_k5_s2'], $data['peringkat_k6_s1'], $data['kategori_hafalan'], $data['jumlah_hafalan'], $data['riwayat_lomba'], $data['daftar_lomba']);
+    $stmt = mysqli_prepare($conn, 'INSERT INTO tb_prestasi_peserta (id_pendaftaran,jenis_prestasi,peringkat_k4_s1,peringkat_k4_s2,peringkat_k5_s1,peringkat_k5_s2,kategori_hafalan,jumlah_hafalan,riwayat_lomba,daftar_lomba) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    mysqli_stmt_bind_param($stmt, 'ssssssssss', $registrationId, $data['jenis_prestasi'], $data['peringkat_k4_s1'], $data['peringkat_k4_s2'], $data['peringkat_k5_s1'], $data['peringkat_k5_s2'], $data['kategori_hafalan'], $data['jumlah_hafalan'], $data['riwayat_lomba'], $data['daftar_lomba']);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
 }

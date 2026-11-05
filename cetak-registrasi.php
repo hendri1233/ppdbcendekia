@@ -45,6 +45,8 @@ if ($selectionData) {
 if ($isAchievementRoute) {
     foreach ([
         'Prestasi akademik' => 'jenis_prestasi',
+        'Kelas 4 semester 1' => 'peringkat_k4_s1',
+        'Kelas 4 semester 2' => 'peringkat_k4_s2',
         'Kelas 5 semester 1' => 'peringkat_k5_s1',
         'Kelas 5 semester 2' => 'peringkat_k5_s2',
         'Kelas 6 semester 1' => 'peringkat_k6_s1',
