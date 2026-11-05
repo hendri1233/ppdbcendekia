@@ -338,10 +338,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
             $errors[] = 'Pilih jenjang tujuan ananda: TK A atau TK B.';
         }
     }
-    // Unit SMP jalur eksternal memilih jalur seleksi; jalur prestasi mengisi data tambahan.
+    // Unit SMP (internal maupun eksternal) memilih jalur seleksi; jalur prestasi mengisi data tambahan.
     $selectionRoute = null;
     $achievementData = null;
-    if ($routeType === 'eksternal' && $routeOffer && ($routeOffer['jenjang'] ?? '') === 'SMP' && prestasi_is_ready($conn)) {
+    if ($routeOffer && ($routeOffer['jenjang'] ?? '') === 'SMP' && prestasi_is_ready($conn)) {
         $selectionRoute = trim((string) ($_POST['jalur_seleksi'] ?? ''));
         if (!in_array($selectionRoute, ['prestasi', 'umum'], true)) {
             $errors[] = 'Pilih jalur pendaftaran SMP: prestasi atau umum.';
@@ -718,7 +718,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                     </div>
                 <?php } ?>
 
-            <form class="registration-form" id="form-utama" action="<?php echo h($formAction); ?>" method="post" autocomplete="on" novalidate>
+            <form class="registration-form" id="form-utama" action="<?php echo h($formAction); ?>" method="post" enctype="multipart/form-data" autocomplete="on" novalidate>
                 <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
 
                 <section class="form-section" aria-labelledby="data-title">
@@ -726,10 +726,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <span class="section-number">02</span>
                         <div><h2 id="data-title">Data dasar ananda &amp; pendaftar</h2><p>Tujuh isian ini memulai proses. NIK dan dokumen menyusul setelah pembayaran.</p></div>
                     </div>
+                    <?php if (($routeOffer['jenjang'] ?? '') === 'SMP' && prestasi_is_ready($conn)) {
+                        $selectedJalur = is_string($formValues['jalur_seleksi'] ?? null) ? $formValues['jalur_seleksi'] : '';
+                        echo '<div class="field-grid">';
+                        prestasi_render_jalur_field($selectedJalur, true);
+                        echo '</div>';
+                        prestasi_render_section($formValues, $selectedJalur === 'prestasi');
+                    } ?>
                     <div class="field-grid">
                         <?php if (($routeOffer['jenjang'] ?? '') === 'TK') { render_tk_level_field($tkLevelOptions, (string) ($formValues['tingkat_kelas'] ?? ''), true, $tkFullLevels); } ?>
                         <?php if ($routeOffer && gender_availability_json($conn, $routeOffer, 'internal') !== '') { ?><div hidden data-gender-route="<?php echo h(gender_availability_json($conn, $routeOffer, 'internal')); ?>"></div><?php } ?>
-                        <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 3); } ?>
+                        <div class="initial-fields" data-initial-fields>
+                            <?php foreach ($initialFields as $index => $field) { render_initial_field($field, $formValues, $index + 3); } ?>
+                        </div>
                     </div>
                     <label class="consent-check" for="konfirmasi_data">
                         <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>

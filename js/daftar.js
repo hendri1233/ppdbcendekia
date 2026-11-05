@@ -295,9 +295,10 @@
     });
   }
   function updateJalur() {
-    if (!externalRoute || !jalurField) return;
-    const option = externalRoute.selectedOptions[0];
-    const isSmp = Boolean(option && option.dataset.jenjang === "SMP");
+    if (!jalurField) return;
+    // Formulir internal tidak punya pilihan unit; isian jalur hanya dirender untuk kode unit SMP.
+    const option = externalRoute ? externalRoute.selectedOptions[0] : null;
+    const isSmp = externalRoute ? Boolean(option && option.dataset.jenjang === "SMP") : true;
     const radios = jalurField.querySelectorAll('input[name="jalur_seleksi"]');
     jalurField.hidden = !isSmp;
     let selected = "";
