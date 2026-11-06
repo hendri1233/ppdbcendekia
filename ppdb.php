@@ -30,7 +30,8 @@ while ($unit = mysqli_fetch_assoc($unitQuery)) {
     $unit['kuota_total'] = $unit['kuota_internal'] + $unit['kuota_eksternal'];
     $unit['pendaftar_total'] = $unit['terisi'] + $unit['internal_terisi'];
     $unit['sisa_total'] = max(0, $unit['kuota_total'] - $unit['pendaftar_total']);
-    $unit['dibuka_total'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1 || (int) ($unit['internal_dibuka'] ?? 0) === 1;
+    // Halaman publik hanya mengikuti jalur eksternal; jalur internal SDM tidak membuat unit tampil dibuka.
+    $unit['dibuka_total'] = (int) ($unit['eksternal_dibuka'] ?? 0) === 1;
     // Angka kuota baru ditampilkan setelah unit dibuka; penuh dan ditutup tetap tampil.
     $unit['kuota_tampil'] = $unit['kuota_total'] > 0
         && ($unit['dibuka_total'] || $unit['sisa_total'] === 0 || ppdb_schedule_phase($unit['jadwal_buka'] ?? null, $unit['jadwal_tutup'] ?? null) === 'selesai');
