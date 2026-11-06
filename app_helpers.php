@@ -83,6 +83,20 @@ function ppdb_column_exists(mysqli $conn, string $table, string $column): bool
 const PPDB_TK_LEVELS = ['TK A', 'TK B'];
 const PPDB_GENDERS = ['laki-laki' => 'Laki-laki', 'perempuan' => 'Perempuan'];
 
+/** Alamat pendaftaran pendek per unit, misalnya cendekiatakengon.or.id/daftarsmpitcendekia (lihat .htaccess). */
+const PPDB_UNIT_SHORT_LINKS = [
+    'KB-CEN' => 'daftarkbitcendekia',
+    'TPA-CEN' => 'daftartpaitcendekia',
+    'TK-CEN' => 'daftartkitcendekia',
+    'SD-CEN' => 'daftarsditcendekia',
+    'SMP-CEN' => 'daftarsmpitcendekia',
+];
+
+function ppdb_unit_register_link(string $unitCode, string $year): string
+{
+    return PPDB_UNIT_SHORT_LINKS[$unitCode] ?? 'daftar?unit='.rawurlencode($unitCode).'&tahun='.rawurlencode($year);
+}
+
 function ppdb_table_exists(mysqli $conn, string $table): bool
 {
     static $cache = [];

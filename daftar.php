@@ -173,7 +173,18 @@ if ($tokenEntryRequested) {
         : '';
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || $selectedRoute === '') {
         $selectedUnitCode = is_string($_GET['unit'] ?? null) ? trim($_GET['unit']) : '';
+        if (is_string($_GET['pendek'] ?? null)) {
+            $selectedUnitCode = (string) (array_search(strtolower($_GET['pendek']), PPDB_UNIT_SHORT_LINKS, true) ?: '');
+        }
         $selectedAcademicYear = is_string($_GET['tahun'] ?? null) ? trim($_GET['tahun']) : '';
+        // Tautan pendek unit (mis. /daftarsmpitcendekia) tidak membawa tahun: pakai tahun ajaran terbaru unit itu.
+        if ($selectedUnitCode !== '' && $selectedAcademicYear === '') {
+            foreach ($settingsByRoute as $offer) {
+                if ($offer['kode_unit'] === $selectedUnitCode && (int) substr($offer['th_ajaran'], 0, 4) >= 2027) {
+                    $selectedAcademicYear = $offer['th_ajaran'];
+                }
+            }
+        }
     } else {
         [$selectedUnitCode, $selectedAcademicYear] = array_pad(explode('|', $selectedRoute, 2), 2, '');
     }

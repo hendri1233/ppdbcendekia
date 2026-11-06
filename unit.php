@@ -100,7 +100,7 @@ public_page_start($conn, [
                 <?php if ($scheduleText !== '') { ?><p class="side-card__note">Jadwal pendaftaran: <?= h($scheduleText) ?></p><?php } ?>
                 <?php if ($isOpen) { ?>
                     <span class="badge badge--success">Dibuka &middot; <?= $remaining ?> kursi tersisa</span>
-                    <a class="button button--primary" href="daftar?unit=<?= rawurlencode($code) ?>&amp;tahun=<?= rawurlencode(PUBLIC_PPDB_YEAR) ?>">Daftar ke <?= h($unit['jenjang']) ?></a>
+                    <a class="button button--primary" href="<?= h(ppdb_unit_register_link($code, PUBLIC_PPDB_YEAR)) ?>">Daftar ke <?= h($unit['jenjang']) ?></a>
                 <?php } else { ?>
                     <span class="badge badge--neutral"><?= (int) $quota['eksternal_dibuka'] === 1 ? 'Kuota terpenuhi' : ($schedulePhase === 'selesai' ? 'Pendaftaran ditutup' : ($schedulePhase === 'belum' ? 'Dibuka '.h(ppdb_format_datetime_short($quota['jadwal_buka'])).' WIB' : 'Belum dibuka')) ?></span>
                     <a class="button button--secondary" href="spmb">Info SPMB</a>

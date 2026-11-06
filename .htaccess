@@ -33,6 +33,10 @@ Options -Indexes
     RewriteRule ^unit/([a-z0-9-]+)/?$ unit.php?slug=$1 [QSA,NC,END]
     RewriteRule ^(tentang|kontak|kurikulum|cerita|program|sosial|usaha|galeri|kebijakan-privasi)/?$ $1.php [NC,END]
     RewriteRule ^spmb/?$ ppdb.php [NC,END]
+    # Tautan pendaftaran khusus unit yang mudah dibagikan.
+    RewriteCond %{THE_REQUEST} ^\S+\s/+([^?\s]+/)?(daftar(kb|tpa|tk|sd|smp)itcendekia)/(?:[?\s]) [NC]
+    RewriteRule ^daftar(kb|tpa|tk|sd|smp)itcendekia/$ /%1%2 [R=301,NC,L,NE]
+    RewriteRule ^(daftar(kb|tpa|tk|sd|smp)itcendekia)$ daftar.php?pendek=$1 [QSA,NC,END]
     RewriteRule ^(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya)$ $1.php [NC,END]
     RewriteRule ^berita/?$ berita.php [NC,END]
     RewriteRule ^unit/?$ direktori-unit.php [NC,END]

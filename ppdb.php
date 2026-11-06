@@ -230,7 +230,7 @@ $summaryOpen = count(array_filter($units, static fn (array $unit): bool => $unit
                             <?php if ($isOpen) { ?>
                                 <span class="badge badge--success">Dibuka</span>
                                 <?php if ($unit['terbuka']) { ?>
-                                    <a class="button button--secondary button--sm" href="daftar?unit=<?= rawurlencode($unit['kode_unit']) ?>&amp;tahun=<?= rawurlencode($activeYear) ?>">Daftar ke <?= h($unit['jenjang']) ?><span class="visually-hidden"> <?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></span></a>
+                                    <a class="button button--secondary button--sm" href="<?= h(ppdb_unit_register_link($unit['kode_unit'], $activeYear)) ?>">Daftar ke <?= h($unit['jenjang']) ?><span class="visually-hidden"> <?= h(ppdb_unit_display_name($unit['nama_unit'])) ?></span></a>
                                 <?php } ?>
                             <?php } elseif ($externalFull || ($unit['kuota_total'] > 0 && $unit['sisa_total'] === 0)) { ?>
                                 <span class="badge badge--warning">Kuota terpenuhi</span>
