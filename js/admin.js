@@ -259,5 +259,26 @@
         });
     }
 
+    // --- Menu akun pada ikon profil ---
+    const userMenu = document.querySelector('[data-user-menu]');
+    if (userMenu) {
+        const toggle = userMenu.querySelector('[data-user-menu-toggle]');
+        const panel = userMenu.querySelector('[data-user-menu-panel]');
+        const setOpen = (open) => {
+            panel.hidden = !open;
+            toggle.setAttribute('aria-expanded', String(open));
+        };
+        toggle.addEventListener('click', () => setOpen(panel.hidden));
+        document.addEventListener('click', (event) => {
+            if (!panel.hidden && !userMenu.contains(event.target)) setOpen(false);
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !panel.hidden) {
+                setOpen(false);
+                toggle.focus();
+            }
+        });
+    }
+
     // --- Tandai baris tabel yang perlu ditindaklanjuti admin ---
 })();

@@ -171,6 +171,9 @@ function public_page_start(mysqli $conn, array $page): void
     <link rel="icon" type="image/png" sizes="512x512" href="img/favicons/android-chrome-512x512.png">
 </head>
 <body class="page-<?= h($active ?: 'umum') ?>">
+<?php if (defined('PPDB_MAINTENANCE_PREVIEW')) { ?>
+<div role="status" style="padding:8px 16px;color:#5a3500;background:#fde7c4;font-size:14px;font-weight:600;text-align:center">Mode maintenance aktif. Pengunjung melihat pesan maintenance; halaman ini hanya terlihat oleh admin.</div>
+<?php } ?>
 <a class="skip-link" href="<?= h($requestPath) ?>#konten">Lompat ke konten utama</a>
 
 <header class="site-header">
