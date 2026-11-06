@@ -435,7 +435,8 @@ function ppdb_schedule_open_sql(mysqli $conn, string $alias = 'q'): string
     }
     $prefix = $alias === '' ? '' : $alias.'.';
     $now = "'".ppdb_now_wib()."'";
-    return '(('.$prefix.'jadwal_buka IS NULL OR '.$prefix.'jadwal_buka<='.$now.') AND ('.$prefix.'jadwal_tutup IS NULL OR '.$prefix.'jadwal_tutup>'.$now.'))';
+    // Jadwal buka wajib diisi: jalur eksternal tetap tertutup selama tanggal buka belum ditentukan.
+    return '(('.$prefix.'jadwal_buka IS NOT NULL AND '.$prefix.'jadwal_buka<='.$now.') AND ('.$prefix.'jadwal_tutup IS NULL OR '.$prefix.'jadwal_tutup>'.$now.'))';
 }
 
 /** Syarat SQL jalur internal terbuka: mengikuti centang admin dan jadwal tutup, tetapi tidak menunggu jadwal buka. */

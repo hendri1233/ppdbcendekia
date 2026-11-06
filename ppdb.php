@@ -6,7 +6,7 @@ $activeYear = '2027/2028';
 // Data unit diambil dari database agar halaman beranda selalu sesuai
 // dengan konfigurasi resmi, termasuk status buka dan kuotanya.
 $unitQuery = mysqli_query($conn, "SELECT u.kode_unit,u.nama_unit,u.jenjang,u.npsn,u.email,u.alamat,
-    q.th_ajaran,q.kuota_internal,q.kuota_eksternal,q.biaya_pendaftaran,".ppdb_route_open_sql($conn, 'internal_dibuka').",".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",
+    q.th_ajaran,q.kuota_internal,q.kuota_eksternal,q.biaya_pendaftaran,".ppdb_internal_open_condition_sql($conn)." AS internal_dibuka,".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",
     (SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=u.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS terisi
     ,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=u.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='internal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS internal_terisi
     FROM tb_unit_pendidikan u

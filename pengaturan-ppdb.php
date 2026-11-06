@@ -556,7 +556,7 @@ require 'admin_header.php';
                     <label for="jadwal_tutup">Jadwal tutup (WIB)</label>
                     <input id="jadwal_tutup" name="jadwal_tutup" type="datetime-local" value="<?php echo h(is_string($_POST['jadwal_tutup'] ?? null) ? $_POST['jadwal_tutup'] : ''); ?>">
                 </div>
-                <p class="field-span-2 level-quota__hint">Jalur eksternal hanya dapat diakses di antara jadwal buka dan tutup, selama jalurnya dicentang buka. Jalur internal dapat diakses sebelum jadwal buka bila dicentang buka, dan berhenti pada jadwal tutup. Kosongkan bila tanpa batas waktu. Kuota tidak berubah.</p>
+                <p class="field-span-2 level-quota__hint">Jalur eksternal hanya dapat diakses di antara jadwal buka dan tutup, selama jalurnya dicentang buka. Jalur internal dapat diakses sebelum jadwal buka bila dicentang buka, dan berhenti pada jadwal tutup. Jalur eksternal belum terbuka selama jadwal buka kosong; jadwal tutup boleh dikosongkan bila tanpa batas waktu. Kuota tidak berubah.</p>
             <?php } ?>
             <label class="quota-toggle">
                 <input type="checkbox" name="internal_dibuka" value="1" <?php echo isset($_POST['internal_dibuka']) ? 'checked' : ''; ?>>
@@ -793,6 +793,11 @@ require 'admin_header.php';
                         $rowSchedule = ppdb_format_schedule_range($row['jadwal_buka'] ?? null, $row['jadwal_tutup'] ?? null);
                         $rowOpen = $row['pendaftaran_dibuka'] && $rowPhase === 'berjalan';
                         $rowStatus = !$row['pendaftaran_dibuka'] ? 'Ditutup' : ($rowPhase === 'belum' ? 'Terjadwal' : ($rowPhase === 'selesai' ? 'Jadwal berakhir' : 'Dibuka'));
+                        // Tanpa jadwal buka, jalur eksternal belum terbuka; hanya internal yang mungkin berjalan.
+                        if ($rowOpen && empty($row['jadwal_buka'])) {
+                            $rowOpen = (bool) $row['internal_dibuka'];
+                            $rowStatus = $rowOpen ? 'Internal dibuka' : 'Belum dijadwalkan';
+                        }
                         ?>
                         <td data-label="Status"><span class="quota-cell-text"><span class="status-pill <?php echo $rowOpen ? 'is-open' : 'is-closed'; ?>"><?php echo $rowStatus; ?></span><?php if ($rowSchedule !== '') { ?><small class="cell-sub"><?php echo h($rowSchedule); ?></small><?php } ?></span></td>
                         <td data-label="Aksi"><button class="button-secondary quota-edit-button" type="button" data-unit="<?php echo h($row['kode_unit']); ?>" data-year="<?php echo h($row['th_ajaran']); ?>">Ubah</button></td>
