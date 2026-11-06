@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__.'/public_layout.php';
+require_once __DIR__.'/wakaf_sync.php';
 
-// Sumber isi: situs resmi lembaga, cendekiabisa.com.
-const WAKAF_SITE = 'https://cendekiabisa.com/';
+// Sumber isi: situs resmi lembaga, cendekiabisa.com (WAKAF_SITE).
 $lembagaName = 'Lembaga Wakaf Insan Cendekia Takengon';
 
 $misi = [
@@ -12,13 +12,20 @@ $misi = [
     'Mewujudkan dan mengembangkan usaha dalam bidang ekonomi produktif untuk menunjang fasilitas pendidikan yang lebih baik.',
 ];
 
-$programs = [
-    ['title' => 'Wakaf Pembebasan Lahan', 'summary' => 'Gerakan menyediakan lahan wakaf untuk SMPIT Cendekia Takengon demi generasi Islami.', 'image' => 'uploads/programs/1777876670_WhatsApp%20Image%202026-05-02%20at%2011.37.46.jpeg', 'path' => 'program.php?id=10'],
-    ['title' => 'Inkubasi Wakaf', 'summary' => 'Membangun dan membina usaha berbasis wakaf melalui pelatihan dan pendampingan usaha.', 'image' => 'uploads/programs/1770868648_inkubasiwakaf.jpeg', 'path' => 'program.php?id=8'],
-    ['title' => 'Wakaf Produktif', 'summary' => 'Gerakan ekonomi umat melalui pengelolaan wakaf yang menghasilkan usaha nyata.', 'image' => 'uploads/programs/1770868594_wakafproduktif.jpeg', 'path' => 'program.php?id=7'],
-    ['title' => 'Wakaf Melalui Uang', 'summary' => '', 'image' => 'uploads/programs/1770868511_wakafmelaluiuang.jpeg', 'path' => 'program.php?id=5'],
-    ['title' => 'Wakaf Uang', 'summary' => '', 'image' => 'uploads/programs/1770868461_wakafuang.jpeg', 'path' => 'program.php?id=4'],
+// Program wakaf diambil otomatis dari cendekiabisa.com; ringkasan di bawah menggantikan
+// cuplikan deskripsi situs sumber untuk program yang sudah dikenal.
+$programSummaries = [
+    10 => 'Gerakan menyediakan lahan wakaf untuk SMPIT Cendekia Takengon demi generasi Islami.',
+    8 => 'Membangun dan membina usaha berbasis wakaf melalui pelatihan dan pendampingan usaha.',
 ];
+// Cadangan bila cendekiabisa.com belum pernah berhasil dibaca.
+$programFallback = [
+    ['id' => 10, 'title' => 'Wakaf Pembebasan Lahan', 'summary' => 'Gerakan menyediakan lahan wakaf untuk SMPIT Cendekia Takengon demi generasi Islami.', 'image' => WAKAF_SITE.'uploads/programs/1777876670_WhatsApp%20Image%202026-05-02%20at%2011.37.46.jpeg', 'url' => WAKAF_SITE.'program.php?id=10'],
+    ['id' => 8, 'title' => 'Inkubasi Wakaf', 'summary' => 'Membangun dan membina usaha berbasis wakaf melalui pelatihan dan pendampingan usaha.', 'image' => WAKAF_SITE.'uploads/programs/1770868648_inkubasiwakaf.jpeg', 'url' => WAKAF_SITE.'program.php?id=8'],
+    ['id' => 5, 'title' => 'Wakaf Melalui Uang', 'summary' => '', 'image' => WAKAF_SITE.'uploads/programs/1770868511_wakafmelaluiuang.jpeg', 'url' => WAKAF_SITE.'program.php?id=5'],
+    ['id' => 4, 'title' => 'Wakaf Uang', 'summary' => '', 'image' => WAKAF_SITE.'uploads/programs/1770868461_wakafuang.jpeg', 'url' => WAKAF_SITE.'program.php?id=4'],
+];
+$programs = wakaf_programs($conn, $programSummaries, $programFallback);
 
 $activities = [
     ['label' => '14 Oktober 2026', 'title' => 'Wakaf Amalan yang Terus Mengalir', 'summary' => 'Artikel ajakan berwakaf dari lembaga.', 'path' => 'berita-detail.php?id=15'],
@@ -96,8 +103,8 @@ public_page_start($conn, [
         </header>
         <div class="org-grid org-grid--programs">
             <?php foreach ($programs as $program) { ?>
-                <a class="org-program" href="<?= h(WAKAF_SITE.$program['path']) ?>" <?= $external ?>>
-                    <img src="<?= h(WAKAF_SITE.$program['image']) ?>" alt="" width="480" height="300" loading="lazy">
+                <a class="org-program" href="<?= h($program['url']) ?>" <?= $external ?>>
+                    <?php if ($program['image'] !== '') { ?><img src="<?= h($program['image']) ?>" alt="" width="480" height="300" loading="lazy"><?php } ?>
                     <span class="org-program__body">
                         <strong><?= h($program['title']) ?></strong>
                         <?php if ($program['summary'] !== '') { ?><span><?= h($program['summary']) ?></span><?php } ?>
