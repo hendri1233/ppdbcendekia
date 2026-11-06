@@ -282,15 +282,14 @@ if (viewer && typeof viewer.showModal === "function") {
   }
 
   // Tombol "Lihat Brosur" di popup unit yang belum dibuka: tutup popup, lalu buka brosur.
-  const unavailableBrochure = document.querySelector("[data-unavailable-brochure]");
-  if (unavailableBrochure) {
+  document.querySelectorAll("[data-unavailable-brochure]").forEach(function (unavailableBrochure) {
     unavailableBrochure.addEventListener("click", function () {
       if (!unavailableBrochure.dataset.brochureUrl) return;
       const dialog = unavailableBrochure.closest("dialog");
       if (dialog && dialog.open) dialog.close();
       open(unavailableBrochure.dataset, null);
     });
-  }
+  });
 
   if (routeTrigger) {
     routeTrigger.addEventListener("click", function () {

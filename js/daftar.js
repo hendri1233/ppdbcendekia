@@ -35,14 +35,17 @@
     const prepare = unavailableDialog.querySelector("[data-unavailable-prepare]");
     if (prepare) prepare.hidden = !(option.dataset.unavailable === "belum" && option.dataset.jenjang === "SMP");
     // Tombol brosur di popup memakai data brosur unit yang dipilih; dibuka oleh brosur.js.
-    const brochureButton = unavailableDialog.querySelector("[data-unavailable-brochure]");
-    if (brochureButton) {
+    // SMP: tombol di samping "Unduh Surat"; unit lain: baris tersendiri di bawah pesan.
+    const hasBrochure = Boolean(option.dataset.brochureUrl);
+    unavailableDialog.querySelectorAll("[data-unavailable-brochure]").forEach(function (brochureButton) {
       ["brochureUrl", "brochureType", "brochureTitle"].forEach(function (key) {
         if (option.dataset[key]) brochureButton.dataset[key] = option.dataset[key];
         else delete brochureButton.dataset[key];
       });
-      brochureButton.hidden = !option.dataset.brochureUrl;
-    }
+      brochureButton.hidden = !hasBrochure;
+    });
+    const brochureRow = unavailableDialog.querySelector("[data-unavailable-brochure-row]");
+    if (brochureRow) brochureRow.hidden = !hasBrochure || Boolean(prepare && !prepare.hidden);
     unavailableDialog.showModal();
   }
   if (externalRoute) {

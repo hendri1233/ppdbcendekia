@@ -766,6 +766,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     </span>
     <h2 id="unavailable-title" data-unavailable-title>Pendaftaran belum dibuka</h2>
     <p id="unavailable-message" class="unavailable-dialog__message" data-unavailable-message></p>
+    <p class="prestasi-template unavailable-dialog__brochure" data-unavailable-brochure-row hidden><button type="button" data-unavailable-brochure>Lihat Brosur</button></p>
     <?php if (prestasi_is_ready($conn)) { ?>
     <div class="unavailable-dialog__prepare" data-unavailable-prepare hidden>
         <p class="unavailable-dialog__prepare-title">Khusus jalur prestasi</p>

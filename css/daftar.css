@@ -3413,8 +3413,13 @@ body.page-daftar .radio-option:has(input:focus-visible) {
     cursor: pointer;
 }
 
-.prestasi-template button[hidden] {
+.prestasi-template button[hidden],
+.unavailable-dialog__brochure[hidden] {
     display: none;
+}
+
+.unavailable-dialog__brochure button {
+    margin-right: 0;
 }
 
 .prestasi-template a:hover,
