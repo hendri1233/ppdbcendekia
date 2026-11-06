@@ -443,6 +443,7 @@ require 'admin_header.php';
             <div><span>Jalur pendaftaran</span><strong><?php echo $participant['jalur_pendaftaran'] === 'internal' ? 'Internal · SDM yayasan' : 'Eksternal · umum'; ?></strong></div>
             <?php if ($participant['jalur_pendaftaran'] === 'internal' && $participant['nama_sdm']) { ?><div><span>Undangan SDM</span><strong><?php echo h($participant['nama_sdm']); ?><?php echo $participant['unit_kerja'] !== '' ? ' · ' . h($participant['unit_kerja']) : ''; ?></strong></div><?php } ?>
             <div><span>Antrean / kuota jalur</span><strong><?php echo $participant['nomor_antrian'] ? '#' . (int) $participant['nomor_antrian'] . ' / ' . (int) ($participant['jalur_pendaftaran'] === 'internal' ? $participant['kuota_internal'] : $participant['kuota_eksternal']) : 'Arsip lama'; ?></strong></div>
+            <?php if ($participant['status_ppdb'] === 'diterima' && array_key_exists('grup_diklik_pada', $participant)) { ?><div><span>Grup WhatsApp unit</span><strong class="tone-<?php echo $participant['grup_diklik_pada'] ? 'ok' : 'warn'; ?>"><?php echo $participant['grup_diklik_pada'] ? 'Tautan dibuka '.h(date('d-m-Y H:i', strtotime($participant['grup_diklik_pada']))) : 'Belum membuka tautan grup'; ?></strong></div><?php } ?>
             <?php if ($participant['tanggal_batas_bayar']) { ?><div><span>Batas pembayaran</span><strong><?php echo h(date('d-m-Y', strtotime($participant['tanggal_batas_bayar']))); ?></strong></div><?php } ?>
         </div>
 

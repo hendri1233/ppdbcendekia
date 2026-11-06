@@ -9,7 +9,8 @@ $registration = null;
 $tokenIsValid = preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1;
 if ($tokenIsValid) {
     $tokenHash = hash('sha256', $receiptToken);
-    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,p.alamat,p.data_diperiksa_pada,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
+    $groupClickColumn = ppdb_column_exists($conn, 'tb_pendaftaran', 'grup_diklik_pada') ? 'p.grup_diklik_pada' : 'NULL AS grup_diklik_pada';
+    $stmt = mysqli_prepare($conn, 'SELECT '.$groupClickColumn.',p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,p.alamat,p.data_diperiksa_pada,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
     mysqli_stmt_bind_param($stmt, 'ssss', $registrationId, $tokenHash, $tokenHash, $tokenHash);
     mysqli_stmt_execute($stmt);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -31,6 +32,9 @@ if ($registration && $registration['status_ppdb'] === 'pembayaran_diperiksa') {
     $currentStep = 3;
 }
 $isAccepted = $registration && $registration['status_ppdb'] === 'diterima';
+// Tautan grup melewati gabung-grup agar panitia tahu siapa yang sudah membukanya.
+$groupJoinUrl = $isAccepted && !empty($registration['link_grup']) ? 'gabung-grup?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $receiptToken]) : '';
+$groupOpened = !empty($registration['grup_diklik_pada']);
 $rejectedCompletedSteps = $registration && $registration['status_ppdb'] === 'ditolak' ? ppdb_rejected_completed_steps($registration) : null;
 $paymentDeadlinePassed = $registration && $registration['tanggal_batas_bayar'] && $registration['tanggal_batas_bayar'] < date('Y-m-d');
 $hasPaymentAccount = $registration
@@ -112,7 +116,7 @@ header('Referrer-Policy: no-referrer');
 
                 <div class="acceptance-actions">
                     <?php if (!empty($registration['link_grup'])) { ?>
-                        <a class="acceptance-button acceptance-button--group group-join-button" href="<?php echo h($registration['link_grup']); ?>" target="_blank" rel="noopener noreferrer">
+                        <a class="acceptance-button acceptance-button--group group-join-button" href="<?php echo h($groupJoinUrl); ?>" data-group-join target="_blank" rel="noopener noreferrer">
                             <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm5.92 15.5c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
                             <span>Gabung grup WhatsApp <?php echo h($registration['nama_unit']); ?></span>
                         </a>
@@ -130,7 +134,7 @@ header('Referrer-Policy: no-referrer');
 
                 <h2 class="acceptance-heading">Langkah berikutnya</h2>
                 <ol class="next-steps" aria-label="Langkah berikutnya">
-                    <li><span aria-hidden="true">1</span><div><strong>Gabung grup WhatsApp unit</strong><small>Informasi lanjutan dari sekolah disampaikan melalui grup.</small></div></li>
+                    <li><span aria-hidden="true">1</span><div><strong>Gabung grup WhatsApp unit <em class="step-flag<?php echo $groupOpened ? ' is-done' : ''; ?>" data-group-flag><?php echo $groupOpened ? 'Sudah dibuka' : 'Wajib'; ?></em></strong><small>Seluruh informasi lanjutan dari sekolah (jadwal, daftar ulang, perlengkapan) hanya disampaikan melalui grup.</small></div></li>
                     <li><span aria-hidden="true">2</span><div><strong>Simpan surat keterangan diterima</strong><small>Unduh PDF, baca ketentuan dan tata tertibnya, lalu simpan sebagai bukti ananda telah diterima.</small></div></li>
                 </ol>
                 <h2 class="acceptance-heading">Data peserta didik</h2>
@@ -301,6 +305,37 @@ header('Referrer-Policy: no-referrer');
 
     <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a> · WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?></footer>
 </main>
+<?php if ($groupJoinUrl !== '' && !$groupOpened) { ?>
+    <dialog class="group-reminder" data-group-reminder aria-labelledby="group-reminder-title" aria-describedby="group-reminder-text">
+        <header class="group-reminder__head">
+            <form method="dialog"><button class="group-reminder__close" type="submit" aria-label="Tutup"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6L19 6.4 17.6 5 12 10.6z"/></svg></button></form>
+            <img class="group-reminder__logo" src="img/logo-display.png" alt="" width="52" height="51">
+            <p class="group-reminder__eyebrow">SPMB <?php echo h($registration['th_ajaran']); ?> &middot; Langkah terakhir</p>
+            <h2 id="group-reminder-title">Bergabung dengan Grup Resmi Wali Murid</h2>
+            <p class="group-reminder__unit"><?php echo h($registration['nama_unit']); ?></p>
+        </header>
+        <ol class="group-reminder__progress" aria-label="Tahapan pendaftaran">
+            <li class="is-done"><span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg></span>Registrasi</li>
+            <li class="is-done"><span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg></span>Pembayaran</li>
+            <li class="is-done"><span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg></span>Formulir</li>
+            <li class="is-current" aria-current="step"><span aria-hidden="true">4</span>Grup WA</li>
+        </ol>
+        <div class="group-reminder__body">
+            <p id="group-reminder-text">Ayah/Bunda, formulir ananda <strong><?php echo h($registration['nm_peserta']); ?></strong> telah kami terima. Mohon bergabung ke grup resmi unit karena <strong>seluruh informasi lanjutan hanya disampaikan melalui grup ini</strong>.</p>
+            <ul class="group-reminder__list">
+                <li>Jadwal dan agenda awal tahun ajaran</li>
+                <li>Informasi daftar ulang dan administrasi</li>
+                <li>Perlengkapan dan persiapan ananda</li>
+            </ul>
+            <a class="group-reminder__join" href="<?php echo h($groupJoinUrl); ?>" target="_blank" rel="noopener noreferrer" data-group-join autofocus>
+                <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm5.92 15.5c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg>
+                <span>Gabung Grup WhatsApp</span>
+            </a>
+            <p class="group-reminder__secure"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.9-4.9 1.4 1.4-6.3 6.3Z"/></svg>Tautan resmi panitia SPMB Cendekia</p>
+            <form method="dialog"><button class="group-reminder__later" type="submit">Nanti saja</button></form>
+        </div>
+    </dialog>
+<?php } ?>
 <script src="js/status.js?v=<?php echo (int) @filemtime(__DIR__.'/js/status.js'); ?>"></script>
 <script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>

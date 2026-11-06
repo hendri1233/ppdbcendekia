@@ -47,4 +47,20 @@
   if (currentStep && typeof currentStep.scrollIntoView === "function") {
     currentStep.classList.add("is-highlighted");
   }
+
+  // Pengingat gabung grup WhatsApp: muncul otomatis sampai tautan grup dibuka.
+  const reminder = document.querySelector("[data-group-reminder]");
+  if (reminder && typeof reminder.showModal === "function") {
+    window.setTimeout(() => reminder.showModal(), 400);
+  }
+  for (const link of document.querySelectorAll("[data-group-join]")) {
+    link.addEventListener("click", () => {
+      if (reminder && reminder.open) reminder.close();
+      const flag = document.querySelector("[data-group-flag]");
+      if (flag) {
+        flag.textContent = "Sudah dibuka";
+        flag.classList.add("is-done");
+      }
+    });
+  }
 })();
