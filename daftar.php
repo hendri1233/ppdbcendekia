@@ -641,7 +641,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                                         $offerAvailable = $offer['availability'] === 'dibuka';
                                         $offerAttributes = $offerAvailable
                                             ? brochure_attributes($brochures, $offerValue, $offer['nama_unit'])
-                                            : ' data-unavailable="'.h($offer['availability']).'" data-unavailable-message="'.h($offer['availability_message']).'"';
+                                            : ' data-unavailable="'.h($offer['availability']).'" data-unavailable-message="'.h($offer['availability_message']).'"'.brochure_attributes($brochures, $offerValue, $offer['nama_unit']);
                                     ?>
                                         <option value="<?php echo h($offerValue); ?>" data-jenjang="<?php echo h($offer['jenjang']); ?>" data-name="<?php echo h($offer['nama_unit']); ?>" data-gender="<?php echo h(gender_availability_json($conn, $offer, 'eksternal')); ?>"<?php echo $offerAttributes; ?><?php echo $offerSelected ? ' selected' : ''; ?>><?php echo h($offer['nama_unit']); ?><?php echo ['penuh' => ' (penuh)', 'ditutup' => ' (ditutup)', 'belum' => ' (belum dibuka)'][$offer['availability']] ?? ''; ?></option>
                                     <?php } ?>
@@ -770,7 +770,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     <div class="unavailable-dialog__prepare" data-unavailable-prepare hidden>
         <p class="unavailable-dialog__prepare-title">Khusus jalur prestasi</p>
         <p class="prestasi-template">Silakan unduh template surat prestasi yang dilengkapi oleh sekolah asal (SD/MI).</p>
-        <p class="prestasi-template"><a href="assets/template/surat-keterangan-prestasi.docx" download>Unduh Surat</a></p>
+        <p class="prestasi-template"><a href="assets/template/surat-keterangan-prestasi.docx" download>Unduh Surat</a><button type="button" data-unavailable-brochure hidden>Lihat Brosur</button></p>
     </div>
     <?php } ?>
 </dialog>

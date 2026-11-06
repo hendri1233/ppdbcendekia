@@ -3393,7 +3393,8 @@ body.page-daftar .radio-option:has(input:focus-visible) {
     font-size: var(--fs-sm);
 }
 
-.prestasi-template a {
+.prestasi-template a,
+.prestasi-template button {
     display: inline-block;
     margin: 6px 8px 0 0;
     padding: 6px 12px;
@@ -3405,7 +3406,19 @@ body.page-daftar .radio-option:has(input:focus-visible) {
     white-space: nowrap;
 }
 
-.prestasi-template a:hover {
+.prestasi-template button {
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.prestasi-template button[hidden] {
+    display: none;
+}
+
+.prestasi-template a:hover,
+.prestasi-template button:hover {
     color: #fff;
     background: var(--green);
 }

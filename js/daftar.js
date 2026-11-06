@@ -34,6 +34,15 @@
     // Persiapan berkas hanya relevan untuk SMP yang belum dibuka (surat jalur prestasi).
     const prepare = unavailableDialog.querySelector("[data-unavailable-prepare]");
     if (prepare) prepare.hidden = !(option.dataset.unavailable === "belum" && option.dataset.jenjang === "SMP");
+    // Tombol brosur di popup memakai data brosur unit yang dipilih; dibuka oleh brosur.js.
+    const brochureButton = unavailableDialog.querySelector("[data-unavailable-brochure]");
+    if (brochureButton) {
+      ["brochureUrl", "brochureType", "brochureTitle"].forEach(function (key) {
+        if (option.dataset[key]) brochureButton.dataset[key] = option.dataset[key];
+        else delete brochureButton.dataset[key];
+      });
+      brochureButton.hidden = !option.dataset.brochureUrl;
+    }
     unavailableDialog.showModal();
   }
   if (externalRoute) {
