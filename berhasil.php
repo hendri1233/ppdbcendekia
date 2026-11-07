@@ -2,13 +2,14 @@
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'wablas.php';
+require_once 'form_deadline.php';
 
 $registrationId = $_GET['id'] ?? '';
 $receiptToken = $_GET['token'] ?? '';
 $registration = null;
 if (preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]{64}$/', $receiptToken) === 1) {
     $tokenHash = hash('sha256', $receiptToken);
-    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.th_ajaran,p.tgl_daftar,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.status_ppdb,p.token_bukti,p.tanggal_batas_bayar,p.no_hp_pendaftar,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
+    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.th_ajaran,p.tgl_daftar,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.status_ppdb,p.token_bukti,p.tanggal_batas_bayar,p.no_hp_pendaftar,p.kode_unit,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
     mysqli_stmt_bind_param($stmt, 's', $registrationId);
     mysqli_stmt_execute($stmt);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -17,6 +18,7 @@ if (preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match('/^[a-f0-9]
         $registration = null;
     }
 }
+$formWindow = $registration ? ppdb_form_window($conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']) : ['buka' => null, 'batas' => null];
 $dapodikAge = $registration ? ppdb_dapodik_age($registration['tgl_lahir'], $registration['th_ajaran']) : null;
 $adminWhatsAppMessage = $registration
     ? 'Assalamu’alaikum, saya ingin bertanya mengenai pendaftaran ananda '.$registration['nm_peserta'].' dengan kode '.$registration['id_pendaftaran'].'.'
@@ -82,7 +84,7 @@ header('Referrer-Policy: no-referrer');
             <h2 class="acceptance-heading">Tahap berikutnya</h2>
             <ol class="next-steps" aria-label="Langkah berikutnya">
                 <li><span aria-hidden="true">1</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
-                <li><span aria-hidden="true">2</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.</small></div></li>
+                <li><span aria-hidden="true">2</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.<?php if ($formWindow['batas']) { ?> Paling lambat <?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?>; lewat dari batas ini Ananda dinyatakan gugur.<?php } ?></small></div></li>
                 <li><span aria-hidden="true">3</span><div><strong>Pendaftaran Selesai</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan diterima langsung tampil.</small></div></li>
             </ol>
 
@@ -121,6 +123,7 @@ header('Referrer-Policy: no-referrer');
 
     <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
 </main>
+<?php if ($registration) { ppdb_render_form_deadline_dialog($formWindow, (string) ($registration['nama_unit'] ?? ''), (string) $registration['nm_peserta']); } ?>
 <script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>
 </html>

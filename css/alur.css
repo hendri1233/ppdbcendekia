@@ -948,3 +948,335 @@ body.page-flow {
         }
     }
 }
+
+/* ---------- Pemberitahuan batas pengisian formulir (kaca halus) ---------- */
+
+.deadline-notice {
+    position: fixed;
+    width: min(440px, calc(100vw - 28px));
+    max-height: calc(100dvh - 28px);
+    margin: auto;
+    padding: 34px 28px 24px;
+    overflow: auto;
+    color: #13241d;
+    text-align: center;
+    background:
+        linear-gradient(155deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.52)),
+        radial-gradient(120% 70% at 50% 0%, rgba(201, 162, 74, 0.16), transparent 70%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 26px;
+    box-shadow:
+        0 30px 80px -24px rgba(8, 38, 28, 0.55),
+        0 0 0 1px rgba(20, 86, 63, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+}
+
+.deadline-notice::backdrop {
+    background:
+        radial-gradient(60% 50% at 30% 20%, rgba(28, 120, 84, 0.35), transparent 70%),
+        radial-gradient(50% 45% at 80% 80%, rgba(201, 162, 74, 0.28), transparent 70%),
+        rgba(9, 30, 23, 0.42);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.deadline-notice[open] {
+    animation: deadline-notice-in 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.deadline-notice__close-form {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    margin: 0;
+}
+
+.deadline-notice__close {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: #3d5149;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.deadline-notice__close:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.deadline-notice__close svg,
+.deadline-notice__icon svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.deadline-notice__icon {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 14px;
+    color: #fff;
+    background: linear-gradient(150deg, #1b6b4f, #0e3d2d);
+    border-radius: 18px;
+    box-shadow: 0 14px 28px -12px rgba(14, 61, 45, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.deadline-notice__icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.deadline-notice__eyebrow {
+    margin: 0 0 4px;
+    color: #8a6418;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.deadline-notice h2 {
+    margin: 0;
+    font-family: var(--flow-serif, Georgia, serif);
+    font-size: clamp(1.35rem, 5vw, 1.6rem);
+    line-height: 1.25;
+}
+
+.deadline-notice__text {
+    margin: 10px 0 18px;
+    color: #3c4d46;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.deadline-notice__date {
+    display: grid;
+    gap: 2px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(20, 86, 63, 0.12);
+    border-radius: 16px;
+}
+
+.deadline-notice__date strong {
+    color: #0e3d2d;
+    font-size: 1.12rem;
+}
+
+.deadline-notice__date span {
+    color: #4b5d55;
+    font-size: 0.88rem;
+}
+
+.deadline-notice__countdown {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.deadline-notice__countdown[hidden] {
+    display: none;
+}
+
+.deadline-notice__countdown div {
+    display: grid;
+    padding: 10px 6px;
+    background: linear-gradient(180deg, rgba(20, 86, 63, 0.92), rgba(14, 61, 45, 0.92));
+    border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.deadline-notice__countdown b {
+    color: #fff;
+    font-size: 1.45rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+
+.deadline-notice__countdown small {
+    color: #e6d3a1;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.deadline-notice__timeline {
+    display: grid;
+    gap: 0;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.deadline-notice__timeline li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 14px 1fr;
+    gap: 12px;
+    padding-bottom: 12px;
+}
+
+.deadline-notice__timeline li:last-child {
+    padding-bottom: 0;
+}
+
+.deadline-notice__timeline li > span {
+    width: 12px;
+    height: 12px;
+    margin-top: 4px;
+    background: #1b6b4f;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(27, 107, 79, 0.35);
+}
+
+.deadline-notice__timeline li:first-child::after {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 0;
+    left: 5px;
+    width: 2px;
+    background: linear-gradient(#1b6b4f, #c9a24a);
+}
+
+.deadline-notice__timeline li.is-end > span {
+    background: #c9a24a;
+    box-shadow: 0 0 0 1px rgba(201, 162, 74, 0.5);
+}
+
+.deadline-notice__timeline small {
+    display: block;
+    color: #5a6b63;
+    font-size: 0.75rem;
+}
+
+.deadline-notice__timeline strong {
+    color: #17362a;
+    font-size: 0.9rem;
+}
+
+.deadline-notice__note {
+    margin: 16px 0 18px;
+    padding: 10px 12px;
+    color: #6b4a0e;
+    background: rgba(236, 217, 166, 0.38);
+    border: 1px solid rgba(201, 162, 74, 0.35);
+    border-radius: 12px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.deadline-notice form {
+    margin: 0;
+}
+
+.deadline-notice__confirm {
+    width: 100%;
+    min-height: 50px;
+    color: #fff;
+    background: linear-gradient(180deg, #1c7a57, #135a40);
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 14px 26px -14px rgba(19, 90, 64, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.deadline-notice__confirm:hover {
+    transform: translateY(-1px);
+}
+
+.deadline-notice__confirm:focus-visible,
+.deadline-notice__close:focus-visible {
+    outline: 3px solid #c9a24a;
+    outline-offset: 2px;
+}
+
+/* Keterangan batas di judul formulir lengkap. */
+.form-deadline-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 7px 14px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    font-size: 0.85rem;
+}
+
+.form-deadline-chip svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    fill: currentColor;
+}
+
+/* Kotak detik: warna emas dan denyut lembut tiap detik agar terasa mendesak. */
+.deadline-notice__countdown .is-seconds {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(166, 120, 32, 0.95), rgba(122, 86, 18, 0.95));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 0 rgba(201, 162, 74, 0.45);
+}
+
+.deadline-notice__countdown .is-seconds small {
+    color: #fbefcf;
+}
+
+.deadline-notice__countdown .is-seconds.is-tick {
+    animation: deadline-second-pulse 1s ease-out;
+}
+
+.deadline-notice__countdown .is-seconds.is-tick b {
+    animation: deadline-second-blink 1s ease-in-out;
+}
+
+@keyframes deadline-second-pulse {
+    0% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 0 rgba(201, 162, 74, 0.5); }
+    70% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 7px rgba(201, 162, 74, 0); }
+    100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 0 rgba(201, 162, 74, 0); }
+}
+
+@keyframes deadline-second-blink {
+    0% { opacity: 0.45; transform: translateY(-2px); }
+    35% { opacity: 1; transform: none; }
+}
+
+@media (max-width: 380px) {
+    .deadline-notice { padding-inline: 20px; }
+    .deadline-notice__countdown { gap: 6px; }
+    .deadline-notice__countdown b { font-size: 1.25rem; }
+    .deadline-notice__countdown small { font-size: 0.62rem; letter-spacing: 0.04em; }
+}
+
+@keyframes deadline-notice-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .deadline-notice[open],
+    .deadline-notice__countdown .is-seconds.is-tick,
+    .deadline-notice__countdown .is-seconds.is-tick b { animation: none; }
+}
+
+/* Peramban tanpa backdrop-filter memakai latar putih yang lebih pekat. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .deadline-notice { background: rgba(255, 255, 255, 0.96); }
+}

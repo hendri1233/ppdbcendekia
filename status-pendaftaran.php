@@ -1,6 +1,7 @@
 <?php
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
+require_once 'form_deadline.php';
 start_app_session();
 
 $registrationId = $_GET['id'] ?? '';
@@ -10,7 +11,7 @@ $tokenIsValid = preg_match('/^P[0-9]{9}$/', $registrationId) === 1 && preg_match
 if ($tokenIsValid) {
     $tokenHash = hash('sha256', $receiptToken);
     $groupClickColumn = ppdb_column_exists($conn, 'tb_pendaftaran', 'grup_diklik_pada') ? 'p.grup_diklik_pada' : 'NULL AS grup_diklik_pada';
-    $stmt = mysqli_prepare($conn, 'SELECT '.$groupClickColumn.',p.id_pendaftaran,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,p.alamat,p.data_diperiksa_pada,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
+    $stmt = mysqli_prepare($conn, 'SELECT '.$groupClickColumn.',p.id_pendaftaran,p.kode_unit,p.nm_peserta,p.tgl_lahir,p.jenis_kelamin,p.pendaftar,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.status_ppdb,p.status_data,p.status_pembayaran,p.revisi_dibuka,p.tanggal_batas_bayar,p.alamat,p.data_diperiksa_pada,u.nama_unit,u.jenjang,g.link_grup,q.biaya_pendaftaran,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,b.status_verifikasi AS status_bukti,b.catatan_admin AS catatan_bukti,b.diunggah_pada,b.nomor_referensi FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_unit_whatsapp_groups g ON g.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran LEFT JOIN tb_bukti_pembayaran b ON b.id=(SELECT MAX(b2.id) FROM tb_bukti_pembayaran b2 WHERE b2.id_pendaftaran=p.id_pendaftaran) WHERE p.id_pendaftaran=? AND (p.token_bukti=? OR p.token_whatsapp=? OR p.token_formulir=?) LIMIT 1');
     mysqli_stmt_bind_param($stmt, 'ssss', $registrationId, $tokenHash, $tokenHash, $tokenHash);
     mysqli_stmt_execute($stmt);
     $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -41,6 +42,9 @@ $hasPaymentAccount = $registration
     && !empty($registration['nomor_rekening'])
     && !empty($registration['nama_pemilik_rekening']);
 $uploadError = trim($_GET['upload_error'] ?? '');
+// Batas pengisian formulir dari admin; formulir revisi yang dibuka panitia tidak terkena batas.
+$formWindow = $registration ? ppdb_form_window($conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']) : ['buka' => null, 'batas' => null];
+$formExpired = $registration && empty($registration['revisi_dibuka']) && ppdb_form_deadline_passed($formWindow['batas']);
 $revisionCount = isset($_GET['revisi']) && ctype_digit((string) $_GET['revisi']) ? (int) $_GET['revisi'] : null;
 
 $journeySteps = [
@@ -199,7 +203,9 @@ header('Referrer-Policy: no-referrer');
                 <?php if ($registration['status_pembayaran'] === 'ditolak') { ?>
                     <div class="payment-error" role="alert">Bukti pembayaran sebelumnya belum disetujui. <?php echo h($registration['catatan_bukti']); ?> Isian formulir Anda tetap tersimpan.</div>
                 <?php } ?>
-                <?php if ($paymentDeadlinePassed) { ?>
+                <?php if ($formExpired) { ?>
+                    <div class="payment-guidance is-warning"><strong>Ananda dinyatakan gugur</strong><span>Batas pengisian formulir telah berakhir pada <?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?>. Hubungi panitia SPMB melalui WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?> sebelum melakukan pembayaran.</span></div>
+                <?php } elseif ($paymentDeadlinePassed) { ?>
                     <div class="payment-guidance is-warning">Batas pembayaran telah lewat. Hubungi panitia sebelum mengirim pembayaran.</div>
                 <?php } else { ?>
                     <section class="payment-instruction" aria-labelledby="payment-instruction-title">
@@ -260,6 +266,11 @@ header('Referrer-Policy: no-referrer');
                     </form>
                     <?php } ?>
                 <?php } ?>
+            <?php } elseif ($panel === 'formulir' && $formExpired) { ?>
+                <div class="payment-guidance is-warning">
+                    <strong>Ananda dinyatakan gugur</strong>
+                    <span>Formulir lengkap belum dikirim sampai batas pengisian <?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?>. Hubungi panitia SPMB melalui WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?> bila memerlukan penjelasan.</span>
+                </div>
             <?php } elseif ($panel === 'formulir') { ?>
                 <div class="payment-guidance">
                     <strong>Lanjutkan pengisian formulir</strong>
@@ -268,6 +279,7 @@ header('Referrer-Policy: no-referrer');
                     <?php } else { ?>
                         <span>Isian yang sudah tersimpan akan dimuat kembali.</span>
                     <?php } ?>
+                    <?php if ($formWindow['batas'] && empty($registration['revisi_dibuka'])) { ?><span>Batas pengisian formulir: <strong><?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?></strong>. Lewat dari batas ini Ananda dinyatakan gugur.</span><?php } ?>
                 </div>
                 <a class="download-button" href="formulir?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan formulir</a>
             <?php } elseif ($panel === 'cek-formulir') { ?>
@@ -305,6 +317,9 @@ header('Referrer-Policy: no-referrer');
 
     <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a> · WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?></footer>
 </main>
+<?php if ($registration && !$formExpired && empty($registration['revisi_dibuka']) && isset($panel) && in_array($panel, ['bayar', 'formulir'], true)) {
+    ppdb_render_form_deadline_dialog($formWindow, (string) ($registration['nama_unit'] ?? ''), (string) $registration['nm_peserta'], 'batas-formulir-'.$registration['id_pendaftaran']);
+} ?>
 <?php if ($groupJoinUrl !== '' && !$groupOpened) { ?>
     <dialog class="group-reminder" data-group-reminder aria-labelledby="group-reminder-title" aria-describedby="group-reminder-text">
         <header class="group-reminder__head">

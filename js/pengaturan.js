@@ -27,6 +27,7 @@
         masa_pembayaran_hari: form.querySelector('#masa_pembayaran_hari'),
         jadwal_buka: form.querySelector('#jadwal_buka'),
         jadwal_tutup: form.querySelector('#jadwal_tutup'),
+        batas_formulir: form.querySelector('#batas_formulir'),
     };
 
     // Unit TK per jenjang dan unit SMP per jenis kelamin: kuota jalur menjadi jumlahnya.
@@ -109,12 +110,91 @@
     unitSelect.addEventListener('change', loadSetting);
     yearSelect.addEventListener('change', loadSetting);
 
+    /* ---------- Waktu pengisian formulir per unit ---------- */
+
+    const deadlineDialog = form.querySelector('[data-deadline-dialog]');
+    const deadlineInput = fields.batas_formulir;
+    const deadlineOpen = form.querySelector('[data-deadline-open]');
+    const deadlineSummary = form.querySelector('[data-deadline-summary]');
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    let deadlineBefore = '';
+
+    // "2026-11-30T23:59" menjadi "30 Nov 2026 23.59 WIB".
+    function formatLocal(value) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value || '');
+        return match ? parseInt(match[3], 10) + ' ' + monthNames[parseInt(match[2], 10) - 1] + ' ' + match[1] + ' ' + match[4] + '.' + match[5] + ' WIB' : '';
+    }
+
+    function syncDeadline() {
+        if (!deadlineInput) return;
+        const ready = Boolean(unitSelect.value && yearSelect.value);
+        deadlineOpen.disabled = !ready;
+        const opens = formatLocal(fields.jadwal_buka && fields.jadwal_buka.value);
+        const deadline = formatLocal(deadlineInput.value);
+        if (!ready) {
+            deadlineSummary.textContent = 'Pilih unit dan tahun ajaran terlebih dahulu.';
+        } else if (deadline) {
+            deadlineSummary.textContent = (opens ? opens + ' sampai ' : 'Sampai ') + deadline;
+        } else {
+            deadlineSummary.textContent = 'Belum dibatasi. Formulir dapat diisi kapan saja setelah pembayaran.';
+        }
+        deadlineOpen.textContent = deadline ? 'Ubah waktu pengisian' : 'Atur waktu pengisian';
+    }
+
+    function validateDeadline() {
+        if (!deadlineInput) return;
+        const opens = fields.jadwal_buka ? fields.jadwal_buka.value : '';
+        const invalid = Boolean(deadlineInput.value && opens && deadlineInput.value <= opens);
+        deadlineInput.setCustomValidity(invalid ? 'Batas pengisian formulir harus setelah jadwal buka.' : '');
+        if (opens) deadlineInput.min = opens;
+        else deadlineInput.removeAttribute('min');
+    }
+
+    if (deadlineDialog && deadlineInput) {
+        deadlineOpen.addEventListener('click', function () {
+            const option = unitSelect.selectedOptions[0];
+            deadlineDialog.querySelector('[data-deadline-unit]').textContent = (option ? option.textContent.trim() : '') + ' · ' + yearSelect.value;
+            deadlineDialog.querySelector('[data-deadline-start]').textContent = formatLocal(fields.jadwal_buka && fields.jadwal_buka.value) || 'Jadwal buka belum diatur';
+            deadlineDialog.querySelector('[data-deadline-close]').textContent = formatLocal(fields.jadwal_tutup && fields.jadwal_tutup.value) || 'Tanpa batas';
+            deadlineBefore = deadlineInput.value;
+            validateDeadline();
+            deadlineDialog.showModal();
+            deadlineInput.focus();
+        });
+        deadlineDialog.querySelector('[data-deadline-cancel]').addEventListener('click', function () {
+            deadlineInput.value = deadlineBefore;
+            deadlineDialog.close();
+            syncDeadline();
+        });
+        deadlineDialog.querySelector('[data-deadline-clear]').addEventListener('click', function () {
+            deadlineInput.value = '';
+            validateDeadline();
+        });
+        deadlineDialog.addEventListener('cancel', function () {
+            deadlineInput.value = deadlineBefore;
+            syncDeadline();
+        });
+        deadlineInput.addEventListener('input', function () {
+            validateDeadline();
+            syncDeadline();
+        });
+        [unitSelect, yearSelect, fields.jadwal_buka].forEach(function (input) {
+            if (input) input.addEventListener('change', function () { validateDeadline(); syncDeadline(); });
+        });
+        // Batas yang tidak valid ditunjukkan di dalam jendela, bukan di formulir yang tertutup.
+        deadlineInput.addEventListener('invalid', function () {
+            if (!deadlineDialog.open) deadlineDialog.showModal();
+        });
+        syncDeadline();
+    }
+
     // Tombol "Ubah" pada tabel mengisi formulir dengan data yang dipilih.
     for (const button of document.querySelectorAll('.quota-edit-button')) {
         button.addEventListener('click', () => {
             unitSelect.value = button.dataset.unit;
             yearSelect.value = button.dataset.year;
             loadSetting();
+            unitSelect.dispatchEvent(new Event('change'));
             form.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     }
@@ -160,6 +240,8 @@
     // Isi otomatis hanya saat halaman dibuka, bukan setelah submit gagal.
     if (!form.dataset.submitted) {
         loadSetting();
+        validateDeadline();
+        syncDeadline();
     } else {
         // Setelah submit gagal: pertahankan isian, cukup atur tampilan kotak kuota.
         syncLevelMode(undefined);

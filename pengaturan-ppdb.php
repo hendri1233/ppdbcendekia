@@ -246,6 +246,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($scheduleError === '' && $scheduleInput['jadwal_buka'] && $scheduleInput['jadwal_tutup'] && $scheduleInput['jadwal_tutup'] <= $scheduleInput['jadwal_buka']) {
         $scheduleError = 'Jadwal tutup harus setelah jadwal buka.';
     }
+    // Batas pengisian formulir boleh melewati jadwal tutup, tetapi harus setelah jadwal buka.
+    $hasFormDeadline = ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_formulir');
+    $rawDeadline = is_string($_POST['batas_formulir'] ?? null) ? trim($_POST['batas_formulir']) : '';
+    $parsedDeadline = $rawDeadline === '' ? null : DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $rawDeadline);
+    $formDeadline = $parsedDeadline ? $parsedDeadline->format('Y-m-d H:i:s') : null;
+    if ($scheduleError === '' && $parsedDeadline === false) {
+        $scheduleError = 'Format batas pengisian formulir tidak valid.';
+    } elseif ($scheduleError === '' && $formDeadline && $scheduleInput['jadwal_buka'] && $formDeadline <= $scheduleInput['jadwal_buka']) {
+        $scheduleError = 'Batas pengisian formulir harus setelah jadwal buka.';
+    }
 
     // Unit TK per jenjang dan unit SMP per jenis kelamin: jumlahnya menjadi kuota per jalur.
     $levelQuotaInput = null;
@@ -339,6 +349,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $saved = mysqli_stmt_execute($scheduleSave);
                     mysqli_stmt_close($scheduleSave);
                 }
+                if ($saved && $hasFormDeadline) {
+                    $deadlineSave = mysqli_prepare($conn, 'UPDATE tb_pengaturan_ppdb SET batas_formulir=? WHERE kode_unit=? AND th_ajaran=?');
+                    mysqli_stmt_bind_param($deadlineSave, 'sss', $formDeadline, $unitCode, $academicYear);
+                    $saved = mysqli_stmt_execute($deadlineSave);
+                    mysqli_stmt_close($deadlineSave);
+                }
                 if ($saved && $levelQuotaInput !== null) {
                     $levelSave = mysqli_prepare($conn, ($unitJenjang === 'SMP' ? 'INSERT INTO tb_kuota_jenis_kelamin (kode_unit,th_ajaran,jenis_kelamin,kuota_internal,kuota_eksternal)' : 'INSERT INTO tb_kuota_tingkat (kode_unit,th_ajaran,tingkat_kelas,kuota_internal,kuota_eksternal)').' VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota_internal=VALUES(kuota_internal),kuota_eksternal=VALUES(kuota_eksternal)');
                     foreach ($levelQuotaInput as $level => $routes) {
@@ -388,6 +404,7 @@ while ($setting = mysqli_fetch_assoc($settings)) {
         'eksternal_dibuka' => (int) $setting['eksternal_dibuka'],
         'jadwal_buka' => isset($setting['jadwal_buka']) ? substr(str_replace(' ', 'T', $setting['jadwal_buka']), 0, 16) : '',
         'jadwal_tutup' => isset($setting['jadwal_tutup']) ? substr(str_replace(' ', 'T', $setting['jadwal_tutup']), 0, 16) : '',
+        'batas_formulir' => isset($setting['batas_formulir']) ? substr(str_replace(' ', 'T', $setting['batas_formulir']), 0, 16) : '',
         'reserved_internal' => (int) $setting['internal_terisi'],
         'reserved_eksternal' => (int) $setting['eksternal_terisi'],
         'levels' => (object) $setting['levels'],
@@ -557,6 +574,38 @@ require 'admin_header.php';
                     <input id="jadwal_tutup" name="jadwal_tutup" type="datetime-local" value="<?php echo h(is_string($_POST['jadwal_tutup'] ?? null) ? $_POST['jadwal_tutup'] : ''); ?>">
                 </div>
                 <p class="field-span-2 level-quota__hint">Jalur eksternal hanya dapat diakses di antara jadwal buka dan tutup, selama jalurnya dicentang buka. Jalur internal dapat diakses sebelum jadwal buka bila dicentang buka, dan berhenti pada jadwal tutup. Jalur eksternal belum terbuka selama jadwal buka kosong; jadwal tutup boleh dikosongkan bila tanpa batas waktu. Kuota tidak berubah.</p>
+            <?php } ?>
+            <?php if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_formulir')) { ?>
+                <div class="form-deadline-row field-span-2">
+                    <span class="form-deadline-row__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm.5-13H11v6l5.2 3.1.8-1.2-4.5-2.7V7Z"/></svg></span>
+                    <div class="form-deadline-row__copy">
+                        <strong>Waktu pengisian formulir</strong>
+                        <span data-deadline-summary>Pilih unit dan tahun ajaran terlebih dahulu.</span>
+                    </div>
+                    <button class="button-secondary" type="button" data-deadline-open disabled>Atur waktu pengisian</button>
+                </div>
+                <dialog class="deadline-dialog" data-deadline-dialog aria-labelledby="deadline-dialog-title">
+                    <div class="deadline-dialog__head">
+                        <p class="deadline-dialog__eyebrow" data-deadline-unit>Konfigurasi unit</p>
+                        <h2 id="deadline-dialog-title">Waktu pengisian formulir</h2>
+                        <p>Pendaftar dapat mengisi formulir lengkap sejak jadwal buka sampai batas ini, meskipun jadwal tutup pendaftaran sudah lewat.</p>
+                    </div>
+                    <dl class="deadline-dialog__range">
+                        <div><dt>Mulai</dt><dd data-deadline-start>Jadwal buka belum diatur</dd></div>
+                        <div><dt>Jadwal tutup pendaftaran</dt><dd data-deadline-close>Tanpa batas</dd></div>
+                    </dl>
+                    <div class="filter-field">
+                        <label for="batas_formulir">Batas pengisian formulir (WIB)</label>
+                        <input id="batas_formulir" name="batas_formulir" type="datetime-local" value="<?php echo h(is_string($_POST['batas_formulir'] ?? null) ? $_POST['batas_formulir'] : ''); ?>">
+                        <small class="deadline-dialog__hint" data-deadline-hint>Kosongkan bila formulir boleh diisi tanpa batas waktu.</small>
+                    </div>
+                    <div class="deadline-dialog__actions">
+                        <button class="button-secondary" type="button" data-deadline-clear>Tanpa batas</button>
+                        <span></span>
+                        <button class="button-secondary" type="button" data-deadline-cancel>Batal</button>
+                        <button class="button-primary" type="submit">Simpan batas</button>
+                    </div>
+                </dialog>
             <?php } ?>
             <label class="quota-toggle">
                 <input type="checkbox" name="internal_dibuka" value="1" <?php echo isset($_POST['internal_dibuka']) ? 'checked' : ''; ?>>
@@ -799,7 +848,7 @@ require 'admin_header.php';
                             $rowStatus = $rowOpen ? 'Internal dibuka' : 'Belum dijadwalkan';
                         }
                         ?>
-                        <td data-label="Status"><span class="quota-cell-text"><span class="status-pill <?php echo $rowOpen ? 'is-open' : 'is-closed'; ?>"><?php echo $rowStatus; ?></span><?php if ($rowSchedule !== '') { ?><small class="cell-sub"><?php echo h($rowSchedule); ?></small><?php } ?></span></td>
+                        <td data-label="Status"><span class="quota-cell-text"><span class="status-pill <?php echo $rowOpen ? 'is-open' : 'is-closed'; ?>"><?php echo $rowStatus; ?></span><?php if ($rowSchedule !== '') { ?><small class="cell-sub"><?php echo h($rowSchedule); ?></small><?php } ?><?php if (!empty($row['batas_formulir'])) { ?><small class="cell-sub">Formulir s.d. <?php echo h(ppdb_format_datetime_short($row['batas_formulir'])); ?> WIB</small><?php } ?></span></td>
                         <td data-label="Aksi"><button class="button-secondary quota-edit-button" type="button" data-unit="<?php echo h($row['kode_unit']); ?>" data-year="<?php echo h($row['th_ajaran']); ?>">Ubah</button></td>
                     </tr>
                 <?php } ?>

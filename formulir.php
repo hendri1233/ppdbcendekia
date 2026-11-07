@@ -151,6 +151,12 @@ $sheetSyncFailed = false;
 $registration = formulir_lookup($conn, $code);
 $authorized = $registration !== null && formulir_token_matches($registration, $token);
 $formOpen = $authorized && formulir_is_open($registration);
+// Batas pengisian formulir per unit (pengaturan SPMB); revisi yang dibuka panitia tetap dapat diisi.
+$formWindow = $authorized ? ppdb_form_window($conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']) : ['buka' => null, 'batas' => null];
+$formExpired = $formOpen && empty($registration['revisi_dibuka']) && ppdb_form_deadline_passed($formWindow['batas']);
+if ($formExpired) {
+    $formOpen = false;
+}
 $alreadySubmitted = $authorized && in_array($registration['status_ppdb'], ['formulir_terisi', 'diterima', 'daftar_tunggu'], true);
 $isRegistrantWithdrawal = $authorized
     && $registration['status_ppdb'] === 'ditolak'
@@ -189,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['aksi'] ?? '') === 'simpan_
     header('Cache-Control: no-store, private');
     if (!$formOpen || !formulir_is_editable($registration['status_ppdb'], !empty($registration['revisi_dibuka']))) {
         http_response_code(403);
-        echo json_encode(['ok' => false, 'message' => 'Formulir ini sudah tidak dapat diubah.']);
+        echo json_encode(['ok' => false, 'message' => $formExpired ? 'Batas pengisian formulir sudah berakhir dan Ananda dinyatakan gugur. Hubungi panitia SPMB.' : 'Formulir ini sudah tidak dapat diubah.']);
         exit;
     }
     if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
@@ -645,9 +651,11 @@ header('Referrer-Policy: no-referrer');
 
         <?php } elseif (!$formOpen) { ?>
             <section class="gate-panel">
-                <p class="eyebrow">Formulir belum tersedia</p>
-                <h1><?php echo $alreadySubmitted ? 'Formulir sudah<br><span>Anda kirim.</span>' : 'Pembayaran belum<br><span>disetujui.</span>'; ?></h1>
-                <?php if ($alreadySubmitted) { ?>
+                <p class="eyebrow"><?php echo $formExpired ? 'Batas pengisian berakhir' : 'Formulir belum tersedia'; ?></p>
+                <h1><?php echo $formExpired ? 'Ananda dinyatakan<br><span>gugur.</span>' : ($alreadySubmitted ? 'Formulir sudah<br><span>Anda kirim.</span>' : 'Pembayaran belum<br><span>disetujui.</span>'); ?></h1>
+                <?php if ($formExpired) { ?>
+                    <p class="intro-copy">Formulir lengkap untuk kode <?php echo h($registration['id_pendaftaran']); ?> belum dikirim sampai batas pengisian <?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?>, sehingga Ananda dinyatakan gugur. Hubungi panitia SPMB bila memerlukan penjelasan.</p>
+                <?php } elseif ($alreadySubmitted) { ?>
                     <p class="intro-copy">Formulir lengkap untuk kode <?php echo h($registration['id_pendaftaran']); ?> sudah diterima dan sedang diperiksa panitia. Hubungi panitia bila perlu perbaikan.</p>
                 <?php } else { ?>
                     <p class="intro-copy">Kode <?php echo h($registration['id_pendaftaran']); ?> belum membuka formulir lengkap. Selesaikan pembayaran terlebih dahulu pada halaman status pendaftaran.</p>
@@ -850,6 +858,7 @@ header('Referrer-Policy: no-referrer');
                     <p class="eyebrow">Tahap 3 dari 3</p>
                     <h2>Formulir data lengkap</h2>
                     <p>Isian tersimpan otomatis. Jika terhenti, buka menu Lanjutkan pendaftaran untuk melanjutkan dari langkah terakhir.</p>
+                    <?php if ($formWindow['batas'] && empty($registration['revisi_dibuka'])) { ?><p class="form-deadline-chip"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm.5-13H11v6l5.2 3.1.8-1.2-4.5-2.7V7Z"/></svg>Batas pengisian: <strong><?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?></strong> · lewat batas dinyatakan gugur</p><?php } ?>
                     <?php if ($draftSavedAt === 'revisi' && $_SERVER['REQUEST_METHOD'] !== 'POST') { ?><p class="draft-restored" role="status">Panitia membuka kembali formulir ini untuk diperbaiki. Isian yang pernah Anda kirim sudah dimuat; perbaiki bagian yang keliru lalu kirim ulang.</p><?php } elseif ($draftSavedAt && $_SERVER['REQUEST_METHOD'] !== 'POST') { ?><p class="draft-restored" role="status">Isian Anda yang tersimpan pada <?php echo h(date('d-m-Y H:i', strtotime($draftSavedAt))); ?> sudah dimuat kembali.</p><?php } ?>
                 </div>
                 <ol class="form-steps" data-step-nav aria-label="Langkah formulir">

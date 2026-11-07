@@ -438,6 +438,38 @@ function ppdb_now_wib(): string
 }
 
 /**
+ * Masa pengisian formulir lengkap unit (migrasi 036): dimulai sejak jadwal buka
+ * sampai batas yang diatur admin. Batas kosong berarti tanpa batas waktu.
+ *
+ * @return array{buka: ?string, batas: ?string}
+ */
+function ppdb_form_window(mysqli $conn, string $unitCode, string $academicYear): array
+{
+    if (!ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_formulir')) {
+        return ['buka' => null, 'batas' => null];
+    }
+    $stmt = mysqli_prepare($conn, 'SELECT jadwal_buka,batas_formulir FROM tb_pengaturan_ppdb WHERE kode_unit=? AND th_ajaran=? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 'ss', $unitCode, $academicYear);
+    mysqli_stmt_execute($stmt);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: [];
+    mysqli_stmt_close($stmt);
+    return ['buka' => $row['jadwal_buka'] ?? null, 'batas' => $row['batas_formulir'] ?? null];
+}
+
+function ppdb_form_deadline_passed(?string $deadline): bool
+{
+    return $deadline !== null && $deadline !== '' && ppdb_now_wib() >= $deadline;
+}
+
+/** Contoh: "Senin, 30 November 2026". */
+function ppdb_format_day_date_id(string $dateTime): string
+{
+    $days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    $timestamp = strtotime($dateTime);
+    return $timestamp === false ? '-' : $days[(int) date('w', $timestamp)].', '.ppdb_format_date_id($dateTime);
+}
+
+/**
  * Syarat SQL bahwa sekarang berada di dalam jadwal buka-tutup unit (migrasi 027).
  * $alias adalah alias tabel tb_pengaturan_ppdb, kosongkan bila tanpa alias.
  * Bila kolom jadwal belum ada, syaratnya selalu terpenuhi.
