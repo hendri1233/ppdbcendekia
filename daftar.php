@@ -10,6 +10,45 @@ start_app_session();
 if (isset($_GET['internal'])) {
     header('Referrer-Policy: no-referrer');
     header('Cache-Control: private, no-store');
+    // Jalur internal hanya lewat tautan pendek; tautan lama daftar?internal=1 tidak berlaku lagi.
+    $requestedPath = strtolower(basename((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH)));
+    if ($requestedPath !== PPDB_INTERNAL_SHORT_LINK) {
+        http_response_code(410);
+        header('X-Robots-Tag: noindex, nofollow');
+        ?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Tautan tidak berlaku | SPMB Cendekia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
+    <link rel="stylesheet" href="css/result.css?v=<?php echo (int) filemtime(__DIR__.'/css/result.css'); ?>">
+    <link rel="icon" type="image/x-icon" href="img/favicons/favicon.ico" sizes="16x16 32x32 48x48">
+</head>
+<body>
+<main class="result-shell">
+    <a class="result-brand" href="./">
+        <img class="brand-logo" src="img/logo-display.png" alt="" width="48" height="47">
+        <span><strong>Wakaf Cendekia</strong><small>Takengon · SPMB</small></span>
+    </a>
+    <section class="result-panel result-error">
+        <p class="result-eyebrow">Tautan tidak berlaku</p>
+        <h1>Tautan pendaftaran ini<br>sudah tidak digunakan.</h1>
+        <p class="result-description">Mohon minta tautan pendaftaran terbaru kepada panitia SPMB Yayasan Wakaf Cendekia Takengon.</p>
+        <a class="download-button" href="<?php echo h(ppdb_admin_whatsapp_url('Assalamu’alaikum, saya memerlukan tautan pendaftaran SPMB terbaru.')); ?>" target="_blank" rel="noopener noreferrer">Hubungi panitia via WhatsApp</a>
+    </section>
+    <footer>Yayasan Wakaf Cendekia Takengon</footer>
+</main>
+</body>
+</html>
+<?php
+        exit;
+    }
 }
 
 $offerResult = mysqli_query($conn, "SELECT q.kode_unit,q.th_ajaran,q.kuota_internal,q.kuota_eksternal,".ppdb_internal_open_condition_sql($conn)." AS internal_dibuka,".ppdb_route_open_sql($conn, 'eksternal_dibuka').",".ppdb_schedule_columns_sql($conn).",q.biaya_pendaftaran,q.nomor_antrian_terakhir,q.bank_nama,q.nomor_rekening,q.nama_pemilik_rekening,q.masa_pembayaran_hari,u.nama_unit,u.jenjang,(SELECT COUNT(*) FROM tb_pendaftaran p WHERE p.kode_unit=q.kode_unit AND p.th_ajaran=q.th_ajaran AND p.jalur_pendaftaran='eksternal' AND p.status_ppdb NOT IN ('ditolak','data_lama')) AS eksternal_terisi FROM tb_pengaturan_ppdb q JOIN tb_unit_pendidikan u ON u.kode_unit=q.kode_unit ORDER BY q.th_ajaran,FIELD(u.jenjang,'KB','TPA','TK','SD','SMP')");
