@@ -327,12 +327,13 @@ function formulir_sections_for(?mysqli $conn, string $jenjang = ''): array
 {
     $rules = $conn ? formulir_field_rules($conn) : [];
     $sections = formulir_data_sections();
-    // Isian berpenanda 'migrasi' disembunyikan sampai migrasinya dijalankan.
-    $hasMigration035 = !$conn || ppdb_column_exists($conn, 'tb_detail_dapodik', 'penerima_pip');
+    // Isian berpenanda 'migrasi' baru tampil bila kolomnya sudah ada; dicek per kolom karena
+    // kolom dapat ditambahkan bertahap (mis. infaq/SPP pada migrasi 037).
+    $detailColumns = $conn ? formulir_detail_columns($conn) : null;
     foreach ($sections as $sectionKey => $section) {
         $fields = [];
         foreach ($section['fields'] as $field) {
-            if (($field['migrasi'] ?? '') === '035' && !$hasMigration035) {
+            if (isset($field['migrasi']) && $detailColumns !== null && !formulir_migrated_field_ready($field, $section['fields'], $detailColumns)) {
                 continue;
             }
             if ($jenjang !== '' && isset($field['jenjang']) && !in_array($jenjang, $field['jenjang'], true)) {
@@ -350,6 +351,51 @@ function formulir_sections_for(?mysqli $conn, string $jenjang = ''): array
         $sections[$sectionKey]['fields'] = $fields;
     }
     return $sections;
+}
+
+/** Nama kolom tb_detail_dapodik; null bila tabel tidak dapat dibaca. */
+function formulir_detail_columns(mysqli $conn): ?array
+{
+    static $columns = null;
+    if ($columns === null) {
+        $result = mysqli_query($conn, 'SHOW COLUMNS FROM tb_detail_dapodik');
+        if (!$result) {
+            return null;
+        }
+        $columns = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $columns[$row['Field']] = true;
+        }
+    }
+    return $columns;
+}
+
+/**
+ * Isian bermigrasi siap bila kolomnya ada. Judul kecil ikut tampil bila
+ * setidaknya satu isian sesudahnya (sampai judul berikutnya) sudah siap.
+ */
+function formulir_migrated_field_ready(array $field, array $sectionFields, array $detailColumns): bool
+{
+    if (($field['type'] ?? 'text') !== 'heading') {
+        return isset($detailColumns[$field['name']]);
+    }
+    $after = false;
+    foreach ($sectionFields as $other) {
+        if ($other === $field) {
+            $after = true;
+            continue;
+        }
+        if (!$after) {
+            continue;
+        }
+        if (($other['type'] ?? 'text') === 'heading') {
+            break;
+        }
+        if (isset($detailColumns[$other['name']])) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /** Semua field input (tanpa judul kecil), diindeks berdasarkan nama. */
