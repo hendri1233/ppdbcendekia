@@ -709,6 +709,15 @@
         });
         form.addEventListener('change', function (event) {
             if (event.target.type === 'file') return;
+            // Kotak centang pilihan ganda disatukan ke isian tersembunyi, dipisah "; ".
+            const multi = event.target.dataset.multiChoice;
+            if (multi) {
+                const checked = form.querySelectorAll('[data-multi-choice="' + multi + '"]:checked');
+                const hidden = form.querySelector('[data-multi-value="' + multi + '"]');
+                if (hidden) hidden.value = Array.from(checked, function (box) { return box.value; }).join('; ');
+                const question = event.target.closest('.participant-question');
+                if (question && checked.length) question.classList.remove('is-invalid');
+            }
             updateConditionalFields();
             scheduleSave();
         });

@@ -214,6 +214,21 @@ function formulir_data_sections(): array
                 ['name' => 'tinggi_badan_cm', 'label' => 'Tinggi badan (cm)', 'type' => 'text', 'inputmode' => 'decimal', 'pattern' => '[0-9]+([,.][0-9]{1,2})?', 'decimal' => true, 'min' => 30, 'max' => 250, 'numeric' => true, 'hint' => 'Koma atau titik dapat digunakan untuk angka desimal. Jika belum tahu, dapat diukur di sekolah.', 'store' => 'detail'],
                 ['name' => 'berat_badan_kg', 'label' => 'Berat badan (kg)', 'type' => 'text', 'inputmode' => 'decimal', 'pattern' => '[0-9]+([,.][0-9]{1,2})?', 'decimal' => true, 'min' => 1, 'max' => 300, 'numeric' => true, 'hint' => 'Koma atau titik dapat digunakan untuk angka desimal.', 'store' => 'detail'],
                 ['name' => 'lingkar_kepala_cm', 'label' => 'Lingkar kepala (cm)', 'type' => 'text', 'inputmode' => 'decimal', 'pattern' => '[0-9]+([,.][0-9]{1,2})?', 'decimal' => true, 'min' => 20, 'max' => 100, 'numeric' => true, 'hint' => 'Koma atau titik dapat digunakan untuk angka desimal.', 'store' => 'detail'],
+                ['name' => 'minat_bakat', 'label' => 'Minat dan bakat yang perlu didukung', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
+                ['name' => 'hobi', 'label' => 'Hobi ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
+                    'Olah Raga', 'Kesenian', 'Membaca', 'Menulis', 'Traveling', 'Lainnya', 'Fotografi', 'Fitness', 'Belanja',
+                    'Menggambar', 'Bermain Musik', 'Mendaki', 'Jogging', 'Bermain Gitar', 'Bermain Bola', 'Bermain Bulu Tangkis',
+                    'Bermain Bola Tenis', 'Bermain Biola', 'Bermain Piano', 'Berlari', 'Berkemah', 'Memancing', 'Berselancar',
+                    'Bermain Boneka', 'Makan', 'Menjahit', 'Main Puzzle', 'Mewarnai',
+                ])],
+                ['name' => 'cita_cita', 'label' => 'Cita-cita ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
+                    'PNS / Pegawai Negeri Sipil', 'TNI/Polri', 'Guru', 'Dokter', 'Politikus', 'Wiraswasta', 'Seni/Lukis/Artis/Sejenis',
+                    'Lainnya', 'Penghafal Al-Qur\'an', 'Atlet E-Sport Profesional', 'Atlet', 'Content Creator', 'Vloger', 'Koki',
+                    'Pendeta', 'Perawat', 'Pilot', 'Pembalap', 'Atlit Olahraga', 'Pengacara', 'Da\'i / Ustadz',
+                    'Entertainer / Pekerja Seni', 'Wartawan', 'Pengusaha / Bisnismen', 'Penulis', 'Penyiar Radio',
+                    'Pembawa Acara / Master Ceremony', 'Polisi', 'Pemadam Kebakaran', 'Astronot', 'Masinis Kereta Api',
+                    'Perawat / Suster', 'Bidan', 'Presiden', 'Translator', 'Designer', 'Pelaut', 'Arsitek', 'Dosen',
+                ])],
                 ['name' => 'sumber_informasi', 'label' => 'Mengetahui SPMB dari', 'type' => 'select', 'wide' => true, 'store' => 'pendaftaran', 'options' => formulir_options(['Keluarga atau alumni', 'Guru atau karyawan', 'Brosur', 'Media sosial', 'Website', 'Lainnya'])],
             ],
         ],
@@ -245,20 +260,46 @@ function formulir_data_sections(): array
                     'Auditori' => 'Auditori — lebih mudah memahami dengan mendengarkan',
                     'Kinestetik' => 'Kinestetik — belajar lewat gerak tubuh dan keterampilan tangan',
                 ]],
-                ['name' => 'minat_bakat', 'label' => 'Minat dan bakat yang perlu didukung', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
-                ['name' => 'hobi', 'label' => 'Hobi ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
-                    'Olah Raga', 'Kesenian', 'Membaca', 'Menulis', 'Traveling', 'Lainnya', 'Fotografi', 'Fitness', 'Belanja',
-                    'Menggambar', 'Bermain Musik', 'Mendaki', 'Jogging', 'Bermain Gitar', 'Bermain Bola', 'Bermain Bulu Tangkis',
-                    'Bermain Bola Tenis', 'Bermain Biola', 'Bermain Piano', 'Berlari', 'Berkemah', 'Memancing', 'Berselancar',
-                    'Bermain Boneka', 'Makan', 'Menjahit', 'Main Puzzle', 'Mewarnai',
-                ])],
-                ['name' => 'cita_cita', 'label' => 'Cita-cita ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
-                    'PNS / Pegawai Negeri Sipil', 'TNI/Polri', 'Guru', 'Dokter', 'Politikus', 'Wiraswasta', 'Seni/Lukis/Artis/Sejenis',
-                    'Lainnya', 'Penghafal Al-Qur\'an', 'Atlet E-Sport Profesional', 'Atlet', 'Content Creator', 'Vloger', 'Koki',
-                    'Pendeta', 'Perawat', 'Pilot', 'Pembalap', 'Atlit Olahraga', 'Pengacara', 'Da\'i / Ustadz',
-                    'Entertainer / Pekerja Seni', 'Wartawan', 'Pengusaha / Bisnismen', 'Penulis', 'Penyiar Radio',
-                    'Pembawa Acara / Master Ceremony', 'Polisi', 'Pemadam Kebakaran', 'Astronot', 'Masinis Kereta Api',
-                    'Perawat / Suster', 'Bidan', 'Presiden', 'Translator', 'Designer', 'Pelaut', 'Arsitek', 'Dosen',
+                // Isian 'migrasi' => '035' baru tampil setelah kolomnya dibuat (migrations/035_komitmen_orang_tua.sql).
+                ['type' => 'heading', 'label' => 'Komitmen ayah dan bunda', 'hint' => 'Sebagai sekolah yang menerapkan nilai-nilai islami kepada peserta didik.', 'migrasi' => '035'],
+                ['name' => 'komitmen_pakaian_muslim', 'label' => 'Apakah ayah/bunda bersedia memakai pakaian muslim/muslimah?', 'type' => 'select', 'required' => true, 'wide' => true, 'store' => 'detail', 'migrasi' => '035', 'options' => formulir_options(['Bersedia', 'Belum bersedia'])],
+                ['name' => 'ibadah_ananda', 'label' => 'Apakah ananda sudah mengikuti ayah dan bunda (sholat dan berpuasa)?', 'type' => 'select', 'required' => true, 'wide' => true, 'store' => 'detail', 'migrasi' => '035', 'options' => formulir_options(['Sudah', 'Sebagian, masih belajar', 'Belum'])],
+                ['name' => 'waktu_mendampingi', 'label' => 'Apakah ayah dan bunda memiliki waktu khusus untuk mendampingi ananda bermain?', 'type' => 'select', 'required' => true, 'wide' => true, 'store' => 'detail', 'migrasi' => '035', 'options' => formulir_options(['Ada, setiap hari', 'Ada, pada akhir pekan', 'Belum ada'])],
+                ['name' => 'pendapat_spp', 'label' => 'Sekolah mewajibkan ayah/bunda membayar SPP 12 bulan. Bagaimana pendapat ayah/bunda?', 'type' => 'textarea', 'required' => true, 'maxlength' => 255, 'store' => 'detail', 'migrasi' => '035'],
+                ['type' => 'heading', 'label' => 'Alternatif infaq/SPP (sumbangan pembinaan pendidikan) per bulan', 'hint' => 'Mewujudkan pendidikan yang berkualitas membutuhkan daya dukung pendanaan yang memadai. Yayasan Wakaf Cendekia Takengon membuka kesempatan bagi wali siswa untuk ikut berkontribusi sesuai kemampuan melalui infaq/sumbangan pembinaan pendidikan (SPP), dengan harapan keterbatasan dana dalam menjalankan berbagai program dapat diminimalkan. Berikut besaran SPP wajib (normal) per bulan; ayah/bunda boleh memilih SPP alternatif sesuai kemampuan.', 'migrasi' => '035'],
+                ['name' => 'infaq_spp_pilihan', 'label' => 'Pilihan infaq/SPP per bulan', 'type' => 'select', 'required' => true, 'wide' => true, 'store' => 'detail', 'migrasi' => '035', 'options' => [
+                    'Wajib/Normal Rp350.000' => 'Wajib/Normal Rp350.000',
+                    'Alternatif A Rp400.000' => 'Pilihan Alternatif A Rp400.000',
+                    'Alternatif B Rp450.000' => 'Pilihan Alternatif B Rp450.000',
+                    'Alternatif C Rp500.000' => 'Pilihan Alternatif C Rp500.000',
+                    'Lebih dari Rp500.000' => 'Lebih dari Rp500.000',
+                ]],
+                ['name' => 'infaq_spp_nominal', 'label' => 'Nominal infaq/SPP per bulan (lebih dari Rp500.000)', 'required' => true, 'maxlength' => 15, 'inputmode' => 'numeric', 'pattern' => '[0-9]+', 'placeholder' => 'Contoh: 600000', 'hint' => 'Tulis angka saja, tanpa Rp dan titik.', 'store' => 'detail', 'migrasi' => '035', 'show_if' => [['infaq_spp_pilihan', ['Lebih dari Rp500.000']]]],
+                ['type' => 'heading', 'label' => 'Program Yayasan Wakaf Cendekia Takengon', 'hint' => 'Yayasan Wakaf Cendekia Takengon memiliki beberapa program yang mengajak masyarakat menjadi mitra dalam memperjuangkan pendidikan islam yang berkualitas dan berbiaya terjangkau bagi banyak lapisan masyarakat.', 'migrasi' => '035'],
+                ['name' => 'program_wakaf_pilihan', 'label' => 'Program yang paling ayah/bunda minati untuk bergabung menjadi mitra', 'type' => 'select', 'required' => true, 'wide' => true, 'store' => 'detail', 'migrasi' => '035', 'options' => [
+                    'Sarana prasarana' => 'Wakaf uang untuk pembangunan sarana prasarana unit-unit Yayasan Wakaf Cendekia Takengon',
+                    'Pembebasan lahan SMP' => 'Wakaf uang untuk pembebasan lahan unit SMP seluas 1.181 m² (Rp900.000 per meter)',
+                    'Usaha produktif' => 'Wakaf uang untuk usaha produktif',
+                    'Lainnya' => 'Yang lain',
+                ]],
+                ['name' => 'program_wakaf_lainnya', 'label' => 'Program lain yang diminati', 'required' => true, 'maxlength' => 150, 'wide' => true, 'store' => 'detail', 'migrasi' => '035', 'show_if' => [['program_wakaf_pilihan', ['Lainnya']]]],
+                ['name' => 'program_wakaf_alasan', 'label' => 'Alasan memilih program tersebut', 'type' => 'textarea', 'required' => true, 'maxlength' => 255, 'store' => 'detail', 'migrasi' => '035'],
+                ['type' => 'heading', 'label' => 'Peran serta ayah dan bunda', 'hint' => 'Mewujudkan sekolah berkualitas memerlukan dukungan berbagai pihak. Kami sangat mengapresiasi bila ayah/bunda bersedia menjadi mitra dalam mengembangkan sekolah unggul di Aceh Tengah.', 'migrasi' => '035'],
+                ['name' => 'peran_mitra', 'label' => 'Peran yang bisa ayah/bunda jalankan (boleh lebih dari satu)', 'type' => 'checkboxes', 'required' => true, 'maxlength' => 500, 'store' => 'detail', 'migrasi' => '035', 'options' => [
+                    'Pengurus komite sekolah' => 'Sebagai pengurus di organisasi komite sekolah',
+                    'Guru tamu ekskul' => 'Sebagai guru tamu dalam kegiatan ekskul (tuliskan bidangnya di kolom bawah)',
+                    'Koperasi Kenara Cendekia' => 'Sebagai anggota koperasi "Kenara Cendekia" atau mitra pengembangan usaha lainnya',
+                    'Market Cendekia' => 'Sebagai konsumen/produsen bagi Market Cendekia',
+                    'Relawan Adiwiyata' => 'Sebagai relawan dalam program Lingkungan Hidup (sekolah ADIWIYATA)',
+                    'Pejuang wakaf' => 'Sebagai bagian dari pejuang wakaf di Lembaga Wakaf Insan Cendekia',
+                    'Lainnya' => 'Yang lain',
+                ]],
+                ['name' => 'peran_mitra_lainnya', 'label' => 'Bidang guru tamu atau peran lain', 'maxlength' => 150, 'wide' => true, 'placeholder' => 'Contoh: bidang memanah, atau peran lain yang bisa dijalankan', 'store' => 'detail', 'migrasi' => '035'],
+                ['type' => 'heading', 'label' => 'Program Indonesia Pintar (PIP)', 'migrasi' => '035'],
+                ['name' => 'penerima_pip', 'label' => 'Penerima Program Indonesia Pintar (PIP)', 'type' => 'select', 'required' => true, 'store' => 'detail', 'migrasi' => '035', 'options' => formulir_options(['Ya', 'Tidak'])],
+                ['name' => 'alasan_pip', 'label' => 'Alasan menerima PIP', 'type' => 'select', 'required' => true, 'store' => 'detail', 'migrasi' => '035', 'show_if' => [['penerima_pip', ['Ya']]], 'options' => formulir_options([
+                    'Pemegang PKH/KPS/KIP', 'Penerima BSM 2014', 'Yatim Piatu/Panti Asuhan/Panti Sosial', 'Dampak Bencana Alam',
+                    'Pernah Drop Out', 'Siswa Miskin/Rentan Miskin', 'Daerah Konflik', 'Keluarga Terpidana', 'Kelainan Fisik',
                 ])],
             ],
         ],
@@ -286,9 +327,14 @@ function formulir_sections_for(?mysqli $conn, string $jenjang = ''): array
 {
     $rules = $conn ? formulir_field_rules($conn) : [];
     $sections = formulir_data_sections();
+    // Isian berpenanda 'migrasi' disembunyikan sampai migrasinya dijalankan.
+    $hasMigration035 = !$conn || ppdb_column_exists($conn, 'tb_detail_dapodik', 'penerima_pip');
     foreach ($sections as $sectionKey => $section) {
         $fields = [];
         foreach ($section['fields'] as $field) {
+            if (($field['migrasi'] ?? '') === '035' && !$hasMigration035) {
+                continue;
+            }
             if ($jenjang !== '' && isset($field['jenjang']) && !in_array($jenjang, $field['jenjang'], true)) {
                 continue;
             }
@@ -332,6 +378,12 @@ function formulir_condition_met(array $field, array $input): bool
     return true;
 }
 
+/** Pilihan kotak centang yang tersimpan sebagai "A; B". */
+function formulir_split_choices(string $value): array
+{
+    return array_values(array_unique(array_filter(array_map('trim', explode(';', $value)), 'strlen')));
+}
+
 function formulir_render_field(array $field, array $values): void
 {
     $showIf = '';
@@ -351,6 +403,23 @@ function formulir_render_field(array $field, array $values): void
     $name = $field['name'];
     $value = $values[$name] ?? '';
     $value = is_scalar($value) ? (string) $value : '';
+    if ($type === 'checkboxes') {
+        $checked = formulir_split_choices($value);
+        $requiredQuestion = !empty($field['required']) ? ' data-question-required="1"' : '';
+        echo '<fieldset class="participant-question field-wide" data-field="'.h($name).'"'.$requiredQuestion.$showIf.'>';
+        echo '<legend>'.h($field['label']);
+        echo !empty($field['required']) ? ' <span class="required-mark" aria-hidden="true">*</span>' : ' <span class="optional-mark">Opsional</span>';
+        echo '</legend><div class="participant-question__choices">';
+        foreach ($field['options'] as $optionValue => $optionLabel) {
+            echo '<label><input type="checkbox" value="'.h($optionValue).'" data-multi-choice="'.h($name).'"'.(in_array((string) $optionValue, $checked, true) ? ' checked' : '').'><span>'.h($optionLabel).'</span></label>';
+        }
+        echo '</div><input type="hidden" name="'.h($name).'" value="'.h(implode('; ', $checked)).'" data-multi-value="'.h($name).'">';
+        if (!empty($field['hint'])) {
+            echo '<small class="field-hint">'.h($field['hint']).'</small>';
+        }
+        echo '</fieldset>';
+        return;
+    }
     $wideClass = !empty($field['wide']) || $type === 'textarea' ? ' field-wide' : '';
     $required = !empty($field['required']) ? ' required' : '';
     echo '<div class="field'.$wideClass.'" data-field="'.h($name).'"'.$showIf.'>';
@@ -441,6 +510,13 @@ function formulir_validate_fields(array $input, array $sections, ?array &$fieldE
             }
             if ($type === 'select') {
                 if (!array_key_exists($value, $field['options'])) {
+                    $errors[] = 'Pilih nilai yang tersedia untuk '.$label.'.';
+                }
+                continue;
+            }
+            if ($type === 'checkboxes') {
+                $choices = formulir_split_choices($value);
+                if (!$choices || array_diff($choices, array_map('strval', array_keys($field['options'])))) {
                     $errors[] = 'Pilih nilai yang tersedia untuk '.$label.'.';
                 }
                 continue;
