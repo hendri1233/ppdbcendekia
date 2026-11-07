@@ -161,7 +161,7 @@ function cetak_registrasi_rows(array $rows): void
             <div>
                 <strong>YAYASAN WAKAF CENDEKIA TAKENGON</strong>
                 <span>Panitia Penerimaan Peserta Didik Baru · <?php echo h($participant['nama_unit']); ?></span>
-                <small>Badan Hukum SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022 · Nazhir Wakaf Uang BWI Kode 3.3.00369<br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?> · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</small>
+                <small>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp <?php echo h(ppdb_admin_whatsapp_display()); ?> · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</small>
             </div>
         </header>
         <h1><?php echo h($documentTitle); ?></h1>

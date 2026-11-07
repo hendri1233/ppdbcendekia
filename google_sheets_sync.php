@@ -230,6 +230,11 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
             }
             $answers[$row['id_pendaftaran']] = ['answers' => $decoded['answers'] ?? [], 'submitted_at' => $row['submitted_at']];
         }
+        // Formulir tidak lagi memakai kuisioner; kolomnya hanya muncul bila sudah ada jawaban tersimpan
+        // agar daftar pertanyaan hasil impor tidak menjadi kolom kosong yang mengulang isian formulir.
+        if (!$answers) {
+            $questions = [];
+        }
     }
 
     // Kolom: [kelompok, judul, kunci nilai, lebar piksel].
@@ -284,7 +289,12 @@ function google_sheets_build_table(mysqli $conn, string $unitCode, string $acade
                 continue;
             }
             $wide = !empty($field['wide']) || ($field['type'] ?? '') === 'textarea';
-            $columns[] = [$section['title'], $field['label'], $field['name'], $wide ? 240 : 160];
+            $label = $field['label'];
+            // Isian ayah, ibu, dan wali berjudul sama (mis. Golongan darah); sebut perannya agar tidak tampak ganda.
+            if (in_array($sectionKey, ['ayah', 'ibu', 'wali'], true) && mb_stripos($label, $sectionKey) === false) {
+                $label .= ' ('.$sectionKey.')';
+            }
+            $columns[] = [$section['title'], $label, $field['name'], $wide ? 240 : 160];
         }
         if ($sectionKey === 'alamat') {
             $columns[] = [$section['title'], 'Lintang', 'latitude', 110];
