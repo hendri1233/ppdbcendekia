@@ -84,6 +84,9 @@ const PPDB_TK_LEVELS = ['TK A', 'TK B'];
 const PPDB_GENDERS = ['laki-laki' => 'Laki-laki', 'perempuan' => 'Perempuan'];
 
 /** Alamat pendaftaran pendek per unit, misalnya cendekiatakengon.or.id/daftarsmpitcendekia (lihat .htaccess). */
+// Satu tautan pendaftaran jalur internal (SDM) untuk semua unit; diteruskan .htaccess ke daftar.php?internal=1.
+const PPDB_INTERNAL_SHORT_LINK = 'daftarcendekia';
+
 const PPDB_UNIT_SHORT_LINKS = [
     'KB-CEN' => 'daftarkbitcendekia',
     'TPA-CEN' => 'daftartpaitcendekia',

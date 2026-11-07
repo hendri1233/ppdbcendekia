@@ -45,7 +45,7 @@ $logoTag = extension_loaded('gd') && is_file($logoFile)
     ? '<img class="logo" src="data:image/png;base64,'.base64_encode((string) file_get_contents($logoFile)).'" alt="">'
     : '';
 $unitName = ppdb_unit_display_name($unit['nama_unit']);
-$internalUrl = ppdb_public_base_url().'/daftar.php?internal=1';
+$internalUrl = ppdb_public_base_url().'/'.PPDB_INTERNAL_SHORT_LINK;
 
 $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
     @page { margin: 40px 44px 54px; }

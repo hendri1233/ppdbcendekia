@@ -5,6 +5,38 @@
 (function () {
     'use strict';
 
+    // Salin tautan bersama (mis. tautan pendaftaran SDM) dengan satu klik.
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-copy-link]');
+        if (!button) return;
+        const label = button.querySelector('span');
+        const done = function (text) {
+            label.textContent = text;
+            button.classList.toggle('is-copied', text === 'Tersalin');
+            window.setTimeout(function () {
+                label.textContent = 'Salin tautan';
+                button.classList.remove('is-copied');
+            }, 1800);
+        };
+        const fallback = function () {
+            const field = document.createElement('textarea');
+            field.value = button.dataset.copyLink;
+            field.setAttribute('readonly', '');
+            field.style.position = 'fixed';
+            field.style.opacity = '0';
+            document.body.appendChild(field);
+            field.select();
+            const copied = document.execCommand('copy');
+            field.remove();
+            done(copied ? 'Tersalin' : 'Gagal menyalin');
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(button.dataset.copyLink).then(function () { done('Tersalin'); }, fallback);
+        } else {
+            fallback();
+        }
+    });
+
     const settings = window.PPDB_QUOTA_SETTINGS || {};
     const form = document.querySelector('#quota-config-form');
     if (!form) return;

@@ -6,7 +6,7 @@ require_super_admin();
 
 $error = '';
 $notice = '';
-$internalEntryUrl = ppdb_public_base_url().'/daftar?internal=1';
+$internalEntryUrl = ppdb_public_base_url().'/'.PPDB_INTERNAL_SHORT_LINK;
 $academicYears = [];
 for ($year = 2027; $year <= 2040; $year++) {
     $academicYears[] = $year.'/'.($year + 1);
@@ -668,8 +668,21 @@ require 'admin_header.php';
                     <?php foreach ($academicYears as $year) { ?><option value="<?php echo h($year); ?>"><?php echo h($year); ?></option><?php } ?>
                 </select>
             </div>
+            <div class="share-link-box field-span-2">
+                <div class="share-link-box__head">
+                    <span class="share-link-box__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a1 1 0 1 1 1.4 1.4L12 13.4a1 1 0 0 1-1.4 0Zm-3.5 6.4a4.5 4.5 0 0 1-3.2-7.7l2.5-2.5a1 1 0 0 1 1.4 1.4l-2.5 2.5a2.5 2.5 0 0 0 3.5 3.5l2.5-2.5a1 1 0 0 1 1.4 1.4l-2.5 2.5a4.5 4.5 0 0 1-3.1 1.4Zm9.3-6.1a1 1 0 0 1-.7-1.7l2.5-2.5a2.5 2.5 0 0 0-3.5-3.5l-2.5 2.5a1 1 0 1 1-1.4-1.4l2.5-2.5a4.5 4.5 0 0 1 6.3 6.3l-2.5 2.5a1 1 0 0 1-.7.3Z"/></svg></span>
+                    <div>
+                        <strong>Tautan pendaftaran SDM</strong>
+                        <small>Satu tautan untuk semua unit. Bagikan bersama satu kode token untuk setiap SDM.</small>
+                    </div>
+                </div>
+                <div class="share-link-box__field">
+                    <a class="share-link-box__url" href="<?php echo h($internalEntryUrl); ?>" target="_blank" rel="noopener"><?php echo h(preg_replace('#^https?://#', '', $internalEntryUrl)); ?></a>
+                    <button class="share-link-box__button" type="button" data-copy-link="<?php echo h($internalEntryUrl); ?>"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3h10a2 2 0 0 1 2 2v12h-2V5H9V3ZM5 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm0 2v10h10V9H5Z"/></svg><span>Salin tautan</span></button>
+                </div>
+            </div>
             <div class="quota-form-footer">
-                <span>Tautan bersama: <a href="<?php echo h($internalEntryUrl); ?>" target="_blank" rel="noopener"><?php echo h($internalEntryUrl); ?></a>. Berikan satu kode kepada satu SDM.</span>
+                <span>Berikan satu kode kepada satu SDM.</span>
                 <button class="button-primary" type="submit">Buat token hingga 150</button>
             </div>
         </form>

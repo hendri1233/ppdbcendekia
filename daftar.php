@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'valid
                     mysqli_commit($conn);
                     session_regenerate_id(true);
                     $_SESSION[$internalSessionKey] = (int) $validToken['id'];
-                    header('Location: daftar?internal=1&form=1');
+                    header('Location: '.PPDB_INTERNAL_SHORT_LINK.'?form=1');
                     exit;
                 }
                 $countAttempt = mysqli_prepare($conn, 'UPDATE tb_token_internal_attempts SET attempts=attempts+1 WHERE ip_hash=?');
@@ -208,7 +208,7 @@ if ($routeOffer && $routeError === '') {
 
 $formAction = 'daftar';
 if ($routeOffer && $routeType === 'internal') {
-    $formAction .= '?internal=1&form=1';
+    $formAction = PPDB_INTERNAL_SHORT_LINK.'?form=1';
 }
 
 $pendaftarOptions = ['Ayah', 'Bunda', 'Ayah dan Bunda', 'Wali'];
@@ -692,7 +692,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                         <div><h2 id="internal-code-title">Pendaftaran</h2><p>Masukkan kode 9 karakter yang terdiri dari huruf besar, huruf kecil, dan angka. Setiap kode hanya berlaku untuk satu peserta dan satu kali pendaftaran.</p></div>
                     </div>
                     <?php if ($tokenEntryError !== '') { ?><div class="error-summary" role="alert"><strong>Kode belum dapat digunakan</strong><ul><li><?php echo h($tokenEntryError); ?></li></ul></div><?php } ?>
-                    <form class="registration-form" action="daftar?internal=1" method="post">
+                    <form class="registration-form" action="<?php echo h(PPDB_INTERNAL_SHORT_LINK); ?>" method="post">
                         <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                         <input type="hidden" name="action" value="validate_internal_token">
                         <div class="field-grid">
