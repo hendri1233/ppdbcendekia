@@ -192,36 +192,6 @@ function formulir_data_sections(): array
                 ['name' => 'npsn_sekolah_asal', 'label' => 'NPSN sekolah sebelumnya', 'maxlength' => 8, 'inputmode' => 'numeric', 'pattern' => '[0-9]{8}', 'placeholder' => '8 digit angka', 'hint' => 'TPA 70037536 · KB 70037526 · TK 69934833 · SD 69862386 · SMP 69990330', 'store' => 'detail', 'show_if' => [['jenjang_sekolah_asal', ['KB IT Cendekia', 'TPA IT Cendekia', 'TK IT Cendekia', 'SD IT Cendekia', 'Sekolah lain']]]],
             ],
         ],
-        'profil' => [
-            'title' => 'Kesehatan dan profil ananda',
-            'description' => 'Membantu guru mengenal kebutuhan dan potensi ananda sejak awal.',
-            'fields' => [
-                ['name' => 'riwayat_penyakit', 'label' => 'Riwayat penyakit yang pernah diderita', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options(['Tidak ada', 'Ada'])],
-                ['name' => 'nama_penyakit', 'label' => 'Penyakit yang pernah diderita', 'maxlength' => 255, 'store' => 'detail', 'show_if' => [['riwayat_penyakit', ['Ada']]]],
-                ['name' => 'pantangan_penyakit', 'label' => 'Pantangan / hal yang harus dihindari', 'maxlength' => 255, 'wide' => true, 'store' => 'detail', 'show_if' => [['riwayat_penyakit', ['Ada']]]],
-                ['name' => 'karakter_menonjol', 'label' => 'Karakter ananda yang paling menonjol', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
-                ['name' => 'kecerdasan_menonjol', 'label' => 'Kecerdasan / gaya belajar yang paling menonjol', 'type' => 'select', 'wide' => true, 'store' => 'detail', 'image' => ['src' => 'img/gaya-belajar.png', 'alt' => 'Ilustrasi tiga gaya belajar: visual, auditori, dan kinestetik', 'width' => 820, 'height' => 509], 'options' => [
-                    'Visual' => 'Visual — cepat menangkap warna, bentuk, arah, dan ruang',
-                    'Auditori' => 'Auditori — lebih mudah memahami dengan mendengarkan',
-                    'Kinestetik' => 'Kinestetik — belajar lewat gerak tubuh dan keterampilan tangan',
-                ]],
-                ['name' => 'minat_bakat', 'label' => 'Minat dan bakat yang perlu didukung', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
-                ['name' => 'hobi', 'label' => 'Hobi ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
-                    'Olah Raga', 'Kesenian', 'Membaca', 'Menulis', 'Traveling', 'Lainnya', 'Fotografi', 'Fitness', 'Belanja',
-                    'Menggambar', 'Bermain Musik', 'Mendaki', 'Jogging', 'Bermain Gitar', 'Bermain Bola', 'Bermain Bulu Tangkis',
-                    'Bermain Bola Tenis', 'Bermain Biola', 'Bermain Piano', 'Berlari', 'Berkemah', 'Memancing', 'Berselancar',
-                    'Bermain Boneka', 'Makan', 'Menjahit', 'Main Puzzle', 'Mewarnai',
-                ])],
-                ['name' => 'cita_cita', 'label' => 'Cita-cita ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
-                    'PNS / Pegawai Negeri Sipil', 'TNI/Polri', 'Guru', 'Dokter', 'Politikus', 'Wiraswasta', 'Seni/Lukis/Artis/Sejenis',
-                    'Lainnya', 'Penghafal Al-Qur\'an', 'Atlet E-Sport Profesional', 'Atlet', 'Content Creator', 'Vloger', 'Koki',
-                    'Pendeta', 'Perawat', 'Pilot', 'Pembalap', 'Atlit Olahraga', 'Pengacara', 'Da\'i / Ustadz',
-                    'Entertainer / Pekerja Seni', 'Wartawan', 'Pengusaha / Bisnismen', 'Penulis', 'Penyiar Radio',
-                    'Pembawa Acara / Master Ceremony', 'Polisi', 'Pemadam Kebakaran', 'Astronot', 'Masinis Kereta Api',
-                    'Perawat / Suster', 'Bidan', 'Presiden', 'Translator', 'Designer', 'Pelaut', 'Arsitek', 'Dosen',
-                ])],
-            ],
-        ],
         'alamat' => [
             'title' => 'Alamat dan data periodik',
             'description' => 'Alamat domisili saat ini serta data tumbuh kembang terbaru.',
@@ -261,6 +231,36 @@ function formulir_data_sections(): array
             'title' => 'Data wali',
             'description' => 'Pilih "Tidak" jika ananda tidak mempunyai wali, lalu lanjutkan.',
             'fields' => formulir_parent_fields('wali'),
+        ],
+        'profil' => [
+            'title' => 'Kesehatan dan profil ananda',
+            'description' => 'Membantu guru mengenal kebutuhan dan potensi ananda sejak awal.',
+            'fields' => [
+                ['name' => 'riwayat_penyakit', 'label' => 'Riwayat penyakit yang pernah diderita', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options(['Tidak ada', 'Ada'])],
+                ['name' => 'nama_penyakit', 'label' => 'Penyakit yang pernah diderita', 'maxlength' => 255, 'store' => 'detail', 'show_if' => [['riwayat_penyakit', ['Ada']]]],
+                ['name' => 'pantangan_penyakit', 'label' => 'Pantangan / hal yang harus dihindari', 'maxlength' => 255, 'wide' => true, 'store' => 'detail', 'show_if' => [['riwayat_penyakit', ['Ada']]]],
+                ['name' => 'karakter_menonjol', 'label' => 'Karakter ananda yang paling menonjol', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
+                ['name' => 'kecerdasan_menonjol', 'label' => 'Kecerdasan / gaya belajar yang paling menonjol', 'type' => 'select', 'wide' => true, 'store' => 'detail', 'image' => ['src' => 'img/gaya-belajar.png', 'alt' => 'Ilustrasi tiga gaya belajar: visual, auditori, dan kinestetik', 'width' => 820, 'height' => 509], 'options' => [
+                    'Visual' => 'Visual — cepat menangkap warna, bentuk, arah, dan ruang',
+                    'Auditori' => 'Auditori — lebih mudah memahami dengan mendengarkan',
+                    'Kinestetik' => 'Kinestetik — belajar lewat gerak tubuh dan keterampilan tangan',
+                ]],
+                ['name' => 'minat_bakat', 'label' => 'Minat dan bakat yang perlu didukung', 'maxlength' => 255, 'wide' => true, 'store' => 'detail'],
+                ['name' => 'hobi', 'label' => 'Hobi ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
+                    'Olah Raga', 'Kesenian', 'Membaca', 'Menulis', 'Traveling', 'Lainnya', 'Fotografi', 'Fitness', 'Belanja',
+                    'Menggambar', 'Bermain Musik', 'Mendaki', 'Jogging', 'Bermain Gitar', 'Bermain Bola', 'Bermain Bulu Tangkis',
+                    'Bermain Bola Tenis', 'Bermain Biola', 'Bermain Piano', 'Berlari', 'Berkemah', 'Memancing', 'Berselancar',
+                    'Bermain Boneka', 'Makan', 'Menjahit', 'Main Puzzle', 'Mewarnai',
+                ])],
+                ['name' => 'cita_cita', 'label' => 'Cita-cita ananda', 'type' => 'select', 'store' => 'detail', 'options' => formulir_options([
+                    'PNS / Pegawai Negeri Sipil', 'TNI/Polri', 'Guru', 'Dokter', 'Politikus', 'Wiraswasta', 'Seni/Lukis/Artis/Sejenis',
+                    'Lainnya', 'Penghafal Al-Qur\'an', 'Atlet E-Sport Profesional', 'Atlet', 'Content Creator', 'Vloger', 'Koki',
+                    'Pendeta', 'Perawat', 'Pilot', 'Pembalap', 'Atlit Olahraga', 'Pengacara', 'Da\'i / Ustadz',
+                    'Entertainer / Pekerja Seni', 'Wartawan', 'Pengusaha / Bisnismen', 'Penulis', 'Penyiar Radio',
+                    'Pembawa Acara / Master Ceremony', 'Polisi', 'Pemadam Kebakaran', 'Astronot', 'Masinis Kereta Api',
+                    'Perawat / Suster', 'Bidan', 'Presiden', 'Translator', 'Designer', 'Pelaut', 'Arsitek', 'Dosen',
+                ])],
+            ],
         ],
     ];
 }
