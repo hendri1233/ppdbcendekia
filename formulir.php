@@ -440,6 +440,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
         // Isian bersyarat yang tersembunyi (mis. data wali saat tidak ada wali) disimpan kosong.
         $fieldValue = static function (array $field) use ($value): ?string {
             $fieldInput = formulir_condition_met($field, $_POST) ? $value($field['name']) : '';
+            if (!empty($field['uppercase'])) {
+                $fieldInput = mb_strtoupper($fieldInput, 'UTF-8');
+            }
             return $fieldInput === '' && !empty($field['numeric']) ? null : $fieldInput;
         };
 

@@ -351,7 +351,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'validate_internal_token') {
     $academicYear = (string) ($routeType === 'internal' ? ($routeOffer['th_ajaran'] ?? '') : $selectedAcademicYear);
     $unitCode = (string) ($routeType === 'internal' ? ($routeOffer['kode_unit'] ?? '') : $selectedUnitCode);
-    $studentName = trim($_POST['nama_ananda'] ?? '');
+    $studentName = mb_strtoupper(trim($_POST['nama_ananda'] ?? ''), 'UTF-8');
     $birthDate = trim($_POST['tanggal_lahir'] ?? '');
     $gender = trim($_POST['jenis_kelamin'] ?? '');
     $registrant = trim($_POST['pendaftar'] ?? '');

@@ -16,6 +16,7 @@
  * - 'jenjang'  : hanya tampil untuk jenjang unit tertentu, mis. ['TK'].
  * - 'wajib_jenjang' : pada jenjang ini field selalu tampil dan selalu wajib
  *                     (syarat tampil diabaikan), mis. NISN untuk SD dan SMP.
+ * - 'uppercase' : nilai disimpan dengan huruf besar, mis. nama orang tua/wali.
  */
 
 const FORMULIR_PARENT_ROLES = ['ayah' => 'Ayah', 'ibu' => 'Ibu', 'wali' => 'Wali'];
@@ -97,7 +98,7 @@ function formulir_parent_fields(string $role): array
         $alive = [[$role.'_status_hidup', ['Masih hidup']]];
         return array_merge(
             [
-                $detail('nama', ['label' => 'Nama lengkap '.$label, 'maxlength' => 100, 'required' => true, 'hint' => $nameHint]),
+                $detail('nama', ['label' => 'Nama lengkap '.$label, 'maxlength' => 100, 'required' => true, 'uppercase' => true, 'hint' => $nameHint]),
                 $ortu('status_hidup', ['label' => 'Keadaan '.$label.' kandung', 'type' => 'select', 'locked' => true, 'options' => ['Masih hidup' => 'Masih hidup', 'Meninggal dunia' => 'Meninggal/lainnya']]),
             ],
             formulir_with_condition([
@@ -121,7 +122,7 @@ function formulir_parent_fields(string $role): array
     $livesWithGuardian = [['jenis_tinggal', ['Bersama wali']]];
     return array_merge(
         formulir_with_condition([
-            $detail('nama', ['label' => 'Nama lengkap wali', 'maxlength' => 100, 'required' => true, 'hint' => $nameHint]),
+            $detail('nama', ['label' => 'Nama lengkap wali', 'maxlength' => 100, 'required' => true, 'uppercase' => true, 'hint' => $nameHint]),
         ], []),
         formulir_with_condition([
             $ortu('gelar', ['label' => 'Gelar akademik wali', 'maxlength' => 80, 'placeholder' => 'Contoh: S.Pd., M.Pd.']),
@@ -768,10 +769,13 @@ function formulir_saved_values(mysqli $conn, string $registrationId): array
     return $values;
 }
 
-/** Samakan bentuk nilai agar 95.50 dan 95.5 tidak dianggap berubah. */
+/** Samakan bentuk nilai agar 95.50 dan 95.5, atau Budi dan BUDI pada nama, tidak dianggap berubah. */
 function formulir_normalize_value(string $value, array $field): string
 {
     $value = trim($value);
+    if (!empty($field['uppercase'])) {
+        return mb_strtoupper($value, 'UTF-8');
+    }
     if (!empty($field['numeric']) && $value !== '' && is_numeric($value)) {
         return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
     }
