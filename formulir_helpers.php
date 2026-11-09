@@ -16,7 +16,7 @@
  * - 'jenjang'  : hanya tampil untuk jenjang unit tertentu, mis. ['TK'].
  * - 'wajib_jenjang' : pada jenjang ini field selalu tampil dan selalu wajib
  *                     (syarat tampil diabaikan), mis. NISN untuk SD dan SMP.
- * - 'uppercase' : nilai disimpan dengan huruf besar, mis. nama orang tua/wali.
+ * - 'uppercase' : nilai disimpan dengan huruf besar, mis. nama dan tempat lahir.
  */
 
 const FORMULIR_PARENT_ROLES = ['ayah' => 'Ayah', 'ibu' => 'Ibu', 'wali' => 'Wali'];
@@ -105,7 +105,7 @@ function formulir_parent_fields(string $role): array
                 $ortu('gelar', ['label' => 'Gelar akademik '.$label, 'maxlength' => 80, 'placeholder' => 'Contoh: S.Pd., M.Pd.']),
             ], $alive),
             [
-                $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50, 'required' => true]),
+                $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50, 'required' => true, 'uppercase' => true]),
                 $detail('tahun_lahir', ['label' => 'Tahun lahir (sesuai KTP)', 'type' => 'number', 'min' => 1900, 'max' => (int) date('Y'), 'numeric' => true]),
                 $nik,
             ],
@@ -128,7 +128,7 @@ function formulir_parent_fields(string $role): array
             $ortu('gelar', ['label' => 'Gelar akademik wali', 'maxlength' => 80, 'placeholder' => 'Contoh: S.Pd., M.Pd.']),
         ], $livesWithGuardian),
         formulir_with_condition([
-            $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50, 'required' => true]),
+            $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50, 'required' => true, 'uppercase' => true]),
             $detail('tahun_lahir', ['label' => 'Tahun lahir (sesuai KTP)', 'type' => 'number', 'min' => 1900, 'max' => (int) date('Y'), 'numeric' => true]),
             $nik,
         ], []),
@@ -173,7 +173,7 @@ function formulir_data_sections(): array
                 ['name' => 'nik', 'label' => 'NIK ananda', 'locked' => true, 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka', 'hint' => 'Pastikan tidak tertukar dengan nomor KK.', 'store' => 'detail'],
                 ['name' => 'nomor_kk', 'label' => 'Nomor Kartu Keluarga', 'locked' => true, 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka', 'store' => 'detail'],
                 ['name' => 'nama_panggilan', 'label' => 'Nama panggilan ananda', 'maxlength' => 50, 'store' => 'detail'],
-                ['name' => 'tmp_lahir', 'label' => 'Tempat lahir', 'locked' => true, 'maxlength' => 50, 'hint' => 'Sesuai akta kelahiran.', 'store' => 'pendaftaran'],
+                ['name' => 'tmp_lahir', 'label' => 'Tempat lahir', 'locked' => true, 'maxlength' => 50, 'uppercase' => true, 'hint' => 'Sesuai akta kelahiran.', 'store' => 'pendaftaran'],
                 ['name' => 'nomor_registrasi_akta', 'label' => 'Nomor registrasi akta kelahiran', 'maxlength' => 100, 'wide' => true, 'placeholder' => 'Contoh: 1104-LT-14082017-0011 atau 1.337/Ist/2002', 'store' => 'detail'],
                 // KB, TPA, TK boleh belum memiliki NISN; SD dan SMP wajib mengisi NISN.
                 ['name' => 'status_nisn', 'label' => 'NISN ananda', 'type' => 'select', 'locked' => true, 'store' => 'detail', 'jenjang' => ['KB', 'TPA', 'TK'], 'options' => formulir_options(['Sudah ada NISN', 'Belum ada NISN']), 'hint' => 'Jenjang KB, TPA, dan TK boleh belum memiliki NISN.'],
@@ -189,7 +189,7 @@ function formulir_data_sections(): array
                 ['name' => 'jenis_pendaftaran', 'label' => 'Jenis pendaftaran', 'type' => 'select', 'locked' => true, 'store' => 'detail', 'options' => ['Siswa baru' => 'Siswa baru', 'Pindahan' => 'Pindahan / mutasi', 'Kembali aktif' => 'Kembali aktif']],
                 ['name' => 'pernah_paud_tk', 'label' => 'Pernah mengikuti PAUD/TK', 'type' => 'select', 'locked' => true, 'store' => 'detail', 'options' => formulir_options(['Ya', 'Tidak', 'Belum diketahui'])],
                 ['name' => 'jenjang_sekolah_asal', 'label' => 'Sekolah ananda sebelumnya', 'type' => 'select', 'store' => 'detail', 'options' => ['Belum sekolah' => 'Belum sekolah', 'KB IT Cendekia' => 'KB IT CENDEKIA', 'TPA IT Cendekia' => 'TPA IT CENDEKIA', 'TK IT Cendekia' => 'TK SWASTA ISLAM TERPADU CENDEKIA', 'SD IT Cendekia' => 'SD IT CENDEKIA TAKENGON', 'Sekolah lain' => 'Sekolah lain']],
-                ['name' => 'asal_sekolah', 'label' => 'Nama sekolah sebelumnya', 'maxlength' => 100, 'store' => 'pendaftaran', 'show_if' => [['jenjang_sekolah_asal', ['Sekolah lain']]]],
+                ['name' => 'asal_sekolah', 'label' => 'Nama sekolah sebelumnya', 'maxlength' => 100, 'uppercase' => true, 'store' => 'pendaftaran', 'show_if' => [['jenjang_sekolah_asal', ['Sekolah lain']]]],
                 ['name' => 'npsn_sekolah_asal', 'label' => 'NPSN sekolah sebelumnya', 'maxlength' => 8, 'inputmode' => 'numeric', 'pattern' => '[0-9]{8}', 'placeholder' => '8 digit angka', 'hint' => 'TPA 70037536 · KB 70037526 · TK 69934833 · SD 69862386 · SMP 69990330', 'store' => 'detail', 'show_if' => [['jenjang_sekolah_asal', ['KB IT Cendekia', 'TPA IT Cendekia', 'TK IT Cendekia', 'SD IT Cendekia', 'Sekolah lain']]]],
             ],
         ],

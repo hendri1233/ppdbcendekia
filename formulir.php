@@ -499,8 +499,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             $nisn = formulir_condition_met($inputFields['NISN'], $_POST) ? $value('NISN') : '';
             // Sekolah asal di bawah yayasan cukup dipilih; namanya diisikan otomatis.
             $previousSchool = $value('jenjang_sekolah_asal');
-            $sourceSchool = $previousSchool === 'Sekolah lain' ? $value('asal_sekolah') : (str_ends_with($previousSchool, 'IT Cendekia') ? $inputFields['jenjang_sekolah_asal']['options'][$previousSchool] : '');
-            $birthPlace = $value('tmp_lahir');
+            $sourceSchool = $previousSchool === 'Sekolah lain' ? mb_strtoupper($value('asal_sekolah'), 'UTF-8') : (str_ends_with($previousSchool, 'IT Cendekia') ? $inputFields['jenjang_sekolah_asal']['options'][$previousSchool] : '');
+            $birthPlace = mb_strtoupper($value('tmp_lahir'), 'UTF-8');
             $religion = $value('agama');
             $informationSource = $value('sumber_informasi');
             // Peserta yang sudah diterima tetap diterima; revisi hanya menandai data untuk dicek ulang.
