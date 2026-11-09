@@ -469,6 +469,8 @@ function formulir_render_field(array $field, array $values): void
     }
     $wideClass = !empty($field['wide']) || $type === 'textarea' ? ' field-wide' : '';
     $required = !empty($field['required']) ? ' required' : '';
+    $minLetters = formulir_content_min_letters($field);
+    $contentRule = $minLetters !== null ? ' data-min-letters="'.$minLetters.'"' : '';
     echo '<div class="field'.$wideClass.'" data-field="'.h($name).'"'.$showIf.'>';
     echo '<label for="'.h($name).'">'.h($field['label']);
     echo $required !== '' ? ' <span class="required-mark" aria-hidden="true">*</span>' : ' <span class="optional-mark">Opsional</span>';
@@ -498,7 +500,7 @@ function formulir_render_field(array $field, array $values): void
         echo '</select>';
     } elseif ($type === 'textarea') {
         $maxlength = isset($field['maxlength']) ? ' maxlength="'.(int) $field['maxlength'].'"' : '';
-        echo '<textarea id="'.h($name).'" name="'.h($name).'" rows="3"'.$maxlength.$required.'>'.h($value).'</textarea>';
+        echo '<textarea id="'.h($name).'" name="'.h($name).'" rows="3"'.$maxlength.$required.$contentRule.'>'.h($value).'</textarea>';
     } else {
         $attributes = '';
         foreach (['maxlength', 'min', 'max', 'step', 'inputmode', 'pattern', 'placeholder'] as $attribute) {
@@ -513,12 +515,35 @@ function formulir_render_field(array $field, array $values): void
                 : ($type === 'tel' ? 'Gunakan nomor WhatsApp berawalan 08, 10–13 digit.' : 'Format belum sesuai.');
             $attributes .= ' data-pattern-message="'.h($patternMessage).'"';
         }
-        echo '<input id="'.h($name).'" type="'.h($type).'" name="'.h($name).'" value="'.h($value).'"'.$attributes.$required.'>';
+        echo '<input id="'.h($name).'" type="'.h($type).'" name="'.h($name).'" value="'.h($value).'"'.$attributes.$required.$contentRule.'>';
     }
     if (!empty($field['hint'])) {
         echo '<small class="field-hint">'.h($field['hint']).'</small>';
     }
     echo '</div>';
+}
+
+/**
+ * Aturan isi untuk teks wajib agar tidak dilewati dengan spasi atau tanda baca saja.
+ * Mengembalikan jumlah huruf minimum (0 berarti cukup ada satu huruf atau angka),
+ * atau null bila isian tidak memakai aturan ini. Aturan sama di js/formulir.js.
+ */
+function formulir_content_min_letters(array $field): ?int
+{
+    if (empty($field['required']) || !in_array($field['type'] ?? 'text', ['text', 'textarea'], true)
+        || isset($field['pattern']) || !empty($field['numeric']) || !empty($field['decimal'])) {
+        return null;
+    }
+    return !empty($field['uppercase']) ? 2 : 0;
+}
+
+/** Pesan galat bila isi teks wajib tidak memenuhi aturan; null bila sudah sesuai. */
+function formulir_content_error(string $value, int $minLetters): ?string
+{
+    if ($minLetters > 0) {
+        return preg_match_all('/\p{L}/u', $value) >= $minLetters ? null : 'harus berisi minimal '.$minLetters.' huruf.';
+    }
+    return preg_match('/[\p{L}\p{N}]/u', $value) ? null : 'harus berisi huruf atau angka, tidak boleh hanya tanda baca.';
 }
 
 /**
@@ -570,6 +595,10 @@ function formulir_validate_fields(array $input, array $sections, ?array &$fieldE
             }
             if (isset($field['maxlength']) && mb_strlen($value) > (int) $field['maxlength']) {
                 $errors[] = $label.' maksimal '.(int) $field['maxlength'].' karakter.';
+            }
+            $minLetters = formulir_content_min_letters($field);
+            if ($minLetters !== null && ($contentError = formulir_content_error($value, $minLetters)) !== null) {
+                $errors[] = $label.' '.$contentError;
             }
             if (!empty($field['decimal'])) {
                 if (!preg_match('/^[0-9]+(?:[,.][0-9]{1,2})?$/D', $value)) {

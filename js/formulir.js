@@ -473,6 +473,24 @@
         return false;
     }
 
+    // Teks wajib tidak boleh hanya spasi atau tanda baca; aturan sama di formulir_content_error().
+    function syncContentRule(control) {
+        if (!control.dataset || control.dataset.minLetters === undefined) return;
+        const value = control.value;
+        const minLetters = parseInt(control.dataset.minLetters, 10) || 0;
+        let message = '';
+        if (value !== '') {
+            if (!/[\p{L}\p{N}\p{P}\p{S}]/u.test(value)) {
+                message = 'Wajib diisi.';
+            } else if (minLetters > 0) {
+                if ((value.match(/\p{L}/gu) || []).length < minLetters) message = 'Isi minimal ' + minLetters + ' huruf.';
+            } else if (!/[\p{L}\p{N}]/u.test(value)) {
+                message = 'Isi dengan huruf atau angka, jangan hanya tanda baca.';
+            }
+        }
+        control.setCustomValidity(message);
+    }
+
     function firstInvalidIn(container) {
         for (const question of container.querySelectorAll('[data-question-required="1"]')) {
             const textarea = question.querySelector('textarea');
@@ -483,6 +501,7 @@
             if (!answered) return question.querySelector('textarea, input');
         }
         for (const control of container.querySelectorAll('input, select, textarea')) {
+            syncContentRule(control);
             if (isVisibleControl(control) && (!control.checkValidity() || serverErrorActive(control))) return control;
         }
         return null;
@@ -555,6 +574,7 @@
             setFieldError(wrapper, wrapper.dataset.serverError);
             return false;
         }
+        syncContentRule(control);
         const valid = control.checkValidity();
         const empty = control.type === 'file' ? !(control.files && control.files.length) : control.value.trim() === '';
         if (!valid && empty && !force && wrapper.dataset.touched !== '1') return false;

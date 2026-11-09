@@ -378,6 +378,19 @@
     sync.call(control);
   }
 
+  // Nama ananda tidak boleh hanya spasi atau tanda baca (sama dengan pemeriksaan di daftar.php).
+  const studentName = document.querySelector('input[name="nama_ananda"]');
+  if (studentName) {
+    const syncStudentName = function () {
+      const letters = (studentName.value.match(/\p{L}/gu) || []).length;
+      studentName.setCustomValidity(
+        studentName.value !== "" && letters < 2 ? "Nama lengkap ananda harus berisi minimal 2 huruf." : "",
+      );
+    };
+    studentName.addEventListener("input", syncStudentName);
+    syncStudentName();
+  }
+
   // Formulir lengkap bertahap (formulir.php) memvalidasi sendiri di js/formulir.js,
   // karena validasi bawaan ikut memeriksa isian bersyarat yang sedang tersembunyi.
   const form = document.getElementById("form-utama");

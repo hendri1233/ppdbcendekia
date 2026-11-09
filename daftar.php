@@ -370,6 +370,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
     }
     if ($studentName === '' || strlen($studentName) > 50) {
         $errors[] = 'Nama lengkap ananda wajib diisi dan maksimal 50 karakter.';
+    } elseif (preg_match_all('/\p{L}/u', $studentName) < 2) {
+        $errors[] = 'Nama lengkap ananda harus berisi minimal 2 huruf.';
     }
     $parsedBirthDate = DateTime::createFromFormat('Y-m-d', $birthDate);
     if (!$parsedBirthDate || $parsedBirthDate->format('Y-m-d') !== $birthDate || $birthDate > date('Y-m-d')) {
