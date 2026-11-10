@@ -323,3 +323,162 @@
         });
     }
 })();
+
+// Daftar peserta: klik nama memunculkan pilihan Pratinjau atau Lihat detail;
+// pratinjau menampilkan data lengkap di panel samping tanpa meninggalkan halaman.
+(function () {
+    const menu = document.querySelector('[data-name-menu]');
+    const drawer = document.querySelector('[data-preview-drawer]');
+    if (!menu || !drawer || typeof drawer.showModal !== 'function') return;
+    const body = drawer.querySelector('[data-preview-body]');
+    const detailLink = drawer.querySelector('[data-preview-detail]');
+    const printLink = drawer.querySelector('[data-preview-print]');
+    const position = drawer.querySelector('[data-preview-position]');
+    const prevButton = drawer.querySelector('[data-preview-prev]');
+    const nextButton = drawer.querySelector('[data-preview-next]');
+    let menuTarget = null;
+    let currentId = '';
+    let request = 0;
+
+    const rowIds = function () {
+        return Array.from(document.querySelectorAll('tr[data-row-id]'), function (row) { return row.dataset.rowId; });
+    };
+
+    const closeMenu = function () {
+        menu.hidden = true;
+        if (menuTarget) menuTarget.removeAttribute('aria-expanded');
+        menuTarget = null;
+    };
+
+    // Menu mengikuti posisi nama; tertutup bila nama sudah keluar dari layar.
+    const placeMenu = function () {
+        if (!menuTarget || menu.hidden) return;
+        const rect = menuTarget.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth) {
+            closeMenu();
+            return;
+        }
+        const width = menu.offsetWidth;
+        const height = menu.offsetHeight;
+        const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
+        const below = rect.bottom + 6;
+        menu.style.left = left + 'px';
+        menu.style.top = (below + height > window.innerHeight - 8 ? Math.max(8, rect.top - height - 6) : below) + 'px';
+    };
+
+    const openMenu = function (link) {
+        closeMenu();
+        menuTarget = link;
+        link.setAttribute('aria-expanded', 'true');
+        menu.querySelector('[data-name-detail]').href = link.href;
+        menu.hidden = false;
+        placeMenu();
+        menu.querySelector('[data-name-preview]').focus({ preventScroll: true });
+    };
+
+    const markRow = function (id) {
+        document.querySelectorAll('tr.is-previewing').forEach(function (row) { row.classList.remove('is-previewing'); });
+        const row = document.querySelector('tr[data-row-id="' + id + '"]');
+        if (row) row.classList.add('is-previewing');
+    };
+
+    const load = function (id) {
+        currentId = id;
+        const ids = rowIds();
+        const index = ids.indexOf(id);
+        position.textContent = index >= 0 ? (index + 1) + ' / ' + ids.length : '';
+        prevButton.disabled = index <= 0;
+        nextButton.disabled = index < 0 || index >= ids.length - 1;
+        detailLink.href = 'detail-peserta.php?id=' + encodeURIComponent(id);
+        printLink.hidden = true;
+        markRow(id);
+        body.innerHTML = '<div class="pv-loading" aria-label="Memuat data"><span></span><span></span><span></span><span></span></div>';
+        const ticket = ++request;
+        fetch('pratinjau-peserta.php?id=' + encodeURIComponent(id), { credentials: 'same-origin', headers: { Accept: 'text/html' } })
+            .then(function (response) { return response.text(); })
+            .catch(function () { return '<div class="pv-empty"><strong>Koneksi terputus.</strong><p>Periksa jaringan lalu coba lagi.</p></div>'; })
+            .then(function (html) {
+                if (ticket !== request) return;
+                body.innerHTML = html;
+                body.scrollTop = 0;
+                const article = body.querySelector('[data-print-url]');
+                if (article) {
+                    printLink.href = article.dataset.printUrl;
+                    printLink.textContent = article.dataset.printLabel;
+                    printLink.hidden = false;
+                }
+            });
+    };
+
+    const open = function (id) {
+        if (!drawer.open) drawer.showModal();
+        load(id);
+        body.focus({ preventScroll: true });
+    };
+
+    document.addEventListener('click', function (event) {
+        const link = event.target.closest('a.participant-link');
+        if (link) {
+            // Ctrl/Shift/klik tengah tetap membuka detail di tab baru seperti biasa.
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+            event.preventDefault();
+            if (menuTarget === link && !menu.hidden) {
+                closeMenu();
+            } else {
+                openMenu(link);
+            }
+            return;
+        }
+        if (!menu.hidden && !menu.contains(event.target)) closeMenu();
+    });
+
+    menu.querySelector('[data-name-preview]').addEventListener('click', function () {
+        const id = menuTarget ? menuTarget.dataset.participant : '';
+        closeMenu();
+        if (id) open(id);
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (!menu.hidden && event.key === 'Escape') {
+            const target = menuTarget;
+            closeMenu();
+            if (target) target.focus();
+            return;
+        }
+        if (!drawer.open || event.target.closest('input, textarea, select')) return;
+        if (event.key === 'ArrowLeft' && !prevButton.disabled) prevButton.click();
+        if (event.key === 'ArrowRight' && !nextButton.disabled) nextButton.click();
+    });
+    window.addEventListener('scroll', placeMenu, { passive: true });
+    window.addEventListener('resize', placeMenu);
+    document.querySelectorAll('.table-wrap').forEach(function (wrap) { wrap.addEventListener('scroll', placeMenu, { passive: true }); });
+
+    prevButton.addEventListener('click', function () {
+        const ids = rowIds();
+        const index = ids.indexOf(currentId);
+        if (index > 0) load(ids[index - 1]);
+    });
+    nextButton.addEventListener('click', function () {
+        const ids = rowIds();
+        const index = ids.indexOf(currentId);
+        if (index >= 0 && index < ids.length - 1) load(ids[index + 1]);
+    });
+    drawer.querySelector('[data-preview-close]').addEventListener('click', function () { drawer.close(); });
+    // Klik di luar panel menutup pratinjau.
+    drawer.addEventListener('click', function (event) {
+        if (event.target === drawer) drawer.close();
+    });
+    drawer.addEventListener('close', function () {
+        document.querySelectorAll('tr.is-previewing').forEach(function (row) { row.classList.remove('is-previewing'); });
+        const link = document.querySelector('a.participant-link[data-participant="' + currentId + '"]');
+        if (link) link.focus({ preventScroll: true });
+    });
+    // Lompat ke bagian di dalam panel tanpa menggulir halaman di belakangnya.
+    body.addEventListener('click', function (event) {
+        const jump = event.target.closest('.pv-jump a');
+        if (!jump) return;
+        event.preventDefault();
+        const target = body.querySelector(jump.getAttribute('href'));
+        if (target) body.scrollTo({ top: target.offsetTop - 64, behavior: 'smooth' });
+    });
+})();

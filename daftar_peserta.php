@@ -268,7 +268,7 @@ require 'admin_header.php';
                             <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
                             <td data-label="Nama" class="primary-cell">
-                                <a href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>"><?php echo h($row['nm_peserta']); ?></a>
+                                <a class="participant-link" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>" data-participant="<?php echo h($row['id_pendaftaran']); ?>" aria-haspopup="menu"><?php echo h($row['nm_peserta']); ?></a>
                                 <?php if (!empty($row['data_ganda'])) { ?><a class="duplicate-badge" href="<?php echo h(with_query(['ganda' => '1', 'q' => $row['nm_peserta'], 'page' => null])); ?>" title="Ada pendaftaran lain dengan nama dan tanggal lahir atau NIK yang sama pada tahun ajaran ini">Ganda</a><?php } ?>
                                 <?php if ($row['NISN'] !== '') { ?><small class="cell-sub">NISN <?php echo h($row['NISN']); ?></small><?php } ?>
                             </td>
@@ -371,4 +371,24 @@ require 'admin_header.php';
         <?php } ?>
     </section>
 </div>
+<div class="name-menu" data-name-menu role="menu" hidden>
+    <button type="button" role="menuitem" data-name-preview><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5C6.5 5 2.7 9.2 1.5 12c1.2 2.8 5 7 10.5 7s9.3-4.2 10.5-7C21.3 9.2 17.5 5 12 5Zm0 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-2.2a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6Z"/></svg><span>Pratinjau<small>Lihat data lengkap di panel samping</small></span></button>
+    <a role="menuitem" href="#" data-name-detail><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>Lihat detail<small>Buka halaman detail dan tindakan</small></span></a>
+</div>
+
+<dialog class="pv-drawer" data-preview-drawer aria-labelledby="pv-title">
+    <div class="pv-drawer__bar">
+        <div class="pv-drawer__nav">
+            <button type="button" data-preview-prev aria-label="Peserta sebelumnya" title="Peserta sebelumnya (←)">&lsaquo;</button>
+            <span data-preview-position aria-live="polite"></span>
+            <button type="button" data-preview-next aria-label="Peserta berikutnya" title="Peserta berikutnya (→)">&rsaquo;</button>
+        </div>
+        <div class="pv-drawer__actions">
+            <a class="button-secondary" href="#" target="_blank" rel="noopener" data-preview-print>Cetak</a>
+            <a class="button-primary" href="#" data-preview-detail>Lihat detail</a>
+            <button type="button" class="pv-close" data-preview-close aria-label="Tutup pratinjau"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6L19 6.4 17.6 5 12 10.6z"/></svg></button>
+        </div>
+    </div>
+    <div class="pv-drawer__body" data-preview-body tabindex="-1"></div>
+</dialog>
 <?php require 'admin_footer.php'; ?>
