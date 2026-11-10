@@ -2524,3 +2524,24 @@ html:root[data-theme="dark"] .combined-quota {
         width: 100%;
     }
 }
+
+/* ---------- Daftar peserta: penanda data ganda ---------- */
+
+.duplicate-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    color: #9a3412;
+    background: #ffedd5;
+    border: 1px solid #fdba74;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+.duplicate-badge:hover {
+    background: #fed7aa;
+}

@@ -17,6 +17,10 @@ $selectedTrack = trim($_GET['jalur'] ?? '');
 if (!in_array($selectedTrack, ['', 'internal', 'eksternal'], true)) {
     $selectedTrack = '';
 }
+$onlyDuplicates = ($_GET['ganda'] ?? '') === '1';
+// Data ganda: pendaftaran lain pada tahun ajaran yang sama dengan nama dan tanggal lahir ananda
+// yang sama, atau NIK ananda yang sama. Arsip lama tidak dihitung.
+$duplicateSql = "(EXISTS (SELECT 1 FROM tb_pendaftaran d WHERE d.id_pendaftaran<>p.id_pendaftaran AND d.th_ajaran=p.th_ajaran AND d.status_ppdb<>'data_lama' AND d.tgl_lahir=p.tgl_lahir AND UPPER(TRIM(d.nm_peserta))=UPPER(TRIM(p.nm_peserta))) OR EXISTS (SELECT 1 FROM tb_detail_dapodik a JOIN tb_detail_dapodik b ON b.nik=a.nik AND b.id_pendaftaran<>a.id_pendaftaran JOIN tb_pendaftaran d ON d.id_pendaftaran=b.id_pendaftaran WHERE a.id_pendaftaran=p.id_pendaftaran AND a.nik<>'' AND d.th_ajaran=p.th_ajaran AND d.status_ppdb<>'data_lama'))";
 
 $statusOptions = [
     'menunggu_kontak' => 'Belum melanjutkan',
@@ -62,6 +66,10 @@ if ($selectedTrack !== '') {
     $conditions[] = 'p.jalur_pendaftaran = ?';
     $parameters[] = $selectedTrack;
 }
+if ($onlyDuplicates) {
+    $conditions[] = "p.status_ppdb<>'data_lama'";
+    $conditions[] = $duplicateSql;
+}
 $whereSql = $conditions ? ' WHERE '.implode(' AND ', $conditions) : '';
 
 // Jumlah total untuk pagination, dihitung terpisah dari halaman saat ini.
@@ -84,10 +92,12 @@ $currentPage = (int) ($_GET['page'] ?? 1);
 $currentPage = min(max(1, $currentPage), $totalPages);
 $offset = ($currentPage - 1) * $perPage;
 
-$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.alamat,p.data_diperiksa_pada,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
+$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.alamat,p.data_diperiksa_pada,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.tgl_lahir,'.$duplicateSql.' AS data_ganda,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
     // Urut nomor antrean dari #1 per tahun ajaran dan unit; peserta tanpa nomor antrean di bawah.
-    ." ORDER BY p.th_ajaran DESC, FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'), p.kode_unit, p.nomor_antrian IS NULL, p.nomor_antrian ASC, p.waktu_daftar ASC, p.id_pendaftaran ASC"
+    // Pada filter data ganda, pendaftaran yang sama dikelompokkan berdampingan.
+    .($onlyDuplicates ? ' ORDER BY p.th_ajaran DESC, UPPER(TRIM(p.nm_peserta)), p.tgl_lahir, p.waktu_daftar ASC, p.id_pendaftaran ASC' : '')
+    .($onlyDuplicates ? '' : " ORDER BY p.th_ajaran DESC, FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'), p.kode_unit, p.nomor_antrian IS NULL, p.nomor_antrian ASC, p.waktu_daftar ASC, p.id_pendaftaran ASC")
     .' LIMIT '.$perPage.' OFFSET '.$offset;
 
 $registrationsStatement = mysqli_prepare($conn, $query);
@@ -124,7 +134,7 @@ function with_query(array $overrides): string
     return '?' . http_build_query($query);
 }
 
-$hasFilter = $search !== '' || $selectedYear !== '' || $selectedUnit !== '' || $selectedStatus !== '' || $selectedTrack !== '';
+$hasFilter = $search !== '' || $selectedYear !== '' || $selectedUnit !== '' || $selectedStatus !== '' || $selectedTrack !== '' || $onlyDuplicates;
 $progressStages = ['Registrasi', 'Pembayaran', 'Formulir', 'Verifikasi', 'Hasil'];
 
 $activeAdminPage = 'registrations';
@@ -201,6 +211,13 @@ require 'admin_header.php';
                     <?php } ?>
                 </select>
             </div><?php } ?>
+            <div class="filter-field">
+                <label for="ganda">Data ganda</label>
+                <select id="ganda" name="ganda">
+                    <option value="">Semua data</option>
+                    <option value="1"<?php echo $onlyDuplicates ? ' selected' : ''; ?>>Hanya data ganda</option>
+                </select>
+            </div>
             <div class="filter-actions">
                 <button class="button-primary" type="submit">Terapkan</button>
                 <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset</a><?php } ?>
@@ -252,6 +269,7 @@ require 'admin_header.php';
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
                             <td data-label="Nama" class="primary-cell">
                                 <a href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>"><?php echo h($row['nm_peserta']); ?></a>
+                                <?php if (!empty($row['data_ganda'])) { ?><a class="duplicate-badge" href="<?php echo h(with_query(['ganda' => '1', 'q' => $row['nm_peserta'], 'page' => null])); ?>" title="Ada pendaftaran lain dengan nama dan tanggal lahir atau NIK yang sama pada tahun ajaran ini">Ganda</a><?php } ?>
                                 <?php if ($row['NISN'] !== '') { ?><small class="cell-sub">NISN <?php echo h($row['NISN']); ?></small><?php } ?>
                             </td>
                             <td data-label="Daftar oleh"><?php echo h(ppdb_pendaftar_label($row['pendaftar'])); ?></td>
