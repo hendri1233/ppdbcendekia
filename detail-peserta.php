@@ -276,6 +276,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_rollback($conn);
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Keputusan belum dapat disimpan.';
             }
+        } elseif ($action === 'switch_selection_route') {
+            // Pindah jalur seleksi SMP (umum <-> prestasi) tanpa mengubah kuota, antrean, maupun pembayaran.
+            $targetRoute = (string) ($_POST['jalur_seleksi'] ?? '');
+            $storedLetterPath = '';
+            try {
+                if (!prestasi_is_ready($conn) || !in_array($targetRoute, ['prestasi', 'umum'], true)) {
+                    throw new RuntimeException('Jalur seleksi tidak dikenali.');
+                }
+                $achievementData = null;
+                if ($targetRoute === 'prestasi') {
+                    [$achievementData, $achievementErrors] = prestasi_validate($_POST, $_FILES);
+                    if ($achievementErrors) {
+                        throw new RuntimeException(implode(' ', $achievementErrors));
+                    }
+                }
+                mysqli_begin_transaction($conn);
+                $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.jalur_seleksi,u.jenjang FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? FOR UPDATE');
+                mysqli_stmt_bind_param($lock, 's', $registrationId);
+                mysqli_stmt_execute($lock);
+                $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
+                mysqli_stmt_close($lock);
+                if (!$locked || ($locked['jenjang'] ?? '') !== 'SMP' || $locked['status_ppdb'] === 'data_lama') {
+                    throw new RuntimeException('Jalur seleksi hanya dapat diubah untuk pendaftar SMP.');
+                }
+                if (($locked['jalur_seleksi'] ?? '') === $targetRoute) {
+                    throw new RuntimeException('Peserta sudah berada di jalur '.prestasi_jalur_label($targetRoute).'.');
+                }
+
+                $oldLetterPath = '';
+                if ($targetRoute === 'prestasi') {
+                    // Data dan surat prestasi lama (bila pernah pindah jalur) diganti isian baru.
+                    $oldLetter = mysqli_prepare($conn, "SELECT path_file FROM tb_dokumen_peserta WHERE id_pendaftaran=? AND jenis_dokumen='surat_prestasi' LIMIT 1");
+                    mysqli_stmt_bind_param($oldLetter, 's', $registrationId);
+                    mysqli_stmt_execute($oldLetter);
+                    $oldLetterPath = (string) (mysqli_fetch_assoc(mysqli_stmt_get_result($oldLetter))['path_file'] ?? '');
+                    mysqli_stmt_close($oldLetter);
+                    foreach (['DELETE FROM tb_prestasi_peserta WHERE id_pendaftaran=?', "DELETE FROM tb_dokumen_peserta WHERE id_pendaftaran=? AND jenis_dokumen='surat_prestasi'"] as $cleanupSql) {
+                        $cleanup = mysqli_prepare($conn, $cleanupSql);
+                        mysqli_stmt_bind_param($cleanup, 's', $registrationId);
+                        mysqli_stmt_execute($cleanup);
+                        mysqli_stmt_close($cleanup);
+                    }
+                    prestasi_save($conn, $registrationId, $achievementData);
+                    $storedLetterPath = prestasi_store_letter($conn, $registrationId, $_FILES['surat_prestasi']);
+                }
+                $routeUpdate = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET jalur_seleksi=? WHERE id_pendaftaran=?');
+                mysqli_stmt_bind_param($routeUpdate, 'ss', $targetRoute, $registrationId);
+                mysqli_stmt_execute($routeUpdate);
+                mysqli_stmt_close($routeUpdate);
+                mysqli_commit($conn);
+                if ($oldLetterPath !== '' && $oldLetterPath !== $storedLetterPath && is_file($oldLetterPath)) {
+                    @unlink($oldLetterPath);
+                }
+                enqueue_google_sheets_registration($conn, $registrationId);
+                $notice = 'Peserta dipindahkan ke jalur '.prestasi_jalur_label($targetRoute).'.';
+            } catch (Throwable $exception) {
+                mysqli_rollback($conn);
+                if ($storedLetterPath !== '' && is_file($storedLetterPath)) {
+                    @unlink($storedLetterPath);
+                }
+                if (!$exception instanceof RuntimeException) {
+                    error_log('Pindah jalur seleksi gagal: '.$exception->getMessage());
+                }
+                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Jalur seleksi belum dapat diubah.';
+            }
         } else {
             $error = 'Aksi verifikasi tidak dikenali.';
         }
@@ -611,6 +676,57 @@ require 'admin_header.php';
             }
             render_detail_panel('Jalur pendaftaran SMP', $selectionFields, $selectionData);
         } ?>
+        <?php if (prestasi_is_ready($conn) && ($participant['jenjang'] ?? '') === 'SMP' && $participant['status_ppdb'] !== 'data_lama') {
+            $currentRoute = (string) ($participant['jalur_seleksi'] ?? '');
+            $routeFormAction = 'detail-peserta.php?id='.rawurlencode($registrationId); ?>
+        <section class="detail-panel wide route-switch">
+            <h2>Ubah jalur seleksi</h2>
+            <?php if ($currentRoute === 'prestasi') { ?>
+                <form class="route-switch__body" method="post" action="<?php echo h($routeFormAction); ?>" data-confirm="Pindahkan peserta ini ke jalur umum? Data prestasi tidak lagi ditampilkan.">
+                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                    <input type="hidden" name="workflow_action" value="switch_selection_route">
+                    <input type="hidden" name="jalur_seleksi" value="umum">
+                    <p class="route-switch__hint">Peserta saat ini di jalur <strong>Prestasi</strong>. Kuota, nomor antrean, dan pembayaran tidak berubah bila jalur dipindah.</p>
+                    <button class="button-secondary" type="submit">Pindah ke jalur umum</button>
+                </form>
+            <?php } else {
+                $posted = ($_POST['workflow_action'] ?? '') === 'switch_selection_route' ? $_POST : [];
+                $pick = static fn (string $name): string => is_string($posted[$name] ?? null) ? $posted[$name] : '';
+                $select = static function (string $name, string $label, array $options) use ($pick): void {
+                    echo '<div class="filter-field"><label for="rs-'.h($name).'">'.h($label).'</label><select id="rs-'.h($name).'" name="'.h($name).'"><option value="">Pilih</option>';
+                    foreach ($options as $option) {
+                        echo '<option value="'.h($option).'"'.($pick($name) === $option ? ' selected' : '').'>'.h($option).'</option>';
+                    }
+                    echo '</select></div>';
+                }; ?>
+                <details class="route-switch__details"<?php echo $posted ? ' open' : ''; ?>>
+                    <summary>Pindah ke jalur prestasi</summary>
+                    <form class="operator-form route-switch__form" method="post" action="<?php echo h($routeFormAction); ?>" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                        <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                        <input type="hidden" name="workflow_action" value="switch_selection_route">
+                        <input type="hidden" name="jalur_seleksi" value="prestasi">
+                        <p class="route-switch__hint">Peserta saat ini di jalur <strong><?php echo h(prestasi_jalur_label($currentRoute) ?: 'belum dipilih'); ?></strong>. Isi data prestasi dari wali murid. Kuota, nomor antrean, dan pembayaran tidak berubah.</p>
+                        <div class="filter-field route-switch__wide"><label for="rs-surat_prestasi">Foto surat pengantar prestasi (JPG/PNG, maks. 5 MB)</label><input id="rs-surat_prestasi" type="file" name="surat_prestasi" accept="image/jpeg,image/png" required></div>
+                        <p class="route-switch__group"><?php echo h(PRESTASI_JENIS_AKADEMIK); ?></p>
+                        <?php $select('akademik_ada', 'Ada peringkat di raport?', ['Ada', PRESTASI_TIDAK_ADA]);
+                        foreach (PRESTASI_PERINGKAT_BARIS as $name => $label) {
+                            $select($name, $label.' (bila ada)', PRESTASI_PERINGKAT);
+                        } ?>
+                        <p class="route-switch__group"><?php echo h(PRESTASI_JENIS_QURAN); ?></p>
+                        <?php $select('hafalan_ada', "Ada hafalan Al-Qur'an?", ['Ada', PRESTASI_TIDAK_ADA]);
+                        $select('jumlah_hafalan', 'Jumlah hafalan (bila ada)', PRESTASI_JUMLAH_HAFALAN); ?>
+                        <div class="filter-field"><label for="rs-jumlah_hafalan_lain">Jumlah hafalan lain (bila 3 Juz ke atas)</label><input id="rs-jumlah_hafalan_lain" name="jumlah_hafalan_lain" maxlength="100" placeholder="Contoh: 5 Juz" value="<?php echo h($pick('jumlah_hafalan_lain')); ?>"></div>
+                        <p class="route-switch__group"><?php echo h(PRESTASI_JENIS_LOMBA); ?></p>
+                        <?php $select('riwayat_lomba', 'Pernah memenangkan lomba?', ['Ada', PRESTASI_TIDAK_ADA]); ?>
+                        <div class="filter-field route-switch__wide"><label for="rs-daftar_lomba">Lomba yang dimenangkan (bila ada)</label><textarea id="rs-daftar_lomba" name="daftar_lomba" rows="3" maxlength="2000" placeholder="Contoh: Juara 1 lomba baca puisi tingkat kabupaten"><?php echo h($pick('daftar_lomba')); ?></textarea></div>
+                        <div class="route-switch__wide"><button class="button-primary" type="submit">Simpan dan pindahkan ke jalur prestasi</button></div>
+                    </form>
+                </details>
+            <?php } ?>
+        </section>
+        <?php } ?>
         <?php render_detail_panel('Registrasi awal', [['Kode pendaftaran', 'id_pendaftaran'], ['Tanggal pendaftaran', 'tgl_daftar'], ['Unit pendidikan', 'nama_unit'], ...(!empty($participant['tingkat_kelas']) ? [['Daftar ke jenjang', 'tingkat_kelas']] : []), ['Tahun ajaran', 'th_ajaran'], ['Nomor antrean', 'nomor_antrian'], ['Nama ananda', 'nm_peserta'], ['Tanggal lahir', 'tgl_lahir'], ['Umur ananda terdeteksi berdasarkan Dapodik dari tanggal ' . ($dapodikAge['reference_date'] ?? '-') . ' berumur:', 'umur_dapodik'], ['Jenis kelamin', 'jenis_kelamin'], ['Yang mendaftarkan', 'pendaftar'], ['WhatsApp pendaftar', 'no_hp_pendaftar'], ['WhatsApp ayah', 'no_hp_ayah'], ['WhatsApp ibu', 'no_hp_ibu'], ['Draf formulir lengkap', 'draf_formulir']], $participant); ?>
         <?php if ($revisions || !empty($participant['revisi_dibuka'])) { ?>
         <section class="detail-panel wide revision-history">
