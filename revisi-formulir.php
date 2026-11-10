@@ -93,7 +93,7 @@ if (ppdb_wablas_enabled()) {
     $shareLinks = ppdb_wablas_send_links($shareLinks);
     $sent = array_values(array_filter($shareLinks['links'], static fn ($link) => !empty($link['sent'])));
     $notice = $sent
-        ? ['ok' => true, 'sent' => true, 'text' => 'Tautan revisi '.$student.' terkirim ke '.implode(', ', array_column($sent, 'display')).'.']
+        ? ['ok' => true, 'sent' => true, 'text' => 'Tautan revisi '.$student.' terkirim ke '.implode(', ', array_column($sent, 'display')).'. Bila belum diterima (Wablas terputus), kirim manual:', 'links' => $shareLinks['links']]
         : ['ok' => false, 'sent' => false, 'text' => 'Formulir '.$student.' sudah dibuka, tetapi WhatsApp gagal terkirim: '.($shareLinks['links'][0]['send_error'] ?? 'tidak diketahui').'. Kirim manual:', 'links' => $shareLinks['links']];
 } else {
     $notice = ['ok' => true, 'sent' => false, 'text' => 'Formulir '.$student.' sudah dibuka. Kirim tautannya lewat WhatsApp:', 'links' => $shareLinks['links']];

@@ -1060,29 +1060,7 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
     ppdb_resume_token($conn, $registrationId);
     $formUrl = ppdb_continue_url(['id_pendaftaran' => $registrationId, 'token_bukti' => $registration['token_bukti']]);
 
-    $lines = [
-        'Assalamu’alaikum warahmatullahi wabarakatuh.',
-        '',
-        'Yth. Ayah/Bunda/Wali dari Ananda '.$registration['nm_peserta'].',',
-        'Panitia SPMB Yayasan Wakaf Cendekia Takengon membuka kembali formulir pendaftaran Ananda untuk diperbaiki.',
-        'Kode pendaftaran: '.$registrationId,
-    ];
-    if ($revisionNote !== '') {
-        $lines[] = '';
-        $lines[] = 'Catatan perbaikan dari panitia: '.$revisionNote;
-    }
-    array_push(
-        $lines,
-        '',
-        'Isian yang telah dikirim sebelumnya tetap tersimpan. Mohon Ayah/Bunda memperbaiki bagian yang diminta, memeriksa kembali seluruh data, kemudian mengirimkan ulang formulir melalui tautan berikut:',
-        $formUrl,
-        '',
-        'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
-        'Wassalamu’alaikum warahmatullahi wabarakatuh.'
-    );
-
-    $lines[] = '';
-    $lines[] = ppdb_admin_contact_message();
+    $lines = ppdb_revision_message_lines($registrationId, (string) $registration['nm_peserta'], $formUrl, $revisionNote);
 
     $recipients = ppdb_registrant_recipients($registration);
     if ($recipients === []) {
@@ -1104,4 +1082,33 @@ function ppdb_prepare_formulir_link(mysqli $conn, string $registrationId, string
         'message' => implode("\n", $lines),
         'links' => $links,
     ];
+}
+
+/** Baris pesan WhatsApp tautan perbaikan formulir. */
+function ppdb_revision_message_lines(string $registrationId, string $studentName, string $formUrl, string $revisionNote = ''): array
+{
+    $lines = [
+        'Assalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Yth. Ayah/Bunda/Wali dari Ananda '.$studentName.',',
+        'Panitia SPMB Yayasan Wakaf Cendekia Takengon membuka kembali formulir pendaftaran Ananda untuk diperbaiki.',
+        'Kode pendaftaran: '.$registrationId,
+    ];
+    if ($revisionNote !== '') {
+        $lines[] = '';
+        $lines[] = 'Catatan perbaikan dari panitia: '.$revisionNote;
+    }
+    array_push(
+        $lines,
+        '',
+        'Isian yang telah dikirim sebelumnya tetap tersimpan. Mohon Ayah/Bunda memperbaiki bagian yang diminta, memeriksa kembali seluruh data, kemudian mengirimkan ulang formulir melalui tautan berikut:',
+        $formUrl,
+        '',
+        'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
+        'Wassalamu’alaikum warahmatullahi wabarakatuh.'
+    );
+
+    $lines[] = '';
+    $lines[] = ppdb_admin_contact_message();
+    return $lines;
 }

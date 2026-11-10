@@ -92,7 +92,7 @@ $currentPage = (int) ($_GET['page'] ?? 1);
 $currentPage = min(max(1, $currentPage), $totalPages);
 $offset = ($currentPage - 1) * $perPage;
 
-$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.alamat,p.data_diperiksa_pada,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.tgl_lahir,'.$duplicateSql.' AS data_ganda,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
+$query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.alamat,p.data_diperiksa_pada,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.tgl_lahir,p.token_bukti,p.revisi_dibuka,'.$duplicateSql.' AS data_ganda,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
     // Urut nomor antrean dari #1 per tahun ajaran dan unit; peserta tanpa nomor antrean di bawah.
     // Pada filter data ganda, pendaftaran yang sama dikelompokkan berdampingan.
@@ -288,6 +288,20 @@ require 'admin_header.php';
                                             <input type="hidden" name="return" value="<?php echo h(with_query([])); ?>">
                                             <button class="table-action revision-action__button" type="submit" title="Buka kembali formulir dan kirim tautannya ke WhatsApp wali murid">Revisi</button>
                                             <span class="revision-action__status" data-revisi-status aria-live="polite"></span>
+                                            <?php
+                                            // Formulir sedang dibuka untuk revisi: tautan dapat dikirim ulang manual tanpa membuka revisi lagi.
+                                            $revisionOpen = $row['status_data'] === 'perlu_perbaikan' && ($row['status_ppdb'] === 'menunggu_formulir' || !empty($row['revisi_dibuka']));
+                                            $manualRecipients = $revisionOpen && !empty($row['token_bukti']) ? ppdb_registrant_recipients($row) : [];
+                                            if ($manualRecipients) {
+                                                $manualText = implode("\n", ppdb_revision_message_lines($row['id_pendaftaran'], (string) $row['nm_peserta'], ppdb_continue_url($row)));
+                                                ?>
+                                                <details class="manual-wa-menu">
+                                                    <summary class="table-action stage-wa" title="Kirim ulang tautan revisi lewat WhatsApp secara manual">WA revisi</summary>
+                                                    <div class="manual-wa-menu__list">
+                                                        <?php foreach ($manualRecipients as $number => $role) { ?><a href="<?php echo h(ppdb_whatsapp_link($number, $manualText)); ?>" target="_blank" rel="noopener noreferrer"><?php echo h($role); ?> · <?php echo h(ppdb_display_phone($number)); ?></a><?php } ?>
+                                                    </div>
+                                                </details>
+                                            <?php } ?>
                                         </form>
                                     <?php } ?>
                                     <form action="hapus-peserta.php" method="post" data-confirm="Hapus pendaftaran ini? Data Dapodik, dokumen, dan bukti pembayaran terkait juga akan terhapus.">
