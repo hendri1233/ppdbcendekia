@@ -44,14 +44,32 @@ $sentToday = 0;
 $items = [];
 $state = wa_queue_state($conn);
 if ($ready) {
-    $result = mysqli_query($conn, 'SELECT status, COUNT(*) AS total FROM tb_wa_antrean GROUP BY status');
-    while ($row = mysqli_fetch_assoc($result)) {
-        $counts[$row['status']] = (int) $row['total'];
-    }
-    $sentToday = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM tb_wa_antrean WHERE status='terkirim' AND dikirim_pada>=CURDATE()"))['total'];
-    $listing = mysqli_query($conn, "SELECT a.*, p.nm_peserta FROM tb_wa_antrean a LEFT JOIN tb_pendaftaran p ON p.id_pendaftaran=a.id_pendaftaran ORDER BY a.status='menunggu' DESC, a.id DESC LIMIT 60");
-    while ($row = mysqli_fetch_assoc($listing)) {
-        $items[] = $row;
+    try {
+        $result = mysqli_query($conn, 'SELECT status, COUNT(*) AS total FROM tb_wa_antrean GROUP BY status');
+        while ($row = mysqli_fetch_assoc($result)) {
+            $counts[$row['status']] = (int) $row['total'];
+        }
+        $sentToday = (int) mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS total FROM tb_wa_antrean WHERE status='terkirim' AND dikirim_pada>=CURDATE()"))['total'];
+        $listing = mysqli_query($conn, "SELECT * FROM tb_wa_antrean ORDER BY status='menunggu' DESC, id DESC LIMIT 60");
+        while ($row = mysqli_fetch_assoc($listing)) {
+            $items[] = $row;
+        }
+        // Nama peserta dicocokkan di PHP: collation tb_wa_antrean bisa berbeda dengan tb_pendaftaran.
+        $ids = array_values(array_unique(array_filter(array_column($items, 'id_pendaftaran'), static fn ($id) => preg_match('/^P[0-9]{9}$/', (string) $id))));
+        $names = [];
+        if ($ids) {
+            $nameResult = mysqli_query($conn, "SELECT id_pendaftaran, nm_peserta FROM tb_pendaftaran WHERE id_pendaftaran IN ('".implode("','", $ids)."')");
+            while ($nameRow = mysqli_fetch_assoc($nameResult)) {
+                $names[$nameRow['id_pendaftaran']] = $nameRow['nm_peserta'];
+            }
+        }
+        foreach ($items as &$item) {
+            $item['nm_peserta'] = $names[$item['id_pendaftaran'] ?? ''] ?? null;
+        }
+        unset($item);
+    } catch (Throwable $exception) {
+        error_log('Halaman antrean WhatsApp: '.$exception->getMessage());
+        $error = 'Data antrean belum dapat dibaca: '.$exception->getMessage();
     }
 }
 $now = time();
