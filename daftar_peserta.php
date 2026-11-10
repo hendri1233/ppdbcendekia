@@ -86,7 +86,8 @@ $offset = ($currentPage - 1) * $perPage;
 
 $query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.alamat,p.data_diperiksa_pada,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
-    .' ORDER BY FIELD(p.status_ppdb,\'menunggu_kontak\',\'pembayaran_diperiksa\',\'pembayaran_terverifikasi\',\'formulir_terisi\',\'menunggu_pembayaran\',\'menunggu_formulir\',\'daftar_tunggu\',\'diterima\',\'ditolak\',\'data_lama\'), p.waktu_daftar DESC, p.id_pendaftaran DESC'
+    // Urut nomor antrean dari #1 per tahun ajaran dan unit; peserta tanpa nomor antrean di bawah.
+    ." ORDER BY p.th_ajaran DESC, FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'), p.kode_unit, p.nomor_antrian IS NULL, p.nomor_antrian ASC, p.waktu_daftar ASC, p.id_pendaftaran ASC"
     .' LIMIT '.$perPage.' OFFSET '.$offset;
 
 $registrationsStatement = mysqli_prepare($conn, $query);
