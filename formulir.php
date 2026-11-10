@@ -293,6 +293,9 @@ if ($registration && !$authorized && preg_match('/^P[0-9]{9}$/', $code)) {
 
 // Aturan wajib/opsional dari super admin dan isian khusus jenjang (mis. TK A/B).
 $dataSections = formulir_sections_for($conn, (string) ($registration['jenjang'] ?? ''));
+if ($registration) {
+    $dataSections = formulir_apply_unit_spp_choices($dataSections, $conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']);
+}
 $inputFields = formulir_input_fields($dataSections);
 $guidePath = __DIR__ . '/petunjuk_teknis_spmb_wakaf_cendekia.json';
 $spmbGuide = null;

@@ -399,6 +399,54 @@ function formulir_migrated_field_ready(array $field, array $sectionFields, array
     return false;
 }
 
+/**
+ * Pilihan infaq/SPP mengikuti kuisioner unit yang diunggah di ppdb-materi.php
+ * (pertanyaan pilihan tunggal yang memuat kata "infaq"). Pilihan berawalan
+ * "Lebih dari" memunculkan isian nominal. Tanpa kuisioner, pilihan bawaan dipakai.
+ */
+function formulir_apply_unit_spp_choices(array $sections, mysqli $conn, string $unitCode, string $academicYear): array
+{
+    if (!ppdb_table_exists($conn, 'tb_ppdb_questionnaires')) {
+        return $sections;
+    }
+    $statement = mysqli_prepare($conn, 'SELECT questions_json FROM tb_ppdb_questionnaires WHERE kode_unit=? AND th_ajaran=? LIMIT 1');
+    mysqli_stmt_bind_param($statement, 'ss', $unitCode, $academicYear);
+    mysqli_stmt_execute($statement);
+    $questions = json_decode((string) (mysqli_fetch_assoc(mysqli_stmt_get_result($statement))['questions_json'] ?? ''), true);
+    mysqli_stmt_close($statement);
+    $choices = [];
+    foreach (is_array($questions) ? $questions : [] as $question) {
+        $raw = $question['choices'] ?? [];
+        $list = array_values(array_unique(array_filter(array_map('trim', is_array($raw) ? array_map('strval', $raw) : explode(';', (string) $raw)), 'strlen')));
+        if (($question['type'] ?? '') === 'single' && count($list) >= 2 && mb_stripos((string) ($question['prompt'] ?? ''), 'infaq') !== false) {
+            $choices = $list;
+            break;
+        }
+    }
+    if (!$choices) {
+        return $sections;
+    }
+    $moreThan = '';
+    foreach ($choices as $choice) {
+        if (preg_match('/^lebih dari\b/iu', $choice)) {
+            $moreThan = $choice;
+        }
+    }
+    foreach ($sections as &$section) {
+        foreach ($section['fields'] as &$field) {
+            if (($field['name'] ?? '') === 'infaq_spp_pilihan') {
+                $field['options'] = array_combine($choices, $choices);
+            } elseif (($field['name'] ?? '') === 'infaq_spp_nominal') {
+                $field['label'] = 'Nominal infaq/SPP per bulan'.($moreThan !== '' ? ' ('.mb_strtolower(mb_substr($moreThan, 0, 1)).mb_substr($moreThan, 1).')' : '');
+                $field['show_if'] = [['infaq_spp_pilihan', [$moreThan !== '' ? $moreThan : '__tanpa_nominal__']]];
+            }
+        }
+        unset($field);
+    }
+    unset($section);
+    return $sections;
+}
+
 /** Semua field input (tanpa judul kecil), diindeks berdasarkan nama. */
 function formulir_input_fields(?array $sections = null): array
 {
