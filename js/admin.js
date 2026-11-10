@@ -242,22 +242,7 @@
         });
     }
 
-    // --- Pencarian dengan tunda agar tidak mengirim setiap ketikan ---
-    const searchInput = document.querySelector('.search-field input[type="search"]');
-    const filterForm = searchInput ? searchInput.closest('form') : null;
-    if (searchInput && filterForm) {
-        let timer = null;
-        searchInput.addEventListener('input', () => {
-            window.clearTimeout(timer);
-            timer = window.setTimeout(() => {
-                if (filterForm.requestSubmit) {
-                    filterForm.requestSubmit();
-                } else {
-                    filterForm.submit();
-                }
-            }, 550);
-        });
-    }
+    // --- Pencarian dijalankan saat Enter ditekan (atau tombol Terapkan), bukan setiap ketikan ---
 
     // --- Menu akun pada ikon profil ---
     const userMenu = document.querySelector('[data-user-menu]');

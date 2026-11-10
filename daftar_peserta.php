@@ -14,7 +14,9 @@ $adminUnitCode = ppdb_is_super_admin() ? '' : (string) $_SESSION['admin_unit_cod
 $selectedUnit = ppdb_is_super_admin() ? trim($_GET['unit'] ?? '') : $adminUnitCode;
 $selectedStatus = trim($_GET['status'] ?? '');
 $selectedTrack = trim($_GET['jalur'] ?? '');
-if (!in_array($selectedTrack, ['', 'internal', 'eksternal'], true)) {
+// Jalur pendaftaran (internal/eksternal) atau jalur seleksi SMP (prestasi/umum, migrasi 030).
+$hasSelectionRoute = ppdb_column_exists($conn, 'tb_pendaftaran', 'jalur_seleksi');
+if (!in_array($selectedTrack, array_merge(['', 'internal', 'eksternal'], $hasSelectionRoute ? ['prestasi', 'umum'] : []), true)) {
     $selectedTrack = '';
 }
 $onlyDuplicates = ($_GET['ganda'] ?? '') === '1';
@@ -62,7 +64,10 @@ if ($selectedStatus === 'pembayaran_diperiksa') {
     $conditions[] = 'p.status_ppdb = ?';
     $parameters[] = $selectedStatus;
 }
-if ($selectedTrack !== '') {
+if (in_array($selectedTrack, ['prestasi', 'umum'], true)) {
+    $conditions[] = 'p.jalur_seleksi = ?';
+    $parameters[] = $selectedTrack;
+} elseif ($selectedTrack !== '') {
     $conditions[] = 'p.jalur_pendaftaran = ?';
     $parameters[] = $selectedTrack;
 }
@@ -173,7 +178,7 @@ require 'admin_header.php';
                 <label for="q">Cari peserta</label>
                 <div class="search-field">
                     <?php echo ppdb_admin_icon('search'); ?>
-                    <input id="q" type="search" name="q" value="<?php echo h($search); ?>" placeholder="Nama, kode pendaftaran, atau NISN">
+                    <input id="q" type="search" name="q" value="<?php echo h($search); ?>" placeholder="Nama, kode, atau NISN · tekan Enter" enterkeyhint="search">
                 </div>
             </div>
             <div class="filter-field">
@@ -182,6 +187,12 @@ require 'admin_header.php';
                     <option value="">Semua jalur</option>
                     <option value="internal"<?php echo $selectedTrack === 'internal' ? ' selected' : ''; ?>>Internal · SDM</option>
                     <option value="eksternal"<?php echo $selectedTrack === 'eksternal' ? ' selected' : ''; ?>>Eksternal · umum</option>
+                    <?php if ($hasSelectionRoute) { ?>
+                        <optgroup label="Jalur seleksi SMP">
+                            <option value="prestasi"<?php echo $selectedTrack === 'prestasi' ? ' selected' : ''; ?>>Prestasi</option>
+                            <option value="umum"<?php echo $selectedTrack === 'umum' ? ' selected' : ''; ?>>Umum</option>
+                        </optgroup>
+                    <?php } ?>
                 </select>
             </div>
             <div class="filter-field">
