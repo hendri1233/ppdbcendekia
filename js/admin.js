@@ -220,10 +220,10 @@
                 .then((result) => {
                     form.dataset.sending = '';
                     button.disabled = false;
-                    button.textContent = result.ok && result.sent ? 'Kirim ulang' : 'Revisi';
+                    button.textContent = result.ok && (result.sent || result.queued) ? 'Kirim ulang' : 'Revisi';
                     status.classList.add(result.ok ? 'is-ok' : 'is-error');
                     status.title = result.text;
-                    status.append(document.createTextNode(result.ok && result.sent ? '✓ Terkirim' : result.ok ? 'Formulir dibuka' : 'Gagal'));
+                    status.append(document.createTextNode(result.ok && result.sent ? '✓ Terkirim' : result.ok && result.queued ? '✓ Masuk antrean' : result.ok ? 'Formulir dibuka' : 'Gagal'));
                     showToast(result.text, result.ok);
                     for (const link of result.links || []) {
                         const anchor = document.createElement('a');

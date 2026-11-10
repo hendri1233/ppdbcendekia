@@ -20,3 +20,11 @@ mysqli_set_charset($conn, 'utf8mb4');
 
 require_once __DIR__ . '/maintenance.php';
 ppdb_maintenance_guard($conn);
+
+// Antrean WhatsApp berjeda dijalankan di akhir permintaan halaman (lihat wa_queue.php).
+if (PHP_SAPI !== 'cli') {
+    register_shutdown_function(static function () use ($conn): void {
+        require_once __DIR__ . '/wa_queue.php';
+        wa_queue_run_after_response($conn);
+    });
+}

@@ -34,7 +34,6 @@ function ppdb_wablas_send(string $phone, string $message): array
     $body = curl_exec($ch);
     $curlError = curl_error($ch);
     $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     if ($body === false) {
         error_log('Wablas gagal: '.$curlError);
@@ -124,12 +123,13 @@ function ppdb_registration_whatsapp_message(array $registration, string $continu
     return implode("\n", $lines);
 }
 
-/** Kirim konfirmasi kursi ke nomor pendaftar. Kegagalan hanya dicatat agar pendaftaran tetap berjalan. */
+/**
+ * Masukkan konfirmasi kursi ke antrean WhatsApp berjeda (wa_queue.php); pesan tidak
+ * dikirim langsung agar nomor Wablas tidak diblokir saat pendaftar ramai.
+ */
 function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId): bool
 {
-    if (!ppdb_wablas_enabled()) {
-        return false;
-    }
+    require_once __DIR__.'/wa_queue.php';
     try {
         $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.kode_unit,p.nm_peserta,p.th_ajaran,p.no_hp_pendaftar,p.tanggal_batas_bayar,p.token_bukti,u.nama_unit,q.biaya_pendaftaran FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? LIMIT 1');
         mysqli_stmt_bind_param($stmt, 's', $registrationId);
@@ -142,11 +142,11 @@ function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId): 
         }
         ppdb_resume_token($conn, $registrationId);
         $formWindow = ppdb_form_window($conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']);
-        $delivery = ppdb_wablas_send($phone, ppdb_registration_whatsapp_message($registration, ppdb_continue_url($registration), $formWindow));
-        if (!$delivery['ok']) {
-            error_log('Konfirmasi WhatsApp '.$registrationId.' gagal: '.$delivery['error']);
+        $queued = wa_queue_add($conn, $phone, ppdb_registration_whatsapp_message($registration, ppdb_continue_url($registration), $formWindow), 'registrasi', $registrationId);
+        if (!$queued) {
+            error_log('Konfirmasi WhatsApp '.$registrationId.' belum masuk antrean (migrasi 038 belum dijalankan?).');
         }
-        return $delivery['ok'];
+        return $queued;
     } catch (Throwable $exception) {
         error_log('Konfirmasi WhatsApp '.$registrationId.' gagal: '.$exception->getMessage());
         return false;
