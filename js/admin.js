@@ -282,3 +282,44 @@
 
     // --- Tandai baris tabel yang perlu ditindaklanjuti admin ---
 })();
+
+// Detail peserta: kirim pesan WhatsApp manual (cadangan bila Wablas terputus).
+(function () {
+    const panel = document.querySelector('[data-manual-wa]');
+    if (!panel) return;
+    const activeText = function () {
+        return Array.from(panel.querySelectorAll('[data-manual-wa-text]')).find(function (area) { return !area.hidden; });
+    };
+    const syncLinks = function () {
+        const area = activeText();
+        if (!area) return;
+        panel.querySelectorAll('[data-manual-wa-send]').forEach(function (link) {
+            link.href = 'https://wa.me/' + link.dataset.manualWaSend + '?text=' + encodeURIComponent(area.value);
+        });
+    };
+    panel.querySelectorAll('[data-manual-wa-choice]').forEach(function (choice) {
+        choice.addEventListener('change', function () {
+            panel.querySelectorAll('[data-manual-wa-text]').forEach(function (area) {
+                area.hidden = area.dataset.manualWaText !== choice.value;
+            });
+            syncLinks();
+        });
+    });
+    panel.addEventListener('input', syncLinks);
+    const copy = panel.querySelector('[data-manual-wa-copy]');
+    if (copy) {
+        copy.addEventListener('click', function () {
+            const area = activeText();
+            const done = function (label) {
+                copy.textContent = label;
+                window.setTimeout(function () { copy.textContent = 'Salin pesan'; }, 1800);
+            };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(area.value).then(function () { done('Tersalin'); }, function () { area.select(); done(document.execCommand('copy') ? 'Tersalin' : 'Gagal menyalin'); });
+            } else {
+                area.select();
+                done(document.execCommand('copy') ? 'Tersalin' : 'Gagal menyalin');
+            }
+        });
+    }
+})();

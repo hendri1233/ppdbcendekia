@@ -4,6 +4,7 @@ require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
 require_once 'formulir_helpers.php';
 require_once 'prestasi_helpers.php';
+require_once 'wablas.php';
 require_admin();
 require_once __DIR__ . '/admin-partials.php';
 
@@ -358,6 +359,46 @@ if (!$participant) {
     http_response_code(404);
     exit('Data peserta tidak ditemukan.');
 }
+
+// Pesan WhatsApp manual: cadangan bila Wablas terputus. Admin membuka WhatsApp sendiri lewat wa.me.
+$manualRecipients = ppdb_registrant_recipients($participant);
+$manualMessages = [];
+if ($manualRecipients && !empty($participant['token_bukti'])) {
+    $manualRegistration = $participant + ['id_pendaftaran' => $registrationId];
+    $manualMessages['registrasi'] = [
+        'label' => 'Konfirmasi registrasi dan tautan lanjutan',
+        'text' => ppdb_registration_whatsapp_message(
+            $manualRegistration,
+            ppdb_continue_url($manualRegistration),
+            ppdb_form_window($conn, (string) $participant['kode_unit'], (string) $participant['th_ajaran'])
+        ),
+    ];
+    if ($participant['status_ppdb'] === 'diterima') {
+        $groupStatement = mysqli_prepare($conn, 'SELECT link_grup FROM tb_unit_whatsapp_groups WHERE kode_unit=? LIMIT 1');
+        mysqli_stmt_bind_param($groupStatement, 's', $participant['kode_unit']);
+        mysqli_stmt_execute($groupStatement);
+        $groupLink = trim((string) (mysqli_fetch_assoc(mysqli_stmt_get_result($groupStatement))['link_grup'] ?? ''));
+        mysqli_stmt_close($groupStatement);
+        if ($groupLink !== '') {
+            $manualMessages['grup'] = [
+                'label' => 'Tautan grup WhatsApp wali murid',
+                'text' => implode("\n", [
+                    'Assalamu’alaikum warahmatullahi wabarakatuh.',
+                    '',
+                    'Yth. Ayah/Bunda dari Ananda *'.$participant['nm_peserta'].'*,',
+                    '',
+                    'Alhamdulillah, Ananda telah *diterima* di *'.$participant['nama_unit'].'* untuk Tahun Ajaran '.$participant['th_ajaran'].'.',
+                    'Mohon bergabung ke grup resmi wali murid melalui tautan berikut, karena seluruh informasi lanjutan disampaikan di grup ini:',
+                    $groupLink,
+                    '',
+                    'Wassalamu’alaikum warahmatullahi wabarakatuh.',
+                    '',
+                    ppdb_admin_contact_message(),
+                ]),
+            ];
+        }
+    }
+}
 $participant['bank_nama'] = PPDB_BANK_NAME;
 $dapodikAge = ppdb_dapodik_age($participant['tgl_lahir'], $participant['th_ajaran']);
 $participant['umur_dapodik'] = ppdb_dapodik_age_label($dapodikAge);
@@ -637,6 +678,34 @@ require 'admin_header.php';
             </div>
         <?php } ?>
     </section>
+
+    <?php if ($manualMessages) { ?>
+        <details class="detail-panel wide manual-wa" data-manual-wa>
+            <summary>
+                <span class="manual-wa__icon" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm5.92 15.5c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg></span>
+                <span class="manual-wa__title"><strong>Kirim pesan WhatsApp manual</strong><small>Gunakan bila pesan otomatis (Wablas) tidak terkirim.</small></span>
+            </summary>
+            <div class="manual-wa__body">
+                <?php if (count($manualMessages) > 1) { ?>
+                    <div class="manual-wa__choices" role="radiogroup" aria-label="Jenis pesan">
+                        <?php $firstMessage = true; foreach ($manualMessages as $messageKey => $message) { ?>
+                            <label><input type="radio" name="manual_wa_jenis" value="<?php echo h($messageKey); ?>" data-manual-wa-choice<?php echo $firstMessage ? ' checked' : ''; ?>> <?php echo h($message['label']); ?></label>
+                        <?php $firstMessage = false; } ?>
+                    </div>
+                <?php } ?>
+                <?php $firstMessage = true; foreach ($manualMessages as $messageKey => $message) { ?>
+                    <textarea class="manual-wa__text" rows="12" data-manual-wa-text="<?php echo h($messageKey); ?>" aria-label="<?php echo h($message['label']); ?>"<?php echo $firstMessage ? '' : ' hidden'; ?>><?php echo h($message['text']); ?></textarea>
+                <?php $firstMessage = false; } ?>
+                <p class="manual-wa__hint">Teks dapat diubah sebelum dikirim. Tombol di bawah membuka WhatsApp dengan pesan ini; tekan kirim di WhatsApp.</p>
+                <div class="manual-wa__actions">
+                    <?php foreach ($manualRecipients as $number => $role) { ?>
+                        <a class="manual-wa__send" href="<?php echo h(ppdb_whatsapp_link($number, reset($manualMessages)['text'])); ?>" target="_blank" rel="noopener noreferrer" data-manual-wa-send="<?php echo h($number); ?>">Kirim ke <?php echo h($role); ?> · <?php echo h(ppdb_display_phone($number)); ?></a>
+                    <?php } ?>
+                    <button class="button-secondary" type="button" data-manual-wa-copy>Salin pesan</button>
+                </div>
+            </div>
+        </details>
+    <?php } ?>
 
     <section class="detail-panel wide">
         <h2>Dokumen pendukung</h2>
