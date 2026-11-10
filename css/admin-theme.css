@@ -2663,3 +2663,49 @@ html:root[data-theme="dark"] .combined-quota {
         flex-wrap: wrap;
     }
 }
+
+/* ---------- Daftar peserta: kolom Kode, Antrean, dan Nama tetap saat tabel digeser ---------- */
+
+@media (min-width: 621px) {
+    .data-table--freeze th:nth-child(-n+3),
+    .data-table--freeze td:nth-child(-n+3) {
+        position: sticky;
+        z-index: 2;
+        background: var(--admin-white);
+    }
+
+    .data-table--freeze th:nth-child(-n+3) {
+        z-index: 3;
+        background: color-mix(in srgb, var(--paper) 70%, var(--admin-white));
+    }
+
+    .data-table--freeze tbody tr:hover td:nth-child(-n+3) {
+        background: color-mix(in srgb, var(--brand-50) 70%, var(--admin-white));
+    }
+
+    .data-table--freeze th:nth-child(1),
+    .data-table--freeze td:nth-child(1) {
+        left: 0;
+        width: 132px;
+        min-width: 132px;
+        max-width: 132px;
+    }
+
+    .data-table--freeze th:nth-child(2),
+    .data-table--freeze td:nth-child(2) {
+        left: 132px;
+        width: 86px;
+        min-width: 86px;
+        max-width: 86px;
+    }
+
+    .data-table--freeze th:nth-child(3),
+    .data-table--freeze td:nth-child(3) {
+        left: 218px;
+        min-width: 220px;
+        max-width: 320px;
+        white-space: normal;
+        box-shadow: 8px 0 12px -10px rgba(15, 23, 42, 0.35);
+        clip-path: inset(0 -16px 0 0);
+    }
+}
