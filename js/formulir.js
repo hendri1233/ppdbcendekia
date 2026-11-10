@@ -399,7 +399,9 @@
         if (nik === controllerValue('nomor_kk').trim()) return 'NIK ini sama dengan nomor KK. Periksa kembali.';
         if (name === 'nik') {
             if (parsed.invalid) return 'Bagian tanggal lahir pada NIK ini tidak terbaca. Periksa kembali angkanya.';
-            const birth = (form.dataset.birthDate || '').split('-');
+            // Saat revisi, tanggal lahir dapat diperbaiki di formulir; nilai itu yang dipakai.
+            const birthInput = form.querySelector('[name="tgl_lahir"]');
+            const birth = ((birthInput && birthInput.value) || form.dataset.birthDate || '').split('-');
             const messages = [];
             if (birth.length === 3 && (parsed.day !== parseInt(birth[2], 10) || parsed.month !== parseInt(birth[1], 10) || parsed.year2 !== parseInt(birth[0], 10) % 100)) {
                 messages.push('Tanggal lahir di NIK (' + pad(parsed.day) + '-' + pad(parsed.month) + '-' + pad(parsed.year2) + ') berbeda dengan tanggal lahir registrasi (' + birth[2] + '-' + birth[1] + '-' + birth[0] + ').');
@@ -656,7 +658,11 @@
             if (control.value.trim() !== '') validateControl(control, true);
         }
         form.addEventListener('focusout', function (event) {
-            if (/(^|_)(nik|tahun_lahir)$|^nomor_kk$/.test(event.target.name || '')) updateNikWarnings();
+            if (/(^|_)(nik|tahun_lahir)$|^nomor_kk$|^tgl_lahir$/.test(event.target.name || '')) updateNikWarnings();
+        });
+        // Tanggal lahir hasil revisi dipilih lewat kalender; periksa ulang NIK saat nilainya berubah.
+        form.addEventListener('change', function (event) {
+            if (event.target.name === 'tgl_lahir') updateNikWarnings();
         });
 
         const goToControl = function (control) {

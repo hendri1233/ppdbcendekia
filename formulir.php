@@ -292,9 +292,22 @@ if ($registration && !$authorized && preg_match('/^P[0-9]{9}$/', $code)) {
 }
 
 // Aturan wajib/opsional dari super admin dan isian khusus jenjang (mis. TK A/B).
-$dataSections = formulir_sections_for($conn, (string) ($registration['jenjang'] ?? ''));
+$dataSections = formulir_sections_for($conn, (string) ($registration['jenjang'] ?? ''), true);
 if ($registration) {
     $dataSections = formulir_apply_unit_spp_choices($dataSections, $conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']);
+}
+// Revisi: formulir yang dibuka kembali setelah pernah dikirim. Nama lengkap dan tanggal lahir
+// ananda dari registrasi awal hanya dapat diperbaiki pada revisi.
+$revisionMode = $authorized && $formOpen && (!empty($registration['revisi_dibuka']) || formulir_saved_values($conn, $registration['id_pendaftaran']) !== []);
+foreach ($dataSections as $sectionKey => $section) {
+    $dataSections[$sectionKey]['fields'] = array_values(array_filter($section['fields'], static fn (array $field): bool => $revisionMode || empty($field['revisi'])));
+}
+if ($revisionMode) {
+    foreach (['nm_peserta', 'tgl_lahir'] as $identityField) {
+        if (trim((string) ($formValues[$identityField] ?? '')) === '') {
+            $formValues[$identityField] = (string) $registration[$identityField];
+        }
+    }
 }
 $inputFields = formulir_input_fields($dataSections);
 $guidePath = __DIR__ . '/petunjuk_teknis_spmb_wakaf_cendekia.json';
@@ -390,8 +403,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
     }
     $errors = array_merge($errors, formulir_validate_fields($_POST, $dataSections, $validatedFields));
     $fieldErrors += $validatedFields;
+    $checkedRegistration = $registration;
+    if ($revisionMode) {
+        $birthInput = trim((string) ($_POST['tgl_lahir'] ?? ''));
+        $birthDate = DateTimeImmutable::createFromFormat('!Y-m-d', $birthInput);
+        if (!$birthDate || $birthDate->format('Y-m-d') !== $birthInput || $birthDate > new DateTimeImmutable('today') || (int) $birthDate->format('Y') < 2000) {
+            $errors[] = 'Periksa kembali tanggal lahir ananda.';
+            $fieldErrors['tgl_lahir'] ??= 'Periksa kembali tanggal lahir ananda.';
+        } else {
+            // Pemeriksaan NIK memakai tanggal lahir hasil perbaikan.
+            $checkedRegistration['tgl_lahir'] = $birthInput;
+        }
+        if (mb_strlen(trim((string) ($_POST['nm_peserta'] ?? ''))) < 3) {
+            $errors[] = 'Nama lengkap ananda minimal 3 huruf.';
+            $fieldErrors['nm_peserta'] ??= 'Nama lengkap ananda minimal 3 huruf.';
+        }
+    }
     // NIK: kekeliruan pasti ditolak; ketidakcocokan dengan data lain hanya ditandai.
-    $identityChecks = formulir_identity_checks($_POST, $registration, $inputFields);
+    $identityChecks = formulir_identity_checks($_POST, $checkedRegistration, $inputFields);
     $errors = array_merge($errors, $identityChecks['errors']);
     $fieldErrors += $identityChecks['fields'];
 
@@ -511,6 +540,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             mysqli_stmt_bind_param($statusUpdate, 'ssssssss', $dataStatus, $nisn, $sourceSchool, $birthPlace, $religion, $fullAddress, $informationSource, $registration['id_pendaftaran']);
             mysqli_stmt_execute($statusUpdate);
             mysqli_stmt_close($statusUpdate);
+            if ($revisionMode) {
+                $correctedName = preg_replace('/\s+/u', ' ', mb_strtoupper(trim((string) $_POST['nm_peserta']), 'UTF-8'));
+                $correctedBirth = trim((string) $_POST['tgl_lahir']);
+                $identityUpdate = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET nm_peserta=?,tgl_lahir=? WHERE id_pendaftaran=?');
+                mysqli_stmt_bind_param($identityUpdate, 'sss', $correctedName, $correctedBirth, $registration['id_pendaftaran']);
+                mysqli_stmt_execute($identityUpdate);
+                mysqli_stmt_close($identityUpdate);
+            }
             ppdb_finalize_registration($conn, $registration['id_pendaftaran']);
 
             $isRevision = $oldValues !== [];

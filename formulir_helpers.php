@@ -169,6 +169,9 @@ function formulir_data_sections(): array
             'title' => 'Data ananda',
             'description' => 'Gunakan ejaan dan angka sesuai Kartu Keluarga dan akta kelahiran.',
             'fields' => [
+                // Data registrasi awal; hanya tampil (dan dapat diperbaiki) saat formulir dibuka untuk revisi.
+                ['name' => 'nm_peserta', 'label' => 'Nama lengkap ananda', 'required' => true, 'uppercase' => true, 'maxlength' => 100, 'wide' => true, 'revisi' => true, 'hint' => 'Sesuai akta kelahiran, tanpa singkatan. Perbaiki bila keliru.', 'store' => 'pendaftaran'],
+                ['name' => 'tgl_lahir', 'label' => 'Tanggal lahir ananda', 'type' => 'date', 'required' => true, 'revisi' => true, 'hint' => 'Sesuai akta kelahiran. Perbaiki bila keliru.', 'store' => 'pendaftaran'],
                 ['name' => 'kelompok_tk', 'label' => 'Ananda mendaftar ke kelompok', 'type' => 'select', 'required' => true, 'store' => 'detail', 'jenjang' => ['TK'], 'options' => ['TK A' => 'TK A (genap 4 tahun per 1 Juli)', 'TK B' => 'TK B (genap 5 tahun per 1 Juli)']],
                 ['name' => 'nik', 'label' => 'NIK ananda', 'locked' => true, 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka', 'hint' => 'Pastikan tidak tertukar dengan nomor KK.', 'store' => 'detail'],
                 ['name' => 'nomor_kk', 'label' => 'Nomor Kartu Keluarga', 'locked' => true, 'maxlength' => 16, 'inputmode' => 'numeric', 'pattern' => '[0-9]{16}', 'placeholder' => '16 digit angka', 'store' => 'detail'],
@@ -324,7 +327,11 @@ function formulir_field_rules(mysqli $conn): array
  * Bagian formulir untuk satu jenjang dengan aturan wajib yang berlaku.
  * Jenjang kosong berarti semua field (dipakai laporan dan pengaturan).
  */
-function formulir_sections_for(?mysqli $conn, string $jenjang = ''): array
+/**
+ * @param bool $includeRevision sertakan isian khusus revisi (nama dan tanggal lahir ananda);
+ *                              hanya halaman formulir yang memerlukannya.
+ */
+function formulir_sections_for(?mysqli $conn, string $jenjang = '', bool $includeRevision = false): array
 {
     $rules = $conn ? formulir_field_rules($conn) : [];
     $sections = formulir_data_sections();
@@ -334,6 +341,9 @@ function formulir_sections_for(?mysqli $conn, string $jenjang = ''): array
     foreach ($sections as $sectionKey => $section) {
         $fields = [];
         foreach ($section['fields'] as $field) {
+            if (!empty($field['revisi']) && !$includeRevision) {
+                continue;
+            }
             if (isset($field['migrasi']) && $detailColumns !== null && !formulir_migrated_field_ready($field, $section['fields'], $detailColumns)) {
                 continue;
             }
@@ -830,7 +840,7 @@ function formulir_identity_checks(array $input, array $registration, array $inpu
  */
 function formulir_saved_values(mysqli $conn, string $registrationId): array
 {
-    $query = mysqli_prepare($conn, 'SELECT p.NISN,p.tmp_lahir,p.agama,p.asal_sekolah,p.sumber_informasi,d.* FROM tb_pendaftaran p JOIN tb_detail_dapodik d ON d.id_pendaftaran=p.id_pendaftaran WHERE p.id_pendaftaran=? LIMIT 1');
+    $query = mysqli_prepare($conn, 'SELECT p.NISN,p.tmp_lahir,p.agama,p.asal_sekolah,p.sumber_informasi,p.nm_peserta,p.tgl_lahir,d.* FROM tb_pendaftaran p JOIN tb_detail_dapodik d ON d.id_pendaftaran=p.id_pendaftaran WHERE p.id_pendaftaran=? LIMIT 1');
     mysqli_stmt_bind_param($query, 's', $registrationId);
     mysqli_stmt_execute($query);
     $row = mysqli_fetch_assoc(mysqli_stmt_get_result($query)) ?: [];
