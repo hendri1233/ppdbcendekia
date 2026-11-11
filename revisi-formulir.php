@@ -63,13 +63,14 @@ try {
         throw new RuntimeException('Data peserta tidak ditemukan.');
     }
     // Hanya pendaftar yang sudah membayar dan sampai ke tahap formulir.
-    if (!in_array($registration['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true) || !in_array($registration['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) {
+    if (!in_array($registration['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true) || !in_array($registration['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima', 'daftar_tunggu'], true)) {
         throw new RuntimeException('Revisi hanya untuk peserta yang sudah sampai ke tahap formulir.');
     }
 
-    // Peserta yang sudah diterima tetap diterima (kursi tidak dilepas); formulir dibuka lewat penanda revisi.
+    // Peserta diterima/daftar tunggu tetap pada statusnya (kursi dan antrean tidak dilepas); formulir dibuka lewat penanda revisi.
     $adminId = (int) $_SESSION['admin_id'];
-    $reopen = mysqli_prepare($conn, $registration['status_ppdb'] === 'diterima'
+    $keepsStatus = in_array($registration['status_ppdb'], ['diterima', 'daftar_tunggu'], true);
+    $reopen = mysqli_prepare($conn, $keepsStatus
         ? "UPDATE tb_pendaftaran SET revisi_dibuka=1,status_data='perlu_perbaikan',data_diperiksa_oleh=?,data_diperiksa_pada=NOW() WHERE id_pendaftaran=?"
         : "UPDATE tb_pendaftaran SET status_ppdb='menunggu_formulir',revisi_dibuka=0,status_data='perlu_perbaikan',data_diperiksa_oleh=?,data_diperiksa_pada=NOW() WHERE id_pendaftaran=?");
     mysqli_stmt_bind_param($reopen, 'is', $adminId, $registrationId);
@@ -88,7 +89,7 @@ try {
 }
 
 $student = $registration['nm_peserta'];
-$statusLabel = $registration['status_ppdb'] === 'diterima' ? 'Diterima · revisi dibuka' : 'Menunggu formulir';
+$statusLabel = ['diterima' => 'Diterima · revisi dibuka', 'daftar_tunggu' => 'Daftar tunggu · revisi dibuka'][$registration['status_ppdb']] ?? 'Menunggu formulir';
 // Tombol WhatsApp manual selalu disertakan, juga saat Wablas melaporkan terkirim.
 if (ppdb_wablas_enabled()) {
     $shareLinks = ppdb_wablas_send_links($shareLinks);

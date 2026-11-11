@@ -338,7 +338,7 @@ require 'admin_header.php';
                             <td data-label="Aksi">
                                 <div class="table-actions">
                                     <a class="table-action" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode(with_query([])); ?>">Detail</a>
-                                    <?php if (in_array($row['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true) && in_array($row['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) { ?>
+                                    <?php if (in_array($row['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true) && in_array($row['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima', 'daftar_tunggu'], true)) { ?>
                                         <form action="revisi-formulir.php" method="post" class="revision-action" data-revisi>
                                             <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                                             <input type="hidden" name="id" value="<?php echo h($row['id_pendaftaran']); ?>">

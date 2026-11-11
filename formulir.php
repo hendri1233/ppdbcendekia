@@ -66,7 +66,7 @@ function formulir_is_open(array $registration): bool
 function formulir_is_editable(string $status, bool $revisionOpen = false): bool
 {
     return in_array($status, ['pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true)
-        || ($revisionOpen && $status === 'diterima');
+        || ($revisionOpen && in_array($status, ['diterima', 'daftar_tunggu'], true));
 }
 
 /** Ambil hanya isian yang dikenal formulir agar draf tidak menyimpan data liar. */
@@ -535,8 +535,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['workflow_action'] ?? '') =
             $birthPlace = mb_strtoupper($value('tmp_lahir'), 'UTF-8');
             $religion = $value('agama');
             $informationSource = $value('sumber_informasi');
-            // Peserta yang sudah diterima tetap diterima; revisi hanya menandai data untuk dicek ulang.
-            $statusUpdate = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb=IF(status_ppdb='diterima','diterima','formulir_terisi'),revisi_dibuka=0,status_data=?,NISN=?,asal_sekolah=?,tmp_lahir=?,agama=?,alamat=?,sumber_informasi=? WHERE id_pendaftaran=?");
+            // Peserta diterima/daftar tunggu tetap pada statusnya; revisi hanya menandai data untuk dicek ulang.
+            $statusUpdate = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET status_ppdb=IF(status_ppdb IN ('diterima','daftar_tunggu'),status_ppdb,'formulir_terisi'),revisi_dibuka=0,status_data=?,NISN=?,asal_sekolah=?,tmp_lahir=?,agama=?,alamat=?,sumber_informasi=? WHERE id_pendaftaran=?");
             mysqli_stmt_bind_param($statusUpdate, 'ssssssss', $dataStatus, $nisn, $sourceSchool, $birthPlace, $religion, $fullAddress, $informationSource, $registration['id_pendaftaran']);
             mysqli_stmt_execute($statusUpdate);
             mysqli_stmt_close($statusUpdate);
