@@ -325,7 +325,7 @@ require 'admin_header.php';
                             <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
                             <td data-label="Nama" class="primary-cell">
-                                <a class="participant-link" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>" data-participant="<?php echo h($row['id_pendaftaran']); ?>" aria-haspopup="menu"><?php echo h($row['nm_peserta']); ?></a>
+                                <a class="participant-link" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode(with_query([])); ?>" data-participant="<?php echo h($row['id_pendaftaran']); ?>" aria-haspopup="menu"><?php echo h($row['nm_peserta']); ?></a>
                                 <?php if (!empty($row['data_ganda'])) { ?><a class="duplicate-badge" href="<?php echo h(with_query(['ganda' => '1', 'q' => $row['nm_peserta'], 'page' => null])); ?>" title="Ada pendaftaran lain dengan nama dan tanggal lahir atau NIK yang sama pada tahun ajaran ini">Ganda</a><?php } ?>
                                 <?php if ($row['NISN'] !== '') { ?><small class="cell-sub">NISN <?php echo h($row['NISN']); ?></small><?php } ?>
                             </td>
@@ -337,7 +337,7 @@ require 'admin_header.php';
                             <td data-label="Tanggal"><?php echo h(date('d-m-Y', strtotime($row['tgl_daftar']))); ?></td>
                             <td data-label="Aksi">
                                 <div class="table-actions">
-                                    <a class="table-action" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>">Detail</a>
+                                    <a class="table-action" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode(with_query([])); ?>">Detail</a>
                                     <?php if (in_array($row['status_pembayaran'], ['terverifikasi', 'menunggu_verifikasi'], true) && in_array($row['status_ppdb'], ['menunggu_formulir', 'formulir_terisi', 'ditolak', 'diterima'], true)) { ?>
                                         <form action="revisi-formulir.php" method="post" class="revision-action" data-revisi>
                                             <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">

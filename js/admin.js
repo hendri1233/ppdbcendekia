@@ -374,7 +374,7 @@
         position.textContent = index >= 0 ? (index + 1) + ' / ' + ids.length : '';
         prevButton.disabled = index <= 0;
         nextButton.disabled = index < 0 || index >= ids.length - 1;
-        detailLink.href = 'detail-peserta.php?id=' + encodeURIComponent(id);
+        detailLink.href = 'detail-peserta.php?id=' + encodeURIComponent(id) + '&kembali=' + encodeURIComponent(window.location.search || '?');
         printLink.hidden = true;
         markRow(id);
         body.innerHTML = '<div class="pv-loading" aria-label="Memuat data"><span></span><span></span><span></span><span></span></div>';

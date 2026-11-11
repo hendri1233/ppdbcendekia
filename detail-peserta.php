@@ -9,6 +9,17 @@ require_admin();
 require_once __DIR__ . '/admin-partials.php';
 
 $registrationId = $_GET['id'] ?? $_POST['id'] ?? '';
+// Daftar asal (filter, pencarian, halaman) agar admin dapat kembali dan lanjut ke peserta berikutnya.
+$returnQuery = (string) ($_GET['kembali'] ?? '');
+if (!preg_match('/^\?[A-Za-z0-9_\-=&%.+]*$/', $returnQuery)) {
+    $returnQuery = '';
+}
+parse_str(ltrim($returnQuery, '?'), $returnFilters);
+$returnLabels = ['menunggu_kontak' => 'Menunggu persetujuan', 'pembayaran_diperiksa' => 'Bukti bayar masuk'];
+$returnLabel = $returnLabels[$returnFilters['status'] ?? ''] ?? 'daftar peserta';
+$returnUrl = 'daftar_peserta.php'.$returnQuery;
+$nextParticipant = null;
+$nextRemaining = 0;
 $error = '';
 $notice = '';
 $whatsappDeliveryNotice = '';
@@ -388,6 +399,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$nextKind = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
+    $nextKind = [
+        'approve_registration' => 'menunggu_kontak',
+        'approve_payment' => 'pembayaran_diperiksa',
+        'reject_payment' => 'pembayaran_diperiksa',
+    ][$_POST['workflow_action'] ?? ''] ?? '';
+}
+if ($nextKind !== '') {
+    $nextConditions = [$nextKind === 'menunggu_kontak' ? "status_ppdb='menunggu_kontak'" : "status_pembayaran='menunggu_verifikasi'", 'id_pendaftaran<>?'];
+    $nextParameters = [$registrationId];
+    $nextUnit = ppdb_is_super_admin() ? (string) ($returnFilters['unit'] ?? '') : (string) $_SESSION['admin_unit_code'];
+    if ($nextUnit !== '') {
+        $nextConditions[] = 'kode_unit=?';
+        $nextParameters[] = $nextUnit;
+    }
+    if (($returnFilters['year'] ?? '') !== '') {
+        $nextConditions[] = 'th_ajaran=?';
+        $nextParameters[] = (string) $returnFilters['year'];
+    }
+    $nextWhere = implode(' AND ', $nextConditions);
+    $nextStatement = mysqli_prepare($conn, 'SELECT id_pendaftaran,nm_peserta,(SELECT COUNT(*) FROM tb_pendaftaran WHERE '.$nextWhere.') AS sisa FROM tb_pendaftaran WHERE '.$nextWhere.' ORDER BY waktu_daftar DESC, id_pendaftaran DESC LIMIT 1');
+    $nextAll = array_merge($nextParameters, $nextParameters);
+    mysqli_stmt_bind_param($nextStatement, str_repeat('s', count($nextAll)), ...$nextAll);
+    mysqli_stmt_execute($nextStatement);
+    $nextParticipant = mysqli_fetch_assoc(mysqli_stmt_get_result($nextStatement)) ?: null;
+    mysqli_stmt_close($nextStatement);
+    $nextRemaining = (int) ($nextParticipant['sisa'] ?? 0);
+}
+
 $stmt = mysqli_prepare($conn, 'SELECT p.*,u.nama_unit,u.jenjang,d.*,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.bank_nama,c.nomor_rekening,c.nama_pemilik_rekening,c.masa_pembayaran_hari,i.nama_sdm,i.unit_kerja FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_detail_dapodik d ON d.id_pendaftaran=p.id_pendaftaran LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran LEFT JOIN tb_undangan_internal i ON i.id=p.undangan_internal_id WHERE p.id_pendaftaran=? LIMIT 1');
 mysqli_stmt_bind_param($stmt, 's', $registrationId);
 mysqli_stmt_execute($stmt);
@@ -583,11 +624,22 @@ require 'admin_header.php';
         </div>
         <div class="table-actions">
             <a class="button-secondary" href="cetak-bukti?id=<?php echo rawurlencode($registrationId); ?>">Unduh bukti PDF</a>
-            <a class="button-secondary" href="daftar_peserta.php">&larr; Kembali</a>
+            <a class="button-secondary" href="<?php echo h($returnUrl); ?>">&larr; Kembali ke <?php echo h($returnLabel); ?></a>
         </div>
     </div>
     <?php if ($error !== '') { ?><div class="alert-error" role="alert"><?php echo h($error); ?></div><?php } ?>
     <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
+    <?php if ($nextKind !== '') { ?>
+        <div class="next-participant">
+            <?php if ($nextParticipant) { ?>
+                <span>Masih ada <strong><?php echo $nextRemaining; ?></strong> peserta <?php echo $nextKind === 'menunggu_kontak' ? 'menunggu persetujuan' : 'dengan bukti bayar belum diperiksa'; ?>.</span>
+                <a class="next-participant__button" href="detail-peserta.php?id=<?php echo rawurlencode($nextParticipant['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode($returnQuery !== '' ? $returnQuery : '?status='.$nextKind); ?>">Peserta berikutnya: <?php echo h($nextParticipant['nm_peserta']); ?> <span aria-hidden="true">&rarr;</span></a>
+            <?php } else { ?>
+                <span>Semua peserta <?php echo $nextKind === 'menunggu_kontak' ? 'yang menunggu persetujuan' : 'dengan bukti bayar masuk'; ?> sudah ditangani.</span>
+                <a class="button-secondary" href="<?php echo h($returnUrl); ?>">Kembali ke <?php echo h($returnLabel); ?></a>
+            <?php } ?>
+        </div>
+    <?php } ?>
     <?php if ($whatsappDeliveryNotice !== '') { ?><div class="alert-<?php echo h($whatsappDeliveryTone); ?>" role="status"><?php echo h($whatsappDeliveryNotice); ?></div><?php } ?>
 
 <?php $paymentAwaitingReview = $latestPayment && $latestPayment['status_verifikasi'] === 'menunggu_verifikasi' && $participant['status_pembayaran'] === 'menunggu_verifikasi'; ?>
