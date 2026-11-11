@@ -553,15 +553,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'valid
                 $storedLetterPath = prestasi_store_letter($conn, $registrationId, $_FILES['surat_prestasi']);
             }
 
-            ppdb_activate_registration($conn, $registrationId);
+            // Registrasi awal menunggu persetujuan panitia (status menunggu_kontak). Tautan lanjutan
+            // dikirim lewat WhatsApp saat admin menyetujuinya di detail peserta.
             enqueue_google_sheets_registration($conn, $registrationId);
             mysqli_commit($conn);
             unset($_SESSION[$internalSessionKey]);
 
-            // Pendaftar langsung diarahkan; pesan WhatsApp dan spreadsheet menyusul di belakang.
+            // Pendaftar langsung diarahkan; spreadsheet menyusul di belakang.
             header('Location: berhasil?id='.urlencode($registrationId).'&token='.urlencode($receiptToken));
             ppdb_finish_response();
-            ppdb_send_registration_whatsapp($conn, $registrationId);
             sync_google_sheets_registration($conn, $registrationId);
             exit;
         } catch (Throwable $exception) {

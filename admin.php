@@ -27,7 +27,7 @@ while ($row = mysqli_fetch_assoc($funnelQuery)) {
 }
 
 $funnelStages = [
-    ['key' => 'menunggu_kontak', 'label' => 'Belum melanjutkan', 'hint' => 'Baru registrasi awal'],
+    ['key' => 'menunggu_kontak', 'label' => 'Menunggu persetujuan', 'hint' => 'Registrasi awal perlu disetujui'],
     ['key' => 'menunggu_pembayaran', 'label' => 'Menunggu bayar', 'hint' => 'Menunggu bukti transfer'],
     ['key' => 'pembayaran_diperiksa', 'label' => 'Bukti masuk', 'hint' => 'Periksa bukti transfer'],
     ['key' => 'pembayaran_terverifikasi', 'label' => 'Bayar disetujui', 'hint' => 'Menunggu isian lengkap'],

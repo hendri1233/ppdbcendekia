@@ -93,6 +93,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 mysqli_stmt_close($update);
             }
+        } elseif ($action === 'approve_registration') {
+            // Setujui registrasi awal: tahap pembayaran dibuka, lalu tautan lanjutan dikirim lewat WhatsApp.
+            try {
+                mysqli_begin_transaction($conn);
+                $lock = mysqli_prepare($conn, 'SELECT status_ppdb FROM tb_pendaftaran WHERE id_pendaftaran=? FOR UPDATE');
+                mysqli_stmt_bind_param($lock, 's', $registrationId);
+                mysqli_stmt_execute($lock);
+                $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
+                mysqli_stmt_close($lock);
+                if (!$locked || $locked['status_ppdb'] !== 'menunggu_kontak') {
+                    throw new RuntimeException('Registrasi ini sudah disetujui atau tidak lagi menunggu persetujuan.');
+                }
+                ppdb_activate_registration($conn, $registrationId);
+                mysqli_commit($conn);
+                enqueue_google_sheets_registration($conn, $registrationId);
+                $delivery = ppdb_send_registration_whatsapp($conn, $registrationId);
+                if ($delivery['ok']) {
+                    $notice = 'Registrasi disetujui. Tautan lanjutan pendaftaran terkirim ke WhatsApp '.ppdb_display_phone($delivery['phone']).'.';
+                } else {
+                    $notice = 'Registrasi disetujui.';
+                    $whatsappDeliveryNotice = 'WhatsApp otomatis belum terkirim ('.$delivery['error'].'). Kirim tautannya melalui panel "Kirim pesan WhatsApp manual" di bawah.';
+                    $whatsappDeliveryTone = 'warning';
+                }
+            } catch (Throwable $exception) {
+                mysqli_rollback($conn);
+                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Persetujuan belum dapat diproses.';
+            }
         } elseif ($action === 'reject_initial') {
             try {
                 mysqli_begin_transaction($conn);
@@ -151,15 +178,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_bind_param($registrationUpdate, 'ssis', $newPpdbStatus, $newPaymentStatus, $adminId, $registrationId);
                 mysqli_stmt_execute($registrationUpdate);
                 mysqli_stmt_close($registrationUpdate);
+                if ($action === 'reject_payment') {
+                    // Pendaftar perlu waktu mengunggah ulang: batas bayar paling cepat 2 hari dari hari ini.
+                    $extendDeadline = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET tanggal_batas_bayar=GREATEST(COALESCE(tanggal_batas_bayar, CURDATE()), DATE_ADD(CURDATE(), INTERVAL 2 DAY)) WHERE id_pendaftaran=?');
+                    mysqli_stmt_bind_param($extendDeadline, 's', $registrationId);
+                    mysqli_stmt_execute($extendDeadline);
+                    mysqli_stmt_close($extendDeadline);
+                }
                 mysqli_commit($conn);
                 enqueue_google_sheets_registration($conn, $registrationId);
 
                 if ($action === 'approve_payment') {
-                    $notice = 'Pembayaran disetujui.';
+                    // Pembayaran diterima cukup tercatat di panel admin; tidak ada pesan ke pendaftar.
+                    $notice = 'Pembayaran diterima. Tidak ada pesan yang dikirim ke pendaftar.';
                 } else {
-                    $notice = $reviewNote !== ''
-                        ? 'Bukti pembayaran ditolak. Peserta dapat mengunggah ulang: ' . $reviewNote
-                        : 'Bukti pembayaran ditolak. Peserta dapat mengunggah ulang sebelum tenggat.';
+                    $delivery = ppdb_send_payment_rejected_whatsapp($conn, $registrationId, $reviewNote);
+                    $notice = 'Bukti pembayaran ditolak'.($reviewNote !== '' ? ' (alasan: '.$reviewNote.')' : '').'.';
+                    if ($delivery['ok']) {
+                        $notice .= ' Tautan unggah ulang terkirim ke WhatsApp '.ppdb_display_phone($delivery['phone']).'.';
+                    } else {
+                        $whatsappDeliveryNotice = 'WhatsApp otomatis belum terkirim ('.$delivery['error'].'). Kirim tautan unggah ulang melalui panel "Kirim pesan WhatsApp manual" di bawah.';
+                        $whatsappDeliveryTone = 'warning';
+                    }
                 }
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
@@ -365,6 +405,17 @@ $manualRecipients = ppdb_registrant_recipients($participant);
 $manualMessages = [];
 if ($manualRecipients && !empty($participant['token_bukti'])) {
     $manualRegistration = $participant + ['id_pendaftaran' => $registrationId];
+    if ($participant['status_pembayaran'] === 'ditolak') {
+        $rejectedPayment = mysqli_prepare($conn, "SELECT catatan_admin FROM tb_bukti_pembayaran WHERE id_pendaftaran=? AND status_verifikasi='ditolak' ORDER BY id DESC LIMIT 1");
+        mysqli_stmt_bind_param($rejectedPayment, 's', $registrationId);
+        mysqli_stmt_execute($rejectedPayment);
+        $rejectedReason = (string) (mysqli_fetch_assoc(mysqli_stmt_get_result($rejectedPayment))['catatan_admin'] ?? '');
+        mysqli_stmt_close($rejectedPayment);
+        $manualMessages['bayar_ditolak'] = [
+            'label' => 'Bukti pembayaran ditolak · tautan unggah ulang',
+            'text' => ppdb_payment_rejected_whatsapp_message($manualRegistration, $rejectedReason, ppdb_continue_url($manualRegistration)),
+        ];
+    }
     $manualMessages['registrasi'] = [
         'label' => 'Konfirmasi registrasi dan tautan lanjutan',
         'text' => ppdb_registration_whatsapp_message(
@@ -554,40 +605,85 @@ require 'admin_header.php';
         </div>
 
         <?php if ($paymentAwaitingReview) { ?>
-            <div class="payment-review-summary">
-                <span>Bukti transfer diunggah <?php echo h(date('d-m-Y H:i', strtotime($latestPayment['diunggah_pada']))); ?></span>
-                <a class="button-secondary" href="bukti-pembayaran-admin.php?id=<?php echo (int) $latestPayment['id']; ?>" target="_blank" rel="noopener">Lihat bukti transfer &#8599;</a>
-            </div>
-            <div class="workflow-actions payment-actions">
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="payment_id" value="<?php echo (int) $latestPayment['id']; ?>">
-                    <input type="hidden" name="workflow_action" value="approve_payment">
-                    <label for="approve-note">Catatan (opsional)</label>
-                    <input id="approve-note" name="catatan_admin" maxlength="500">
-                    <button class="button-primary" type="submit">Setujui pembayaran</button>
-                </form>
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="payment_id" value="<?php echo (int) $latestPayment['id']; ?>">
-                    <input type="hidden" name="workflow_action" value="reject_payment">
-                    <label for="reject-note">Alasan penolakan</label>
-                    <input id="reject-note" name="catatan_admin" maxlength="500" required>
-                    <button class="button-danger" type="submit">Tolak bukti</button>
-                </form>
+            <div class="payment-review">
+                <div class="payment-review__head">
+                    <span class="payment-review__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M3 6a2 2 0 0 1 2-2h13v3H5v1h15a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Zm14 8a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg></span>
+                    <div>
+                        <strong>Bukti pembayaran perlu diperiksa</strong>
+                        <small>Diunggah <?php echo h(date('d-m-Y H.i', strtotime($latestPayment['diunggah_pada']))); ?><?php echo (float) ($participant['biaya_pendaftaran'] ?? 0) > 0 ? ' · tagihan Rp '.h(number_format((float) $participant['biaya_pendaftaran'], 0, ',', '.')) : ''; ?><?php echo trim((string) $latestPayment['nomor_referensi']) !== '' ? ' · ref. '.h($latestPayment['nomor_referensi']) : ''; ?></small>
+                    </div>
+                    <a class="button-secondary" href="bukti-pembayaran-admin.php?id=<?php echo (int) $latestPayment['id']; ?>" target="_blank" rel="noopener">Buka bukti &#8599;</a>
+                </div>
+                <?php if (str_starts_with((string) $latestPayment['mime_type'], 'image/')) { ?>
+                    <a class="payment-review__preview" href="bukti-pembayaran-admin.php?id=<?php echo (int) $latestPayment['id']; ?>" target="_blank" rel="noopener"><img src="bukti-pembayaran-admin.php?id=<?php echo (int) $latestPayment['id']; ?>" alt="Pratinjau bukti transfer" loading="lazy"></a>
+                <?php } ?>
+                <div class="payment-review__actions">
+                    <form method="post" class="payment-review__accept" data-confirm="Terima bukti pembayaran <?php echo h($participant['nm_peserta']); ?>? Tidak ada pesan yang dikirim ke pendaftar.">
+                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                        <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                        <input type="hidden" name="payment_id" value="<?php echo (int) $latestPayment['id']; ?>">
+                        <input type="hidden" name="workflow_action" value="approve_payment">
+                        <button class="approval-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg><span>Terima pembayaran</span></button>
+                        <p class="approval-card__note">Hanya tercatat di panel admin; pendaftar tidak dikirimi pesan.</p>
+                    </form>
+                    <form method="post" class="payment-review__reject" data-confirm="Tolak bukti pembayaran ini dan kirim tautan unggah ulang ke WhatsApp pendaftar?">
+                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                        <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                        <input type="hidden" name="payment_id" value="<?php echo (int) $latestPayment['id']; ?>">
+                        <input type="hidden" name="workflow_action" value="reject_payment">
+                        <label for="reject-note">Alasan penolakan <span aria-hidden="true">*</span></label>
+                        <input id="reject-note" name="catatan_admin" maxlength="500" required placeholder="Contoh: nominal tidak sesuai, foto buram, bukan bukti transfer">
+                        <button class="reject-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6L19 6.4 17.6 5 12 10.6z"/></svg><span>Tolak &amp; minta unggah ulang</span></button>
+                        <p class="approval-card__note">Pendaftar menerima WhatsApp berisi alasan dan tautan unggah ulang; batas bayar diperpanjang minimal 2 hari.</p>
+                    </form>
+                </div>
             </div>
         <?php } ?>
 
-        <?php if ($participant['status_ppdb'] === 'menunggu_kontak') { ?>
-            <p class="workflow-hint">Pendaftar belum melanjutkan ke tahap pembayaran. Halaman ini akan berubah otomatis saat pendaftar melanjutkan.</p>
-            <div class="contact-strip">
-                <div><span>Pendaftar</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_pendaftar'])); ?></strong></div>
-                <div><span>Ayah</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ayah'])); ?></strong></div>
-                <div><span>Ibu</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ibu'])); ?></strong></div>
+        <?php if ($participant['status_ppdb'] === 'menunggu_kontak') {
+            $approvalPhone = ppdb_normalize_whatsapp_number((string) $participant['no_hp_pendaftar']);
+            ?>
+            <div class="approval-card">
+                <div class="approval-card__head">
+                    <span class="approval-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.9-4.9 1.4 1.4-6.3 6.3Z"/></svg></span>
+                    <div>
+                        <strong>Registrasi awal menunggu persetujuan</strong>
+                        <small>Periksa data di bawah. Setelah disetujui, pendaftar menerima WhatsApp berisi tautan lanjutan pendaftaran dan batas pembayaran mulai dihitung.</small>
+                    </div>
+                </div>
+                <dl class="approval-card__facts">
+                    <div><dt>Nama ananda</dt><dd><?php echo h($participant['nm_peserta']); ?></dd></div>
+                    <div><dt>Tanggal lahir</dt><dd><?php echo h(ppdb_format_date_id($participant['tgl_lahir'])); ?><small><?php echo h($participant['umur_dapodik']); ?></small></dd></div>
+                    <div><dt>Unit pendidikan</dt><dd><?php echo h(ppdb_unit_display_name($participant['nama_unit'] ?? '')); ?><?php echo !empty($participant['tingkat_kelas']) ? ' · '.h($participant['tingkat_kelas']) : ''; ?></dd></div>
+                    <div><dt>Jalur</dt><dd><?php echo $participant['jalur_pendaftaran'] === 'internal' ? 'Internal · SDM' : 'Eksternal · umum'; ?></dd></div>
+                    <div><dt>Didaftarkan oleh</dt><dd><?php echo h(ppdb_pendaftar_label($participant['pendaftar'])); ?></dd></div>
+                    <div><dt>Terdaftar</dt><dd><?php echo h(ppdb_format_date_id($participant['tgl_daftar'])); ?></dd></div>
+                </dl>
+                <div class="contact-strip">
+                    <div><span>Pendaftar</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_pendaftar'])); ?></strong></div>
+                    <div><span>Ayah</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ayah'])); ?></strong></div>
+                    <div><span>Ibu</span><strong><?php echo h(ppdb_display_phone($participant['no_hp_ibu'])); ?></strong></div>
+                </div>
+                <div class="approval-card__actions">
+                    <form method="post" data-confirm="Setujui registrasi <?php echo h($participant['nm_peserta']); ?> dan kirim tautan lanjutan ke WhatsApp <?php echo h(ppdb_display_phone($participant['no_hp_pendaftar'])); ?>?">
+                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
+                        <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
+                        <input type="hidden" name="workflow_action" value="approve_registration">
+                        <button class="approval-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg><span>Setujui registrasi &amp; kirim WhatsApp</span></button>
+                        <?php if (!ppdb_wablas_enabled()) { ?>
+                            <p class="approval-card__note is-warning">Wablas belum aktif. Setelah disetujui, kirim tautannya lewat panel WhatsApp manual.</p>
+                        <?php } elseif ($approvalPhone === '') { ?>
+                            <p class="approval-card__note is-warning">Nomor WhatsApp pendaftar tidak valid; pesan perlu dikirim manual ke nomor ayah atau ibu.</p>
+                        <?php } else { ?>
+                            <p class="approval-card__note">Pesan dikirim ke <?php echo h(ppdb_display_phone($approvalPhone)); ?> (pendaftar).</p>
+                        <?php } ?>
+                    </form>
+                    <details class="approval-reject">
+                        <summary>Tolak pendaftaran</summary>
+                        <?php ppdb_detail_reject_form($registrationId); ?>
+                    </details>
+                </div>
             </div>
-            <?php ppdb_detail_reject_form($registrationId); ?>
         <?php } elseif ($participant['status_ppdb'] === 'pembayaran_diperiksa') { ?>
             <p class="workflow-hint">Bukti transfer sudah masuk. Pendaftar dapat terus mengisi formulir sambil bukti ini diperiksa.</p>
             <?php ppdb_detail_reject_form($registrationId); ?>
@@ -679,7 +775,7 @@ require 'admin_header.php';
         <?php } ?>
     </section>
 
-    <?php if ($manualMessages) { ?>
+    <?php if ($manualMessages && $participant['status_ppdb'] !== 'menunggu_kontak') { ?>
         <details class="detail-panel wide manual-wa" data-manual-wa>
             <summary>
                 <span class="manual-wa__icon" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm5.92 15.5c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg></span>

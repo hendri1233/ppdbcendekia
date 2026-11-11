@@ -607,11 +607,11 @@ function ppdb_status_catalog(): array
 {
     return [
         'menunggu_kontak' => [
-            'label' => 'Belum melanjutkan pendaftaran',
-            'short' => 'Belum lanjut',
+            'label' => 'Menunggu persetujuan panitia',
+            'short' => 'Menunggu persetujuan',
             'step' => 1,
             'tone' => 'neutral',
-            'public' => 'Data awal diterima. Silakan lanjutkan ke tahap berikutnya.',
+            'public' => 'Registrasi awal diterima dan sedang diverifikasi panitia. Tautan lanjutan pendaftaran dikirim melalui WhatsApp setelah disetujui.',
         ],
         'menunggu_pembayaran' => [
             'label' => 'Menunggu bukti pembayaran',

@@ -20,11 +20,8 @@ if ($tokenIsValid) {
 
 if (!$registration) {
     http_response_code(404);
-} elseif ($registration['status_ppdb'] === 'menunggu_kontak' && ppdb_activate_registration($conn, $registration['id_pendaftaran'])) {
-    // Pendaftar lama yang belum dikirimi tautan langsung masuk ke tahap berikutnya.
-    header('Location: status-pendaftaran?'.http_build_query(['id' => $registration['id_pendaftaran'], 'token' => $receiptToken]));
-    exit;
 }
+// Registrasi awal yang belum disetujui panitia (menunggu_kontak) tetap menunggu di halaman ini.
 
 $statusInfo = $registration ? ppdb_status_info($registration['status_ppdb']) : null;
 $currentStep = $statusInfo['step'] ?? 0;
@@ -187,7 +184,9 @@ header('Referrer-Policy: no-referrer');
 
             <?php
             $panel = '';
-            if ($registration['status_ppdb'] === 'menunggu_pembayaran'
+            if ($registration['status_ppdb'] === 'menunggu_kontak') {
+                $panel = 'persetujuan';
+            } elseif ($registration['status_ppdb'] === 'menunggu_pembayaran'
                 || ($registration['status_pembayaran'] === 'ditolak' && in_array($registration['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true))) {
                 $panel = 'bayar';
             } elseif (!empty($registration['revisi_dibuka']) || in_array($registration['status_ppdb'], ['pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true)) {
@@ -199,7 +198,16 @@ header('Referrer-Policy: no-referrer');
             }
             ?>
 
-            <?php if ($panel === 'bayar') { ?>
+            <?php if ($panel === 'persetujuan') { ?>
+                <div class="approval-wait" role="status">
+                    <span class="approval-wait__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm.5-13H11v6l5.2 3.1.8-1.2-4.5-2.7V7Z"/></svg></span>
+                    <div>
+                        <strong>Registrasi awal sedang diverifikasi panitia</strong>
+                        <p>Setelah disetujui, tautan untuk melanjutkan pendaftaran (pembayaran dan formulir lengkap) dikirim ke WhatsApp <strong><?php echo h(ppdb_display_phone((string) $registration['no_hp_pendaftar'])); ?></strong>. Mohon pastikan nomor tersebut aktif.</p>
+                        <p class="approval-wait__note">Simpan kode <strong><?php echo h($registration['id_pendaftaran']); ?></strong>. Halaman ini juga dapat dibuka kembali melalui menu Lanjutkan pendaftaran.</p>
+                    </div>
+                </div>
+            <?php } elseif ($panel === 'bayar') { ?>
                 <?php if ($registration['status_pembayaran'] === 'ditolak') { ?>
                     <div class="payment-error" role="alert">Bukti pembayaran sebelumnya belum disetujui. <?php echo h($registration['catatan_bukti']); ?> Isian formulir Anda tetap tersimpan.</div>
                 <?php } ?>

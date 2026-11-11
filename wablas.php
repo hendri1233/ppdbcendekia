@@ -124,12 +124,16 @@ function ppdb_registration_whatsapp_message(array $registration, string $continu
 }
 
 /**
- * Masukkan konfirmasi kursi ke antrean WhatsApp berjeda (wa_queue.php); pesan tidak
- * dikirim langsung agar nomor Wablas tidak diblokir saat pendaftar ramai.
+ * Kirim konfirmasi kursi beserta tautan lanjutan ke nomor pendaftar. Dipanggil saat
+ * admin menyetujui registrasi awal di detail peserta.
+ *
+ * @return array{ok: bool, error: string, phone: string}
  */
-function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId): bool
+function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId): array
 {
-    require_once __DIR__.'/wa_queue.php';
+    if (!ppdb_wablas_enabled()) {
+        return ['ok' => false, 'error' => 'Wablas belum diatur.', 'phone' => ''];
+    }
     try {
         $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.kode_unit,p.nm_peserta,p.th_ajaran,p.no_hp_pendaftar,p.tanggal_batas_bayar,p.token_bukti,u.nama_unit,q.biaya_pendaftaran FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? LIMIT 1');
         mysqli_stmt_bind_param($stmt, 's', $registrationId);
@@ -138,17 +142,87 @@ function ppdb_send_registration_whatsapp(mysqli $conn, string $registrationId): 
         mysqli_stmt_close($stmt);
         $phone = ppdb_normalize_whatsapp_number((string) ($registration['no_hp_pendaftar'] ?? ''));
         if ($phone === '') {
-            return false;
+            return ['ok' => false, 'error' => 'Nomor WhatsApp pendaftar tidak valid.', 'phone' => ''];
         }
         ppdb_resume_token($conn, $registrationId);
         $formWindow = ppdb_form_window($conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']);
-        $queued = wa_queue_add($conn, $phone, ppdb_registration_whatsapp_message($registration, ppdb_continue_url($registration), $formWindow), 'registrasi', $registrationId);
-        if (!$queued) {
-            error_log('Konfirmasi WhatsApp '.$registrationId.' belum masuk antrean (migrasi 038 belum dijalankan?).');
+        $delivery = ppdb_wablas_send($phone, ppdb_registration_whatsapp_message($registration, ppdb_continue_url($registration), $formWindow));
+        if (!$delivery['ok']) {
+            error_log('Konfirmasi WhatsApp '.$registrationId.' gagal: '.$delivery['error']);
         }
-        return $queued;
+        return $delivery + ['phone' => $phone];
     } catch (Throwable $exception) {
         error_log('Konfirmasi WhatsApp '.$registrationId.' gagal: '.$exception->getMessage());
-        return false;
+        return ['ok' => false, 'error' => 'Pesan belum dapat dikirim.', 'phone' => ''];
+    }
+}
+
+/** Pesan untuk pendaftar yang bukti pembayarannya ditolak: alasan dan tautan unggah ulang. */
+function ppdb_payment_rejected_whatsapp_message(array $registration, string $reason, string $continueUrl): string
+{
+    $lines = [
+        'Assalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Yth. Ayah/Bunda dari Ananda *'.$registration['nm_peserta'].'*,',
+        '',
+        'Mohon maaf, bukti pembayaran pendaftaran Ananda di *'.$registration['nama_unit'].'* (kode *'.$registration['id_pendaftaran'].'*) *belum dapat kami terima*.',
+    ];
+    if (trim($reason) !== '') {
+        $lines[] = 'Alasan: '.trim($reason);
+    }
+    array_push($lines, '', 'Mohon unggah ulang bukti pembayaran yang benar melalui tautan berikut:', $continueUrl);
+    if (!empty($registration['tanggal_batas_bayar'])) {
+        $lines[] = 'Batas unggah ulang: '.ppdb_format_date_id($registration['tanggal_batas_bayar']);
+    }
+    array_push(
+        $lines,
+        '',
+        'Isian formulir yang sudah tersimpan tidak hilang.',
+        '',
+        'Terima kasih atas perhatian Ayah/Bunda.',
+        'Wassalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Admin SPMB Yayasan Wakaf Cendekia Takengon',
+        'WhatsApp: '.ppdb_admin_whatsapp_display()
+    );
+    return implode("\n", $lines);
+}
+
+/** Data pendaftar untuk pesan penolakan bukti pembayaran. */
+function ppdb_payment_rejected_registration(mysqli $conn, string $registrationId): ?array
+{
+    $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.no_hp_pendaftar,p.tanggal_batas_bayar,p.token_bukti,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 's', $registrationId);
+    mysqli_stmt_execute($stmt);
+    $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
+    mysqli_stmt_close($stmt);
+    return $registration;
+}
+
+/**
+ * Kirim pemberitahuan bukti pembayaran ditolak beserta tautan unggah ulang.
+ *
+ * @return array{ok: bool, error: string, phone: string}
+ */
+function ppdb_send_payment_rejected_whatsapp(mysqli $conn, string $registrationId, string $reason): array
+{
+    if (!ppdb_wablas_enabled()) {
+        return ['ok' => false, 'error' => 'Wablas belum diatur.', 'phone' => ''];
+    }
+    try {
+        $registration = ppdb_payment_rejected_registration($conn, $registrationId);
+        $phone = ppdb_normalize_whatsapp_number((string) ($registration['no_hp_pendaftar'] ?? ''));
+        if (!$registration || $phone === '') {
+            return ['ok' => false, 'error' => 'Nomor WhatsApp pendaftar tidak valid.', 'phone' => ''];
+        }
+        ppdb_resume_token($conn, $registrationId);
+        $delivery = ppdb_wablas_send($phone, ppdb_payment_rejected_whatsapp_message($registration, $reason, ppdb_continue_url($registration)));
+        if (!$delivery['ok']) {
+            error_log('Pemberitahuan bukti ditolak '.$registrationId.' gagal: '.$delivery['error']);
+        }
+        return $delivery + ['phone' => $phone];
+    } catch (Throwable $exception) {
+        error_log('Pemberitahuan bukti ditolak '.$registrationId.' gagal: '.$exception->getMessage());
+        return ['ok' => false, 'error' => 'Pesan belum dapat dikirim.', 'phone' => ''];
     }
 }

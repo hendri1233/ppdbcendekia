@@ -2587,83 +2587,6 @@ html:root[data-theme="dark"] .combined-quota {
     background: #f0fdf4;
 }
 
-/* ---------- Antrean WhatsApp ---------- */
-
-.wa-queue-summary {
-    display: grid;
-    gap: 16px;
-    padding: 18px;
-}
-
-.wa-queue-state {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 12px;
-}
-
-.wa-queue-state.tone-warn {
-    background: #fffbeb;
-    border-color: #fde68a;
-}
-
-.wa-queue-state > div {
-    display: grid;
-    flex: 1;
-    gap: 2px;
-}
-
-.wa-queue-state small {
-    color: var(--muted, #5b6862);
-}
-
-.wa-queue-state__dot {
-    width: 10px;
-    height: 10px;
-    flex: none;
-    background: #16a34a;
-    border-radius: 50%;
-    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18);
-}
-
-.wa-queue-state.tone-warn .wa-queue-state__dot {
-    background: #d97706;
-    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.18);
-}
-
-.wa-queue-counts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-    margin: 0;
-}
-
-.wa-queue-counts div {
-    padding: 12px 14px;
-    background: rgba(20, 86, 63, 0.05);
-    border-radius: 10px;
-}
-
-.wa-queue-counts dt {
-    color: var(--muted, #5b6862);
-    font-size: 0.8rem;
-}
-
-.wa-queue-counts dd {
-    margin: 2px 0 0;
-    font-size: 1.35rem;
-    font-weight: 700;
-}
-
-@media (max-width: 560px) {
-    .wa-queue-state {
-        flex-wrap: wrap;
-    }
-}
-
 /* ---------- Daftar peserta: kolom Kode, Antrean, dan Nama tetap saat tabel digeser ---------- */
 
 @media (min-width: 621px) {
@@ -3350,4 +3273,390 @@ html:root[data-theme="dark"] .combined-quota {
     .pv-loading span {
         animation: none;
     }
+}
+
+/* ---------- Detail peserta: persetujuan registrasi awal ---------- */
+
+.approval-card {
+    display: grid;
+    gap: 16px;
+    margin-top: 6px;
+    padding: 18px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand-50) 55%, var(--admin-white)), var(--admin-white));
+    border: 1px solid color-mix(in srgb, var(--brand-600) 25%, var(--admin-line));
+    border-radius: 16px;
+}
+
+.approval-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.approval-card__head > div {
+    display: grid;
+    gap: 3px;
+}
+
+.approval-card__head strong {
+    font-size: 1.02rem;
+}
+
+.approval-card__head small {
+    color: var(--admin-muted);
+    line-height: 1.5;
+}
+
+.approval-card__icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    flex: none;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(150deg, var(--brand-600), var(--brand-700));
+    border-radius: 12px;
+    box-shadow: 0 10px 20px -12px var(--brand-700);
+}
+
+.approval-card__icon svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.approval-card__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.approval-card__facts div {
+    padding: 10px 12px;
+    background: var(--admin-white);
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+}
+
+.approval-card__facts dt {
+    color: var(--admin-muted);
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+
+.approval-card__facts dd {
+    display: grid;
+    margin: 2px 0 0;
+    font-weight: 700;
+}
+
+.approval-card__facts dd small {
+    color: var(--admin-muted);
+    font-size: 0.76rem;
+    font-weight: 500;
+}
+
+.approval-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--admin-line);
+}
+
+.approval-card__actions > form {
+    display: grid;
+    gap: 6px;
+}
+
+.approval-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px 22px;
+    color: #fff;
+    background: linear-gradient(180deg, #16a34a, #15803d);
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 12px 24px -14px rgba(21, 128, 61, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.approval-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 28px -14px rgba(21, 128, 61, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.approval-button:focus-visible {
+    outline: 3px solid color-mix(in srgb, #16a34a 45%, transparent);
+    outline-offset: 2px;
+}
+
+.approval-button svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.approval-card__note {
+    margin: 0;
+    color: var(--admin-muted);
+    font-size: 0.82rem;
+}
+
+.approval-card__note.is-warning {
+    color: #b45309;
+}
+
+.approval-reject > summary {
+    padding: 10px 14px;
+    color: #b42318;
+    border: 1px solid #fecdca;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+}
+
+.approval-reject > summary::-webkit-details-marker {
+    display: none;
+}
+
+.approval-reject[open] > summary {
+    margin-bottom: 8px;
+    background: #fef3f2;
+}
+
+@media (max-width: 620px) {
+    .approval-card__actions,
+    .approval-card__actions > form,
+    .approval-button {
+        width: 100%;
+    }
+
+    .approval-button {
+        justify-content: center;
+    }
+}
+
+/* ---------- Detail peserta: pemeriksaan bukti pembayaran ---------- */
+
+.payment-review {
+    display: grid;
+    gap: 14px;
+    margin-top: 6px;
+    padding: 18px;
+    background: var(--admin-white);
+    border: 1px solid color-mix(in srgb, #d97706 30%, var(--admin-line));
+    border-radius: 16px;
+}
+
+.payment-review__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.payment-review__head > div {
+    display: grid;
+    flex: 1;
+    gap: 2px;
+}
+
+.payment-review__head small {
+    color: var(--admin-muted);
+}
+
+.payment-review__icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    flex: none;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(150deg, #f59e0b, #d97706);
+    border-radius: 12px;
+}
+
+.payment-review__icon svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.payment-review__preview {
+    display: block;
+    max-height: 320px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--paper, #f6f8f7) 80%, var(--admin-white));
+    border: 1px solid var(--admin-line);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.payment-review__preview img {
+    max-width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+}
+
+.payment-review__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--admin-line);
+}
+
+.payment-review__actions form {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    padding: 14px;
+    border-radius: 12px;
+}
+
+.payment-review__accept {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+
+.payment-review__reject {
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+}
+
+.payment-review__reject label {
+    color: #912018;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.payment-review__reject input {
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--admin-white);
+    border: 1px solid #fda29b;
+    border-radius: 10px;
+    font: inherit;
+}
+
+.payment-review .approval-button,
+.reject-button {
+    justify-content: center;
+    width: 100%;
+}
+
+.reject-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+    padding: 11px 18px;
+    color: #fff;
+    background: linear-gradient(180deg, #ef4444, #dc2626);
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 12px 24px -14px rgba(220, 38, 38, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.reject-button:hover {
+    background: linear-gradient(180deg, #dc2626, #b91c1c);
+}
+
+.reject-button svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+@media (max-width: 720px) {
+    .payment-review__actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .payment-review__head {
+        flex-wrap: wrap;
+    }
+}
+
+/* ---------- Daftar peserta: pintasan perlu tindakan ---------- */
+
+.action-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--admin-line);
+}
+
+.action-shortcuts__label {
+    margin-right: 4px;
+    color: var(--admin-muted);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.action-shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px 6px 14px;
+    color: inherit;
+    background: var(--admin-white);
+    border: 1px solid var(--admin-line);
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.action-shortcut strong {
+    min-width: 26px;
+    padding: 2px 8px;
+    color: var(--admin-muted);
+    background: color-mix(in srgb, var(--admin-line) 60%, var(--admin-white));
+    border-radius: 999px;
+    text-align: center;
+}
+
+.action-shortcut.has-items {
+    border-color: #fcd34d;
+    background: #fffbeb;
+}
+
+.action-shortcut.has-items strong {
+    color: #fff;
+    background: #d97706;
+}
+
+.action-shortcut:hover {
+    border-color: var(--brand-600);
+}
+
+.action-shortcut.is-active {
+    color: #fff;
+    background: var(--brand-600);
+    border-color: var(--brand-600);
+}
+
+.action-shortcut.is-active strong {
+    color: var(--brand-700);
+    background: #fff;
 }

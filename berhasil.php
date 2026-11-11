@@ -68,8 +68,11 @@ header('Referrer-Policy: no-referrer');
 
             <div class="seat-notice" role="status">
                 <strong>Alhamdulillah, Ananda sudah melakukan registrasi awal</strong>
-                <p>Selanjutnya ikuti petunjuk di bawah ini.</p>
-                <?php if (ppdb_wablas_enabled() && ppdb_normalize_whatsapp_number((string) $registration['no_hp_pendaftar']) !== '') { ?><p>Konfirmasi dan tautan lanjutan juga kami kirim ke WhatsApp <?php echo h(ppdb_display_phone($registration['no_hp_pendaftar'])); ?>.</p><?php } ?>
+                <?php if ($registration['status_ppdb'] === 'menunggu_kontak') { ?>
+                    <p>Registrasi awal sedang <strong>diverifikasi panitia</strong>. Setelah disetujui, tautan untuk melanjutkan pendaftaran dikirim ke WhatsApp <strong><?php echo h(ppdb_display_phone($registration['no_hp_pendaftar'])); ?></strong>.</p>
+                <?php } else { ?>
+                    <p>Selanjutnya ikuti petunjuk di bawah ini.</p>
+                <?php } ?>
             </div>
 
             <div class="registration-code" role="group" aria-label="Kode pendaftaran">
@@ -79,13 +82,18 @@ header('Referrer-Policy: no-referrer');
             </div>
             <p class="code-hint">Simpan kode ini. Kode, tanggal lahir ananda, dan nomor WhatsApp diperlukan untuk kembali ke pendaftaran dan melihat hasilnya.</p>
 
-            <a class="download-button" href="formulir?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>
+            <?php if ($registration['status_ppdb'] === 'menunggu_kontak') { ?>
+                <a class="download-button" href="status-pendaftaran?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lihat status pendaftaran <span aria-hidden="true">&rarr;</span></a>
+            <?php } else { ?>
+                <a class="download-button" href="formulir?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Lanjutkan pendaftaran <span aria-hidden="true">&rarr;</span></a>
+            <?php } ?>
 
             <h2 class="acceptance-heading">Tahap berikutnya</h2>
             <ol class="next-steps" aria-label="Langkah berikutnya">
-                <li><span aria-hidden="true">1</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
-                <li><span aria-hidden="true">2</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.<?php if ($formWindow['batas']) { ?> Paling lambat <?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?>; lewat dari batas ini Ananda dinyatakan gugur.<?php } ?></small></div></li>
-                <li><span aria-hidden="true">3</span><div><strong>Pendaftaran Selesai</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan diterima langsung tampil.</small></div></li>
+                <li><span aria-hidden="true">1</span><div><strong>Tunggu persetujuan panitia</strong><small>Tautan lanjutan pendaftaran dikirim melalui WhatsApp setelah registrasi awal disetujui.</small></div></li>
+                <li><span aria-hidden="true">2</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
+                <li><span aria-hidden="true">3</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.<?php if ($formWindow['batas']) { ?> Paling lambat <?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?>; lewat dari batas ini Ananda dinyatakan gugur.<?php } ?></small></div></li>
+                <li><span aria-hidden="true">4</span><div><strong>Pendaftaran Selesai</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan diterima langsung tampil.</small></div></li>
             </ol>
 
             <h2 class="acceptance-heading">Data pendaftaran</h2>

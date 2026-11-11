@@ -7,7 +7,6 @@
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'wablas.php';
-require_once 'wa_queue.php';
 require_once 'google_sheets_sync.php';
 require_admin();
 
@@ -90,17 +89,13 @@ try {
 
 $student = $registration['nm_peserta'];
 $statusLabel = $registration['status_ppdb'] === 'diterima' ? 'Diterima · revisi dibuka' : 'Menunggu formulir';
-// Pesan revisi masuk antrean berjeda; tombol manual tetap tersedia.
-$queuedTo = [];
+// Tombol WhatsApp manual selalu disertakan, juga saat Wablas melaporkan terkirim.
 if (ppdb_wablas_enabled()) {
-    foreach ($shareLinks['links'] as $link) {
-        if (wa_queue_add($conn, $link['phone'], $shareLinks['message'], 'revisi', $registrationId)) {
-            $queuedTo[] = $link['display'];
-        }
-    }
-}
-if ($queuedTo) {
-    $notice = ['ok' => true, 'sent' => false, 'queued' => true, 'text' => 'Formulir '.$student.' sudah dibuka. Tautan revisi masuk antrean WhatsApp ke '.implode(', ', $queuedTo).' dan dikirim bertahap. Bila perlu segera, kirim manual:', 'links' => $shareLinks['links']];
+    $shareLinks = ppdb_wablas_send_links($shareLinks);
+    $sent = array_values(array_filter($shareLinks['links'], static fn ($link) => !empty($link['sent'])));
+    $notice = $sent
+        ? ['ok' => true, 'sent' => true, 'text' => 'Tautan revisi '.$student.' terkirim ke '.implode(', ', array_column($sent, 'display')).'. Bila belum diterima, kirim manual:', 'links' => $shareLinks['links']]
+        : ['ok' => false, 'sent' => false, 'text' => 'Formulir '.$student.' sudah dibuka, tetapi WhatsApp gagal terkirim: '.($shareLinks['links'][0]['send_error'] ?? 'tidak diketahui').'. Kirim manual:', 'links' => $shareLinks['links']];
 } else {
     $notice = ['ok' => true, 'sent' => false, 'text' => 'Formulir '.$student.' sudah dibuka. Kirim tautannya lewat WhatsApp:', 'links' => $shareLinks['links']];
 }

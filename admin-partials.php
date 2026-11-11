@@ -51,7 +51,6 @@ function ppdb_admin_navigation(string $activePage): array
         ['key' => 'materials', 'href' => 'ppdb-materi.php', 'label' => 'Materi &amp; kuisioner', 'icon' => 'file', 'group' => 'Pengaturan'],
         ['key' => 'form-fields', 'href' => 'pengaturan-formulir.php', 'label' => 'Isian formulir', 'icon' => 'page', 'group' => 'Pengaturan'],
         ['key' => 'groups', 'href' => 'grup-whatsapp.php', 'label' => 'Grup WhatsApp', 'icon' => 'group', 'group' => 'Pengaturan'],
-        ['key' => 'wa-queue', 'href' => 'wa-antrean.php', 'label' => 'Antrean WhatsApp', 'icon' => 'group', 'group' => 'Pengaturan'],
         ['key' => 'file-checklist', 'href' => 'checklist-berkas-admin.php', 'label' => 'Berkas dari unit', 'icon' => 'file', 'group' => 'Pengaturan'],
         ['key' => 'accounts', 'href' => 'register.php', 'label' => 'Administrator', 'icon' => 'users', 'group' => 'Pengaturan'],
         ['key' => 'cms-home', 'href' => 'cms-beranda.php', 'label' => 'Beranda &amp; slider', 'icon' => 'image', 'group' => 'Situs web'],
@@ -78,7 +77,7 @@ function ppdb_admin_navigation(string $activePage): array
 function ppdb_admin_status_meta(?string $status): array
 {
     $map = [
-        'menunggu_kontak' => ['label' => 'Belum melanjutkan', 'tone' => 'slate', 'icon' => 'clock'],
+        'menunggu_kontak' => ['label' => 'Menunggu persetujuan', 'tone' => 'amber', 'icon' => 'clock'],
         'menunggu_pembayaran' => ['label' => 'Menunggu bayar', 'tone' => 'amber', 'icon' => 'wallet'],
         'pembayaran_diperiksa' => ['label' => 'Cek bayar', 'tone' => 'amber', 'icon' => 'clock'],
         'pembayaran_terverifikasi' => ['label' => 'Bayar sah', 'tone' => 'teal', 'icon' => 'check'],

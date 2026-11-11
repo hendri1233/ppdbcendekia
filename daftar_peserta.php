@@ -20,12 +20,13 @@ if (!in_array($selectedTrack, array_merge(['', 'internal', 'eksternal'], $hasSel
     $selectedTrack = '';
 }
 $onlyDuplicates = ($_GET['ganda'] ?? '') === '1';
+$sortOrder = ($_GET['urut'] ?? '') === 'antrean' ? 'antrean' : 'terbaru';
 // Data ganda: pendaftaran lain pada tahun ajaran yang sama dengan nama dan tanggal lahir ananda
 // yang sama, atau NIK ananda yang sama. Arsip lama tidak dihitung.
 $duplicateSql = "(EXISTS (SELECT 1 FROM tb_pendaftaran d WHERE d.id_pendaftaran<>p.id_pendaftaran AND d.th_ajaran=p.th_ajaran AND d.status_ppdb<>'data_lama' AND d.tgl_lahir=p.tgl_lahir AND UPPER(TRIM(d.nm_peserta))=UPPER(TRIM(p.nm_peserta))) OR EXISTS (SELECT 1 FROM tb_detail_dapodik a JOIN tb_detail_dapodik b ON b.nik=a.nik AND b.id_pendaftaran<>a.id_pendaftaran JOIN tb_pendaftaran d ON d.id_pendaftaran=b.id_pendaftaran WHERE a.id_pendaftaran=p.id_pendaftaran AND a.nik<>'' AND d.th_ajaran=p.th_ajaran AND d.status_ppdb<>'data_lama'))";
 
 $statusOptions = [
-    'menunggu_kontak' => 'Belum melanjutkan',
+    'menunggu_kontak' => 'Menunggu persetujuan',
     'menunggu_pembayaran' => 'Menunggu bayar',
     'pembayaran_diperiksa' => 'Bukti bayar masuk',
     'pembayaran_terverifikasi' => 'Bayar disetujui',
@@ -99,10 +100,13 @@ $offset = ($currentPage - 1) * $perPage;
 
 $query = 'SELECT p.id_pendaftaran,p.NISN,p.nm_peserta,p.th_ajaran,p.tgl_daftar,p.waktu_daftar,p.nomor_antrian,p.jalur_pendaftaran,p.status_ppdb,p.status_pembayaran,p.status_data,p.alamat,p.data_diperiksa_pada,p.pendaftar,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.tgl_lahir,p.token_bukti,p.revisi_dibuka,'.$duplicateSql.' AS data_ganda,'.(ppdb_column_exists($conn, 'tb_pendaftaran', 'tingkat_kelas') ? 'p.tingkat_kelas,' : '').'u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON p.kode_unit=u.kode_unit'
     .$whereSql
-    // Urut nomor antrean dari #1 per tahun ajaran dan unit; peserta tanpa nomor antrean di bawah.
+    // Bawaan: pendaftar terbaru di atas agar tautan cepat dikirim. Pilihan antrean: #1 per tahun ajaran dan unit.
     // Pada filter data ganda, pendaftaran yang sama dikelompokkan berdampingan.
-    .($onlyDuplicates ? ' ORDER BY p.th_ajaran DESC, UPPER(TRIM(p.nm_peserta)), p.tgl_lahir, p.waktu_daftar ASC, p.id_pendaftaran ASC' : '')
-    .($onlyDuplicates ? '' : " ORDER BY p.th_ajaran DESC, FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'), p.kode_unit, p.nomor_antrian IS NULL, p.nomor_antrian ASC, p.waktu_daftar ASC, p.id_pendaftaran ASC")
+    .($onlyDuplicates
+        ? ' ORDER BY p.th_ajaran DESC, UPPER(TRIM(p.nm_peserta)), p.tgl_lahir, p.waktu_daftar ASC, p.id_pendaftaran ASC'
+        : ($sortOrder === 'antrean'
+            ? " ORDER BY p.th_ajaran DESC, FIELD(u.jenjang,'KB','TPA','TK','SD','SMP'), p.kode_unit, p.nomor_antrian IS NULL, p.nomor_antrian ASC, p.waktu_daftar ASC, p.id_pendaftaran ASC"
+            : ' ORDER BY p.waktu_daftar DESC, p.id_pendaftaran DESC'))
     .' LIMIT '.$perPage.' OFFSET '.$offset;
 
 $registrationsStatement = mysqli_prepare($conn, $query);
@@ -139,7 +143,30 @@ function with_query(array $overrides): string
     return '?' . http_build_query($query);
 }
 
-$hasFilter = $search !== '' || $selectedYear !== '' || $selectedUnit !== '' || $selectedStatus !== '' || $selectedTrack !== '' || $onlyDuplicates;
+$hasFilter = $search !== '' || $selectedYear !== '' || $selectedUnit !== '' || $selectedStatus !== '' || $selectedTrack !== '' || $onlyDuplicates || $sortOrder !== 'terbaru';
+
+// Jumlah pendaftar yang menunggu tindakan admin, mengikuti filter unit dan tahun ajaran.
+$actionCounts = ['menunggu_kontak' => 0, 'pembayaran_diperiksa' => 0];
+$countConditions = [];
+$countParameters = [];
+if ($selectedUnit !== '') {
+    $countConditions[] = 'kode_unit = ?';
+    $countParameters[] = $selectedUnit;
+}
+if ($selectedYear !== '') {
+    $countConditions[] = 'th_ajaran = ?';
+    $countParameters[] = $selectedYear;
+}
+$countStatement = mysqli_prepare($conn, "SELECT SUM(status_ppdb='menunggu_kontak') AS menunggu_kontak, SUM(status_pembayaran='menunggu_verifikasi') AS pembayaran_diperiksa FROM tb_pendaftaran".($countConditions ? ' WHERE '.implode(' AND ', $countConditions) : ''));
+if ($countParameters) {
+    mysqli_stmt_bind_param($countStatement, str_repeat('s', count($countParameters)), ...$countParameters);
+}
+mysqli_stmt_execute($countStatement);
+$countRow = mysqli_fetch_assoc(mysqli_stmt_get_result($countStatement)) ?: [];
+mysqli_stmt_close($countStatement);
+foreach ($actionCounts as $key => $_count) {
+    $actionCounts[$key] = (int) ($countRow[$key] ?? 0);
+}
 $progressStages = ['Registrasi', 'Pembayaran', 'Formulir', 'Verifikasi', 'Hasil'];
 
 $activeAdminPage = 'registrations';
@@ -229,11 +256,30 @@ require 'admin_header.php';
                     <option value="1"<?php echo $onlyDuplicates ? ' selected' : ''; ?>>Hanya data ganda</option>
                 </select>
             </div>
+            <div class="filter-field">
+                <label for="urut">Urutkan</label>
+                <select id="urut" name="urut">
+                    <option value="">Terbaru mendaftar</option>
+                    <option value="antrean"<?php echo $sortOrder === 'antrean' ? ' selected' : ''; ?>>Nomor antrean</option>
+                </select>
+            </div>
             <div class="filter-actions">
                 <button class="button-primary" type="submit">Terapkan</button>
                 <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset</a><?php } ?>
             </div>
         </form>
+
+        <?php if ($actionCounts['menunggu_kontak'] > 0 || $actionCounts['pembayaran_diperiksa'] > 0 || in_array($selectedStatus, ['menunggu_kontak', 'pembayaran_diperiksa'], true)) { ?>
+            <nav class="action-shortcuts" aria-label="Perlu tindakan">
+                <span class="action-shortcuts__label">Perlu tindakan</span>
+                <?php foreach (['menunggu_kontak' => 'Menunggu persetujuan', 'pembayaran_diperiksa' => 'Bukti bayar masuk'] as $statusKey => $statusText) {
+                    $active = $selectedStatus === $statusKey; ?>
+                    <a class="action-shortcut<?php echo $active ? ' is-active' : ''; ?><?php echo $actionCounts[$statusKey] > 0 ? ' has-items' : ''; ?>" href="<?php echo h(with_query(['status' => $active ? null : $statusKey, 'page' => null])); ?>"<?php echo $active ? ' aria-current="true"' : ''; ?>>
+                        <?php echo h($statusText); ?><strong><?php echo (int) $actionCounts[$statusKey]; ?></strong>
+                    </a>
+                <?php } ?>
+            </nav>
+        <?php } ?>
 
         <div class="table-meta">
             <span>Menampilkan <strong><?php echo $totalRows > 0 ? $offset + 1 : 0; ?>&ndash;<?php echo min($offset + $perPage, $totalRows); ?></strong> dari <strong><?php echo $totalRows; ?></strong> peserta</span>
