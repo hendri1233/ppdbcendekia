@@ -226,3 +226,84 @@ function ppdb_send_payment_rejected_whatsapp(mysqli $conn, string $registrationI
         return ['ok' => false, 'error' => 'Pesan belum dapat dikirim.', 'phone' => ''];
     }
 }
+
+/**
+ * Tahap yang dapat diingatkan kepada orang tua:
+ * 'bayar' (belum bayar / bukti ditolak), 'formulir' (formulir lengkap belum dikirim), atau '' bila tidak ada.
+ */
+function ppdb_reminder_stage(array $registration): string
+{
+    $status = (string) ($registration['status_ppdb'] ?? '');
+    $payment = (string) ($registration['status_pembayaran'] ?? '');
+    if ($status === 'menunggu_pembayaran' && !in_array($payment, ['menunggu_verifikasi', 'terverifikasi'], true)) {
+        return 'bayar';
+    }
+    if (in_array($status, ['menunggu_pembayaran', 'pembayaran_diperiksa', 'pembayaran_terverifikasi', 'menunggu_formulir'], true)) {
+        return 'formulir';
+    }
+    return '';
+}
+
+/** Alasan singkat bila peserta tidak perlu (atau belum dapat) diingatkan. */
+function ppdb_reminder_unavailable_note(array $registration): string
+{
+    return match ((string) ($registration['status_ppdb'] ?? '')) {
+        'menunggu_kontak' => 'Registrasi awal belum disetujui. Setujui dulu di halaman detail; tautan lanjutan terkirim otomatis.',
+        'formulir_terisi' => 'Formulir lengkap sudah dikirim dan sedang diperiksa panitia.',
+        'diterima' => 'Peserta sudah diterima.',
+        'daftar_tunggu' => 'Peserta berada di daftar tunggu kuota.',
+        'ditolak' => 'Pendaftaran memerlukan tindak lanjut panitia.',
+        default => 'Tidak ada tahap yang perlu dilanjutkan orang tua.',
+    };
+}
+
+/** Pesan pengingat profesional sesuai tahap yang belum diselesaikan. */
+function ppdb_reminder_whatsapp_message(array $registration, string $stage, string $continueUrl, array $formWindow = []): string
+{
+    $lines = [
+        'Assalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Yth. Ayah/Bunda dari Ananda *'.$registration['nm_peserta'].'*,',
+        '',
+        'Dengan hormat, kami mengingatkan bahwa proses pendaftaran Ananda di *'.$registration['nama_unit'].'* Tahun Ajaran '.$registration['th_ajaran'].' *belum selesai*.',
+        'Kode pendaftaran: *'.$registration['id_pendaftaran'].'*',
+        '',
+        '*Tahap yang perlu diselesaikan:*',
+    ];
+    if ($stage === 'bayar') {
+        $fee = (float) ($registration['biaya_pendaftaran'] ?? 0);
+        $lines[] = '1. Melakukan pembayaran biaya pendaftaran'.($fee > 0 ? ' sebesar *Rp '.number_format($fee, 0, ',', '.').'*' : '').'.';
+        $lines[] = ($registration['status_pembayaran'] ?? '') === 'ditolak'
+            ? '2. Mengunggah ulang bukti transfer yang benar (bukti sebelumnya belum dapat diterima).'
+            : '2. Mengunggah foto bukti transfer.';
+        $lines[] = '3. Mengisi formulir pendaftaran lengkap.';
+        if (!empty($registration['tanggal_batas_bayar'])) {
+            $lines[] = '';
+            $lines[] = 'Batas pembayaran: *'.ppdb_format_date_id($registration['tanggal_batas_bayar']).'*';
+        }
+    } else {
+        $lines[] = 'Mengisi dan mengirim *formulir pendaftaran lengkap* (data Ananda, alamat, orang tua/wali, dan kesehatan).';
+    }
+    if (!empty($formWindow['batas'])) {
+        if ($stage !== 'bayar' || empty($registration['tanggal_batas_bayar'])) {
+            $lines[] = '';
+        }
+        $lines[] = 'Batas pengisian formulir: *'.ppdb_format_day_date_id($formWindow['batas']).' pukul '.date('H.i', strtotime($formWindow['batas'])).' WIB*';
+        $lines[] ='Apabila belum diselesaikan sampai batas tersebut, Ananda *dinyatakan gugur*.';
+    }
+    array_push(
+        $lines,
+        '',
+        'Silakan lanjutkan melalui tautan pribadi berikut:',
+        $continueUrl,
+        '',
+        'Apabila Ayah/Bunda sudah menyelesaikannya, mohon abaikan pesan ini. Bila mengalami kendala, silakan balas pesan ini atau hubungi admin SPMB.',
+        '',
+        'Terima kasih atas perhatian Ayah/Bunda.',
+        'Wassalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Admin SPMB Yayasan Wakaf Cendekia Takengon',
+        'WhatsApp: '.ppdb_admin_whatsapp_display()
+    );
+    return implode("\n", $lines);
+}

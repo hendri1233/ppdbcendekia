@@ -356,6 +356,14 @@
         menuTarget = link;
         link.setAttribute('aria-expanded', 'true');
         menu.querySelector('[data-name-detail]').href = link.href;
+        const reminder = menu.querySelector('[data-name-reminder]');
+        if (reminder) {
+            const available = (link.dataset.reminder || '') !== '';
+            reminder.setAttribute('aria-disabled', available ? 'false' : 'true');
+            reminder.querySelector('[data-reminder-hint]').textContent = available
+                ? (link.dataset.reminder === 'bayar' ? 'Ingatkan pembayaran & unggah bukti' : 'Ingatkan pengisian formulir lengkap')
+                : (link.dataset.reminderNote || 'Tidak ada tahap yang perlu diingatkan');
+        }
         menu.hidden = false;
         placeMenu();
         menu.querySelector('[data-name-preview]').focus({ preventScroll: true });
@@ -422,6 +430,124 @@
         closeMenu();
         if (id) open(id);
     });
+
+    // Pengingat WhatsApp: pratinjau pesan, lalu kirim otomatis (Wablas) atau manual (wa.me).
+    const reminderButton = menu.querySelector('[data-name-reminder]');
+    const reminderDialog = document.querySelector('[data-reminder-dialog]');
+    if (reminderButton && reminderDialog && typeof reminderDialog.showModal === 'function') {
+        const rName = reminderDialog.querySelector('[data-reminder-name]');
+        const rMeta = reminderDialog.querySelector('[data-reminder-meta]');
+        const rBody = reminderDialog.querySelector('[data-reminder-body]');
+        const rFoot = reminderDialog.querySelector('[data-reminder-foot]');
+        const rManual = reminderDialog.querySelector('[data-reminder-manual]');
+        const rSend = reminderDialog.querySelector('[data-reminder-send]');
+        const rCancel = reminderDialog.querySelector('[data-reminder-cancel]');
+        let reminderId = '';
+        let reminderTicket = 0;
+        const esc = function (text) {
+            const span = document.createElement('span');
+            span.textContent = text == null ? '' : String(text);
+            return span.innerHTML;
+        };
+        const historyHtml = function (data) {
+            const history = data.history || {};
+            if (!history.last) {
+                return '<p class="reminder-history">' + (data.tracked ? 'Belum pernah diingatkan.' : 'Riwayat pengingat belum dicatat (jalankan migrasi 039).') + '</p>';
+            }
+            return '<p class="reminder-history' + (history.recent ? ' is-recent' : '') + '">' + (history.recent ? '<strong>Baru saja diingatkan.</strong> ' : '') + 'Terakhir: ' + esc(history.last) + ' · ' + esc(history.count) + ' kali</p>';
+        };
+        const manualHtml = function (data) {
+            if (!data.links || !data.links.length) return '';
+            return '<span>Kirim manual:</span>' + data.links.map(function (link) {
+                return '<a href="' + esc(link.url) + '" target="_blank" rel="noopener noreferrer">' + esc(link.role) + ' · ' + esc(link.display) + '</a>';
+            }).join('');
+        };
+        const render = function (data, result) {
+            rName.textContent = data.name || 'Peserta';
+            rMeta.textContent = [data.id, data.unit].filter(Boolean).join(' · ');
+            if (data.blocked) {
+                rBody.innerHTML = '<div class="reminder-blocked"><strong>Pengingat tidak diperlukan</strong><p>' + esc(data.blocked) + '</p></div>';
+                rFoot.hidden = false;
+                rManual.innerHTML = '';
+                rSend.hidden = true;
+                rCancel.textContent = 'Tutup';
+                return;
+            }
+            let html = '';
+            if (result) {
+                html += '<div class="reminder-result ' + (result.ok ? 'is-ok' : 'is-error') + '" role="status">' + esc(result.text) + '</div>';
+            }
+            html += '<dl class="reminder-facts">'
+                + '<div><dt>Tahap</dt><dd><span class="reminder-stage">' + esc(data.stage_label) + '</span></dd></div>'
+                + '<div><dt>Dikirim ke</dt><dd><strong>' + esc(data.phone) + '</strong> <small>' + esc(data.phone_role) + '</small></dd></div>'
+                + (data.deadline ? '<div><dt>Batas formulir</dt><dd>' + esc(data.deadline) + '</dd></div>' : '')
+                + '</dl>'
+                + historyHtml(data)
+                + '<label class="reminder-preview"><span>Isi pesan</span><textarea readonly rows="9">' + esc(data.message) + '</textarea></label>';
+            rBody.innerHTML = html;
+            rFoot.hidden = false;
+            rManual.innerHTML = manualHtml(data);
+            const sent = result && result.ok;
+            rSend.hidden = sent;
+            rSend.disabled = !data.wablas;
+            rSend.textContent = data.wablas ? (data.history && data.history.recent ? 'Kirim lagi' : 'Kirim otomatis') : 'Wablas belum aktif';
+            rCancel.textContent = sent ? 'Selesai' : 'Batal';
+        };
+        const loadReminder = function (id) {
+            reminderId = id;
+            const ticket = ++reminderTicket;
+            rName.textContent = 'Memuat…';
+            rMeta.textContent = '';
+            rFoot.hidden = true;
+            rBody.innerHTML = '<div class="pv-loading" aria-label="Memuat data"><span></span><span></span><span></span></div>';
+            fetch('pengingat-wa.php?id=' + encodeURIComponent(id), { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (ticket !== reminderTicket) return;
+                    if (!data.ok && !data.name) throw new Error(data.text || 'Gagal memuat');
+                    render(data, null);
+                })
+                .catch(function (error) {
+                    if (ticket !== reminderTicket) return;
+                    rName.textContent = 'Pengingat WhatsApp';
+                    rBody.innerHTML = '<div class="reminder-result is-error">' + esc(error.message || 'Koneksi terputus. Coba lagi.') + '</div>';
+                });
+        };
+        reminderButton.addEventListener('click', function () {
+            if (reminderButton.getAttribute('aria-disabled') === 'true') return;
+            const id = menuTarget ? menuTarget.dataset.participant : '';
+            closeMenu();
+            if (!id) return;
+            reminderDialog.showModal();
+            loadReminder(id);
+        });
+        rSend.addEventListener('click', function () {
+            if (!reminderId || rSend.disabled) return;
+            rSend.disabled = true;
+            rSend.textContent = 'Mengirim…';
+            const form = new FormData();
+            form.append('id', reminderId);
+            form.append('csrf_token', menu.dataset.csrf || '');
+            fetch('pengingat-wa.php', { method: 'POST', body: form, credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    render(data, { ok: !!data.ok, text: data.text || (data.ok ? 'Pengingat terkirim.' : 'Pengingat belum terkirim.') });
+                    if (data.ok) {
+                        const row = document.querySelector('tr[data-row-id="' + reminderId + '"]');
+                        if (row) row.classList.add('is-reminded');
+                    }
+                })
+                .catch(function () {
+                    rSend.disabled = false;
+                    rSend.textContent = 'Kirim otomatis';
+                    rBody.insertAdjacentHTML('afterbegin', '<div class="reminder-result is-error">Koneksi terputus. Coba lagi.</div>');
+                });
+        });
+        rCancel.addEventListener('click', function () { reminderDialog.close(); });
+        reminderDialog.addEventListener('click', function (event) {
+            if (event.target === reminderDialog) reminderDialog.close();
+        });
+    }
 
     document.addEventListener('keydown', function (event) {
         if (!menu.hidden && event.key === 'Escape') {

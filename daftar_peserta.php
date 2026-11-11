@@ -325,7 +325,7 @@ require 'admin_header.php';
                             <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
                             <td data-label="Nama" class="primary-cell">
-                                <a class="participant-link" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode(with_query([])); ?>" data-participant="<?php echo h($row['id_pendaftaran']); ?>" aria-haspopup="menu"><?php echo h($row['nm_peserta']); ?></a>
+                                <a class="participant-link" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode(with_query([])); ?>" data-participant="<?php echo h($row['id_pendaftaran']); ?>" data-reminder="<?php echo h(ppdb_reminder_stage($row)); ?>" data-reminder-note="<?php echo h(ppdb_reminder_stage($row) === '' ? ppdb_reminder_unavailable_note($row) : ''); ?>" aria-haspopup="menu"><?php echo h($row['nm_peserta']); ?></a>
                                 <?php if (!empty($row['data_ganda'])) { ?><a class="duplicate-badge" href="<?php echo h(with_query(['ganda' => '1', 'q' => $row['nm_peserta'], 'page' => null])); ?>" title="Ada pendaftaran lain dengan nama dan tanggal lahir atau NIK yang sama pada tahun ajaran ini">Ganda</a><?php } ?>
                                 <?php if ($row['NISN'] !== '') { ?><small class="cell-sub">NISN <?php echo h($row['NISN']); ?></small><?php } ?>
                             </td>
@@ -428,10 +428,33 @@ require 'admin_header.php';
         <?php } ?>
     </section>
 </div>
-<div class="name-menu" data-name-menu role="menu" hidden>
+<div class="name-menu" data-name-menu data-csrf="<?php echo h(csrf_token()); ?>" role="menu" hidden>
     <button type="button" role="menuitem" data-name-preview><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5C6.5 5 2.7 9.2 1.5 12c1.2 2.8 5 7 10.5 7s9.3-4.2 10.5-7C21.3 9.2 17.5 5 12 5Zm0 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-2.2a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6Z"/></svg><span>Pratinjau<small>Lihat data lengkap di panel samping</small></span></button>
     <a role="menuitem" href="#" data-name-detail><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>Lihat detail<small>Buka halaman detail dan tindakan</small></span></a>
+    <button type="button" role="menuitem" class="name-menu__reminder" data-name-reminder><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><span>Kirim pengingat WA<small data-reminder-hint>Ingatkan orang tua untuk melanjutkan proses</small></span></button>
 </div>
+
+<dialog class="reminder-dialog" data-reminder-dialog aria-labelledby="reminder-title">
+    <form method="dialog" class="reminder-dialog__close-form"><button type="submit" class="pv-close" aria-label="Tutup"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6L19 6.4 17.6 5 12 10.6z"/></svg></button></form>
+    <header class="reminder-dialog__head">
+        <span class="reminder-dialog__icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg></span>
+        <div>
+            <p class="reminder-dialog__eyebrow">Pengingat WhatsApp</p>
+            <h2 id="reminder-title" data-reminder-name>Memuat…</h2>
+            <p class="reminder-dialog__meta" data-reminder-meta></p>
+        </div>
+    </header>
+    <div class="reminder-dialog__body" data-reminder-body>
+        <div class="pv-loading" aria-label="Memuat data"><span></span><span></span><span></span></div>
+    </div>
+    <footer class="reminder-dialog__foot" data-reminder-foot hidden>
+        <div class="reminder-dialog__manual" data-reminder-manual></div>
+        <div class="reminder-dialog__buttons">
+            <button type="button" class="button-secondary" data-reminder-cancel>Batal</button>
+            <button type="button" class="reminder-dialog__send" data-reminder-send>Kirim otomatis</button>
+        </div>
+    </footer>
+</dialog>
 
 <dialog class="pv-drawer" data-preview-drawer aria-labelledby="pv-title">
     <div class="pv-drawer__bar">
