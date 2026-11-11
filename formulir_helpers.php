@@ -118,7 +118,7 @@ function formulir_parent_fields(string $role): array
         );
     }
 
-    // Wali: identitas bila mempunyai wali; data lengkap bila ananda tinggal bersama wali.
+    // Wali: empat isian identitas selalu wajib; data lengkap bila ananda tinggal bersama wali.
     $livesWithGuardian = [['jenis_tinggal', ['Bersama wali']]];
     return array_merge(
         formulir_with_condition([
@@ -129,8 +129,8 @@ function formulir_parent_fields(string $role): array
         ], $livesWithGuardian),
         formulir_with_condition([
             $ortu('tempat_lahir', ['label' => 'Tempat lahir (sesuai KTP)', 'maxlength' => 50, 'required' => true, 'uppercase' => true]),
-            $detail('tahun_lahir', ['label' => 'Tahun lahir (sesuai KTP)', 'type' => 'number', 'min' => 1900, 'max' => (int) date('Y'), 'numeric' => true]),
-            $nik,
+            $detail('tahun_lahir', ['label' => 'Tahun lahir (sesuai KTP)', 'type' => 'number', 'min' => 1900, 'max' => (int) date('Y'), 'numeric' => true, 'required' => true]),
+            ['required' => true] + $nik,
         ], []),
         formulir_with_condition([
             $ortu('hubungan_keluarga', ['label' => 'Ikatan keluarga dengan wali', 'type' => 'select', 'options' => formulir_options(['Kakek', 'Nenek', 'Paman', 'Bibik', 'Cicik', 'Saudara kandung', 'Lainnya'])]),
@@ -248,7 +248,7 @@ function formulir_data_sections(): array
         ],
         'wali' => [
             'title' => 'Data wali',
-            'description' => 'Pilih "Tidak" jika ananda tidak mempunyai wali, lalu lanjutkan.',
+            'description' => '',
             'fields' => formulir_parent_fields('wali'),
         ],
         'profil' => [
