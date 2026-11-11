@@ -1280,3 +1280,143 @@ body.page-flow {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .deadline-notice { background: rgba(255, 255, 255, 0.96); }
 }
+
+/* ---------- Popup langkah selanjutnya: tautan lewat WhatsApp (ringkas, tanpa gulir) ---------- */
+
+.wa-notice {
+    width: min(420px, calc(100vw - 24px));
+    padding: 24px 22px 20px;
+}
+
+.wa-notice__logo {
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 10px;
+    color: #25d366;
+    filter: drop-shadow(0 10px 18px rgba(18, 140, 74, 0.35));
+    animation: wa-notice-ring 2.4s ease-in-out 0.6s infinite;
+}
+
+.wa-notice__logo svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.wa-notice h2 {
+    font-size: clamp(1.2rem, 4.6vw, 1.4rem);
+}
+
+.wa-notice__text {
+    margin: 8px 0 10px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+.wa-notice__phone {
+    margin: 0;
+    padding: 9px 14px;
+    color: #0e3d2d;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(18, 140, 74, 0.25);
+    border-radius: 14px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.wa-notice__steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wa-notice__steps li {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 5px;
+    color: #4b5d55;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.wa-notice__steps li + li::before {
+    content: "";
+    position: absolute;
+    top: 12px;
+    right: calc(50% + 14px);
+    width: calc(100% - 22px);
+    height: 2px;
+    background: rgba(20, 86, 63, 0.18);
+}
+
+.wa-notice__steps li > span {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    color: #5a6b63;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(20, 86, 63, 0.2);
+    border-radius: 50%;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.wa-notice__steps li.is-current {
+    color: #0e3d2d;
+}
+
+.wa-notice__steps li.is-current > span {
+    color: #fff;
+    background: linear-gradient(150deg, #25d366, #128c4a);
+    border-color: transparent;
+    box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.2);
+}
+
+.wa-notice__steps li.is-done > span {
+    color: #fff;
+    background: #1b6b4f;
+    border-color: #1b6b4f;
+}
+
+.wa-notice__note {
+    margin: 14px 0 14px;
+    color: #4b5d55;
+    font-size: 0.8rem;
+}
+
+.wa-notice__note a {
+    color: #135a40;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.wa-notice .deadline-notice__confirm {
+    background: linear-gradient(180deg, #1fbf5a, #128c4a);
+    box-shadow: 0 14px 26px -14px rgba(18, 140, 74, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+@keyframes wa-notice-ring {
+    0%, 100% { transform: rotate(0); }
+    6% { transform: rotate(-10deg); }
+    12% { transform: rotate(9deg); }
+    18% { transform: rotate(-6deg); }
+    24% { transform: rotate(0); }
+}
+
+@media (max-height: 640px) {
+    .wa-notice { padding-top: 18px; }
+    .wa-notice__logo { width: 52px; height: 52px; }
+    .wa-notice__steps { margin-top: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wa-notice__logo { animation: none; }
+}

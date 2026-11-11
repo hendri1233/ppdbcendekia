@@ -131,7 +131,40 @@ header('Referrer-Policy: no-referrer');
 
     <footer>Yayasan Wakaf Cendekia Takengon · <a href="mailto:wakafcendekiatakengon@gmail.com">Hubungi panitia</a></footer>
 </main>
-<?php if ($registration) { ppdb_render_form_deadline_dialog($formWindow, (string) ($registration['nama_unit'] ?? ''), (string) $registration['nm_peserta']); } ?>
+<?php if ($registration) { ppdb_render_form_deadline_dialog($formWindow, (string) ($registration['nama_unit'] ?? ''), (string) $registration['nm_peserta'], '', 'Cek WhatsApp'); } ?>
+<?php if ($registration) {
+    // Popup langkah selanjutnya: tautan lanjutan dikirim lewat WhatsApp setelah registrasi disetujui panitia.
+    $awaitingApproval = $registration['status_ppdb'] === 'menunggu_kontak';
+    $registrantPhone = ppdb_normalize_whatsapp_number((string) $registration['no_hp_pendaftar']);
+    ?>
+    <dialog class="deadline-notice wa-notice" data-wa-notice aria-labelledby="wa-notice-title" aria-describedby="wa-notice-text">
+        <form method="dialog" class="deadline-notice__close-form">
+            <button class="deadline-notice__close" type="submit" aria-label="Tutup pemberitahuan"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7l-1.4-1.4L9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3z"/></svg></button>
+        </form>
+        <span class="wa-notice__logo" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><path d="M16.04 3C8.87 3 3.04 8.77 3.04 15.88c0 2.27.6 4.48 1.75 6.43L3 29l6.9-1.8a13.1 13.1 0 0 0 6.14 1.52h.01c7.17 0 13-5.78 13-12.89 0-3.45-1.36-6.69-3.83-9.12A12.94 12.94 0 0 0 16.04 3Zm0 23.54h-.01c-1.93 0-3.83-.52-5.48-1.51l-.39-.23-4.09 1.07 1.09-3.96-.25-.4a10.62 10.62 0 0 1-1.65-5.63c0-5.92 4.85-10.74 10.79-10.74 2.88 0 5.59 1.12 7.62 3.14a10.61 10.61 0 0 1 3.16 7.59c0 5.92-4.85 10.74-10.79 10.74Zm5.92-8.04c-.32-.16-1.9-.93-2.2-1.04-.3-.11-.51-.16-.73.16-.21.32-.84 1.04-1.03 1.25-.19.21-.38.24-.7.08-.32-.16-1.36-.5-2.59-1.59-.96-.85-1.61-1.9-1.8-2.22-.19-.32-.02-.49.14-.65.14-.14.32-.37.48-.56.16-.19.21-.32.32-.53.11-.21.05-.4-.03-.56-.08-.16-.73-1.74-1-2.38-.26-.62-.53-.54-.73-.55l-.62-.01c-.21 0-.56.08-.86.4-.3.32-1.12 1.09-1.12 2.67s1.15 3.1 1.31 3.31c.16.21 2.26 3.43 5.47 4.81.76.33 1.36.52 1.82.66.76.24 1.45.21 2 .13.61-.09 1.9-.77 2.17-1.52.27-.75.27-1.39.19-1.52-.08-.13-.3-.21-.62-.37Z"/></svg></span>
+        <p class="deadline-notice__eyebrow">Langkah selanjutnya</p>
+        <h2 id="wa-notice-title"><?php echo $awaitingApproval ? 'Mohon cek WhatsApp, Ayah/Bunda' : 'Tautan sudah dikirim'; ?></h2>
+        <p class="deadline-notice__text wa-notice__text" id="wa-notice-text">
+            <?php if ($awaitingApproval) { ?>
+                Registrasi awal ananda <strong><?php echo h($registration['nm_peserta']); ?></strong> sedang diverifikasi panitia. Setelah disetujui, <strong>tautan lanjutan dikirim lewat WhatsApp</strong> oleh Admin SPMB ke nomor:
+            <?php } else { ?>
+                Tautan lanjutan pendaftaran ananda <strong><?php echo h($registration['nm_peserta']); ?></strong> <strong>telah dikirim lewat WhatsApp</strong> oleh Admin SPMB ke nomor:
+            <?php } ?>
+        </p>
+        <?php if ($registrantPhone !== '') { ?>
+            <p class="wa-notice__phone"><?php echo h(ppdb_display_phone($registrantPhone)); ?></p>
+        <?php } ?>
+        <ol class="wa-notice__steps" aria-label="Tahapan berikutnya">
+            <li class="<?php echo $awaitingApproval ? 'is-current' : 'is-done'; ?>"><span><?php echo $awaitingApproval ? '1' : '&#10003;'; ?></span>Verifikasi panitia</li>
+            <li class="<?php echo $awaitingApproval ? '' : 'is-current'; ?>"><span>2</span>Tautan via WhatsApp</li>
+            <li><span>3</span>Bayar &amp; isi formulir</li>
+        </ol>
+        <p class="wa-notice__note">Belum ada pesan dalam 1&times;24 jam? <a href="<?php echo h($adminWhatsAppUrl); ?>" target="_blank" rel="noopener noreferrer">Hubungi admin · <?php echo h(ppdb_admin_whatsapp_display()); ?></a></p>
+        <form method="dialog">
+            <button class="deadline-notice__confirm" type="submit" autofocus>Baik, saya akan cek WhatsApp</button>
+        </form>
+    </dialog>
+<?php } ?>
 <script src="js/alur.js?v=<?php echo (int) @filemtime(__DIR__.'/js/alur.js'); ?>"></script>
 </body>
 </html>

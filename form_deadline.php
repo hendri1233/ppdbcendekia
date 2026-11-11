@@ -9,8 +9,9 @@ require_once __DIR__.'/app_helpers.php';
 /**
  * @param array{buka: ?string, batas: ?string} $window hasil ppdb_form_window()
  * @param string $rememberKey kunci agar popup tidak muncul berulang dalam satu sesi; kosong berarti selalu muncul
+ * @param string $confirmLabel teks tombol penutup (mis. "Cek WhatsApp" bila disusul popup WhatsApp)
  */
-function ppdb_render_form_deadline_dialog(array $window, string $unitName, string $participantName, string $rememberKey = ''): void
+function ppdb_render_form_deadline_dialog(array $window, string $unitName, string $participantName, string $rememberKey = '', string $confirmLabel = 'Saya mengerti'): void
 {
     $deadline = $window['batas'] ?? null;
     if (!$deadline || ppdb_form_deadline_passed($deadline)) {
@@ -44,7 +45,7 @@ function ppdb_render_form_deadline_dialog(array $window, string $unitName, strin
         </ol>
         <p class="deadline-notice__note"><strong>Penting:</strong> apabila pembayaran dan formulir lengkap belum diselesaikan sampai batas ini, formulir tidak dapat diisi lagi dan Ananda <strong>dinyatakan gugur</strong>.</p>
         <form method="dialog">
-            <button class="deadline-notice__confirm" type="submit" autofocus>Saya mengerti</button>
+            <button class="deadline-notice__confirm" type="submit" autofocus><?php echo h($confirmLabel); ?></button>
         </form>
     </dialog>
     <?php

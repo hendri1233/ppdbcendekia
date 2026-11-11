@@ -92,6 +92,25 @@
     });
   }
 
+  // Popup langkah selanjutnya (WhatsApp) di halaman registrasi berhasil.
+  const waNotice = document.querySelector("[data-wa-notice]");
+  if (waNotice && typeof waNotice.showModal === "function") {
+    const showWaNotice = function () {
+      if (!waNotice.open && !document.querySelector("dialog[open]")) waNotice.showModal();
+    };
+    const deadlineDialog = document.querySelector("[data-deadline-notice]");
+    if (deadlineDialog) {
+      deadlineDialog.addEventListener("close", function () {
+        window.setTimeout(showWaNotice, 250);
+      }, { once: true });
+    } else {
+      window.setTimeout(showWaNotice, 450);
+    }
+    waNotice.addEventListener("click", function (event) {
+      if (event.target === waNotice) waNotice.close();
+    });
+  }
+
   // Halaman yang dibuka kembali lewat tombol kembali tidak boleh tetap menampilkan garis.
   window.addEventListener("pageshow", function () {
     bar.classList.remove("is-active");
