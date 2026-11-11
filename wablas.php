@@ -257,9 +257,30 @@ function ppdb_reminder_unavailable_note(array $registration): string
     };
 }
 
+/**
+ * Kontak admin yang dicantumkan di akhir pengingat: nomor WhatsApp admin unit
+ * (Profil unit di cms-unit.php), atau nomor admin SPMB yayasan bila belum diisi.
+ *
+ * @return array{name: string, display: string, unit: bool}
+ */
+function ppdb_reminder_admin_contact(array $registration): array
+{
+    $unitPhone = ppdb_normalize_whatsapp_number((string) ($registration['telepon_unit'] ?? ''));
+    if ($unitPhone === '') {
+        return ['name' => 'Admin SPMB Yayasan Wakaf Cendekia Takengon', 'display' => ppdb_admin_whatsapp_display(), 'unit' => false];
+    }
+    $local = '0'.substr($unitPhone, 2);
+    return [
+        'name' => 'Admin SPMB '.ppdb_unit_display_name((string) ($registration['nama_unit'] ?? '')),
+        'display' => trim(chunk_split($local, 4, ' ')),
+        'unit' => true,
+    ];
+}
+
 /** Pesan pengingat profesional sesuai tahap yang belum diselesaikan. */
 function ppdb_reminder_whatsapp_message(array $registration, string $stage, string $continueUrl, array $formWindow = []): string
 {
+    $contact = ppdb_reminder_admin_contact($registration);
     $lines = [
         'Assalamu’alaikum warahmatullahi wabarakatuh.',
         '',
@@ -297,13 +318,13 @@ function ppdb_reminder_whatsapp_message(array $registration, string $stage, stri
         'Silakan lanjutkan melalui tautan pribadi berikut:',
         $continueUrl,
         '',
-        'Apabila Ayah/Bunda sudah menyelesaikannya, mohon abaikan pesan ini. Bila mengalami kendala, silakan balas pesan ini atau hubungi admin SPMB.',
+        'Apabila Ayah/Bunda sudah menyelesaikannya, mohon abaikan pesan ini. Bila mengalami kendala, silakan hubungi admin melalui nomor WhatsApp di bawah ini.',
         '',
         'Terima kasih atas perhatian Ayah/Bunda.',
         'Wassalamu’alaikum warahmatullahi wabarakatuh.',
         '',
-        'Admin SPMB Yayasan Wakaf Cendekia Takengon',
-        'WhatsApp: '.ppdb_admin_whatsapp_display()
+        $contact['name'],
+        'WhatsApp: '.$contact['display']
     );
     return implode("\n", $lines);
 }

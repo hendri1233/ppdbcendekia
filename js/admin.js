@@ -481,6 +481,7 @@
                 + '<div><dt>Tahap</dt><dd><span class="reminder-stage">' + esc(data.stage_label) + '</span></dd></div>'
                 + '<div><dt>Dikirim ke</dt><dd><strong>' + esc(data.phone) + '</strong> <small>' + esc(data.phone_role) + '</small></dd></div>'
                 + (data.deadline ? '<div><dt>Batas formulir</dt><dd>' + esc(data.deadline) + '</dd></div>' : '')
+                + (data.contact ? '<div><dt>Kontak di pesan</dt><dd><strong>' + esc(data.contact.display) + '</strong> <small>' + (data.contact.unit ? esc(data.contact.name) : 'Admin yayasan · nomor admin unit belum diisi di Profil unit') + '</small></dd></div>' : '')
                 + '</dl>'
                 + historyHtml(data)
                 + '<label class="reminder-preview"><span>Isi pesan</span><textarea readonly rows="9">' + esc(data.message) + '</textarea></label>';

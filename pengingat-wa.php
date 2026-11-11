@@ -32,6 +32,7 @@ if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
 $tracked = ppdb_column_exists($conn, 'tb_pendaftaran', 'pengingat_wa_terakhir');
 $sql = 'SELECT p.id_pendaftaran,p.kode_unit,p.nm_peserta,p.th_ajaran,p.status_ppdb,p.status_pembayaran,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.tanggal_batas_bayar,p.token_bukti,'
     .($tracked ? 'p.pengingat_wa_terakhir,p.pengingat_wa_jumlah,' : '')
+    .(ppdb_table_exists($conn, 'tb_cms_unit_profiles') ? '(SELECT pr.phone FROM tb_cms_unit_profiles pr WHERE pr.kode_unit=p.kode_unit LIMIT 1) AS telepon_unit,' : '')
     .'u.nama_unit,q.biaya_pendaftaran FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=?';
 if (ppdb_is_super_admin()) {
     $stmt = mysqli_prepare($conn, $sql.' LIMIT 1');
@@ -96,6 +97,7 @@ $base = [
     'phone_role' => $primaryPhone !== '' ? $recipients[$primaryPhone] : '',
     'deadline' => !empty($formWindow['batas']) ? ppdb_format_day_date_id($formWindow['batas']).' pukul '.date('H.i', strtotime($formWindow['batas'])).' WIB' : '',
     'message' => $message,
+    'contact' => ppdb_reminder_admin_contact($registration),
     'links' => $links,
     'history' => $history($lastSent, $tracked ? (int) $registration['pengingat_wa_jumlah'] : 0),
     'tracked' => $tracked,
