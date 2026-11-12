@@ -157,7 +157,7 @@ if ($selectedYear !== '') {
     $countConditions[] = 'th_ajaran = ?';
     $countParameters[] = $selectedYear;
 }
-$countStatement = mysqli_prepare($conn, "SELECT SUM(status_ppdb='menunggu_kontak') AS menunggu_kontak, SUM(status_pembayaran='menunggu_verifikasi') AS pembayaran_diperiksa FROM tb_pendaftaran".($countConditions ? ' WHERE '.implode(' AND ', $countConditions) : ''));
+$countStatement = mysqli_prepare($conn, "SELECT SUM(status_ppdb='menunggu_kontak') AS menunggu_kontak, SUM(status_pembayaran='menunggu_verifikasi') AS pembayaran_diperiksa, SUM(status_ppdb<>'data_lama') AS total_aktif, SUM(status_ppdb='formulir_terisi') AS formulir_masuk, SUM(status_ppdb='diterima') AS diterima, SUM(status_ppdb IN ('formulir_terisi','diterima','daftar_tunggu') AND status_data<>'terverifikasi' AND COALESCE(revisi_dibuka,0)=0) AS belum_cek_kk FROM tb_pendaftaran".($countConditions ? ' WHERE '.implode(' AND ', $countConditions) : ''));
 if ($countParameters) {
     mysqli_stmt_bind_param($countStatement, str_repeat('s', count($countParameters)), ...$countParameters);
 }
@@ -181,8 +181,17 @@ require 'admin_header.php';
             <h1>Data peserta</h1>
             <p><?php echo $adminUnitCode === '' ? 'Daftar seluruh pendaftar. Gunakan filter untuk memisahkan peserta yang menunggu tindakan.' : 'Daftar pendaftar untuk unit pendidikan Anda. Data unit lain tidak ditampilkan.'; ?></p>
         </div>
-        <div class="table-actions">
-            <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset filter</a><?php } ?>
+        <?php $headingStats = [
+            ['Total pendaftar', (int) ($countRow['total_aktif'] ?? 0), with_query(['status' => null, 'ganda' => null, 'q' => null, 'jalur' => null, 'page' => null]), 'tone-total'],
+            ['Formulir masuk', (int) ($countRow['formulir_masuk'] ?? 0), with_query(['status' => 'formulir_terisi', 'page' => null]), 'tone-form'],
+            ['Diterima', (int) ($countRow['diterima'] ?? 0), with_query(['status' => 'diterima', 'page' => null]), 'tone-ok'],
+            ['Belum cek KK', (int) ($countRow['belum_cek_kk'] ?? 0), 'verifikasi-data.php'.(ppdb_is_super_admin() && $selectedUnit !== '' ? '?unit='.rawurlencode($selectedUnit) : ''), 'tone-kk'],
+        ]; ?>
+        <div class="heading-stats">
+            <?php foreach ($headingStats as [$statLabel, $statValue, $statHref, $statTone]) { ?>
+                <a class="heading-stat <?php echo $statTone; ?>" href="<?php echo h($statHref); ?>"><strong><?php echo number_format($statValue, 0, ',', '.'); ?></strong><span><?php echo h($statLabel); ?></span></a>
+            <?php } ?>
+            <?php if ($hasFilter) { ?><a class="button-secondary heading-stats__reset" href="daftar_peserta.php">Reset filter</a><?php } ?>
         </div>
     </header>
 
