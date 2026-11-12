@@ -183,6 +183,7 @@ require 'admin_header.php';
         </div>
         <div class="table-actions">
             <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset filter</a><?php } ?>
+            <a class="button-primary" href="verifikasi-data.php<?php echo ppdb_is_super_admin() && $selectedUnit !== '' ? '?unit='.rawurlencode($selectedUnit) : ''; ?>">Verifikasi data vs KK</a>
         </div>
     </header>
 
