@@ -183,7 +183,6 @@ require 'admin_header.php';
         </div>
         <div class="table-actions">
             <?php if ($hasFilter) { ?><a class="button-secondary" href="daftar_peserta.php">Reset filter</a><?php } ?>
-            <a class="button-primary" href="verifikasi-data.php<?php echo ppdb_is_super_admin() && $selectedUnit !== '' ? '?unit='.rawurlencode($selectedUnit) : ''; ?>">Verifikasi data vs KK</a>
         </div>
     </header>
 
@@ -326,7 +325,7 @@ require 'admin_header.php';
                             <td data-label="Kode"><code class="code-chip"><?php echo h($row['id_pendaftaran']); ?></code></td>
                             <td data-label="Antrean"><?php echo $row['nomor_antrian'] ? '#'.(int) $row['nomor_antrian'] : '<span class="muted-dash">&mdash;</span>'; ?></td>
                             <td data-label="Nama" class="primary-cell">
-                                <a class="participant-link" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode(with_query([])); ?>" data-participant="<?php echo h($row['id_pendaftaran']); ?>" data-reminder="<?php echo h(ppdb_reminder_stage($row)); ?>" data-reminder-note="<?php echo h(ppdb_reminder_stage($row) === '' ? ppdb_reminder_unavailable_note($row) : ''); ?>" aria-haspopup="menu"><?php echo h($row['nm_peserta']); ?></a>
+                                <a class="participant-link" href="detail-peserta.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>&amp;kembali=<?php echo rawurlencode(with_query([])); ?>" data-participant="<?php echo h($row['id_pendaftaran']); ?>" data-reminder="<?php echo h(ppdb_reminder_stage($row)); ?>" data-reminder-note="<?php echo h(ppdb_reminder_stage($row) === '' ? ppdb_reminder_unavailable_note($row) : ''); ?>" data-verify="<?php echo h((string) $row['status_data']); ?>" aria-haspopup="menu"><?php echo h($row['nm_peserta']); ?></a>
                                 <?php if (!empty($row['data_ganda'])) { ?><a class="duplicate-badge" href="<?php echo h(with_query(['ganda' => '1', 'q' => $row['nm_peserta'], 'page' => null])); ?>" title="Ada pendaftaran lain dengan nama dan tanggal lahir atau NIK yang sama pada tahun ajaran ini">Ganda</a><?php } ?>
                                 <?php if ($row['NISN'] !== '') { ?><small class="cell-sub">NISN <?php echo h($row['NISN']); ?></small><?php } ?>
                             </td>
@@ -432,6 +431,7 @@ require 'admin_header.php';
 <div class="name-menu" data-name-menu data-csrf="<?php echo h(csrf_token()); ?>" role="menu" hidden>
     <button type="button" role="menuitem" data-name-preview><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5C6.5 5 2.7 9.2 1.5 12c1.2 2.8 5 7 10.5 7s9.3-4.2 10.5-7C21.3 9.2 17.5 5 12 5Zm0 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-2.2a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6Z"/></svg><span>Pratinjau<small>Lihat data lengkap di panel samping</small></span></button>
     <a role="menuitem" href="#" data-name-detail><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>Lihat detail<small>Buka halaman detail dan tindakan</small></span></a>
+    <a role="menuitem" href="#" class="name-menu__verify" data-name-verify><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 3h11l5 5v6h-2V9h-4V5H6v14h7v2H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm4 8h8v2H8v-2Zm0 4h5v2H8v-2Zm12.3 1.3 1.4 1.4-4.7 4.7-2.7-2.7 1.4-1.4 1.3 1.3 3.3-3.3Z"/></svg><span>Verifikasi data vs KK<small data-verify-hint>Cocokkan isian dengan scan KK, akta, KTP</small></span><b class="name-menu__badge" data-verify-badge aria-hidden="true"></b></a>
     <button type="button" role="menuitem" class="name-menu__reminder" data-name-reminder><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg><span>Kirim pengingat WA<small data-reminder-hint>Ingatkan orang tua untuk melanjutkan proses</small></span></button>
 </div>
 

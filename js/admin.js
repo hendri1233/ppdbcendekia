@@ -356,6 +356,17 @@
         menuTarget = link;
         link.setAttribute('aria-expanded', 'true');
         menu.querySelector('[data-name-detail]').href = link.href;
+        const verify = menu.querySelector('[data-name-verify]');
+        if (verify) {
+            const dataStatus = link.dataset.verify || '';
+            const verified = dataStatus === 'terverifikasi';
+            verify.href = 'verifikasi-data.php?id=' + encodeURIComponent(link.dataset.participant);
+            verify.dataset.state = verified ? 'ok' : 'no';
+            verify.querySelector('[data-verify-badge]').textContent = verified ? '✓' : '✗';
+            verify.querySelector('[data-verify-hint]').textContent = verified
+                ? 'Sudah diverifikasi · sesuai KK'
+                : (dataStatus === 'perlu_perbaikan' ? 'Belum diverifikasi · perlu perbaikan' : 'Belum diverifikasi');
+        }
         const reminder = menu.querySelector('[data-name-reminder]');
         if (reminder) {
             const available = (link.dataset.reminder || '') !== '';
