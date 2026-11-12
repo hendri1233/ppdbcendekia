@@ -4020,3 +4020,26 @@ html:root[data-theme="dark"] .combined-quota {
     filter: brightness(1.1);
     color: #fff;
 }
+
+/* Filter daftar peserta: grid rata agar kolom cari tidak melebar dan semua filter tersusun rapi. */
+@media (min-width: 821px) {
+    .filter-bar--compact {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+        align-items: end;
+    }
+
+    .filter-bar--compact .filter-field.grow {
+        min-width: 0;
+    }
+
+    .filter-bar--compact .filter-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .filter-bar--compact .filter-actions > * {
+        flex: 1;
+        justify-content: center;
+    }
+}

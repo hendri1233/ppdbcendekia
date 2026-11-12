@@ -200,7 +200,7 @@ require 'admin_header.php';
     <?php } ?>
 
     <section class="panel">
-        <form class="filter-bar" action="daftar_peserta.php" method="get">
+        <form class="filter-bar filter-bar--compact" action="daftar_peserta.php" method="get">
             <div class="filter-field grow">
                 <label for="q">Cari peserta</label>
                 <div class="search-field">
