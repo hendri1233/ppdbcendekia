@@ -310,6 +310,7 @@ require 'admin_header.php';
                             <?php foreach ($progressStages as $stage) { ?>
                                 <th scope="col" class="stage-col"><?php echo h($stage); ?></th>
                             <?php } ?>
+                            <th scope="col" class="stage-col" title="Data formulir sudah dicocokkan dengan scan KK, akta, dan KTP">Cek KK</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -394,6 +395,15 @@ require 'admin_header.php';
                                 </td>
                             <?php }
                             } ?>
+                            <td data-label="Cek KK" class="stage-cell kk-cell">
+                                <?php $kkVerified = $row['status_data'] === 'terverifikasi';
+                                $kkFormIn = $kkVerified || in_array($row['status_ppdb'], ['formulir_terisi', 'diterima', 'daftar_tunggu'], true) || !empty($row['revisi_dibuka']);
+                                if ($kkFormIn) { ?>
+                                    <a class="kk-mark <?php echo $kkVerified ? 'is-ok' : 'is-no'; ?>" href="verifikasi-data.php?id=<?php echo rawurlencode($row['id_pendaftaran']); ?>" title="<?php echo $kkVerified ? 'Sudah diverifikasi · sesuai KK' : 'Belum diverifikasi · klik untuk mencocokkan'; ?>"><?php echo $kkVerified ? '&#10003; Sesuai' : '&#10007; Belum'; ?></a>
+                                <?php } else { ?>
+                                    <span class="stage-state is-upcoming" title="Formulir lengkap belum masuk">&ndash;</span>
+                                <?php } ?>
+                            </td>
                         </tr>
                     <?php } ?>
                     </tbody>

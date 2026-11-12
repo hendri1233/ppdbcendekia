@@ -3993,3 +3993,30 @@ html:root[data-theme="dark"] .combined-quota {
 .name-menu__verify[data-state="no"] .name-menu__badge {
     background: #b91c1c;
 }
+
+/* Kolom "Cek KK" di daftar peserta: sudah (✓) / belum (✗) dicocokkan dengan KK. */
+.kk-mark {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #fff;
+    border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.kk-mark.is-ok {
+    background: #15803d;
+}
+
+.kk-mark.is-no {
+    background: #b91c1c;
+}
+
+.kk-mark:hover,
+.kk-mark:focus-visible {
+    filter: brightness(1.1);
+    color: #fff;
+}
