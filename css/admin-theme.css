@@ -4110,3 +4110,27 @@ html:root[data-theme="dark"] .combined-quota {
         grid-column: 1 / -1;
     }
 }
+
+/* Daftar peserta: judul kolom tetap terlihat saat tabel digulir ke bawah.
+   Tabel digulir di dalam wadahnya sendiri (setinggi layar) karena wadah yang
+   bisa digeser ke samping membuat judul tidak dapat menempel ke halaman. */
+@media (min-width: 621px) {
+    .table-wrap--sticky-head {
+        max-height: calc(100vh - 120px);
+        overflow: auto;
+        overscroll-behavior: contain;
+    }
+
+    .table-wrap--sticky-head .data-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        background: color-mix(in srgb, var(--paper) 70%, var(--admin-white));
+        box-shadow: inset 0 -1px 0 var(--admin-line);
+    }
+
+    /* Sudut kiri atas (Kode, Antrean, Nama) di atas judul lain dan isi tabel. */
+    .table-wrap--sticky-head .data-table--freeze thead th:nth-child(-n+3) {
+        z-index: 5;
+    }
+}

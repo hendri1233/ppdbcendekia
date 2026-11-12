@@ -302,7 +302,7 @@ require 'admin_header.php';
                 <p><?php echo $hasFilter ? 'Coba ubah kata kunci atau atur ulang filter.' : 'Pendaftaran yang masuk akan tampil di sini secara otomatis.'; ?></p>
             </div>
         <?php } else { ?>
-            <div class="table-wrap">
+            <div class="table-wrap table-wrap--sticky-head">
                 <table class="data-table data-table--single-line data-table--freeze">
                     <thead>
                         <tr>
