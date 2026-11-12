@@ -4136,3 +4136,25 @@ html:root[data-theme="dark"] .combined-quota {
         z-index: 5;
     }
 }
+
+/* Judul Data peserta dibuat ringkas agar tabel lebih cepat terlihat. */
+.page-heading--compact {
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.page-heading--compact .eyebrow {
+    margin-bottom: 2px;
+    font-size: 0.66rem;
+}
+
+.page-heading--compact h1 {
+    font-size: 1.3rem;
+    line-height: 1.2;
+}
+
+.page-heading--compact p:not(.eyebrow) {
+    margin-top: 2px;
+    font-size: 0.78rem;
+}

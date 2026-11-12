@@ -175,7 +175,7 @@ $adminPageDescription = 'Kelola seluruh data pendaftar SPMB, filter per status, 
 require 'admin_header.php';
 ?>
 <div class="admin-content">
-    <header class="page-heading">
+    <header class="page-heading page-heading--compact">
         <div>
             <p class="eyebrow"><?php echo $adminUnitCode === '' ? 'Arsip penerimaan' : 'Arsip unit · '.h(ppdb_unit_display_name($_SESSION['admin_unit_name'] ?? '')); ?></p>
             <h1>Data peserta</h1>
