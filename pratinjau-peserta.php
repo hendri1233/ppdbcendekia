@@ -79,7 +79,7 @@ function pv_value(array $field, $value): string
         return (string) $field['options'][$value];
     }
     if (!empty($field['numeric']) && is_numeric($value)) {
-        return rtrim(rtrim(number_format((float) $value, 2, ',', '.'), '0'), ',');
+        return rtrim(rtrim(number_format((float) $value, 2, ',', ''), '0'), ',');
     }
     return $value;
 }
