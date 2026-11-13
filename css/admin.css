@@ -4931,49 +4931,26 @@ select:focus-visible {
 @media (max-width:1100px){.level-quota{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* Ubah jalur seleksi SMP (umum <-> prestasi) di detail peserta */
-.route-switch__body,
-.route-switch__details {
+.route-switch__body {
     padding: 14px 17px 17px;
 }
 
-.route-switch__details summary {
-    cursor: pointer;
-    font-weight: 700;
-    color: var(--admin-green);
-}
-
-.route-switch__form {
-    padding: 14px 0 0;
-}
-
-.route-switch__hint,
-.route-switch__group,
-.route-switch__wide {
-    grid-column: 1 / -1;
-    margin: 0;
-}
-
 .route-switch__hint {
-    margin-bottom: 10px;
+    margin: 0 0 10px;
     font-size: var(--fs-sm);
     color: var(--admin-muted);
 }
 
-.route-switch__group {
-    margin-top: 6px;
-    font-size: var(--fs-xs);
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+.route-switch__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.route-switch textarea {
-    width: 100%;
-    padding: 8px 11px;
-    color: var(--admin-ink);
-    background: var(--admin-white);
-    border: 1px solid var(--input-border);
-    border-radius: var(--r-sm);
-    font: inherit;
-    font-size: var(--fs-sm);
+/* Tombol WhatsApp tautan isian prestasi pada pesan berhasil */
+.route-share-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
 }

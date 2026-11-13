@@ -3578,3 +3578,10 @@ body.page-daftar .radio-option:has(input:focus-visible) {
 .prestasi-section:not([hidden]) + .initial-block .initial-block__title {
     display: block;
 }
+
+/* Isian jalur prestasi oleh wali murid (data-prestasi) */
+.prestasi-wali-form .prestasi-section {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}

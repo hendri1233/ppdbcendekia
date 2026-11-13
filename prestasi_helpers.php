@@ -198,3 +198,64 @@ function prestasi_jalur_label(?string $value): string
 {
     return ['prestasi' => 'Prestasi', 'umum' => 'Umum'][$value] ?? '';
 }
+
+/** Peserta jalur prestasi yang datanya belum diisi (dipindah admin, menunggu wali murid). */
+function prestasi_has_data(mysqli $conn, string $registrationId): bool
+{
+    $stmt = mysqli_prepare($conn, 'SELECT 1 FROM tb_prestasi_peserta WHERE id_pendaftaran=? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 's', $registrationId);
+    mysqli_stmt_execute($stmt);
+    $found = (bool) mysqli_fetch_row(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+    return $found;
+}
+
+/** Tanda tautan isian prestasi wali murid; kuncinya hash token yang tidak pernah tampil ke publik. */
+function prestasi_wali_signature(array $registration): string
+{
+    $key = (string) ($registration['token_bukti'] ?? '');
+    return $key === '' ? '' : substr(hash_hmac('sha256', 'isi-prestasi|'.$registration['id_pendaftaran'], $key), 0, 16);
+}
+
+function prestasi_wali_url(array $registration): string
+{
+    return ppdb_public_base_url().'/data-prestasi?'.http_build_query(['kode' => $registration['id_pendaftaran'], 'sig' => prestasi_wali_signature($registration)]);
+}
+
+/** Tautan WhatsApp agar wali murid mengisi data prestasi setelah panitia memindahkan jalur. */
+function prestasi_prepare_wali_links(mysqli $conn, string $registrationId): array
+{
+    $lookup = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.nm_peserta,p.no_hp,p.no_hp_pendaftar,p.no_hp_ayah,p.no_hp_ibu,p.token_bukti,u.nama_unit FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? LIMIT 1');
+    mysqli_stmt_bind_param($lookup, 's', $registrationId);
+    mysqli_stmt_execute($lookup);
+    $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($lookup));
+    mysqli_stmt_close($lookup);
+    if (!$registration || prestasi_wali_signature($registration) === '') {
+        throw new RuntimeException('Tautan isian prestasi belum dapat dibuat untuk peserta ini.');
+    }
+    $url = prestasi_wali_url($registration);
+    $message = implode("\n", [
+        'Assalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Yth. Ayah/Bunda/Wali dari Ananda *'.$registration['nm_peserta'].'*,',
+        'Pendaftaran Ananda di '.ppdb_unit_display_name((string) ($registration['nama_unit'] ?? 'SMP')).' telah dipindahkan panitia ke *jalur prestasi*.',
+        'Kode pendaftaran: '.$registrationId,
+        '',
+        'Mohon Ayah/Bunda melengkapi data prestasi Ananda (foto surat pengantar prestasi dari sekolah asal, peringkat raport, hafalan Al-Qur’an, dan lomba) melalui tautan berikut:',
+        $url,
+        '',
+        'Template surat pengantar prestasi tersedia di halaman tersebut.',
+        'Terima kasih atas perhatian dan kerja sama Ayah/Bunda.',
+        'Wassalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        ppdb_admin_contact_message(),
+    ]);
+    $links = [];
+    foreach (ppdb_registrant_recipients($registration) as $number => $role) {
+        $links[] = ['role' => $role, 'phone' => $number, 'display' => ppdb_display_phone($number), 'url' => ppdb_whatsapp_link($number, $message)];
+    }
+    if ($links === []) {
+        throw new RuntimeException('Nomor WhatsApp pendaftar tidak valid.');
+    }
+    return ['status_url' => $url, 'message' => $message, 'links' => $links];
+}

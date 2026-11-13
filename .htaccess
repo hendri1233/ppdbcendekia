@@ -22,10 +22,10 @@ Options -Indexes
     RewriteRule ^(tentang|kontak|kurikulum|cerita|program|sosial|usaha|galeri|kebijakan-privasi)\.php$ $1 [R=301,L,NE]
 
     # Halaman pendaftaran: alamat lama dialihkan (hanya GET, agar formulir yang sedang terbuka tetap terkirim).
-    RewriteCond %{THE_REQUEST} ^(GET|HEAD)\s/+([^?\s]+/)?(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup)\.php(?:[?\s]) [NC]
-    RewriteRule ^(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup)\.php$ /%2$1 [R=301,L,NE]
-    RewriteCond %{THE_REQUEST} ^\S+\s/+([^?\s]+/)?(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup)/(?:[?\s]) [NC]
-    RewriteRule ^(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup)/$ /%1$1 [R=301,L,NE]
+    RewriteCond %{THE_REQUEST} ^(GET|HEAD)\s/+([^?\s]+/)?(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup|data-prestasi)\.php(?:[?\s]) [NC]
+    RewriteRule ^(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup|data-prestasi)\.php$ /%2$1 [R=301,L,NE]
+    RewriteCond %{THE_REQUEST} ^\S+\s/+([^?\s]+/)?(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup|data-prestasi)/(?:[?\s]) [NC]
+    RewriteRule ^(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup|data-prestasi)/$ /%1$1 [R=301,L,NE]
 
     # Rute publik bersih diteruskan ke file PHP yang sudah ada.
     RewriteRule ^lanjut/(P[0-9]{9})-([a-f0-9]{12})/?$ lanjut.php?kode=$1&sig=$2 [END]
@@ -41,7 +41,7 @@ Options -Indexes
     RewriteCond %{THE_REQUEST} ^\S+\s/+([^?\s]+/)?(daftarcendekia)/(?:[?\s]) [NC]
     RewriteRule ^daftarcendekia/$ /%1%2 [R=301,NC,L,NE]
     RewriteRule ^daftarcendekia$ daftar.php?internal=1 [QSA,NC,END]
-    RewriteRule ^(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup)$ $1.php [NC,END]
+    RewriteRule ^(daftar|berhasil|formulir|status-pendaftaran|lanjutkan-pendaftaran|verifikasi-surat|cetak-bukti|upload-bukti-pembayaran|ppdb-materi-file|api-tanya|gabung-grup|data-prestasi)$ $1.php [NC,END]
     RewriteRule ^berita/?$ berita.php [NC,END]
     RewriteRule ^unit/?$ direktori-unit.php [NC,END]
 

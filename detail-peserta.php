@@ -24,6 +24,7 @@ $error = '';
 $notice = '';
 $whatsappDeliveryNotice = '';
 $whatsappDeliveryTone = 'success';
+$routeShareLinks = null;
 if (!preg_match('/^P[0-9]{9}$/', $registrationId)) {
     http_response_code(404);
     exit('Data peserta tidak ditemukan.');
@@ -328,20 +329,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_rollback($conn);
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Keputusan belum dapat disimpan.';
             }
-        } elseif ($action === 'switch_selection_route') {
+        } elseif ($action === 'switch_selection_route' || $action === 'resend_prestasi_link') {
             // Pindah jalur seleksi SMP (umum <-> prestasi) tanpa mengubah kuota, antrean, maupun pembayaran.
-            $targetRoute = (string) ($_POST['jalur_seleksi'] ?? '');
-            $storedLetterPath = '';
+            // Data jalur prestasi diisi sendiri oleh wali murid lewat tautan WhatsApp.
+            $targetRoute = $action === 'resend_prestasi_link' ? 'prestasi' : (string) ($_POST['jalur_seleksi'] ?? '');
             try {
                 if (!prestasi_is_ready($conn) || !in_array($targetRoute, ['prestasi', 'umum'], true)) {
                     throw new RuntimeException('Jalur seleksi tidak dikenali.');
-                }
-                $achievementData = null;
-                if ($targetRoute === 'prestasi') {
-                    [$achievementData, $achievementErrors] = prestasi_validate($_POST, $_FILES);
-                    if ($achievementErrors) {
-                        throw new RuntimeException(implode(' ', $achievementErrors));
-                    }
                 }
                 mysqli_begin_transaction($conn);
                 $lock = mysqli_prepare($conn, 'SELECT p.status_ppdb,p.jalur_seleksi,u.jenjang FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit WHERE p.id_pendaftaran=? FOR UPDATE');
@@ -352,42 +346,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$locked || ($locked['jenjang'] ?? '') !== 'SMP' || $locked['status_ppdb'] === 'data_lama') {
                     throw new RuntimeException('Jalur seleksi hanya dapat diubah untuk pendaftar SMP.');
                 }
-                if (($locked['jalur_seleksi'] ?? '') === $targetRoute) {
-                    throw new RuntimeException('Peserta sudah berada di jalur '.prestasi_jalur_label($targetRoute).'.');
-                }
-
                 $oldLetterPath = '';
-                if ($targetRoute === 'prestasi') {
-                    // Data dan surat prestasi lama (bila pernah pindah jalur) diganti isian baru.
-                    $oldLetter = mysqli_prepare($conn, "SELECT path_file FROM tb_dokumen_peserta WHERE id_pendaftaran=? AND jenis_dokumen='surat_prestasi' LIMIT 1");
-                    mysqli_stmt_bind_param($oldLetter, 's', $registrationId);
-                    mysqli_stmt_execute($oldLetter);
-                    $oldLetterPath = (string) (mysqli_fetch_assoc(mysqli_stmt_get_result($oldLetter))['path_file'] ?? '');
-                    mysqli_stmt_close($oldLetter);
-                    foreach (['DELETE FROM tb_prestasi_peserta WHERE id_pendaftaran=?', "DELETE FROM tb_dokumen_peserta WHERE id_pendaftaran=? AND jenis_dokumen='surat_prestasi'"] as $cleanupSql) {
-                        $cleanup = mysqli_prepare($conn, $cleanupSql);
-                        mysqli_stmt_bind_param($cleanup, 's', $registrationId);
-                        mysqli_stmt_execute($cleanup);
-                        mysqli_stmt_close($cleanup);
+                if ($action === 'resend_prestasi_link') {
+                    if (($locked['jalur_seleksi'] ?? '') !== 'prestasi' || prestasi_has_data($conn, $registrationId)) {
+                        throw new RuntimeException('Data prestasi peserta ini sudah terisi.');
                     }
-                    prestasi_save($conn, $registrationId, $achievementData);
-                    $storedLetterPath = prestasi_store_letter($conn, $registrationId, $_FILES['surat_prestasi']);
+                } else {
+                    if (($locked['jalur_seleksi'] ?? '') === $targetRoute) {
+                        throw new RuntimeException('Peserta sudah berada di jalur '.prestasi_jalur_label($targetRoute).'.');
+                    }
+                    if ($targetRoute === 'prestasi') {
+                        // Data dan surat prestasi lama (bila pernah pindah jalur) dihapus; wali murid mengisi ulang.
+                        $oldLetter = mysqli_prepare($conn, "SELECT path_file FROM tb_dokumen_peserta WHERE id_pendaftaran=? AND jenis_dokumen='surat_prestasi' LIMIT 1");
+                        mysqli_stmt_bind_param($oldLetter, 's', $registrationId);
+                        mysqli_stmt_execute($oldLetter);
+                        $oldLetterPath = (string) (mysqli_fetch_assoc(mysqli_stmt_get_result($oldLetter))['path_file'] ?? '');
+                        mysqli_stmt_close($oldLetter);
+                        foreach (['DELETE FROM tb_prestasi_peserta WHERE id_pendaftaran=?', "DELETE FROM tb_dokumen_peserta WHERE id_pendaftaran=? AND jenis_dokumen='surat_prestasi'"] as $cleanupSql) {
+                            $cleanup = mysqli_prepare($conn, $cleanupSql);
+                            mysqli_stmt_bind_param($cleanup, 's', $registrationId);
+                            mysqli_stmt_execute($cleanup);
+                            mysqli_stmt_close($cleanup);
+                        }
+                    }
+                    $routeUpdate = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET jalur_seleksi=? WHERE id_pendaftaran=?');
+                    mysqli_stmt_bind_param($routeUpdate, 'ss', $targetRoute, $registrationId);
+                    mysqli_stmt_execute($routeUpdate);
+                    mysqli_stmt_close($routeUpdate);
                 }
-                $routeUpdate = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET jalur_seleksi=? WHERE id_pendaftaran=?');
-                mysqli_stmt_bind_param($routeUpdate, 'ss', $targetRoute, $registrationId);
-                mysqli_stmt_execute($routeUpdate);
-                mysqli_stmt_close($routeUpdate);
+                $routeShareLinks = $targetRoute === 'prestasi' ? prestasi_prepare_wali_links($conn, $registrationId) : null;
                 mysqli_commit($conn);
-                if ($oldLetterPath !== '' && $oldLetterPath !== $storedLetterPath && is_file($oldLetterPath)) {
+                if ($oldLetterPath !== '' && is_file($oldLetterPath)) {
                     @unlink($oldLetterPath);
                 }
-                enqueue_google_sheets_registration($conn, $registrationId);
-                $notice = 'Peserta dipindahkan ke jalur '.prestasi_jalur_label($targetRoute).'.';
+                if ($action === 'switch_selection_route') {
+                    enqueue_google_sheets_registration($conn, $registrationId);
+                }
+                $notice = $action === 'resend_prestasi_link' ? 'Tautan isian prestasi disiapkan ulang.' : 'Peserta dipindahkan ke jalur '.prestasi_jalur_label($targetRoute).'.';
+                if ($routeShareLinks) {
+                    if (ppdb_wablas_enabled()) {
+                        $routeShareLinks = ppdb_wablas_send_links($routeShareLinks);
+                        $sent = array_values(array_filter($routeShareLinks['links'], static fn ($link) => !empty($link['sent'])));
+                        $notice .= $sent
+                            ? ' Tautan isian prestasi terkirim ke WhatsApp '.implode(', ', array_column($sent, 'display')).'. Bila belum diterima, kirim manual:'
+                            : ' WhatsApp otomatis gagal terkirim. Kirim tautan isian prestasi secara manual:';
+                    } else {
+                        $notice .= ' Kirim tautan isian prestasi ke wali murid lewat WhatsApp:';
+                    }
+                }
             } catch (Throwable $exception) {
                 mysqli_rollback($conn);
-                if ($storedLetterPath !== '' && is_file($storedLetterPath)) {
-                    @unlink($storedLetterPath);
-                }
                 if (!$exception instanceof RuntimeException) {
                     error_log('Pindah jalur seleksi gagal: '.$exception->getMessage());
                 }
@@ -629,7 +637,7 @@ require 'admin_header.php';
         </div>
     </div>
     <?php if ($error !== '') { ?><div class="alert-error" role="alert"><?php echo h($error); ?></div><?php } ?>
-    <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?></div><?php } ?>
+    <?php if ($notice !== '') { ?><div class="alert-success" role="status"><?php echo h($notice); ?><?php if ($routeShareLinks) { ?><span class="route-share-links"><?php foreach ($routeShareLinks['links'] as $shareLink) { ?><a class="button-secondary" href="<?php echo h($shareLink['url']); ?>" target="_blank" rel="noopener noreferrer">WhatsApp <?php echo h($shareLink['role'].' · '.$shareLink['display']); ?></a><?php } ?></span><?php } ?></div><?php } ?>
     <?php if ($nextKind !== '') { ?>
         <div class="next-participant">
             <?php if ($nextParticipant) { ?>
@@ -889,7 +897,10 @@ require 'admin_header.php';
         <?php if ($selectionData) {
             $selectionData['jalur_seleksi_label'] = prestasi_jalur_label($selectionData['jalur_seleksi']);
             $selectionFields = [['Jalur seleksi', 'jalur_seleksi_label']];
-            if ($selectionData['jalur_seleksi'] === 'prestasi') {
+            if ($selectionData['jalur_seleksi'] === 'prestasi' && ($selectionData['id_pendaftaran'] ?? null) === null) {
+                $selectionData['status_isian_prestasi'] = 'Menunggu wali murid mengisi lewat tautan WhatsApp';
+                $selectionFields[] = ['Data prestasi', 'status_isian_prestasi'];
+            } elseif ($selectionData['jalur_seleksi'] === 'prestasi') {
                 foreach ([['Prestasi akademik', 'jenis_prestasi'], ['Kelas 4 semester 1', 'peringkat_k4_s1'], ['Kelas 4 semester 2', 'peringkat_k4_s2'], ['Kelas 5 semester 1', 'peringkat_k5_s1'], ['Kelas 5 semester 2', 'peringkat_k5_s2'], ['Kelas 6 semester 1', 'peringkat_k6_s1'], ['Kategori prestasi', 'kategori_hafalan'], ['Jumlah hafalan', 'jumlah_hafalan'], ['Riwayat lomba', 'riwayat_lomba'], ['Lomba yang dimenangkan', 'daftar_lomba']] as $selectionField) { if (trim((string) ($selectionData[$selectionField[1]] ?? '')) !== '') { $selectionFields[] = $selectionField; } }
             }
             render_detail_panel('Jalur pendaftaran SMP', $selectionFields, $selectionData);
@@ -899,49 +910,36 @@ require 'admin_header.php';
             $routeFormAction = 'detail-peserta.php?id='.rawurlencode($registrationId); ?>
         <section class="detail-panel wide route-switch">
             <h2>Ubah jalur seleksi</h2>
-            <?php if ($currentRoute === 'prestasi') { ?>
-                <form class="route-switch__body" method="post" action="<?php echo h($routeFormAction); ?>" data-confirm="Pindahkan peserta ini ke jalur umum? Data prestasi tidak lagi ditampilkan.">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="switch_selection_route">
-                    <input type="hidden" name="jalur_seleksi" value="umum">
-                    <p class="route-switch__hint">Peserta saat ini di jalur <strong>Prestasi</strong>. Kuota, nomor antrean, dan pembayaran tidak berubah bila jalur dipindah.</p>
-                    <button class="button-secondary" type="submit">Pindah ke jalur umum</button>
+            <?php
+            $routeHidden = static function (string $action, string $route = '') use ($registrationId): void {
+                echo '<input type="hidden" name="csrf_token" value="'.h(csrf_token()).'">';
+                echo '<input type="hidden" name="id" value="'.h($registrationId).'">';
+                echo '<input type="hidden" name="workflow_action" value="'.h($action).'">';
+                if ($route !== '') {
+                    echo '<input type="hidden" name="jalur_seleksi" value="'.h($route).'">';
+                }
+            };
+            if ($currentRoute === 'prestasi') {
+                $awaitingParent = !prestasi_has_data($conn, $registrationId); ?>
+                <div class="route-switch__body">
+                    <?php if ($awaitingParent) { ?>
+                        <p class="route-switch__hint">Peserta di jalur <strong>Prestasi</strong> dan <strong>menunggu wali murid mengisi data prestasi</strong> lewat tautan WhatsApp. Kuota, nomor antrean, dan pembayaran tidak berubah bila jalur dipindah.</p>
+                    <?php } else { ?>
+                        <p class="route-switch__hint">Peserta saat ini di jalur <strong>Prestasi</strong>. Kuota, nomor antrean, dan pembayaran tidak berubah bila jalur dipindah.</p>
+                    <?php } ?>
+                    <div class="route-switch__actions">
+                        <?php if ($awaitingParent) { ?>
+                            <form method="post" action="<?php echo h($routeFormAction); ?>"><?php $routeHidden('resend_prestasi_link'); ?><button class="button-primary" type="submit">Kirim ulang tautan ke wali murid</button></form>
+                        <?php } ?>
+                        <form method="post" action="<?php echo h($routeFormAction); ?>" data-confirm="Pindahkan peserta ini ke jalur umum? Data prestasi tidak lagi ditampilkan."><?php $routeHidden('switch_selection_route', 'umum'); ?><button class="button-secondary" type="submit">Pindah ke jalur umum</button></form>
+                    </div>
+                </div>
+            <?php } else { ?>
+                <form class="route-switch__body" method="post" action="<?php echo h($routeFormAction); ?>" data-confirm="Pindahkan peserta ini ke jalur prestasi? Wali murid diminta mengisi data prestasi lewat tautan WhatsApp.">
+                    <?php $routeHidden('switch_selection_route', 'prestasi'); ?>
+                    <p class="route-switch__hint">Peserta saat ini di jalur <strong><?php echo h(prestasi_jalur_label($currentRoute) ?: 'belum dipilih'); ?></strong>. Setelah dipindah, wali murid menerima tautan WhatsApp untuk mengisi data prestasi (surat pengantar, peringkat raport, hafalan, dan lomba). Kuota, nomor antrean, dan pembayaran tidak berubah.</p>
+                    <button class="button-primary" type="submit">Pindah ke jalur prestasi</button>
                 </form>
-            <?php } else {
-                $posted = ($_POST['workflow_action'] ?? '') === 'switch_selection_route' ? $_POST : [];
-                $pick = static fn (string $name): string => is_string($posted[$name] ?? null) ? $posted[$name] : '';
-                $select = static function (string $name, string $label, array $options) use ($pick): void {
-                    echo '<div class="filter-field"><label for="rs-'.h($name).'">'.h($label).'</label><select id="rs-'.h($name).'" name="'.h($name).'"><option value="">Pilih</option>';
-                    foreach ($options as $option) {
-                        echo '<option value="'.h($option).'"'.($pick($name) === $option ? ' selected' : '').'>'.h($option).'</option>';
-                    }
-                    echo '</select></div>';
-                }; ?>
-                <details class="route-switch__details"<?php echo $posted ? ' open' : ''; ?>>
-                    <summary>Pindah ke jalur prestasi</summary>
-                    <form class="operator-form route-switch__form" method="post" action="<?php echo h($routeFormAction); ?>" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                        <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                        <input type="hidden" name="workflow_action" value="switch_selection_route">
-                        <input type="hidden" name="jalur_seleksi" value="prestasi">
-                        <p class="route-switch__hint">Peserta saat ini di jalur <strong><?php echo h(prestasi_jalur_label($currentRoute) ?: 'belum dipilih'); ?></strong>. Isi data prestasi dari wali murid. Kuota, nomor antrean, dan pembayaran tidak berubah.</p>
-                        <div class="filter-field route-switch__wide"><label for="rs-surat_prestasi">Foto surat pengantar prestasi (JPG/PNG, maks. 5 MB)</label><input id="rs-surat_prestasi" type="file" name="surat_prestasi" accept="image/jpeg,image/png" required></div>
-                        <p class="route-switch__group"><?php echo h(PRESTASI_JENIS_AKADEMIK); ?></p>
-                        <?php $select('akademik_ada', 'Ada peringkat di raport?', ['Ada', PRESTASI_TIDAK_ADA]);
-                        foreach (PRESTASI_PERINGKAT_BARIS as $name => $label) {
-                            $select($name, $label.' (bila ada)', PRESTASI_PERINGKAT);
-                        } ?>
-                        <p class="route-switch__group"><?php echo h(PRESTASI_JENIS_QURAN); ?></p>
-                        <?php $select('hafalan_ada', "Ada hafalan Al-Qur'an?", ['Ada', PRESTASI_TIDAK_ADA]);
-                        $select('jumlah_hafalan', 'Jumlah hafalan (bila ada)', PRESTASI_JUMLAH_HAFALAN); ?>
-                        <div class="filter-field"><label for="rs-jumlah_hafalan_lain">Jumlah hafalan lain (bila 3 Juz ke atas)</label><input id="rs-jumlah_hafalan_lain" name="jumlah_hafalan_lain" maxlength="100" placeholder="Contoh: 5 Juz" value="<?php echo h($pick('jumlah_hafalan_lain')); ?>"></div>
-                        <p class="route-switch__group"><?php echo h(PRESTASI_JENIS_LOMBA); ?></p>
-                        <?php $select('riwayat_lomba', 'Pernah memenangkan lomba?', ['Ada', PRESTASI_TIDAK_ADA]); ?>
-                        <div class="filter-field route-switch__wide"><label for="rs-daftar_lomba">Lomba yang dimenangkan (bila ada)</label><textarea id="rs-daftar_lomba" name="daftar_lomba" rows="3" maxlength="2000" placeholder="Contoh: Juara 1 lomba baca puisi tingkat kabupaten"><?php echo h($pick('daftar_lomba')); ?></textarea></div>
-                        <div class="route-switch__wide"><button class="button-primary" type="submit">Simpan dan pindahkan ke jalur prestasi</button></div>
-                    </form>
-                </details>
             <?php } ?>
         </section>
         <?php } ?>
