@@ -310,6 +310,20 @@ if ($revisionMode) {
     }
 }
 $inputFields = formulir_input_fields($dataSections);
+// Revisi: pilihan tersimpan yang kini tidak tersedia lagi (mis. nominal infaq/SPP yang
+// diganti lewat kuisioner unit) dikosongkan, ditandai merah, dan formulir dibuka di isian itu.
+$staleChoices = [];
+if ($revisionMode && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    foreach ($inputFields as $fieldName => $field) {
+        $savedChoice = trim((string) ($formValues[$fieldName] ?? ''));
+        if (($field['type'] ?? '') !== 'select' || $savedChoice === '' || array_key_exists($savedChoice, $field['options'] ?? [])
+            || !formulir_condition_met($field, $formValues)) {
+            continue;
+        }
+        $staleChoices[$fieldName] = $fieldErrors[$fieldName] = $field['label'].': pilihan sebelumnya ('.$savedChoice.') sudah tidak berlaku. Silakan pilih kembali.';
+        $formValues[$fieldName] = '';
+    }
+}
 $guidePath = __DIR__ . '/petunjuk_teknis_spmb_wakaf_cendekia.json';
 $spmbGuide = null;
 $guideLoadError = '';
@@ -714,6 +728,15 @@ header('Referrer-Policy: no-referrer');
                     <ul><?php foreach ($errors as $error) {
                         $errorField = array_search($error, $fieldErrors, true); ?>
                         <li><?php if ($errorField !== false) { ?><a href="#<?php echo h($errorField); ?>" data-error-field="<?php echo h($errorField); ?>"><?php echo h($error); ?></a><?php } else { echo h($error); } ?></li>
+                    <?php } ?></ul>
+                </div>
+                <script type="application/json" id="server-field-errors"><?php echo json_encode((object) $fieldErrors, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>
+            <?php } elseif ($staleChoices && $canShowFullForm) { ?>
+                <div class="error-summary" role="alert" aria-labelledby="formulir-stale" data-server-errors>
+                    <strong id="formulir-stale">Ada pilihan yang perlu dipilih ulang</strong>
+                    <p>Panitia memperbarui pilihan berikut. Pilih kembali, periksa isian lain, lalu kirim ulang formulir.</p>
+                    <ul><?php foreach ($staleChoices as $staleField => $staleMessage) { ?>
+                        <li><a href="#<?php echo h($staleField); ?>" data-error-field="<?php echo h($staleField); ?>"><?php echo h($staleMessage); ?></a></li>
                     <?php } ?></ul>
                 </div>
                 <script type="application/json" id="server-field-errors"><?php echo json_encode((object) $fieldErrors, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE); ?></script>
