@@ -3448,6 +3448,78 @@ html:root[data-theme="dark"] .combined-quota {
     }
 }
 
+/* ---------- Detail peserta: perpanjangan batas pembayaran ---------- */
+
+.deadline-extend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px 20px;
+    margin-top: 6px;
+    padding: 16px 18px;
+    background: var(--admin-white);
+    border: 1px solid var(--admin-line);
+    border-radius: 16px;
+}
+
+.deadline-extend.is-overdue {
+    border-color: color-mix(in srgb, #d97706 45%, var(--admin-line));
+    background: color-mix(in srgb, #f59e0b 7%, var(--admin-white));
+}
+
+.deadline-extend__info {
+    display: grid;
+    gap: 4px;
+    flex: 1 1 280px;
+    min-width: 0;
+}
+
+.deadline-extend__info strong {
+    font-size: 0.98rem;
+}
+
+.deadline-extend.is-overdue .deadline-extend__info strong,
+.deadline-extend .is-warning {
+    color: #b45309;
+}
+
+.deadline-extend__info span,
+.deadline-extend small {
+    color: var(--admin-muted);
+    font-size: 0.85rem;
+}
+
+.deadline-extend__form {
+    display: grid;
+    gap: 6px;
+    flex: 0 1 320px;
+    min-width: 0;
+}
+
+.deadline-extend__form label {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.deadline-extend__form .deadline-extend__check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+@media (max-width: 620px) {
+    .deadline-extend__form {
+        flex-basis: 100%;
+    }
+}
+
+html:root[data-theme="dark"] .deadline-extend.is-overdue .deadline-extend__info strong,
+html:root[data-theme="dark"] .deadline-extend .is-warning {
+    color: #fbbf24;
+}
+
 /* ---------- Detail peserta: pemeriksaan bukti pembayaran ---------- */
 
 .payment-review {

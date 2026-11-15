@@ -227,6 +227,73 @@ function ppdb_send_payment_rejected_whatsapp(mysqli $conn, string $registrationI
     }
 }
 
+/** Pesan untuk pendaftar yang batas pembayarannya diperpanjang panitia. */
+function ppdb_payment_extended_whatsapp_message(array $registration, string $continueUrl, array $formWindow = []): string
+{
+    $fee = (float) ($registration['biaya_pendaftaran'] ?? 0);
+    $lines = [
+        'Assalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Yth. Ayah/Bunda dari Ananda *'.$registration['nm_peserta'].'*,',
+        '',
+        'Batas pembayaran pendaftaran Ananda di *'.$registration['nama_unit'].'* (kode *'.$registration['id_pendaftaran'].'*) telah *diperpanjang* oleh panitia.',
+        '',
+        'Batas pembayaran baru: *'.ppdb_format_date_id((string) $registration['tanggal_batas_bayar']).'*',
+    ];
+    if ($fee > 0) {
+        $lines[] = 'Biaya pendaftaran: *Rp '.number_format($fee, 0, ',', '.').'*';
+    }
+    if (!empty($formWindow['batas'])) {
+        $lines[] = 'Batas pengisian formulir: *'.ppdb_format_day_date_id($formWindow['batas']).' pukul '.date('H.i', strtotime($formWindow['batas'])).' WIB*';
+    }
+    array_push(
+        $lines,
+        '',
+        'Silakan lakukan pembayaran, unggah bukti transfer, lalu lengkapi formulir melalui tautan pribadi berikut:',
+        $continueUrl,
+        '',
+        'Terima kasih atas perhatian Ayah/Bunda.',
+        'Wassalamu’alaikum warahmatullahi wabarakatuh.',
+        '',
+        'Admin SPMB Yayasan Wakaf Cendekia Takengon',
+        'WhatsApp: '.ppdb_admin_whatsapp_display()
+    );
+    return implode("\n", $lines);
+}
+
+/**
+ * Kirim pemberitahuan perpanjangan batas pembayaran beserta tautan lanjutan.
+ *
+ * @return array{ok: bool, error: string, phone: string}
+ */
+function ppdb_send_payment_extended_whatsapp(mysqli $conn, string $registrationId): array
+{
+    if (!ppdb_wablas_enabled()) {
+        return ['ok' => false, 'error' => 'Wablas belum diatur.', 'phone' => ''];
+    }
+    try {
+        $stmt = mysqli_prepare($conn, 'SELECT p.id_pendaftaran,p.kode_unit,p.nm_peserta,p.th_ajaran,p.no_hp_pendaftar,p.tanggal_batas_bayar,p.token_bukti,u.nama_unit,q.biaya_pendaftaran FROM tb_pendaftaran p LEFT JOIN tb_unit_pendidikan u ON u.kode_unit=p.kode_unit LEFT JOIN tb_pengaturan_ppdb q ON q.kode_unit=p.kode_unit AND q.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? LIMIT 1');
+        mysqli_stmt_bind_param($stmt, 's', $registrationId);
+        mysqli_stmt_execute($stmt);
+        $registration = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
+        mysqli_stmt_close($stmt);
+        $phone = ppdb_normalize_whatsapp_number((string) ($registration['no_hp_pendaftar'] ?? ''));
+        if (!$registration || $phone === '') {
+            return ['ok' => false, 'error' => 'Nomor WhatsApp pendaftar tidak valid.', 'phone' => ''];
+        }
+        ppdb_resume_token($conn, $registrationId);
+        $formWindow = ppdb_form_window($conn, (string) $registration['kode_unit'], (string) $registration['th_ajaran']);
+        $delivery = ppdb_wablas_send($phone, ppdb_payment_extended_whatsapp_message($registration, ppdb_continue_url($registration), $formWindow));
+        if (!$delivery['ok']) {
+            error_log('Pemberitahuan perpanjangan bayar '.$registrationId.' gagal: '.$delivery['error']);
+        }
+        return $delivery + ['phone' => $phone];
+    } catch (Throwable $exception) {
+        error_log('Pemberitahuan perpanjangan bayar '.$registrationId.' gagal: '.$exception->getMessage());
+        return ['ok' => false, 'error' => 'Pesan belum dapat dikirim.', 'phone' => ''];
+    }
+}
+
 /**
  * Tahap yang dapat diingatkan kepada orang tua:
  * 'bayar' (belum bayar / bukti ditolak), 'formulir' (formulir lengkap belum dikirim), atau '' bila tidak ada.
