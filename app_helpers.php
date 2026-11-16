@@ -1026,8 +1026,13 @@ function ppdb_finalize_registration(mysqli $conn, string $registrationId): void
  */
 function ppdb_activate_registration(mysqli $conn, string $registrationId): bool
 {
+    // Batas bayar mengikuti tanggal tetap di pengaturan unit; tanpa tanggal, memakai jumlah hari lama.
+    $deadlineSql = 'DATE_ADD(CURDATE(),INTERVAL GREATEST(1,COALESCE(c.masa_pembayaran_hari,1)) DAY)';
+    if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_pembayaran')) {
+        $deadlineSql = 'COALESCE(c.batas_pembayaran,'.$deadlineSql.')';
+    }
     $update = mysqli_prepare($conn, "UPDATE tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran
-        SET p.tanggal_batas_bayar=IF(COALESCE(c.biaya_pendaftaran,0)>0,COALESCE(p.tanggal_batas_bayar,DATE_ADD(CURDATE(),INTERVAL GREATEST(1,COALESCE(c.masa_pembayaran_hari,1)) DAY)),p.tanggal_batas_bayar),
+        SET p.tanggal_batas_bayar=IF(COALESCE(c.biaya_pendaftaran,0)>0,COALESCE(p.tanggal_batas_bayar,".$deadlineSql."),p.tanggal_batas_bayar),
             p.status_pembayaran=IF(COALESCE(c.biaya_pendaftaran,0)>0,'belum_bayar','terverifikasi'),
             p.status_ppdb=IF(COALESCE(c.biaya_pendaftaran,0)>0,'menunggu_pembayaran','menunggu_formulir')
         WHERE p.id_pendaftaran=? AND p.status_ppdb='menunggu_kontak'");

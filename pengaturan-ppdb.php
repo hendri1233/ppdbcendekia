@@ -227,7 +227,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bankName = PPDB_BANK_NAME;
     $accountNumber = trim($_POST['nomor_rekening'] ?? '');
     $accountName = trim($_POST['nama_pemilik_rekening'] ?? '');
-    $paymentDays = filter_var($_POST['masa_pembayaran_hari'] ?? null, FILTER_VALIDATE_INT);
+    // Batas pembayaran berupa tanggal tetap untuk semua pendaftar unit dan tahun ini.
+    $hasPaymentDate = ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_pembayaran');
+    $rawPaymentDate = is_string($_POST['batas_pembayaran'] ?? null) ? trim($_POST['batas_pembayaran']) : '';
+    $parsedPaymentDate = $rawPaymentDate === '' ? null : DateTimeImmutable::createFromFormat('!Y-m-d', $rawPaymentDate);
+    $paymentDate = $parsedPaymentDate ? $parsedPaymentDate->format('Y-m-d') : null;
+    // Tanggal lama yang sudah lewat boleh tetap disimpan saat mengubah isian lain.
+    $settingsDates = [];
+    if ($hasPaymentDate && is_string($unitCode) && is_string($academicYear)) {
+        $storedDate = mysqli_prepare($conn, 'SELECT batas_pembayaran FROM tb_pengaturan_ppdb WHERE kode_unit=? AND th_ajaran=? LIMIT 1');
+        mysqli_stmt_bind_param($storedDate, 'ss', $unitCode, $academicYear);
+        mysqli_stmt_execute($storedDate);
+        $settingsDates[$unitCode.'|'.$academicYear] = (string) (mysqli_fetch_assoc(mysqli_stmt_get_result($storedDate))['batas_pembayaran'] ?? '');
+        mysqli_stmt_close($storedDate);
+    }
+    $paymentDays = $hasPaymentDate ? 7 : filter_var($_POST['masa_pembayaran_hari'] ?? null, FILTER_VALIDATE_INT);
+    $syncedPayments = 0;
     $internalOpen = isset($_POST['internal_dibuka']) ? 1 : 0;
     $externalOpen = isset($_POST['eksternal_dibuka']) ? 1 : 0;
     $isOpen = $internalOpen || $externalOpen ? 1 : 0;
@@ -289,8 +304,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Jumlah kuota internal dan eksternal harus berupa angka nonnegatif dengan total maksimal 10.000.';
     } elseif ($feeInput === '' || !preg_match('/^[0-9]{1,10}(\.[0-9]{1,2})?$/', $feeInput)) {
         $error = 'Biaya pendaftaran harus berupa angka Rupiah yang valid.';
-    } elseif ($paymentDays === false || $paymentDays < 1 || $paymentDays > 30) {
+    } elseif (!$hasPaymentDate && ($paymentDays === false || $paymentDays < 1 || $paymentDays > 30)) {
         $error = 'Masa pembayaran harus antara 1 dan 30 hari.';
+    } elseif ($hasPaymentDate && $parsedPaymentDate === false) {
+        $error = 'Format tanggal batas pembayaran tidak valid.';
+    } elseif ($hasPaymentDate && (float) $feeInput > 0 && $paymentDate === null) {
+        $error = 'Tentukan tanggal batas pembayaran untuk unit yang memungut biaya.';
+    } elseif ($hasPaymentDate && $paymentDate !== null && $paymentDate < date('Y-m-d') && $paymentDate !== (string) ($settingsDates[$unitCode.'|'.$academicYear] ?? '')) {
+        $error = 'Tanggal batas pembayaran tidak boleh sebelum hari ini.';
     } elseif (strlen($bankName) > 80 || strlen($accountNumber) > 50 || strlen($accountName) > 120) {
         $error = 'Data rekening melebihi batas karakter.';
     } elseif ((float) $feeInput > 0 && ($accountNumber === '' || $accountName === '')) {
@@ -355,6 +376,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $saved = mysqli_stmt_execute($deadlineSave);
                     mysqli_stmt_close($deadlineSave);
                 }
+                if ($saved && $hasPaymentDate) {
+                    $paymentDateSave = mysqli_prepare($conn, 'UPDATE tb_pengaturan_ppdb SET batas_pembayaran=? WHERE kode_unit=? AND th_ajaran=?');
+                    mysqli_stmt_bind_param($paymentDateSave, 'sss', $paymentDate, $unitCode, $academicYear);
+                    $saved = mysqli_stmt_execute($paymentDateSave);
+                    mysqli_stmt_close($paymentDateSave);
+                    // Semua pendaftar yang masih menunggu pembayaran ikut memakai tanggal ini.
+                    if ($saved && $paymentDate !== null) {
+                        $paymentDateSync = mysqli_prepare($conn, "UPDATE tb_pendaftaran SET tanggal_batas_bayar=? WHERE kode_unit=? AND th_ajaran=? AND status_ppdb='menunggu_pembayaran' AND (tanggal_batas_bayar IS NULL OR tanggal_batas_bayar<>?)");
+                        mysqli_stmt_bind_param($paymentDateSync, 'ssss', $paymentDate, $unitCode, $academicYear, $paymentDate);
+                        $saved = mysqli_stmt_execute($paymentDateSync);
+                        $syncedPayments = max(0, mysqli_stmt_affected_rows($paymentDateSync));
+                        mysqli_stmt_close($paymentDateSync);
+                    }
+                }
                 if ($saved && $levelQuotaInput !== null) {
                     $levelSave = mysqli_prepare($conn, ($unitJenjang === 'SMP' ? 'INSERT INTO tb_kuota_jenis_kelamin (kode_unit,th_ajaran,jenis_kelamin,kuota_internal,kuota_eksternal)' : 'INSERT INTO tb_kuota_tingkat (kode_unit,th_ajaran,tingkat_kelas,kuota_internal,kuota_eksternal)').' VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE kuota_internal=VALUES(kuota_internal),kuota_eksternal=VALUES(kuota_eksternal)');
                     foreach ($levelQuotaInput as $level => $routes) {
@@ -365,7 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 if ($saved) {
                     mysqli_commit($conn);
-                    $notice = 'Pengaturan SPMB berhasil disimpan.';
+                    $notice = 'Pengaturan SPMB berhasil disimpan.'.($syncedPayments > 0 ? ' Batas pembayaran '.$syncedPayments.' pendaftar yang menunggu pembayaran ikut diperbarui.' : '');
                 } else {
                     mysqli_rollback($conn);
                     $error = 'Pengaturan belum dapat disimpan.';
@@ -400,6 +435,7 @@ while ($setting = mysqli_fetch_assoc($settings)) {
         'nomor_rekening' => $setting['nomor_rekening'],
         'nama_pemilik_rekening' => $setting['nama_pemilik_rekening'],
         'masa_pembayaran_hari' => (int) $setting['masa_pembayaran_hari'],
+        'batas_pembayaran' => (string) ($setting['batas_pembayaran'] ?? ''),
         'internal_dibuka' => (int) $setting['internal_dibuka'],
         'eksternal_dibuka' => (int) $setting['eksternal_dibuka'],
         'jadwal_buka' => isset($setting['jadwal_buka']) ? substr(str_replace(' ', 'T', $setting['jadwal_buka']), 0, 16) : '',
@@ -544,10 +580,17 @@ require 'admin_header.php';
                     <?php } ?>
                 </fieldset>
             <?php } ?>
-            <div class="filter-field">
-                <label for="masa_pembayaran_hari">Batas pembayaran (hari)</label>
-                <input id="masa_pembayaran_hari" name="masa_pembayaran_hari" type="number" min="1" max="30" value="<?php echo h($_POST['masa_pembayaran_hari'] ?? '7'); ?>" required>
-            </div>
+            <?php if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_pembayaran')) { ?>
+                <div class="filter-field">
+                    <label for="batas_pembayaran">Batas pembayaran (tanggal)</label>
+                    <input id="batas_pembayaran" name="batas_pembayaran" type="date" value="<?php echo h(is_string($_POST['batas_pembayaran'] ?? null) ? $_POST['batas_pembayaran'] : ''); ?>" title="Berlaku untuk semua pendaftar, sejak mendaftar sampai tanggal ini">
+                </div>
+            <?php } else { ?>
+                <div class="filter-field">
+                    <label for="masa_pembayaran_hari">Batas pembayaran (hari)</label>
+                    <input id="masa_pembayaran_hari" name="masa_pembayaran_hari" type="number" min="1" max="30" value="<?php echo h($_POST['masa_pembayaran_hari'] ?? '7'); ?>" required>
+                </div>
+            <?php } ?>
             <div class="filter-field field-span-2">
                 <label for="biaya_pendaftaran">Biaya pendaftaran (Rp)</label>
                 <input id="biaya_pendaftaran" name="biaya_pendaftaran" inputmode="decimal" placeholder="Contoh: 250000 — kosongkan bila tidak dipungut" value="<?php echo h($_POST['biaya_pendaftaran'] ?? ''); ?>" required>

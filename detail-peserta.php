@@ -117,6 +117,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$locked || $locked['status_ppdb'] !== 'menunggu_kontak') {
                     throw new RuntimeException('Registrasi ini sudah disetujui atau tidak lagi menunggu persetujuan.');
                 }
+                // Batas pembayaran unit yang sudah lewat membuat pendaftar tidak dapat membayar.
+                if (ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_pembayaran')) {
+                    $deadlineCheck = mysqli_prepare($conn, 'SELECT c.batas_pembayaran FROM tb_pendaftaran p JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? AND c.biaya_pendaftaran>0 AND c.batas_pembayaran<CURDATE()');
+                    mysqli_stmt_bind_param($deadlineCheck, 's', $registrationId);
+                    mysqli_stmt_execute($deadlineCheck);
+                    $expiredDeadline = mysqli_fetch_assoc(mysqli_stmt_get_result($deadlineCheck));
+                    mysqli_stmt_close($deadlineCheck);
+                    if ($expiredDeadline) {
+                        throw new RuntimeException('Batas pembayaran unit ini ('.ppdb_format_date_id($expiredDeadline['batas_pembayaran']).') sudah lewat. Perbarui tanggalnya di menu Kuota & pembayaran sebelum menyetujui registrasi.');
+                    }
+                }
                 ppdb_activate_registration($conn, $registrationId);
                 mysqli_commit($conn);
                 enqueue_google_sheets_registration($conn, $registrationId);
@@ -217,53 +228,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_rollback($conn);
                 $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Status pembayaran belum dapat diperbarui.';
             }
-        } elseif ($action === 'extend_payment_deadline') {
-            // Perpanjang batas bayar: dihitung dari hari ini atau dari batas lama bila masih lebih jauh.
-            $extendDays = filter_var($_POST['tambah_hari'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 30]]);
-            try {
-                if ($extendDays === false) {
-                    throw new RuntimeException('Pilih jumlah hari perpanjangan antara 1 sampai 30.');
-                }
-                mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, 'SELECT status_ppdb,status_pembayaran,tanggal_batas_bayar FROM tb_pendaftaran WHERE id_pendaftaran=? FOR UPDATE');
-                mysqli_stmt_bind_param($lock, 's', $registrationId);
-                mysqli_stmt_execute($lock);
-                $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
-                mysqli_stmt_close($lock);
-                $awaitingPayment = $locked && ($locked['status_ppdb'] === 'menunggu_pembayaran'
-                    || ($locked['status_pembayaran'] === 'ditolak' && in_array($locked['status_ppdb'], ['pembayaran_terverifikasi', 'menunggu_formulir', 'formulir_terisi'], true)));
-                if (!$awaitingPayment) {
-                    throw new RuntimeException('Batas pembayaran hanya dapat diperpanjang untuk peserta yang masih menunggu pembayaran.');
-                }
-                $baseDate = $locked['tanggal_batas_bayar'] && $locked['tanggal_batas_bayar'] > date('Y-m-d') ? $locked['tanggal_batas_bayar'] : date('Y-m-d');
-                $newDeadline = date('Y-m-d', strtotime($baseDate.' +'.$extendDays.' days'));
-                $extend = mysqli_prepare($conn, 'UPDATE tb_pendaftaran SET tanggal_batas_bayar=? WHERE id_pendaftaran=?');
-                mysqli_stmt_bind_param($extend, 'ss', $newDeadline, $registrationId);
-                mysqli_stmt_execute($extend);
-                mysqli_stmt_close($extend);
-                mysqli_commit($conn);
-                enqueue_google_sheets_registration($conn, $registrationId);
-
-                $notice = 'Batas pembayaran diperpanjang sampai '.ppdb_format_date_id($newDeadline).'.';
-                if (!empty($_POST['kirim_wa'])) {
-                    $delivery = ppdb_send_payment_extended_whatsapp($conn, $registrationId);
-                    if ($delivery['ok']) {
-                        $notice .= ' Pemberitahuan terkirim ke WhatsApp '.ppdb_display_phone($delivery['phone']).'.';
-                    } else {
-                        $whatsappDeliveryNotice = 'WhatsApp otomatis belum terkirim ('.$delivery['error'].'). Kirim pemberitahuan melalui panel "Kirim pesan WhatsApp manual" di bawah.';
-                        $whatsappDeliveryTone = 'warning';
-                    }
-                } else {
-                    $notice .= ' Tidak ada pesan yang dikirim ke pendaftar.';
-                }
-            } catch (Throwable $exception) {
-                mysqli_rollback($conn);
-                $error = $exception instanceof RuntimeException ? $exception->getMessage() : 'Batas pembayaran belum dapat diperpanjang.';
-            }
         } elseif ($action === 'reopen_registration') {
             try {
                 mysqli_begin_transaction($conn);
-                $lock = mysqli_prepare($conn, "SELECT p.status_ppdb,p.status_pembayaran,p.jenis_kelamin,p.alamat,p.tanggal_batas_bayar,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.masa_pembayaran_hari FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE");
+                $lock = mysqli_prepare($conn, "SELECT p.status_ppdb,p.status_pembayaran,p.jenis_kelamin,p.alamat,p.tanggal_batas_bayar,p.kode_unit,p.th_ajaran,p.jalur_pendaftaran,c.kuota_internal,c.kuota_eksternal,c.biaya_pendaftaran,c.masa_pembayaran_hari".(ppdb_column_exists($conn, 'tb_pengaturan_ppdb', 'batas_pembayaran') ? ',c.batas_pembayaran' : '')." FROM tb_pendaftaran p LEFT JOIN tb_pengaturan_ppdb c ON c.kode_unit=p.kode_unit AND c.th_ajaran=p.th_ajaran WHERE p.id_pendaftaran=? FOR UPDATE");
                 mysqli_stmt_bind_param($lock, 's', $registrationId);
                 mysqli_stmt_execute($lock);
                 $locked = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
@@ -295,7 +263,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ((float) $locked['biaya_pendaftaran'] > 0) {
                     $newStatus = 'menunggu_pembayaran';
                     if (!$newDeadline || $newDeadline < date('Y-m-d')) {
-                        $newDeadline = date('Y-m-d', strtotime('+' . max(1, (int) $locked['masa_pembayaran_hari']) . ' days'));
+                        // Tanggal tetap di pengaturan unit bila masih berlaku; selain itu jumlah hari lama.
+                        $unitDeadline = (string) ($locked['batas_pembayaran'] ?? '');
+                        $newDeadline = $unitDeadline !== '' && $unitDeadline >= date('Y-m-d')
+                            ? $unitDeadline
+                            : date('Y-m-d', strtotime('+' . max(1, (int) $locked['masa_pembayaran_hari']) . ' days'));
                     }
                 } else {
                     $newStatus = 'menunggu_formulir';
@@ -506,16 +478,6 @@ if ($manualRecipients && !empty($participant['token_bukti'])) {
         $manualMessages['bayar_ditolak'] = [
             'label' => 'Bukti pembayaran ditolak · tautan unggah ulang',
             'text' => ppdb_payment_rejected_whatsapp_message($manualRegistration, $rejectedReason, ppdb_continue_url($manualRegistration)),
-        ];
-    }
-    if ($participant['status_ppdb'] === 'menunggu_pembayaran' && !empty($participant['tanggal_batas_bayar']) && $participant['tanggal_batas_bayar'] >= date('Y-m-d')) {
-        $manualMessages['bayar_diperpanjang'] = [
-            'label' => 'Batas pembayaran diperpanjang',
-            'text' => ppdb_payment_extended_whatsapp_message(
-                $manualRegistration,
-                ppdb_continue_url($manualRegistration),
-                ppdb_form_window($conn, (string) $participant['kode_unit'], (string) $participant['th_ajaran'])
-            ),
         ];
     }
     $manualMessages['registrasi'] = [
@@ -761,32 +723,17 @@ require 'admin_header.php';
         if ($awaitingPayment) {
             $currentDeadline = (string) ($participant['tanggal_batas_bayar'] ?? '');
             $deadlinePassed = $currentDeadline !== '' && $currentDeadline < date('Y-m-d');
-            $extendBase = $currentDeadline !== '' && $currentDeadline > date('Y-m-d') ? $currentDeadline : date('Y-m-d');
             $extendFormWindow = ppdb_form_window($conn, (string) $participant['kode_unit'], (string) $participant['th_ajaran']);
-            $extendPhone = ppdb_normalize_whatsapp_number((string) $participant['no_hp_pendaftar']);
             ?>
             <div class="deadline-extend<?php echo $deadlinePassed ? ' is-overdue' : ''; ?>">
                 <div class="deadline-extend__info">
                     <strong><?php echo $deadlinePassed ? 'Batas pembayaran sudah lewat' : 'Batas pembayaran'; ?></strong>
-                    <span><?php echo $currentDeadline !== '' ? h(ppdb_format_date_id($currentDeadline)) : 'Belum ditentukan'; ?><?php echo $deadlinePassed ? ' · pendaftar tidak dapat mengunggah bukti transfer sampai batasnya diperpanjang.' : ''; ?></span>
+                    <span><?php echo $currentDeadline !== '' ? h(ppdb_format_date_id($currentDeadline)) : 'Belum ditentukan'; ?><?php echo $deadlinePassed ? ' · pendaftar tidak dapat mengunggah bukti transfer.' : ''; ?></span>
+                    <small>Batas pembayaran berlaku sama untuk semua pendaftar unit ini dan diubah di menu <a href="pengaturan-ppdb.php">Kuota &amp; pembayaran</a>.</small>
                     <?php if (!empty($extendFormWindow['batas']) && empty($participant['revisi_dibuka'])) { ?>
                         <small<?php echo ppdb_form_deadline_passed($extendFormWindow['batas']) ? ' class="is-warning"' : ''; ?>>Batas pengisian formulir unit: <?php echo h(ppdb_format_datetime_id($extendFormWindow['batas'])); ?><?php echo ppdb_form_deadline_passed($extendFormWindow['batas']) ? ' (sudah lewat; peserta tetap dinyatakan gugur sampai batas formulir di Pengaturan PPDB dimundurkan)' : ''; ?>.</small>
                     <?php } ?>
                 </div>
-                <form method="post" class="deadline-extend__form" data-confirm="Perpanjang batas pembayaran <?php echo h($participant['nm_peserta']); ?>?">
-                    <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
-                    <input type="hidden" name="id" value="<?php echo h($registrationId); ?>">
-                    <input type="hidden" name="workflow_action" value="extend_payment_deadline">
-                    <label for="tambah-hari">Perpanjang</label>
-                    <select id="tambah-hari" name="tambah_hari">
-                        <?php foreach ([1, 2, 3, 5, 7, 14] as $dayOption) { ?>
-                            <option value="<?php echo $dayOption; ?>"<?php echo $dayOption === 3 ? ' selected' : ''; ?>><?php echo $dayOption; ?> hari · sampai <?php echo h(ppdb_format_date_id(date('Y-m-d', strtotime($extendBase.' +'.$dayOption.' days')))); ?></option>
-                        <?php } ?>
-                    </select>
-                    <label class="deadline-extend__check"><input type="checkbox" name="kirim_wa" value="1"<?php echo ppdb_wablas_enabled() && $extendPhone !== '' ? ' checked' : ' disabled'; ?>> Kirim pemberitahuan WhatsApp<?php echo $extendPhone !== '' ? ' ke '.h(ppdb_display_phone($extendPhone)) : ''; ?></label>
-                    <?php if (!ppdb_wablas_enabled()) { ?><small class="is-warning">Wablas belum aktif; kirim pemberitahuan lewat panel WhatsApp manual.</small><?php } elseif ($extendPhone === '') { ?><small class="is-warning">Nomor WhatsApp pendaftar tidak valid; kirim manual ke nomor ayah atau ibu.</small><?php } ?>
-                    <button class="button-primary" type="submit">Perpanjang batas bayar</button>
-                </form>
             </div>
         <?php } ?>
 

@@ -3490,31 +3490,6 @@ html:root[data-theme="dark"] .combined-quota {
     font-size: 0.85rem;
 }
 
-.deadline-extend__form {
-    display: grid;
-    gap: 6px;
-    flex: 0 1 320px;
-    min-width: 0;
-}
-
-.deadline-extend__form label {
-    font-size: 0.85rem;
-    font-weight: 700;
-}
-
-.deadline-extend__form .deadline-extend__check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-}
-
-@media (max-width: 620px) {
-    .deadline-extend__form {
-        flex-basis: 100%;
-    }
-}
-
 html:root[data-theme="dark"] .deadline-extend.is-overdue .deadline-extend__info strong,
 html:root[data-theme="dark"] .deadline-extend .is-warning {
     color: #fbbf24;

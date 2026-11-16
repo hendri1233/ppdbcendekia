@@ -57,6 +57,7 @@
         nama_pemilik_rekening: form.querySelector('#nama_pemilik_rekening'),
         biaya_pendaftaran: form.querySelector('#biaya_pendaftaran'),
         masa_pembayaran_hari: form.querySelector('#masa_pembayaran_hari'),
+        batas_pembayaran: form.querySelector('#batas_pembayaran'),
         jadwal_buka: form.querySelector('#jadwal_buka'),
         jadwal_tutup: form.querySelector('#jadwal_tutup'),
         batas_formulir: form.querySelector('#batas_formulir'),
