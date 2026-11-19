@@ -76,7 +76,7 @@ require 'admin_header.php';
                 <div class="cms-split">
                     <div class="cms-grid">
                         <div class="cms-field cms-field--wide"><label class="cms-label" for="unit-tagline">Ringkasan satu kalimat</label><input id="unit-tagline" name="tagline" value="<?php echo h($unit['tagline']); ?>" maxlength="200"><span class="cms-hint">Tampil di kartu unit pada beranda dan di bawah judul halaman unit.</span></div>
-                        <div class="cms-field"><label class="cms-label" for="unit-phone">Nomor WhatsApp admin unit</label><input id="unit-phone" name="phone" value="<?php echo h($unit['phone']); ?>" maxlength="30" inputmode="tel"><span class="cms-hint">Tercetak pada PDF bukti pendaftaran dan surat keterangan diterima unit ini. Tidak tampil di situs.</span></div>
+                        <div class="cms-field"><label class="cms-label" for="unit-phone">Nomor WhatsApp admin unit</label><input id="unit-phone" name="phone" value="<?php echo h($unit['phone']); ?>" maxlength="30" inputmode="tel"><span class="cms-hint">Tercetak pada PDF bukti pendaftaran dan surat keterangan pendaftaran unit ini. Tidak tampil di situs.</span></div>
                         <?php echo cms_rich_editor('description_html', $unit['description_html'], 'Uraian profil unit', 'Program unggulan, kegiatan, dan informasi yang diverifikasi sekolah.'); ?>
                     </div>
                     <?php echo cms_image_field('photo', $unit['photo_path'], 'Foto unit', 'Boleh potret atau lanskap; gambar tampil utuh tanpa terpotong. JPG, PNG, atau WebP, maks. 6 MB.'); ?>

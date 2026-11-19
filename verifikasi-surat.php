@@ -29,7 +29,7 @@ if (!$letter) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Verifikasi surat keterangan diterima | SPMB Cendekia</title>
+    <title>Verifikasi surat keterangan pendaftaran | SPMB Cendekia</title>
     <link rel="stylesheet" href="css/tokens.css?v=<?php echo (int) @filemtime(__DIR__.'/css/tokens.css'); ?>">
     <link rel="stylesheet" href="css/result.css?v=<?php echo (int) filemtime(__DIR__.'/css/result.css'); ?>">
     <link rel="stylesheet" href="css/alur.css?v=<?php echo (int) @filemtime(__DIR__.'/css/alur.css'); ?>">
@@ -42,11 +42,11 @@ if (!$letter) {
         <span><strong>Wakaf Cendekia</strong><small>Takengon · SPMB</small></span>
     </a>
     <section class="result-panel">
-        <p class="result-eyebrow">Verifikasi surat keterangan diterima</p>
+        <p class="result-eyebrow">Verifikasi surat keterangan pendaftaran</p>
         <?php if ($isValid) { ?>
             <div class="payment-success" role="status"><strong>Surat ini sah dan masih berlaku.</strong> Data di bawah sesuai dengan catatan Panitia SPMB.</div>
         <?php } elseif ($letter) { ?>
-            <div class="payment-error" role="status"><strong>Surat ini tidak berlaku.</strong> Penerimaan peserta ini telah dibatalkan atau sedang ditinjau panitia.</div>
+            <div class="payment-error" role="status"><strong>Surat ini tidak berlaku.</strong> Pendaftaran peserta ini telah dibatalkan atau sedang ditinjau panitia.</div>
         <?php } else { ?>
             <div class="payment-error" role="alert"><strong>Surat tidak dapat diverifikasi.</strong> Tautan tidak sesuai dengan data Panitia SPMB.</div>
         <?php } ?>

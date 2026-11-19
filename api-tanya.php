@@ -148,7 +148,7 @@ function ai_knowledge_base(mysqli $conn): string
     $lines[] = '# Alur pendaftaran (halaman spmb, formulir di daftar)';
     $lines[] = '1. Registrasi awal di daftar.php: nama lengkap ananda, tanggal lahir, jenis kelamin, siapa yang mendaftarkan, nomor WhatsApp pendaftar, ayah, dan ibu. Sekitar 3 menit, tanpa NIK.';
     $lines[] = '2. Pembayaran: langsung setelah registrasi awal, pendaftar transfer lalu mengunggah bukti di situs tanpa menunggu dihubungi panitia.';
-    $lines[] = '3. Formulir lengkap di situs yang sama: data identitas, alamat, keluarga, membaca materi SPMB unit, lalu mengunggah dokumen. Sediakan sekitar 1 jam. Setelah formulir terkirim, ananda langsung diterima selama kursi tersedia, lalu tautan grup WhatsApp unit dan surat keterangan diterima (PDF) tampil.';
+    $lines[] = '3. Formulir lengkap di situs yang sama: data identitas, alamat, keluarga, membaca materi SPMB unit, lalu mengunggah dokumen. Sediakan sekitar 1 jam. Setelah formulir terkirim, ananda langsung diterima selama kursi tersedia, lalu tautan grup WhatsApp unit dan surat keterangan pendaftaran (PDF) tampil.';
     $lines[] = 'Setelah registrasi awal pendaftar menerima kode pendaftaran. Untuk kembali atau melihat hasil dan tautan grup WhatsApp unit, buka lanjutkan-pendaftaran dengan kode, tanggal lahir ananda, dan nomor WhatsApp. Jalur internal SDM yayasan memakai kode undangan terpisah. Pendaftar bisa masuk daftar tunggu bila kuota penuh.';
 
     $guide = ppdb_technical_guide();

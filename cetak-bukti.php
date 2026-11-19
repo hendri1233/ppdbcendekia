@@ -12,7 +12,7 @@ function cetak_image(string $path, string $class): string
     return is_file($path) ? '<img class="'.$class.'" src="data:image/jpeg;base64,'.base64_encode((string) file_get_contents($path)).'" alt="">' : '';
 }
 
-/** Kop surat dipakai bersama oleh bukti pendaftaran dan surat keterangan diterima. */
+/** Kop surat dipakai bersama oleh bukti pendaftaran dan surat keterangan pendaftaran. */
 function cetak_kop(string $unitName, string $adminPhone): string
 {
     return '<table class="kop"><tr>
@@ -173,15 +173,15 @@ if ($registration['status_ppdb'] === 'diterima') {
         <div class="page">
             '.cetak_kop($unitName, $unitAdminPhone).'
 
-            <div class="title">SURAT KETERANGAN DITERIMA</div>
+            <div class="title">SURAT KETERANGAN PENDAFTARAN</div>
             <div class="number">Nomor: '.h($letterNumber).'</div>
 
             <p>Yayasan Wakaf Cendekia Takengon, berdasarkan hasil pendaftaran SPMB Tahun Ajaran '.h($registration['th_ajaran']).' dan kelengkapan data yang disampaikan pendaftar, dengan ini menerangkan bahwa:</p>
             <table class="data">'.$rowsHtml.'</table>
-            <div class="verdict">DINYATAKAN DITERIMA SEBAGAI PESERTA DIDIK BARU</div>
+            <div class="verdict">TERDAFTAR SEBAGAI CALON PESERTA DIDIK BARU</div>
 
             <h2>Ketentuan dan Tata Tertib</h2>
-            <p style="margin-top:2px">Dengan diterimanya peserta didik tersebut, peserta didik dan orang tua/wali bersedia mematuhi ketentuan berikut serta peraturan sekolah yang berlaku:</p>
+            <p style="margin-top:2px">Apabila peserta didik tersebut diterima, peserta didik dan orang tua/wali bersedia mematuhi ketentuan berikut serta peraturan sekolah yang berlaku:</p>
             <ol>'.$rulesHtml.'</ol>
             <p style="margin-top:5px">Pelanggaran terhadap ketentuan di atas ditindaklanjuti melalui pembinaan sesuai peraturan sekolah. Surat ini dapat ditinjau kembali atau dibatalkan apabila data maupun bukti pembayaran yang disampaikan terbukti tidak benar.'.($groupLink !== '' ? ' Informasi lanjutan disampaikan melalui <a href="'.h($groupLink).'" style="color:#123f32">grup WhatsApp unit</a>.' : '').'</p>
             <p style="margin-top:5px">Demikian surat keterangan ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
@@ -194,7 +194,7 @@ if ($registration['status_ppdb'] === 'diterima') {
         <div class="footer">Surat ini diterbitkan melalui sistem SPMB Yayasan Wakaf Cendekia Takengon · Nomor '.h($letterNumber).'</div>
     </body></html>';
 
-    cetak_stream($html, 'surat-keterangan-diterima-'.$registrationId.'.pdf');
+    cetak_stream($html, 'surat-keterangan-pendaftaran-'.$registrationId.'.pdf');
 }
 
 $unitName = (string) ($registration['nama_unit'] ?? 'Belum ditentukan');
@@ -251,7 +251,7 @@ $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
         <ol>
             <li>Lakukan pembayaran pendaftaran dan unggah bukti transfer, dengan mencantumkan kode pendaftaran pada berita transfer.</li>
             <li>Konfirmasi data, baca brosur, rincian biaya, dan SOP, lalu lengkapi formulir dan dokumen persyaratan.</li>
-            <li>Setelah formulir terkirim, hasil pendaftaran dan surat keterangan diterima tampil pada halaman pendaftaran.</li>
+            <li>Setelah formulir terkirim, hasil pendaftaran dan surat keterangan pendaftaran tampil pada halaman pendaftaran.</li>
         </ol>
         <p style="margin-top:9px">Untuk melanjutkan, buka <a href="'.h($resumeUrl).'">halaman Lanjutkan pendaftaran</a> lalu masukkan kode pendaftaran, tanggal lahir ananda, dan nomor WhatsApp yang didaftarkan.</p>
         <div class="note">Dokumen ini bukan bukti penerimaan. NIK, alamat lengkap, dan data keluarga tidak dicantumkan demi menjaga privasi.</div>

@@ -979,7 +979,7 @@ header('Referrer-Policy: no-referrer');
                                 <input type="checkbox" id="konfirmasi_data" name="konfirmasi_data" value="1" required <?php echo (($_POST['konfirmasi_data'] ?? '') === '1') ? 'checked' : ''; ?>>
                                 <span>Saya memastikan seluruh data di atas benar dan dapat dipertanggungjawabkan.</span>
                             </label>
-                            <p>Setelah formulir terkirim, hasil pendaftaran dan surat keterangan diterima langsung tampil. NIPD dan tanggal masuk sekolah ditetapkan operator setelah peserta diterima. Data bertanda opsional boleh dikosongkan.</p>
+                            <p>Setelah formulir terkirim, hasil pendaftaran dan surat keterangan pendaftaran langsung tampil. NIPD dan tanggal masuk sekolah ditetapkan operator setelah peserta diterima. Data bertanda opsional boleh dikosongkan.</p>
                             <button type="submit" name="submit" value="1" class="submit-button" data-final-submit>Kirim formulir lengkap</button>
                         </div>
                         <?php formulir_step_actions($stepIndex, count($steps)); ?>

@@ -821,7 +821,7 @@ require 'admin_header.php';
             <p class="workflow-hint">Menunggu bukti transfer dari pendaftar. Nomor <?php echo h($registrationId); ?> menjadi berita transfer.</p>
             <?php ppdb_detail_reject_form($registrationId); ?>
         <?php } elseif ($participant['status_ppdb'] === 'diterima') { ?>
-            <p class="workflow-hint">Peserta diterima otomatis setelah menyelesaikan pendaftaran. Hasil, tautan grup WhatsApp unit, dan surat keterangan diterima tampil pada halaman pendaftar. Bila bukti transfer ditolak, penerimaan ditahan sampai pendaftar mengunggah bukti baru.</p>
+            <p class="workflow-hint">Peserta diterima otomatis setelah menyelesaikan pendaftaran. Hasil, tautan grup WhatsApp unit, dan surat keterangan pendaftaran tampil pada halaman pendaftar. Bila bukti transfer ditolak, penerimaan ditahan sampai pendaftar mengunggah bukti baru.</p>
             <div class="workflow-actions">
                 <form method="post" class="stacked-action" data-confirm="Batalkan penerimaan peserta ini?">
                     <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">

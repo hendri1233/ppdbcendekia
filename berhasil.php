@@ -93,7 +93,7 @@ header('Referrer-Policy: no-referrer');
                 <li><span aria-hidden="true">1</span><div><strong>Tunggu persetujuan panitia</strong><small>Tautan lanjutan pendaftaran dikirim melalui WhatsApp setelah registrasi awal disetujui.</small></div></li>
                 <li><span aria-hidden="true">2</span><div><strong>Bayar dan unggah bukti</strong><small>Transfer sesuai petunjuk lalu unggah buktinya.</small></div></li>
                 <li><span aria-hidden="true">3</span><div><strong>Isi formulir lengkap</strong><small>Konfirmasi data, baca materi, lalu isi formulir dan unggah dokumen.<?php if ($formWindow['batas']) { ?> Paling lambat <?php echo h(ppdb_format_datetime_id($formWindow['batas'])); ?>; lewat dari batas ini Ananda dinyatakan gugur.<?php } ?></small></div></li>
-                <li><span aria-hidden="true">4</span><div><strong>Pendaftaran Selesai</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan diterima langsung tampil.</small></div></li>
+                <li><span aria-hidden="true">4</span><div><strong>Pendaftaran Selesai</strong><small>Setelah formulir terkirim, tautan grup WhatsApp unit dan surat keterangan pendaftaran langsung tampil.</small></div></li>
             </ol>
 
             <h2 class="acceptance-heading">Data pendaftaran</h2>

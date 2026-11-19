@@ -953,7 +953,7 @@ function ppdb_resume_token(mysqli $conn, string $registrationId): string
     return $token;
 }
 
-/** Nomor surat keterangan diterima, misalnya 00046/SPMB-KB/YWCT/XI/2026. */
+/** Nomor surat keterangan pendaftaran, misalnya 00046/SPMB-KB/YWCT/XI/2026. */
 function ppdb_acceptance_number(array $registration): string
 {
     $issuedAt = strtotime((string) ($registration['data_diperiksa_pada'] ?? '')) ?: time();
@@ -967,7 +967,7 @@ function ppdb_acceptance_signature(array $registration): string
     return substr(hash_hmac('sha256', 'surat-diterima|'.$registration['id_pendaftaran'], (string) ($registration['token_bukti'] ?? '')), 0, 20);
 }
 
-/** Tata tertib pada surat keterangan diterima, dibedakan untuk usia dini dan sekolah. */
+/** Tata tertib pada surat keterangan pendaftaran, dibedakan untuk usia dini dan sekolah. */
 function ppdb_acceptance_rules(?string $jenjang): array
 {
     if (in_array($jenjang, ['KB', 'TPA', 'TK'], true)) {

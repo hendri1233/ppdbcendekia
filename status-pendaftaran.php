@@ -126,7 +126,7 @@ header('Referrer-Policy: no-referrer');
                     <?php } ?>
                     <a class="acceptance-button acceptance-button--pdf" href="cetak-bukti?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 16 6.5 10.5l1.4-1.4 3.1 3.1V3h2v9.2l3.1-3.1 1.4 1.4L12 16Zm-7 3h14v2H5v-2Z"/></svg>
-                        <span>Unduh surat keterangan diterima (PDF)</span>
+                        <span>Unduh surat keterangan pendaftaran (PDF)</span>
                     </a>
                 </div>
                 <?php if ($registration['status_pembayaran'] === 'menunggu_verifikasi') { ?>
@@ -136,7 +136,7 @@ header('Referrer-Policy: no-referrer');
                 <h2 class="acceptance-heading">Langkah berikutnya</h2>
                 <ol class="next-steps" aria-label="Langkah berikutnya">
                     <li><span aria-hidden="true">1</span><div><strong>Gabung grup WhatsApp unit <em class="step-flag<?php echo $groupOpened ? ' is-done' : ''; ?>" data-group-flag><?php echo $groupOpened ? 'Sudah dibuka' : 'Wajib'; ?></em></strong><small>Seluruh informasi lanjutan dari sekolah (jadwal, daftar ulang, perlengkapan) hanya disampaikan melalui grup.</small></div></li>
-                    <li><span aria-hidden="true">2</span><div><strong>Simpan surat keterangan diterima</strong><small>Unduh PDF, baca ketentuan dan tata tertibnya, lalu simpan sebagai bukti ananda telah diterima.</small></div></li>
+                    <li><span aria-hidden="true">2</span><div><strong>Simpan surat keterangan pendaftaran</strong><small>Unduh PDF, baca ketentuan dan tata tertibnya, lalu simpan sebagai bukti ananda telah terdaftar.</small></div></li>
                 </ol>
                 <h2 class="acceptance-heading">Data peserta didik</h2>
             <?php } else { ?>
