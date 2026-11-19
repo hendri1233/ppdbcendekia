@@ -20,7 +20,7 @@ function cetak_kop(string $unitName, string $adminPhone): string
         <td class="kop-text">
             <div class="kop-org">YAYASAN WAKAF CENDEKIA TAKENGON</div>
             <div class="kop-unit">Panitia Penerimaan Peserta Didik Baru · '.h($unitName).'</div>
-            <div class="kop-meta">Badan Hukum SK Kemenkumham AHU-0000410.AH.01.12 Tahun 2022 · Nazhir Wakaf Uang BWI Kode 3.3.00369<br>Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp Admin '.h($adminPhone).' · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</div>
+            <div class="kop-meta">Jalan Pertamina–Kebet, Kecamatan Bebesen, Kabupaten Aceh Tengah, Aceh<br>WhatsApp Admin '.h($adminPhone).' · wakafcendekiatakengon@gmail.com · cendekiatakengon.or.id</div>
         </td>
     </tr></table>
     <div class="kop-line"></div>';
