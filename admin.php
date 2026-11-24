@@ -275,6 +275,11 @@ if ($adminUnitCode === '') {
     $driveConfigured = google_drive_configured($conn);
     $driveAccount = $driveConfigured ? google_drive_account($conn) : null;
     $driveRootFolder = $driveAccount ? google_drive_cached_folder($conn, 'root') : '';
+    // PDF cetak peserta per unit di folder Drive panitia (migrasi 041).
+    require_once 'cetak_drive.php';
+    $printDriveMigrated = ppdb_table_exists($conn, 'tb_cetak_drive');
+    $printDriveCount = $printDriveMigrated ? (int) (mysqli_fetch_row(mysqli_query($conn, 'SELECT COUNT(*) FROM tb_cetak_drive'))[0] ?? 0) : 0;
+    $printDrivePending = $printDriveMigrated && $driveAccount && cetak_drive_pending_ids($conn, 1) !== [];
     $driveFlash = $_SESSION['google_drive_flash'] ?? null;
     unset($_SESSION['google_drive_flash']);
 }
@@ -571,6 +576,11 @@ require 'admin_header.php';
                     <?php } else { ?>
                         <p>Terhubung sebagai <strong><?php echo h($driveAccount['email']); ?></strong>.<?php if ($driveRootFolder !== '') { ?> <a href="<?php echo h(google_drive_folder_url($driveRootFolder)); ?>" target="_blank" rel="noopener noreferrer">Buka folder <?php echo h(GOOGLE_DRIVE_ROOT_FOLDER); ?></a><?php } ?></p>
                         <?php if (!empty($driveAccount['galat_terakhir'])) { ?><p class="sheet-sync-error" role="status">Drive: <?php echo h($driveAccount['galat_terakhir']); ?></p><?php } ?>
+                        <?php if ($printDriveMigrated) { ?>
+                            <p>PDF cetak peserta (registrasi dan data lengkap) disimpan otomatis per unit di <a href="<?php echo h(google_drive_folder_url(cetak_drive_folder_id())); ?>" target="_blank" rel="noopener noreferrer">folder cetak peserta</a>. <?php echo (int) $printDriveCount; ?> PDF tersimpan<?php echo $printDrivePending ? ', sisanya dicicil di latar belakang' : ''; ?>.</p>
+                        <?php } else { ?>
+                            <p>Jalankan migrasi <code>041_cetak_peserta_drive.sql</code> agar PDF cetak peserta disimpan otomatis per unit di Google Drive.</p>
+                        <?php } ?>
                         <form action="google-drive-auth.php" method="post" onsubmit="return confirm('Putuskan Google Drive? Dokumen baru tidak lagi disalin ke Drive.');">
                             <input type="hidden" name="csrf_token" value="<?php echo h(csrf_token()); ?>">
                             <input type="hidden" name="action" value="disconnect">

@@ -72,6 +72,9 @@ if (isset($_GET['code']) || isset($_GET['error'])) {
         mysqli_query($conn, 'DELETE FROM tb_google_drive_folders');
         mysqli_query($conn, 'UPDATE tb_dokumen_peserta SET drive_file_id=NULL,drive_source_path=NULL');
         mysqli_query($conn, 'UPDATE tb_bukti_pembayaran SET drive_file_id=NULL,drive_source_path=NULL');
+        if (ppdb_table_exists($conn, 'tb_cetak_drive')) {
+            mysqli_query($conn, 'DELETE FROM tb_cetak_drive');
+        }
     }
     $adminId = (int) $_SESSION['admin_id'];
     $save = mysqli_prepare($conn, 'INSERT INTO tb_google_drive_akun (id,email,refresh_token,terhubung_pada,terhubung_oleh) VALUES (1,?,?,NOW(),?) ON DUPLICATE KEY UPDATE email=VALUES(email),refresh_token=VALUES(refresh_token),terhubung_pada=NOW(),terhubung_oleh=VALUES(terhubung_oleh)');

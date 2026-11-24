@@ -6,6 +6,7 @@
 require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
+require_once 'cetak_drive.php';
 require_once 'web_stats.php';
 require_admin();
 
@@ -23,9 +24,15 @@ if ((int) ($lock[0] ?? 0) !== 1) {
     exit;
 }
 
+$startedAt = microtime(true);
 $synced = ['synced' => 0, 'failed' => 0];
 if (ppdb_admin_sync_is_due($conn)) {
     $synced = google_sheets_sync_units($conn);
+}
+// PDF cetak peserta yang belum ada atau berubah, termasuk peserta lama, dicicil tiap kunjungan admin.
+if (cetak_drive_has_pending($conn)) {
+    $printDeadline = min($startedAt + 120, microtime(true) + 60);
+    google_drive_sync_safely($conn, static fn () => cetak_drive_sync_pending($conn, $printDeadline));
 }
 
 ppdb_geo_network(true);

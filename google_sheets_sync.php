@@ -677,6 +677,7 @@ function sync_google_sheets_registration(mysqli $conn, string $registrationId): 
     if (!$registration) {
         return false;
     }
+    google_sheets_mark_print_dirty($conn, $registrationId);
     // Salin berkas peserta ke Drive lebih dulu (maks. 20 detik) agar tautannya ikut tertulis.
     google_drive_sync_safely($conn, static fn () => google_drive_sync_registration($conn, $registrationId, microtime(true) + 20));
     try {
@@ -719,7 +720,25 @@ function google_sheets_sync_units(mysqli $conn, bool $all = false): array
             $result['failed']++;
         }
     }
+    // PDF cetak peserta per unit di Drive memakai sisa waktu unggahan.
+    require_once __DIR__.'/cetak_drive.php';
+    google_drive_sync_safely($conn, static fn () => cetak_drive_sync_pending($conn, $driveDeadline));
     return $result;
+}
+
+/**
+ * Tandai PDF cetak peserta di Drive untuk diperiksa ulang karena datanya berubah.
+ * Ditulis langsung (tanpa memuat cetak_drive.php) agar permintaan wali murid tetap ringan.
+ */
+function google_sheets_mark_print_dirty(mysqli $conn, string $registrationId): void
+{
+    if (!ppdb_table_exists($conn, 'tb_cetak_drive')) {
+        return;
+    }
+    $stmt = mysqli_prepare($conn, 'UPDATE tb_cetak_drive SET perlu_periksa=1 WHERE id_pendaftaran=?');
+    mysqli_stmt_bind_param($stmt, 's', $registrationId);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
 }
 
 /** Jalankan unggahan Drive tanpa menggagalkan sinkronisasi spreadsheet; galat dicatat untuk dasbor. */
@@ -738,6 +757,7 @@ function google_drive_sync_safely(mysqli $conn, callable $upload): void
 
 function enqueue_google_sheets_registration(mysqli $conn, string $registrationId): void
 {
+    google_sheets_mark_print_dirty($conn, $registrationId);
     $stmt = mysqli_prepare($conn, "INSERT INTO tb_google_sync_outbox (id_pendaftaran, status) VALUES (?, 'pending') ON DUPLICATE KEY UPDATE status = 'pending', last_error = NULL");
     mysqli_stmt_bind_param($stmt, 's', $registrationId);
     mysqli_stmt_execute($stmt);

@@ -4,8 +4,9 @@ require_once __DIR__.'/app_helpers.php';
 /*
  * Salinan dokumen peserta (foto, NISN, KK, akta, KTP) dan bukti transfer di Google Drive.
  * Service account tidak punya kuota Drive, sehingga unggahan memakai akun Google yayasan
- * yang dihubungkan super admin lewat OAuth (google-drive-auth.php, cakupan drive.file:
- * aplikasi hanya dapat melihat berkas dan folder yang dibuatnya sendiri).
+ * yang dihubungkan super admin lewat OAuth (google-drive-auth.php). Cakupan penuh "drive"
+ * diperlukan karena PDF cetak peserta (cetak_drive.php) ditulis ke folder yang dibuat
+ * panitia sendiri; cakupan drive.file hanya dapat menulis ke folder buatan aplikasi.
  *
  * Struktur folder: Dokumen Peserta SPMB Cendekia / 2027-2028 / <unit> / <kode> - <nama>.
  * Berkas di server tetap menjadi sumber utama; Drive hanya salinan untuk spreadsheet.
@@ -57,7 +58,7 @@ function google_drive_oauth_client(): \Google\Client
     $client->setClientId(trim((string) getenv('GOOGLE_OAUTH_CLIENT_ID')));
     $client->setClientSecret(trim((string) getenv('GOOGLE_OAUTH_CLIENT_SECRET')));
     $client->setRedirectUri(google_drive_redirect_uri());
-    $client->setScopes([\Google\Service\Drive::DRIVE_FILE]);
+    $client->setScopes([\Google\Service\Drive::DRIVE]);
     $client->setAccessType('offline');
     // Selalu minta persetujuan agar Google mengirim refresh token baru.
     $client->setPrompt('consent');
@@ -83,9 +84,29 @@ function google_drive_service(mysqli $conn): ?\Google\Service\Drive
         if (isset($token['error'])) {
             throw new RuntimeException('Izin Google Drive yayasan tidak berlaku lagi ('.$token['error'].'). Hubungkan ulang Google Drive di dasbor.');
         }
+        google_drive_granted_scope((string) ($token['scope'] ?? ''));
         $services[$key] = new \Google\Service\Drive($client);
     }
     return $services[$key];
+}
+
+/** Cakupan izin token terakhir; diisi google_drive_service(). */
+function google_drive_granted_scope(?string $scope = null): string
+{
+    static $granted = '';
+    if ($scope !== null) {
+        $granted = $scope;
+    }
+    return $granted;
+}
+
+/**
+ * Izin penuh Drive sudah diberikan. Akun yang dihubungkan sebelum cakupan diperluas masih
+ * memegang drive.file saja dan perlu dihubungkan ulang. Panggil setelah google_drive_service().
+ */
+function google_drive_has_full_access(): bool
+{
+    return in_array(\Google\Service\Drive::DRIVE, preg_split('/\s+/', google_drive_granted_scope()) ?: [], true);
 }
 
 function google_drive_file_url(string $fileId): string
@@ -166,7 +187,7 @@ function google_drive_registration_folder(mysqli $conn, \Google\Service\Drive $d
 }
 
 /** Unggah satu berkas secara bertahap (aman untuk berkas di atas 5 MB). */
-function google_drive_upload_file(\Google\Service\Drive $drive, string $folderId, string $name, string $path, string $mimeType, array $appProperties): string
+function google_drive_upload_file(\Google\Service\Drive $drive, string $folderId, string $name, string $path, string $mimeType, array $appProperties, array $extraParams = []): string
 {
     $client = $drive->getClient();
     $client->setDefer(true);
@@ -175,7 +196,7 @@ function google_drive_upload_file(\Google\Service\Drive $drive, string $folderId
             'name' => $name,
             'parents' => [$folderId],
             'appProperties' => $appProperties,
-        ]), ['fields' => 'id']);
+        ]), ['fields' => 'id'] + $extraParams);
         $media = new \Google\Http\MediaFileUpload($client, $request, $mimeType, null, true, GOOGLE_DRIVE_CHUNK_BYTES);
         $media->setFileSize((int) filesize($path));
         $handle = fopen($path, 'rb');

@@ -3,6 +3,7 @@ require_once 'app_helpers.php';
 require_once 'koneksi.php';
 require_once 'google_sheets_sync.php';
 require_once 'google_drive_sync.php';
+require_once 'cetak_drive.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token($_POST['csrf_token'] ?? null)) {
@@ -31,6 +32,7 @@ if (preg_match('/^P[0-9]{9}$/', $registrationId)) {
     // Folder dokumen peserta di Google Drive ikut dipindah ke sampah.
     if ($deleted) {
         google_drive_trash_registration($conn, $registrationId);
+        cetak_drive_trash_registration($conn, $registrationId);
     }
     // Tulis ulang spreadsheet unit agar baris peserta yang dihapus ikut hilang.
     if ($deleted && $deletedUnit) {
