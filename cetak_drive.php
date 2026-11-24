@@ -72,21 +72,31 @@ function cetak_drive_mark_dirty(mysqli $conn, string $registrationId): void
     mysqli_stmt_close($stmt);
 }
 
-/** Peserta yang cetakannya belum ada di Drive atau perlu diperiksa ulang. */
+/**
+ * Peserta yang cetakannya belum ada di Drive atau perlu diperiksa ulang.
+ * Dicocokkan di PHP, bukan JOIN SQL, karena collation tb_cetak_drive di server dapat
+ * berbeda dengan tb_pendaftaran dan JOIN-nya akan gagal ("Illegal mix of collations").
+ */
 function cetak_drive_pending_ids(mysqli $conn, int $limit = 200): array
 {
-    $registered = cetak_drive_registered_statuses();
-    $placeholders = implode(',', array_fill(0, count($registered), '?'));
-    $sql = "SELECT p.id_pendaftaran FROM tb_pendaftaran p WHERE
-        (p.status_ppdb IN ($placeholders) AND NOT EXISTS (SELECT 1 FROM tb_cetak_drive c WHERE c.id_pendaftaran=p.id_pendaftaran AND c.jenis='registrasi'))
-        OR (p.status_ppdb='diterima' AND NOT EXISTS (SELECT 1 FROM tb_cetak_drive c WHERE c.id_pendaftaran=p.id_pendaftaran AND c.jenis='lengkap'))
-        OR EXISTS (SELECT 1 FROM tb_cetak_drive c WHERE c.id_pendaftaran=p.id_pendaftaran AND c.perlu_periksa=1)
-        ORDER BY p.tgl_daftar,p.id_pendaftaran LIMIT ".max(1, $limit);
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, str_repeat('s', count($registered)), ...$registered);
-    mysqli_stmt_execute($stmt);
-    $ids = array_column(mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC), 'id_pendaftaran');
-    mysqli_stmt_close($stmt);
+    $stored = [];
+    $dirty = [];
+    foreach (mysqli_fetch_all(mysqli_query($conn, 'SELECT id_pendaftaran,jenis,perlu_periksa FROM tb_cetak_drive'), MYSQLI_ASSOC) as $row) {
+        $stored[$row['id_pendaftaran'].'|'.$row['jenis']] = true;
+        if ((int) $row['perlu_periksa'] === 1) {
+            $dirty[$row['id_pendaftaran']] = true;
+        }
+    }
+    $ids = [];
+    $participants = mysqli_query($conn, "SELECT id_pendaftaran,status_ppdb FROM tb_pendaftaran WHERE status_ppdb<>'data_lama' ORDER BY tgl_daftar,id_pendaftaran");
+    while (($participant = mysqli_fetch_assoc($participants)) && count($ids) < max(1, $limit)) {
+        $id = (string) $participant['id_pendaftaran'];
+        $missing = array_filter(cetak_drive_kinds_for($participant), static fn (string $kind): bool => !isset($stored[$id.'|'.$kind]));
+        if ($missing || isset($dirty[$id])) {
+            $ids[] = $id;
+        }
+    }
+    mysqli_free_result($participants);
     return $ids;
 }
 

@@ -276,10 +276,18 @@ if ($adminUnitCode === '') {
     $driveAccount = $driveConfigured ? google_drive_account($conn) : null;
     $driveRootFolder = $driveAccount ? google_drive_cached_folder($conn, 'root') : '';
     // PDF cetak peserta per unit di folder Drive panitia (migrasi 041).
-    require_once 'cetak_drive.php';
-    $printDriveMigrated = ppdb_table_exists($conn, 'tb_cetak_drive');
-    $printDriveCount = $printDriveMigrated ? (int) (mysqli_fetch_row(mysqli_query($conn, 'SELECT COUNT(*) FROM tb_cetak_drive'))[0] ?? 0) : 0;
-    $printDrivePending = $printDriveMigrated && $driveAccount && cetak_drive_pending_ids($conn, 1) !== [];
+    // Status ini hanya informasi; galat apa pun di sini tidak boleh menjatuhkan dasbor.
+    $printDriveMigrated = false;
+    $printDriveCount = 0;
+    $printDrivePending = false;
+    try {
+        require_once 'cetak_drive.php';
+        $printDriveMigrated = ppdb_table_exists($conn, 'tb_cetak_drive');
+        $printDriveCount = $printDriveMigrated ? (int) (mysqli_fetch_row(mysqli_query($conn, 'SELECT COUNT(*) FROM tb_cetak_drive'))[0] ?? 0) : 0;
+        $printDrivePending = $printDriveMigrated && $driveAccount && cetak_drive_pending_ids($conn, 1) !== [];
+    } catch (Throwable $exception) {
+        error_log('SPMB cetak Drive status failed: '.$exception->getMessage());
+    }
     $driveFlash = $_SESSION['google_drive_flash'] ?? null;
     unset($_SESSION['google_drive_flash']);
 }
