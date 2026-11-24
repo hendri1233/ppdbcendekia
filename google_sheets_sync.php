@@ -720,9 +720,8 @@ function google_sheets_sync_units(mysqli $conn, bool $all = false): array
             $result['failed']++;
         }
     }
-    // PDF cetak peserta per unit di Drive memakai sisa waktu unggahan.
-    require_once __DIR__.'/cetak_drive.php';
-    google_drive_sync_safely($conn, static fn () => cetak_drive_sync_pending($conn, $driveDeadline));
+    // PDF cetak peserta tidak dibuat di sini: tombol sinkronisasi menunggu jawaban dan server
+    // memutus permintaan sekitar 60 detik (504). PDF dicicil oleh admin-latar.php.
     return $result;
 }
 

@@ -336,8 +336,15 @@ function cetak_drive_move_to_kind_folders(mysqli $conn, \Google\Service\Drive $d
     if (google_drive_cached_folder($conn, CETAK_DRIVE_SPLIT_MARKER) !== '') {
         return true;
     }
+    // Posisi terakhir disimpan agar kunjungan berikutnya melanjutkan, bukan mengulang dari awal.
+    $progressKey = CETAK_DRIVE_SPLIT_MARKER.':sampai';
+    $resumeAfter = google_drive_cached_folder($conn, $progressKey);
     $participants = [];
-    foreach (mysqli_fetch_all(mysqli_query($conn, 'SELECT id_pendaftaran,jenis,drive_file_id FROM tb_cetak_drive ORDER BY id_pendaftaran'), MYSQLI_ASSOC) as $record) {
+    foreach (mysqli_fetch_all(mysqli_query($conn, 'SELECT id_pendaftaran,jenis,drive_file_id FROM tb_cetak_drive ORDER BY id_pendaftaran,jenis'), MYSQLI_ASSOC) as $record) {
+        $position = $record['id_pendaftaran'].'|'.$record['jenis'];
+        if ($resumeAfter !== '' && strcmp($position, $resumeAfter) <= 0) {
+            continue;
+        }
         if (microtime(true) > $deadline) {
             return false;
         }
@@ -367,6 +374,10 @@ function cetak_drive_move_to_kind_folders(mysqli $conn, \Google\Service\Drive $d
             mysqli_stmt_execute($delete);
             mysqli_stmt_close($delete);
         }
+        $progress = mysqli_prepare($conn, 'INSERT INTO tb_google_drive_folders (folder_key,folder_id) VALUES (?,?) ON DUPLICATE KEY UPDATE folder_id=VALUES(folder_id)');
+        mysqli_stmt_bind_param($progress, 'ss', $progressKey, $position);
+        mysqli_stmt_execute($progress);
+        mysqli_stmt_close($progress);
     }
     $marker = CETAK_DRIVE_SPLIT_MARKER;
     $done = 'selesai';

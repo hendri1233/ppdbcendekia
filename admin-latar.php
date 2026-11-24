@@ -31,8 +31,9 @@ if (ppdb_admin_sync_is_due($conn)) {
 }
 // PDF cetak peserta yang belum ada atau berubah, termasuk peserta lama, dicicil tiap kunjungan admin.
 try {
-    if (cetak_drive_has_pending($conn)) {
-        $printDeadline = min($startedAt + 120, microtime(true) + 60);
+    // Jatah dibatasi agar selesai sebelum batas waktu server (~60 detik); sisanya dicicil kunjungan berikutnya.
+    if (microtime(true) - $startedAt < 15 && cetak_drive_has_pending($conn)) {
+        $printDeadline = microtime(true) + 30;
         google_drive_sync_safely($conn, static fn () => cetak_drive_sync_pending($conn, $printDeadline));
     }
 } catch (Throwable $exception) {
