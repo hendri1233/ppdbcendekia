@@ -102,7 +102,8 @@ function cetak_drive_pending_ids(mysqli $conn, int $limit = 200): array
 
 function cetak_drive_has_pending(mysqli $conn): bool
 {
-    return cetak_drive_ready($conn) && cetak_drive_pending_ids($conn, 1) !== [];
+    return cetak_drive_ready($conn)
+        && (google_drive_cached_folder($conn, CETAK_DRIVE_SPLIT_MARKER) === '' || cetak_drive_pending_ids($conn, 1) !== []);
 }
 
 /** Sidik isi cetakan; tanggal cetak tidak ikut agar PDF tidak dibuat ulang setiap hari. */
@@ -290,18 +291,17 @@ function cetak_drive_file_name(array $participant, string $kind): string
     return $participant['id_pendaftaran'].' - '.mb_substr($name, 0, 80).' - '.CETAK_DRIVE_KINDS[$kind].'.pdf';
 }
 
-/** Folder unit di dalam folder cetak, dibuat bila belum ada. */
-function cetak_drive_unit_folder(mysqli $conn, \Google\Service\Drive $drive, array $participant): string
+/** Folder cetak dengan kunci tertentu, dibuat di dalam $parentId bila belum ada. */
+function cetak_drive_folder(mysqli $conn, \Google\Service\Drive $drive, string $key, string $name, string $parentId): string
 {
-    $key = 'cetak:unit:'.$participant['kode_unit'];
     $folderId = google_drive_cached_folder($conn, $key);
     if ($folderId !== '') {
         return $folderId;
     }
     $folder = $drive->files->create(new \Google\Service\Drive\DriveFile([
-        'name' => ppdb_unit_display_name($participant['nama_unit'] ?? $participant['kode_unit']),
+        'name' => $name,
         'mimeType' => GOOGLE_DRIVE_FOLDER_MIME,
-        'parents' => [cetak_drive_folder_id()],
+        'parents' => [$parentId],
     ]), ['fields' => 'id', 'supportsAllDrives' => true]);
     $folderId = (string) $folder->getId();
     $stmt = mysqli_prepare($conn, 'INSERT INTO tb_google_drive_folders (folder_key,folder_id) VALUES (?,?) ON DUPLICATE KEY UPDATE folder_id=VALUES(folder_id)');
@@ -309,6 +309,72 @@ function cetak_drive_unit_folder(mysqli $conn, \Google\Service\Drive $drive, arr
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
     return $folderId;
+}
+
+function cetak_drive_folder_keys(array $participant, string $kind): array
+{
+    return ['cetak:unit:'.$participant['kode_unit'], 'cetak:unit:'.$participant['kode_unit'].':'.$kind];
+}
+
+/** Folder tujuan satu jenis cetakan: <folder cetak> / <unit> / Registrasi atau Data lengkap. */
+function cetak_drive_kind_folder(mysqli $conn, \Google\Service\Drive $drive, array $participant, string $kind): string
+{
+    [$unitKey, $kindKey] = cetak_drive_folder_keys($participant, $kind);
+    $unitId = cetak_drive_folder($conn, $drive, $unitKey, ppdb_unit_display_name($participant['nama_unit'] ?? $participant['kode_unit']), cetak_drive_folder_id());
+    return cetak_drive_folder($conn, $drive, $kindKey, CETAK_DRIVE_KINDS[$kind], $unitId);
+}
+
+/** Penanda bahwa PDF lama sudah dipindah ke subfolder per jenis (dicatat sekali). */
+const CETAK_DRIVE_SPLIT_MARKER = 'cetak:pisah-jenis';
+
+/**
+ * PDF yang diunggah sebelum ada subfolder per jenis dipindahkan (bukan diunggah ulang)
+ * ke subfolder Registrasi/Data lengkap. Mengembalikan true bila semuanya sudah selesai.
+ */
+function cetak_drive_move_to_kind_folders(mysqli $conn, \Google\Service\Drive $drive, float $deadline): bool
+{
+    if (google_drive_cached_folder($conn, CETAK_DRIVE_SPLIT_MARKER) !== '') {
+        return true;
+    }
+    $participants = [];
+    foreach (mysqli_fetch_all(mysqli_query($conn, 'SELECT id_pendaftaran,jenis,drive_file_id FROM tb_cetak_drive ORDER BY id_pendaftaran'), MYSQLI_ASSOC) as $record) {
+        if (microtime(true) > $deadline) {
+            return false;
+        }
+        $registrationId = $record['id_pendaftaran'];
+        $participants[$registrationId] ??= cetak_registrasi_participant($conn, $registrationId);
+        if (!$participants[$registrationId] || !isset(CETAK_DRIVE_KINDS[$record['jenis']])) {
+            continue;
+        }
+        $targetId = cetak_drive_kind_folder($conn, $drive, $participants[$registrationId], $record['jenis']);
+        try {
+            $parents = (array) $drive->files->get($record['drive_file_id'], ['fields' => 'parents', 'supportsAllDrives' => true])->getParents();
+            if (!in_array($targetId, $parents, true)) {
+                $drive->files->update($record['drive_file_id'], new \Google\Service\Drive\DriveFile(), [
+                    'addParents' => $targetId,
+                    'removeParents' => implode(',', $parents),
+                    'fields' => 'id',
+                    'supportsAllDrives' => true,
+                ]);
+            }
+        } catch (\Google\Service\Exception $exception) {
+            if ((int) $exception->getCode() !== 404) {
+                throw $exception;
+            }
+            // Berkas sudah dihapus manual dari Drive: catatannya dibuang agar dibuat ulang.
+            $delete = mysqli_prepare($conn, 'DELETE FROM tb_cetak_drive WHERE id_pendaftaran=? AND jenis=?');
+            mysqli_stmt_bind_param($delete, 'ss', $registrationId, $record['jenis']);
+            mysqli_stmt_execute($delete);
+            mysqli_stmt_close($delete);
+        }
+    }
+    $marker = CETAK_DRIVE_SPLIT_MARKER;
+    $done = 'selesai';
+    $stmt = mysqli_prepare($conn, 'INSERT INTO tb_google_drive_folders (folder_key,folder_id) VALUES (?,?) ON DUPLICATE KEY UPDATE folder_id=VALUES(folder_id)');
+    mysqli_stmt_bind_param($stmt, 'ss', $marker, $done);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+    return true;
 }
 
 /** Cetakan yang sudah tercatat untuk peserta, per jenis. */
@@ -360,12 +426,12 @@ function cetak_drive_sync_registration(mysqli $conn, \Google\Service\Drive $driv
                 continue;
             }
             try {
-                $folderId = cetak_drive_unit_folder($conn, $drive, $participant);
+                $folderId = cetak_drive_kind_folder($conn, $drive, $participant, $kind);
                 $fileId = google_drive_upload_file($drive, $folderId, cetak_drive_file_name($participant, $kind), $temporary, 'application/pdf', ['ppdb_kind' => 'cetak:'.$kind], ['supportsAllDrives' => true]);
             } catch (\Google\Service\Exception $exception) {
                 if ((int) $exception->getCode() === 404) {
-                    // Folder unit dihapus dari Drive: dibuat ulang pada percobaan berikutnya.
-                    google_drive_forget_folders($conn, ['cetak:unit:'.$participant['kode_unit']]);
+                    // Folder unit/jenis dihapus dari Drive: dibuat ulang pada percobaan berikutnya.
+                    google_drive_forget_folders($conn, cetak_drive_folder_keys($participant, $kind));
                     throw new RuntimeException('Folder cetak peserta di Google Drive tidak ditemukan atau tidak dapat diakses akun yayasan. Pastikan akun tersebut punya akses edit ke folder tujuan.');
                 }
                 throw $exception;
@@ -406,6 +472,10 @@ function cetak_drive_sync_pending(mysqli $conn, float $deadline): int
     }
     if (!google_drive_has_full_access()) {
         throw new RuntimeException('Izin Google Drive belum mencakup folder cetak peserta. Super admin perlu menekan "Putuskan Google Drive" lalu "Hubungkan Google Drive" lagi di dasbor.');
+    }
+    // PDF lama dirapikan ke subfolder per jenis lebih dulu, sebelum PDF baru dibuat.
+    if (!cetak_drive_move_to_kind_folders($conn, $drive, $deadline)) {
+        return 0;
     }
     $uploaded = 0;
     foreach (cetak_drive_pending_ids($conn) as $registrationId) {
