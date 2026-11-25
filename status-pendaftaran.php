@@ -109,7 +109,7 @@ header('Referrer-Policy: no-referrer');
                 <header class="acceptance-hero">
                     <span class="acceptance-seal" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9.5 16.2 5.3 12l-1.6 1.6 5.8 5.8L20.3 8.6 18.7 7z"/></svg></span>
                     <p class="acceptance-eyebrow">Hasil pendaftaran · Tahun ajaran <?php echo h($registration['th_ajaran']); ?></p>
-                    <h1>Selamat, ananda diterima</h1>
+                    <h1>Selamat, ananda terdaftar</h1>
                     <p class="acceptance-name"><?php echo h($registration['nm_peserta']); ?></p>
                     <p class="acceptance-unit"><?php echo h($registration['nama_unit']); ?></p>
                     <p class="acceptance-code">Kode pendaftaran <strong><?php echo h($registration['id_pendaftaran']); ?></strong></p>
@@ -124,10 +124,6 @@ header('Referrer-Policy: no-referrer');
                     <?php } else { ?>
                         <p class="acceptance-note">Tautan grup WhatsApp <?php echo h($registration['nama_unit']); ?> sedang disiapkan panitia dan akan tampil di halaman ini.</p>
                     <?php } ?>
-                    <a class="acceptance-button acceptance-button--pdf" href="cetak-bukti?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">
-                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 16 6.5 10.5l1.4-1.4 3.1 3.1V3h2v9.2l3.1-3.1 1.4 1.4L12 16Zm-7 3h14v2H5v-2Z"/></svg>
-                        <span>Unduh surat keterangan pendaftaran (PDF)</span>
-                    </a>
                 </div>
                 <?php if ($registration['status_pembayaran'] === 'menunggu_verifikasi') { ?>
                     <p class="acceptance-note">Bukti transfer Anda masih diperiksa panitia. Penerimaan ditinjau kembali bila bukti tersebut tidak sah.</p>
@@ -304,7 +300,6 @@ header('Referrer-Policy: no-referrer');
                 </div>
             <?php } ?>
 
-            <?php if (!$isAccepted) { ?><a class="secondary-download" href="cetak-bukti?id=<?php echo rawurlencode($registration['id_pendaftaran']); ?>&amp;token=<?php echo rawurlencode($receiptToken); ?>">Unduh bukti pendaftaran (PDF)</a><?php } ?>
             <p class="result-note">Halaman ini memuat token akses pribadi. Jangan bagikan tautannya kepada orang lain. Untuk kembali lagi, buka <a href="lanjutkan-pendaftaran?kode=<?php echo rawurlencode($registration['id_pendaftaran']); ?>">Lanjutkan pendaftaran</a>.</p>
             <div class="admin-contact">
                 <span>Perlu bantuan? Hubungi admin SPMB.</span>

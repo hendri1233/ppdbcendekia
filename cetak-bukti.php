@@ -144,7 +144,6 @@ $rowsHtml = '';
 foreach ($rows as [$label, $value]) {
     $rowsHtml .= '<tr><td class="label">'.h($label).'</td><td class="colon">:</td><td>'.$value.'</td></tr>';
 }
-$resumeUrl = ppdb_public_base_url().'/lanjutkan-pendaftaran?kode='.rawurlencode($registrationId);
 $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
     @page { margin: 0; }
     body { margin: 0; color: #1f2622; font-family: "Source Serif", "DejaVu Serif", serif; font-size: 11.8px; line-height: 1.3; }
@@ -184,7 +183,7 @@ $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>
             <li>Konfirmasi data, baca brosur, rincian biaya, dan SOP, lalu lengkapi formulir dan dokumen persyaratan.</li>
             <li>Setelah formulir terkirim, hasil pendaftaran dan surat keterangan pendaftaran tampil pada halaman pendaftaran.</li>
         </ol>
-        <p style="margin-top:9px">Untuk melanjutkan, buka <a href="'.h($resumeUrl).'">halaman Lanjutkan pendaftaran</a> lalu masukkan kode pendaftaran, tanggal lahir ananda, dan nomor WhatsApp yang didaftarkan.</p>
+        <p style="margin-top:9px">Untuk melanjutkan, mohon menunggu pemeriksaan. Panitia akan mengonfirmasi proses berikutnya melalui WhatsApp.</p>
         <div class="note">Dokumen ini bukan bukti penerimaan. NIK, alamat lengkap, dan data keluarga tidak dicantumkan demi menjaga privasi.</div>
     </div>
     <div class="footer">Diterbitkan melalui sistem SPMB Yayasan Wakaf Cendekia Takengon · Kode '.h($registration['id_pendaftaran']).'</div>
