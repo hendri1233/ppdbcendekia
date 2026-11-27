@@ -38,7 +38,7 @@ function cetak_registrasi_build(mysqli $conn, array $participant, bool $isComple
         'Tanggal pendaftaran' => ppdb_format_date_id($participant['tgl_daftar']),
         'Unit pendidikan' => $participant['nama_unit'],
         ...(!empty($participant['tingkat_kelas']) ? ['Daftar ke jenjang' => $participant['tingkat_kelas']] : []),
-        'Jalur pendaftaran' => $participant['jalur_pendaftaran'] === 'internal' ? 'Internal' : 'Umum',
+        'Jalur pendaftaran' => ppdb_jalur_label($participant),
         'Nomor antrean' => $participant['nomor_antrian'] ? '#'.(int) $participant['nomor_antrian'] : '',
         'Nama ananda' => $participant['nm_peserta'],
         'Tempat, tanggal lahir' => ($birthPlace !== '' ? $birthPlace.', ' : '').ppdb_format_date_id($participant['tgl_lahir']),

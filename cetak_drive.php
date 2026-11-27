@@ -18,6 +18,9 @@ require_once __DIR__.'/cetak_pdf.php';
 const CETAK_DRIVE_DEFAULT_FOLDER = '18rZYQlta3Wq59mii0Hda11pfIZrgAkvY';
 /** Naikkan bila tata letak PDF berubah agar semua cetakan dibuat ulang. */
 const CETAK_DRIVE_TEMPLATE_VERSION = '1';
+// Naikkan bila isi cetakan berubah agar PDF lama di Drive diperiksa ulang (2: jalur prestasi).
+// Terpisah dari versi templat (bagian sidik) supaya hanya PDF yang isinya berubah yang diunggah ulang.
+const CETAK_DRIVE_RECHECK_VERSION = '2';
 const CETAK_DRIVE_KINDS = ['registrasi' => 'Registrasi', 'lengkap' => 'Data lengkap'];
 /** Ruang gambar lampiran pada A4 96 dpi, setelah margin dan judul lampiran. */
 const CETAK_DRIVE_IMAGE_BOX = [662, 940];
@@ -100,10 +103,31 @@ function cetak_drive_pending_ids(mysqli $conn, int $limit = 200): array
     return $ids;
 }
 
+/**
+ * Saat CETAK_DRIVE_RECHECK_VERSION naik, semua cetakan diperiksa ulang sekali. Hanya PDF yang sidiknya
+ * berubah yang diunggah ulang; sisanya cukup dibandingkan tanpa dirender.
+ */
+function cetak_drive_apply_template_version(mysqli $conn): void
+{
+    $key = 'cetak:periksa-ulang';
+    if (google_drive_cached_folder($conn, $key) === CETAK_DRIVE_RECHECK_VERSION) {
+        return;
+    }
+    mysqli_query($conn, 'UPDATE tb_cetak_drive SET perlu_periksa=1');
+    $version = CETAK_DRIVE_RECHECK_VERSION;
+    $stmt = mysqli_prepare($conn, 'INSERT INTO tb_google_drive_folders (folder_key,folder_id) VALUES (?,?) ON DUPLICATE KEY UPDATE folder_id=VALUES(folder_id)');
+    mysqli_stmt_bind_param($stmt, 'ss', $key, $version);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+}
+
 function cetak_drive_has_pending(mysqli $conn): bool
 {
-    return cetak_drive_ready($conn)
-        && (google_drive_cached_folder($conn, CETAK_DRIVE_SPLIT_MARKER) === '' || cetak_drive_pending_ids($conn, 1) !== []);
+    if (!cetak_drive_ready($conn)) {
+        return false;
+    }
+    cetak_drive_apply_template_version($conn);
+    return (google_drive_cached_folder($conn, CETAK_DRIVE_SPLIT_MARKER) === '' || cetak_drive_pending_ids($conn, 1) !== []);
 }
 
 /** Sidik isi cetakan; tanggal cetak tidak ikut agar PDF tidak dibuat ulang setiap hari. */

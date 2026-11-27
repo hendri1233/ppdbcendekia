@@ -577,6 +577,16 @@ function ppdb_dapodik_age_label(?array $age): string
     return $age['years'].' tahun, '.$age['months'].' bulan, '.$age['days'].' hari';
 }
 
+/** Jalur pendaftaran untuk dokumen: internal/umum, ditambah jalur seleksi prestasi (SMP) bila dipilih. */
+function ppdb_jalur_label(array $registration): string
+{
+    $isInternal = ($registration['jalur_pendaftaran'] ?? '') === 'internal';
+    if (($registration['jalur_seleksi'] ?? '') === 'prestasi') {
+        return $isInternal ? 'Internal · Prestasi' : 'Prestasi';
+    }
+    return $isInternal ? 'Internal' : 'Umum';
+}
+
 function ppdb_pendaftar_label(?string $value): string
 {
     $labels = [
